@@ -1,0 +1,138 @@
+{% extends 'shop/base.html' %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero__background-overlay"></div>
+  <div class="container hero__content">
+    <h1 class="hero__title">
+      {% if request.state.locale == 'uz' %}
+      <span class="hero__title-main">Hayot va biznes uchun</span>
+      <span class="hero__title-sub">zamonaviy modulli yechimlar</span>
+      {% else %}
+      <span class="hero__title-main">Современные модульные решения</span>
+      <span class="hero__title-sub">для жизни и бизнеса</span>
+      {% endif %}
+    </h1>
+    <p class="hero__description">
+      {% if request.state.locale == 'uz' %}
+      Ofislar va savdo pavilyonlaridan tortib turar-joy binolari va sanitariya bloklarigacha bo'lgan har qanday maqsaddagi tez quriladigan binolarni loyihalashtiramiz, ishlab chiqaramiz va o'rnatamiz.
+      {% else %}
+      Проектируем, производим и монтируем быстровозводимые здания любого назначения: от офисов и торговых павильонов до жилых домов и санитарных блоков.
+      {% endif %}
+    </p>
+    <div class="hero__actions">
+        <button hx-get="{{ request.url_for('htmx_general_quote_form', locale=request.state.locale) }}"
+                hx-target="#modal-placeholder"
+                hx-swap="innerHTML"
+                class="btn btn--primary btn--hero">
+          <span>{% if request.state.locale == 'uz' %}Ariza qoldirish{% else %}Оставить заявку{% endif %}</span>
+          <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+  </div>
+</section>
+
+<section class="advantages-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">{% if request.state.locale == 'uz' %}Nima uchun WeConstruct'ni tanlashadi{% else %}Почему выбирают WeConstruct{% endif %}</h2>
+            <p class="section-subtitle">{% if request.state.locale == 'uz' %}Biz innovatsion texnologiyalarni, qat'iy sifat nazoratini va har bir loyihaga individual yondashuvni birlashtirgan holda kompleks yechimlarni taklif etamiz.{% else %}Мы предлагаем комплексные решения, сочетая инновационные технологии, строгий контроль качества и индивидуальный подход к каждому проекту.{% endif %}</p>
+        </div>
+        <div class="advantages-grid">
+            <div class="advantage-card">
+                <div class="advantage-card__icon"><i class="fas fa-shipping-fast"></i></div>
+                <h3 class="advantage-card__title">{% if request.state.locale == 'uz' %}Tezkor o'rnatish{% else %}Быстрый монтаж{% endif %}</h3>
+                <p class="advantage-card__text">{% if request.state.locale == 'uz' %}Modulli texnologiya ob'ektlarni rekord darajada qisqa vaqt ichida qurish imkonini beradi va qurilish vaqtini minimallashtiradi.{% else %}Модульная технология позволяет возводить объекты в рекордно короткие сроки, минимизируя время строительства.{% endif %}</p>
+            </div>
+            <div class="advantage-card">
+                <div class="advantage-card__icon"><i class="fas fa-shield-alt"></i></div>
+                <h3 class="advantage-card__title">{% if request.state.locale == 'uz' %}Sifat kafolati{% else %}Гарантия качества{% endif %}</h3>
+                <p class="advantage-card__text">{% if request.state.locale == 'uz' %}Biz tasdiqlangan zavodlar bilan ishlaymiz va sertifikatlangan materiallardan foydalanamiz, barcha konstruksiyalarimizga kafolat beramiz.{% else %}Мы работаем с проверенными заводами и используем сертифицированные материалы, предоставляя гарантию на все наши конструкции.{% endif %}</p>
+            </div>
+            <div class="advantage-card">
+                <div class="advantage-card__icon"><i class="fas fa-leaf"></i></div>
+                <h3 class="advantage-card__title">{% if request.state.locale == 'uz' %}Eko-samaradorlik{% else %}Экологичность{% endif %}</h3>
+                <p class="advantage-card__text">{% if request.state.locale == 'uz' %}Zamonaviy materiallar va ishlab chiqarish texnologiyalari yuqori energiya samaradorligini va atrof-muhitga minimal ta'sirni ta'minlaydi.{% else %}Современные материалы и технологии производства обеспечивают высокую энергоэффективность и минимальное воздействие на среду.{% endif %}</p>
+            </div>
+             <div class="advantage-card">
+                <div class="advantage-card__icon"><i class="fas fa-ruler-combined"></i></div>
+                <h3 class="advantage-card__title">{% if request.state.locale == 'uz' %}Moslashuvchan yechimlar{% else %}Гибкость решений{% endif %}</h3>
+                <p class="advantage-card__text">{% if request.state.locale == 'uz' %}Sizning noyob vazifalaringiz va byudjetingizga mos individual loyihani ishlab chiqamiz yoki tayyor yechimni moslashtiramiz.{% else %}Разработаем индивидуальный проект или адаптируем готовое решение под ваши уникальные задачи и бюджет.{% endif %}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% for category in categories_with_products %}
+<section class="products-section" id="category-{{ category.slug }}">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{{ t_get(request, category, 'name') }}</h2>
+      {% set category_desc = t_get(request, category, 'description') %}
+      {% if category_desc %}
+      <p class="section-subtitle">{{ category_desc }}</p>
+      {% endif %}
+    </div>
+    
+    <div class="products-grid">
+      {% for product in category.products %}
+      <article class="product-card cursor-pointer" 
+               hx-get="{{ request.url_for('htmx_product_modal', locale=request.state.locale, product_id=product.id) }}"
+               hx-target="#modal-placeholder"
+               hx-swap="innerHTML"
+               title="{{ t_get(request, product, 'name') }} haqida batafsil">
+        <div class="product-card__image">
+          <img src="{{ media(request, product.main_image) }}" alt="{{ t_get(request, product, 'name') }}">
+          <div class="product-card__overlay">
+            <span class="product-card__view-text">
+                <i class="fas fa-eye"></i>
+                <span>{% if request.state.locale == 'uz' %}Batafsil{% else %}Узнать подробнее{% endif %}</span>
+            </span>
+          </div>
+        </div>
+           <div class="product-card__content">
+          <div>
+            <h3 class="product-card__title">{{ t_get(request, product, 'name') }}</h3>
+            <p class="product-card__description">
+              {% set short_desc = t_get(request, product, 'short_description') %}
+              {% if short_desc %}
+                {{ short_desc }}
+              {% else %}
+                {% if request.state.locale == 'uz' %}Qisqa tavsif mavjud emas.{% else %}Краткое описание отсутствует.{% endif %}
+              {% endif %}
+            </p>
+          </div>
+          
+          {% if product.price_min %}
+          <div class="product-card__footer">
+              <span class="product-card__price">{% if request.state.locale == 'uz' %}{{ product.price_min|format_number }} so'mdan{% else %}от {{ product.price_min|format_number }} сум{% endif %}</span>
+          </div>
+          {% endif %}
+          
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endfor %}
+
+<section class="cta">
+    <div class="container">
+        <div class="cta__content">
+          <div class="cta__text">
+            <h2 class="cta__title">{% if request.state.locale == 'uz' %}Mos variant topmadingizmi?{% else %}Не нашли подходящий вариант?{% endif %}</h2>
+            <p class="cta__description">{% if request.state.locale == 'uz' %}Biz bilan bog'laning va biz sizning vazifalaringiz uchun individual loyiha ishlab chiqamiz.{% else %}Свяжитесь с нами, и мы разработаем индивидуальный проект под ваши задачи.{% endif %}</p>
+          </div>
+          <div class="cta__actions">
+            <button hx-get="{{ request.url_for('htmx_general_quote_form', locale=request.state.locale) }}"
+                    hx-target="#modal-placeholder"
+                    hx-swap="innerHTML"
+                    class="btn btn--white btn--hero">
+              <span>{% if request.state.locale == 'uz' %}Ariza qoldirish{% else %}Оставить заявку{% endif %}</span>
+            </button>
+          </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,15 @@
+<div class="text-center">
+    <button @click="$el.closest('.modal-overlay').remove()" class="modal-close-btn">
+        &times;
+    </button>
+    <div class="thank-you__icon" style="margin: 0 auto 1rem auto; background-color: #4caf50;">
+        <i class="fas fa-check"></i>
+    </div>
+    <h3 class="modal-title">Спасибо!</h3>
+    <p class="modal-subtitle" style="margin-top: 1rem;">
+        Ваша заявка по товару <strong>"{{ product.name }}"</strong> принята. <br>Наш менеджер скоро с вами свяжется.
+    </p>
+    <button @click="$el.closest('.modal-overlay').remove()" class="btn btn--secondary" style="margin-top: 1.5rem;">
+        Закрыть
+    </button>
+</div>

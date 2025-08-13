@@ -1,0 +1,26 @@
+<form hx-post="{{ request.url_for('request_quote', locale=request.state.locale, product_id=product.id) }}" hx-target="this" hx-swap="outerHTML">
+    {{ form.csrf_token }}
+
+    <h3 class="form-title">{% if request.state.locale == 'uz' %}Maslahat so'rash{% else %}Запросить консультацию{% endif %}</h3>
+    <p class="form-subtitle">{% if request.state.locale == 'uz' %}Ma'lumotlaringizni qoldiring va menejerimiz siz bilan bog'lanadi.{% else %}Оставьте свои данные, и наш менеджер свяжется с вами.{% endif %}</p>
+    
+    <div class="form-group">
+        {{ form.name(class="form-input") }}
+        <label for="{{ form.name.id }}" class="form-label">{% if request.state.locale == 'uz' %}Ismingiz *{% else %}Ваше имя *{% endif %}</label>
+        {% if form.name.errors %}
+            <div class="form-error">{{ form.name.errors[0] }}</div>
+        {% endif %}
+    </div>
+    <div class="form-group">
+        {{ form.phone(class="form-input") }}
+        <label for="{{ form.phone.id }}" class="form-label">{% if request.state.locale == 'uz' %}Telefon raqamingiz *{% else %}Ваш телефон *{% endif %}</label>
+        {% if form.phone.errors %}
+            <div class="form-error">{{ form.phone.errors[0] }}</div>
+        {% endif %}
+    </div>
+    
+    <button type="submit" class="btn btn--primary btn--full htmx-indicator-parent">
+      <span class="htmx-indicator-text">{% if request.state.locale == 'uz' %}Yuborish{% else %}Отправить{% endif %}</span>
+      <i class="fas fa-spinner fa-spin htmx-indicator"></i>
+    </button>
+</form>

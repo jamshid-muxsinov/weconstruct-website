@@ -1,0 +1,32 @@
+<div id="notifications-list" style="padding-top: 8px;">
+    
+    <div style="padding: 0 12px 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); margin-bottom: 8px;">
+        <span style="font-weight: 600; font-size: 0.9rem;">Уведомления</span>
+        {% if notifications %}
+        <button class="btn-link"
+                hx-post="{{ request.url_for('admin_api_notifications_mark_read') }}"
+                hx-indicator="this"
+                title="Пометить все как прочитанные">
+            <i class='bx bx-check-double'></i>
+        </button>
+        {% endif %}
+    </div>
+    
+    {% if notifications %}
+        <ul style="display: flex; flex-direction: column; gap: 4px; padding: 0 8px 8px 8px;">
+            {% for n in notifications %}
+            <li>
+                <a href="{{ n.link }}" class="notification-item">
+                    <div class="notification-icon"><i class='bx bxs-bell'></i></div>
+                    <div class="notification-content">
+                        <p class="notification-message">{{ n.message }}</p>
+                        <small class="notification-time">{{ n.created_at.strftime('%d %b, %H:%M') }}</small>
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="empty-notification-placeholder">Новых уведомлений нет.</p>
+    {% endif %}
+</div>

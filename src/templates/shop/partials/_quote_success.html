@@ -1,0 +1,27 @@
+<div class="quote-success text-center swap-me">
+    <div class="thank-you__icon" style="background-color: #4caf50;">
+        <i class="fas fa-check"></i>
+    </div>
+    <h3 class="modal-title">{% if request.state.locale == 'uz' %}Rahmat, ariza qabul qilindi!{% else %}Спасибо, заявка принята!{% endif %}</h3>
+    <p class="modal-subtitle">
+        {% if product %}
+            {% if request.state.locale == 'uz' %}
+                Sizning <strong>"{{ t_get(request, product, 'name') }}"</strong> mahsuloti bo'yicha arizangiz yuborildi.
+            {% else %}
+                Ваша заявка по товару <strong>"{{ t_get(request, product, 'name') }}"</strong> отправлена.
+            {% endif %}
+        {% else %}
+            {% if request.state.locale == 'uz' %}
+                Sizning xabaringiz yuborildi.
+            {% else %}
+                Ваше сообщение отправлено.
+            {% endif %}
+        {% endif %}
+        <br>
+        {% if request.state.locale == 'uz' %}
+            Menejerimiz tez orada siz bilan bog'lanadi.
+        {% else %}
+            Наш менеджер скоро с вами свяжется.
+        {% endif %}
+    </p>
+</div>

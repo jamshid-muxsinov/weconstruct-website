@@ -1,0 +1,14 @@
+{# /src/templates/admin/partials/_contact_search_results.html #}
+
+{% for contact in contacts %}
+<div class="search-result-item" 
+     onclick="selectContact('{{ contact.id }}', '{{ contact.full_name }} ({{ contact.phone }})')">
+    <div class="item-name">{{ contact.full_name }}</div>
+    <div class="item-details">{{ contact.phone }}</div>
+</div>
+{% else %}
+<div class="search-no-results">
+    Клиенты не найдены.
+    <button type="button" class="btn btn-secondary btn-sm" onclick="showNewContactForm()">Создать нового</button>
+</div>
+{% endfor %}

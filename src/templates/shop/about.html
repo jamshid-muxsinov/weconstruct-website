@@ -1,0 +1,162 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}{% if request.state.locale == 'uz' %}Kompaniya haqida — WeConstruct{% else %}О компании — WeConstruct{% endif %}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <div class="page-header__content">
+      {% if request.state.locale == 'uz' %}
+      <h1 class="page-title">Biz shunchaki qurmaymiz.<br>Biz kelajak makonlarini yaratamiz.</h1>
+      <p class="page-subtitle">WeConstruct — bu O'zbekistonda har bir inson uchun zamonaviy, qulay va ekologik toza makonlarni ochiq qilish missiyasi bilan birlashgan muhandislar, dizaynerlar va quruvchilar jamoasi.</p>
+      {% else %}
+      <h1 class="page-title">Мы не просто строим.<br>Мы создаем будущие пространства.</h1>
+      <p class="page-subtitle">WeConstruct — это команда инженеров, дизайнеров и строителей, объединенных миссией сделать современные, комфортные и экологичные пространства доступными для каждого в Узбекистане.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="container">
+    <div class="stats__grid" x-data="{
+        animateCounter(el, finalValue, suffix = '') {
+            let start = 0;
+            const duration = 1500; // ms
+            const frameRate = 60; // fps
+            const totalFrames = Math.round(duration / (1000 / frameRate));
+            const increment = finalValue / totalFrames;
+
+            let currentFrame = 0;
+            const timer = setInterval(() => {
+                currentFrame++;
+                start += increment;
+                
+                if (currentFrame === totalFrames) {
+                    clearInterval(timer);
+                    start = finalValue;
+                }
+                
+                el.textContent = Math.floor(start) + suffix;
+            }, 1000 / frameRate);
+        }
+    }">
+      <div class="stat-card" x-intersect:enter="animateCounter($refs.projects, 50, '+')">
+        <div class="stat-card__number" x-ref="projects">0+</div>
+        <div class="stat-card__label">{% if request.state.locale == 'uz' %}Amalga oshirilgan loyihalar{% else %}Реализованных проектов{% endif %}</div>
+      </div>
+      
+      <div class="stat-card" x-intersect:enter="animateCounter($refs.days, 3)">
+        <div class="stat-card__number" x-ref="days">0</div>
+        <div class="stat-card__label">{% if request.state.locale == 'uz' %}Kun — o'rtacha montaj{% else %}Дня — средний монтаж{% endif %}</div>
+      </div>
+      <div class="stat-card" x-intersect:enter="animateCounter($refs.clients, 98, '%')">
+        <div class="stat-card__number" x-ref="clients">0%</div>
+        <div class="stat-card__label">{% if request.state.locale == 'uz' %}Mamnun mijozlar{% else %}Довольных клиентов{% endif %}</div>
+      </div>
+      <div class="stat-card" x-intersect:enter="animateCounter($refs.warranty, 2)">
+        <div class="stat-card__number" x-ref="warranty">0</div>
+        <div class="stat-card__label">{% if request.state.locale == 'uz' %}Yilgacha kafolat{% else %}Года гарантии{% endif %}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="logo-story">
+  <div class="container">
+    <div class="logo-story__content">
+      <div class="logo-story__visual">
+        <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="1080.000000pt" height="1080.000000pt" viewBox="0 0 1080.000000 1080.000000" preserveAspectRatio="xMidYMid meet">
+            <g transform="translate(0.000000,1080.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none">
+                      <path d="M5630 8485 c-184 -103 -346 -198 -360 -211 -25 -24 -25 -25 -33 -292 -5 -147 -7 -509 -5 -805 4 -624 -2 -588 94 -539 33 17 187 101 344 187 193 107 298 159 325 162 45 5 60 -2 355 -170 211 -120 323 -177 348 -177 10 0 23 5 30 12 15 15 18 1552 3 1591 -10 27 -66 64 -281 187 -290 166 -416 232 -450 237 -31 4 -76 -19 -370 -182z"/>
+                      <path d="M2315 8525 c-61 -31 -126 -67 -145 -79 -19 -13 -118 -70 -219 -127 -101 -57 -194 -114 -207 -126 l-24 -22 0 -769 c0 -714 1 -770 17 -776 24 -10 176 68 443 224 63 38 143 80 178 94 77 33 89 30 232 -49 58 -32 164 -89 235 -127 72 -38 150 -82 175 -98 83 -52 139 -75 152 -62 18 18 13 1522 -6 1565 -13 33 -60 61 -421 260 -60 33 -140 77 -177 98 -105 58 -108 58 -233 -6z"/>
+                      <path d="M7730 8306 c-14 -7 -140 -87 -281 -178 -140 -91 -298 -190 -350 -221 -100 -59 -150 -103 -171 -152 -11 -24 -12 -258 -10 -1240 3 -1189 4 -1211 23 -1252 24 -50 42 -63 329 -247 118 -75 263 -169 322 -207 95 -63 114 -72 177 -80 41 -6 288 -9 588 -7 485 3 521 4 563 22 46 20 507 322 548 359 l22 20 0 357 c0 263 -3 359 -12 368 -9 9 -98 12 -339 12 -291 0 -328 -2 -340 -17 -9 -10 -16 -52 -19 -109 -5 -83 -9 -98 -35 -136 -18 -25 -50 -52 -80 -67 l-50 -26 -325 0 -326 0 -69 35 c-51 26 -78 47 -100 78 l-30 44 0 862 0 863 30 48 c21 33 47 57 85 79 l55 31 345 -3 c386 -4 396 -6 457 -75 40 -46 53 -91 53 -189 0 -56 4 -81 16 -92 13 -14 57 -16 332 -16 182 0 323 4 332 10 22 14 28 671 6 705 -14 22 -332 244 -502 350 -48 30 -103 59 -123 64 -20 5 -274 12 -566 15 -433 5 -535 3 -555 -8z"/>
+                      <path d="M4805 8029 c-110 -61 -267 -148 -350 -194 -102 -56 -157 -93 -171 -114 -33 -47 -38 -191 -31 -959 5 -705 6 -710 49 -699 27 8 724 396 737 411 8 9 10 245 9 837 -3 816 -3 824 -23 826 -11 2 -110 -47 -220 -108z"/>
+                      <path d="M3370 7261 c0 -724 2 -800 16 -812 9 -8 63 -39 119 -69 56 -30 174 -95 261 -144 281 -158 333 -183 344 -166 11 18 16 519 12 1130 -3 374 -6 428 -20 454 -10 16 -45 43 -87 65 -38 21 -123 68 -188 105 -66 37 -140 78 -165 91 -26 14 -54 29 -62 34 -72 44 -203 111 -215 111 -13 0 -15 -94 -15 -799z"/>
+                      <path d="M5675 6634 c-154 -86 -308 -172 -343 -191 -104 -58 -96 -17 -101 -568 -4 -655 6 -1161 26 -1180 17 -17 29 -12 276 127 215 121 428 238 433 238 3 0 161 -85 352 -190 191 -105 359 -190 373 -190 14 0 30 5 37 12 16 16 17 1669 1 1699 -6 11 -29 28 -53 38 -23 10 -183 93 -355 185 -173 92 -325 169 -340 172 -20 4 -89 -30 -306 -152z"/>
+                      <path d="M2289 6663 c-90 -46 -182 -95 -204 -108 -22 -12 -107 -57 -190 -100 -82 -42 -156 -82 -163 -87 -9 -8 -12 -182 -10 -832 l3 -821 23 -3 c20 -3 114 44 352 176 176 98 355 192 367 192 7 0 84 -40 171 -89 86 -48 195 -110 242 -136 47 -26 119 -67 161 -91 42 -24 84 -44 92 -44 8 0 17 13 21 31 7 38 8 1566 0 1594 -5 20 -26 35 -114 83 -25 14 -110 62 -190 107 -168 95 -333 185 -371 201 -24 11 -42 4 -190 -73z"/>
+                      <path d="M4740 6094 c-506 -280 -456 -248 -469 -298 -15 -60 -16 -1609 -1 -1637 6 -10 17 -19 26 -19 24 0 134 59 449 243 227 133 302 181 306 199 12 40 10 1617 -1 1639 -6 10 -18 19 -28 19 -10 0 -136 -66 -282 -146z"/>
+                      <path d="M3374 6209 c-9 -14 -12 -1086 -5 -1389 l6 -235 100 -57 c55 -31 105 -62 112 -67 7 -6 14 -11 17 -11 3 0 73 -39 155 -87 307 -179 345 -195 356 -150 9 36 1 1570 -9 1590 -8 17 -171 118 -220 137 -14 5 -56 27 -93 48 -237 136 -288 164 -309 172 -13 5 -41 20 -63 34 -26 17 -42 22 -47 15z"/>
+                      <path d="M3655 3896 c-91 -29 -149 -78 -184 -156 -19 -42 -21 -65 -21 -363 l0 -318 25 -48 c30 -60 83 -105 155 -132 45 -17 71 -20 140 -17 100 5 167 34 220 94 44 50 60 93 67 174 l6 67 -69 13 c-38 6 -76 14 -85 16 -13 4 -17 -7 -22 -56 -11 -102 -44 -143 -122 -155 -49 -7 -81 9 -112 54 -23 33 -23 39 -23 308 0 250 2 277 19 311 22 42 55 62 106 62 78 0 119 -46 130 -146 l7 -62 42 5 c22 2 61 6 85 9 l44 6 -6 79 c-6 91 -33 148 -94 198 -78 65 -208 88 -308 57z"/>
+                      <path d="M4379 3895 c-76 -24 -140 -75 -171 -135 l-28 -52 0 -327 0 -327 26 -52 c46 -93 143 -142 279 -142 98 0 162 21 220 72 84 74 85 77 85 437 0 214 -4 326 -12 353 -17 57 -87 131 -150 158 -67 29 -183 36 -249 15z m172 -155 c10 -6 27 -25 36 -43 16 -28 18 -64 18 -317 0 -260 -2 -288 -18 -314 -56 -85 -201 -61 -221 35 -3 18 -6 148 -6 291 0 278 5 309 51 342 26 18 110 22 140 6z"/>
+                      <path d="M5875 3896 c-92 -29 -161 -89 -186 -162 -23 -67 -17 -163 15 -227 36 -75 87 -116 235 -190 78 -39 134 -74 153 -96 27 -31 30 -39 26 -88 -6 -64 -33 -98 -92 -114 -89 -24 -166 28 -166 114 0 20 -3 37 -7 37 -5 0 -43 -7 -86 -15 -43 -8 -81 -15 -83 -15 -13 0 0 -83 20 -125 27 -58 63 -94 126 -127 40 -20 59 -23 160 -23 131 0 155 8 228 78 53 52 82 126 82 209 0 145 -43 197 -254 306 -170 88 -191 108 -191 184 0 43 4 53 33 79 26 23 42 29 78 29 80 0 118 -35 126 -115 3 -28 6 -30 38 -27 19 1 59 7 88 13 52 10 52 11 52 48 0 54 -47 140 -98 178 -77 58 -203 79 -297 49z"/>
+                      <path d="M8655 3897 c-66 -22 -99 -43 -143 -90 -69 -75 -74 -107 -70 -454 3 -283 4 -300 25 -338 27 -50 75 -96 133 -126 39 -21 59 -24 145 -24 118 0 169 19 233 85 50 51 74 118 70 196 l-3 59 -70 12 c-38 6 -76 12 -82 12 -9 1 -13 -16 -13 -54 0 -31 -6 -68 -14 -83 -37 -70 -112 -98 -176 -65 -60 31 -63 46 -64 352 -1 245 1 280 16 308 25 45 56 63 109 63 79 0 119 -44 128 -145 l6 -60 40 3 c22 1 60 5 84 8 l43 6 -4 81 c-3 49 -11 95 -21 114 -24 46 -81 98 -135 124 -58 27 -178 35 -237 16z"/>
+                      <path d="M1698 3895 c-3 -3 1 -38 9 -78 7 -40 47 -265 88 -501 41 -237 79 -434 83 -438 5 -5 53 -7 108 -6 l99 3 22 125 c13 69 38 220 57 335 25 160 35 202 40 175 3 -19 26 -161 51 -315 26 -154 49 -290 52 -302 5 -22 10 -23 104 -23 94 0 100 1 109 23 5 12 32 155 60 317 28 162 67 377 86 477 18 100 34 189 34 198 0 12 -16 15 -95 15 -53 0 -95 -4 -95 -10 0 -24 -101 -704 -105 -708 -3 -3 -5 0 -5 6 0 32 -102 670 -110 690 -9 20 -16 22 -94 22 -72 0 -85 -3 -90 -17 -7 -22 -103 -572 -112 -642 -4 -28 -8 -50 -10 -48 -2 2 -19 118 -39 258 -19 140 -40 292 -46 339 -7 47 -16 91 -22 98 -9 12 -167 18 -179 7z"/>
+                      <path d="M2817 3893 c-9 -8 -9 -233 0 -676 l6 -347 254 0 253 0 0 80 0 80 -170 0 -170 0 0 140 0 140 134 0 c74 0 137 3 139 8 3 4 8 37 12 74 l7 67 -143 3 -144 3 -3 138 -3 137 170 0 170 0 6 53 c4 29 5 64 3 78 l-3 24 -256 3 c-140 1 -258 -1 -262 -5z"/>
+                      <path d="M4926 3892 c-3 -3 -6 -234 -6 -514 l0 -508 96 0 96 0 -7 318 c-4 174 -4 314 0 310 7 -7 78 -176 182 -438 36 -91 70 -171 76 -177 6 -9 40 -13 103 -13 l94 0 -2 513 -3 512 -90 -1 -90 0 0 -312 c0 -172 -2 -312 -5 -312 -3 0 -27 55 -53 123 -27 67 -84 208 -128 312 l-80 190 -89 2 c-49 0 -91 -1 -94 -5z"/>
+                      <path d="M6347 3893 c-4 -3 -7 -39 -7 -80 l0 -73 105 0 105 0 0 -435 0 -435 90 0 90 0 0 435 0 435 105 0 106 0 -3 78 -3 77 -291 3 c-160 1 -293 -1 -297 -5z"/>
+                      <path d="M7028 3894 c-5 -4 -8 -236 -8 -516 l0 -508 96 0 97 0 -5 205 -4 206 55 -3 56 -3 68 -202 69 -203 94 0 c52 0 94 1 94 3 0 1 -34 94 -76 207 -42 113 -78 214 -81 226 -3 15 5 28 30 47 51 39 87 119 94 209 11 153 -33 247 -142 303 -58 30 -61 30 -244 33 -102 2 -189 0 -193 -4z m344 -168 c28 -13 50 -74 50 -140 -1 -120 -35 -156 -148 -156 l-74 0 0 158 0 157 77 -6 c43 -3 86 -9 95 -13z"/>
+                      <path d="M7740 3892 c-6 -3 -10 -148 -10 -420 0 -475 -1 -464 85 -540 56 -49 122 -72 210 -72 99 0 160 23 221 85 86 86 87 94 79 556 l-8 389 -88 0 -89 0 0 -400 0 -400 -28 -31 c-23 -25 -38 -33 -78 -36 -43 -5 -54 -2 -82 22 -29 24 -39 50 -48 120 -1 11 -3 181 -3 377 l-1 357 -75 -2 c-41 -1 -79 -3 -85 -5z"/>
+                      <path d="M9114 3887 c-3 -8 -4 -43 -2 -78 l3 -64 108 -3 107 -3 0 -432 -1 -432 88 0 88 0 3 433 2 432 101 0 100 0 -3 78 -3 77 -293 3 c-240 2 -293 0 -298 -11z"/>
+                    </g>
+          </svg>
+      </div>
+      <div class="logo-story__text">
+        <h2 class="section-title">{% if request.state.locale == 'uz' %}Logotipimizda mujassamlashgan yondashuvimiz{% else %}Наш подход, отлитый в логотипе{% endif %}</h2>
+        <p class="section-subtitle">{% if request.state.locale == 'uz' %}Logotipimiz shunchaki emblema emas, balki falsafamizning vizual chizmasidir. U qurilishdagi modullar singari alohida geometrik bloklardan yig'ilgan bo'lib, ular yagona va mustahkam tuzilmaga birlashib, bizning nomimizni — WeConstruct'ni hosil qiladi. Bu murakkab, ammo uyg'un shakl bizning muhandislik aniqligi, ishonchlilik va zamonaviy dizaynni qanday birlashtirganimizni anglatadi. Logotip bizning asosiy g'oyamizni aks ettiradi: standartlashtirilgan elementlardan kelajak uchun noyob, barqaror va puxta o'ylangan makonlar yaratamiz.{% else %}Наш логотип — это не просто эмблема, а визуальный чертёж нашей философии. Он собран из отдельных геометрических блоков, которые, подобно модулям в строительстве, соединяются в единую и прочную структуру, образуя наше имя — WeConstruct. Эта сложная, но гармоничная форма символизирует то, как мы объединяем инженерную точность, надёжность и современный дизайн. Логотип отражает нашу главную идею: из стандартизированных элементов мы создаём уникальные, устойчивые и продуманные пространства для будущего.{% endif %}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="team">
+  <div class="container">
+    <div class="team__header section-header">
+      <h2 class="section-title">{% if request.state.locale == 'uz' %}WeConstruct'ni yaratayotgan inson{% else %}Человек, который создает WeConstruct{% endif %}</h2>
+      <p class="section-subtitle">{% if request.state.locale == 'uz' %}Bizning asosiy qadriyatimiz — bu o'z ishini sevadigan va har bir loyihada mukammallikka intiladigan professionallar jamoasi. Kompaniya asosida uning g'oyaviy ilhomlantiruvchisi turadi.{% else %}Наша главная ценность — это команда профессионалов, которые любят свое дело и стремятся к совершенству в каждом проекте. В основе компании стоит её идейный вдохновитель.{% endif %}</p>
+    </div>
+    
+    <div class="team__grid">
+      <div class="team-member">
+        <div class="team-member__image">
+          <img src="{{ static(request, 'img/photo_2025-07-29_11-08-03.jpg') }}" alt="Sobir Qayumov">
+        </div>
+        <div class="team-member__info">
+          <h3 class="team-member__name">{% if request.state.locale == 'uz' %}Sobir Qayumov{% else %}Собир Каюмов{% endif %}</h3>
+          <p class="team-member__position">{% if request.state.locale == 'uz' %}Asoschi{% else %}Основатель{% endif %}</p>
+          <p class="team-member__bio">
+            {% if request.state.locale == 'uz' %}Qurilish sohasidagi ko'p yillik tajribaga ega bo'lgan Sobir, ilg'or texnologiyalarni joriy etib va eng yuqori sifat standartlarini ta'minlab, kompaniyaning rivojlanish yo'nalishini belgilaydi. Uning maqsadi — zamonaviy modulli yechimlarni har bir inson uchun ochiq qilish.{% else %}
+            С многолетним опытом в строительной индустрии, Собир задает вектор развития компании, внедряя передовые технологии и обеспечивая высочайшие стандарты качества. Его цель — сделать современные модульные решения доступными для каждого.
+            {% endif %}
+          </p>
+          <div class="team-member__socials">
+            <a href="https://t.me/weconstructowner" target="_blank" rel="noopener noreferrer" class="team-member__social-link" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
+            <a href="https://www.linkedin.com/in/%D1%81%D0%BE%D0%B1%D0%B8%D1%80-%D0%BA%D0%B0%D1%8E%D0%BC%D0%BE%D0%B2-4b8582374/" target="_blank" rel="noopener noreferrer" class="team-member__social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="production">
+  <div class="container">
+    <div class="production__content">
+      <div class="production__visual">
+        <img src="https://opis-cdn.tinkoffjournal.ru/mercury/main-modular-house.90crpnkltypj..jpg?preset=image_570w_2x" alt="WeConstruct ishlab chiqarishi" class="production__image">
+      </div>
+      <div class="production__text">
+        <h2 class="production__title section-title">{% if request.state.locale == 'uz' %}Sifat kafolati — <span class="text-primary">tasdiqlangan hamkorlar</span>{% else %}Гарантия качества — <span class="text-primary">проверенные партнёры</span>{% endif %}</h2>
+        <p class="production__description">{% if request.state.locale == 'uz' %}Biz Xitoydagi yetakchi zavod-ishlab chiqaruvchilar bilan bevosita hamkorlik qilamiz. Hamkorlarni sinchkovlik bilan tanlash va ishlab chiqarishning barcha bosqichlarida qat'iy nazorat qilish bizga yuqori sifatli mahsulot, zamonaviy texnologiyalar va ishonchli materiallardan foydalanishni kafolatlash imkonini beradi. Siz texnologik mahsulotni optimal narxda olasiz.{% else %}Мы сотрудничаем напрямую с ведущими заводами-производителями в Китае. Тщательный отбор партнёров и строгий контроль на всех этапах производства позволяют нам гарантировать высокое качество продукции, использование современных технологий и надёжных материалов. Вы получаете технологичный продукт по оптимальной цене.{% endif %}</p>
+        <a href="{{ request.url_for('index', locale=request.state.locale) }}" class="btn btn--primary btn--lg">
+          <span>{% if request.state.locale == 'uz' %}Mahsulotlarni ko'rish{% else %}Посмотреть продукцию{% endif %}</span>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="map">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{% if request.state.locale == 'uz' %}Biz xaritadamiz{% else %}Мы на карте{% endif %}</h2>
+      <p class="section-subtitle">{% if request.state.locale == 'uz' %}Loyihangizni muhokama qilish uchun ofisimizga tashrif buyuring.{% else %}Приезжайте к нам в офис для обсуждения вашего проекта.{% endif %}</p>
+    </div>
+    <iframe src="https://yandex.ru/map-widget/v1/?ll=69.217220%2C41.259594&z=17&pt=69.217220%2C41.259594,pm2rdm"
+            class="map__iframe"
+            allowfullscreen="true">
+    </iframe>
+  </div>
+</section>
+{% endblock %}

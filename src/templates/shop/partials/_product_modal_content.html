@@ -1,0 +1,154 @@
+
+<div 
+    x-data="{ shake: false }" 
+    class="modal-overlay" 
+    @keydown.escape.window="$el.remove()" 
+    @click.self="shake = true; setTimeout(() => shake = false, 500)">
+    <div 
+        class="modal-content"
+        :class="{ 'shake-it': shake }"
+        @click.away="!shake && $el.parentElement.remove()">
+        
+        <button class="modal-close-btn" @click="$el.parentElement.parentElement.remove()">&times;</button>
+        
+        <div class="modal-grid">
+            {% set all_images = [] %}
+            {% if product.main_image %}
+                {% set _ = all_images.append(product.main_image) %}
+            {% endif %}
+            {% for img in product.images %}
+                {% set _ = all_images.append(img.image) %}
+            {% endfor %}
+
+            <div class="modal-gallery" 
+                 x-data="{ 
+                     mainImage: '{{ media(request, all_images[0]) if all_images else '' }}',
+                     lightboxOpen: false,
+                     images: [
+                         {% for image_path in all_images %}'{{ media(request, image_path) }}',{% endfor %}
+                     ],
+                     currentIndex: 0,
+                     openLightbox(clickedImage) {
+                         this.currentIndex = this.images.indexOf(clickedImage);
+                         if (this.currentIndex === -1) this.currentIndex = 0;
+                         this.lightboxOpen = true;
+                     },
+                     nextImage() {
+                         this.currentIndex = (this.currentIndex + 1) % this.images.length;
+                     },
+                     prevImage() {
+                         this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+                     }
+                 }"
+                 @keydown.escape.window="lightboxOpen = false"
+                 @keydown.arrow-right.window="if(lightboxOpen) { nextImage() }"
+                 @keydown.arrow-left.window="if(lightboxOpen) { prevImage() }"
+                 x-data="{ 
+                     touchStartX: 0,
+                     touchEndX: 0,
+                     handleTouchStart(e) { this.touchStartX = e.touches[0].clientX; },
+                     handleTouchEnd(e) { 
+                         this.touchEndX = e.changedTouches[0].clientX;
+                         if (this.touchStartX - this.touchEndX > 50) { this.nextImage(); }
+                         if (this.touchEndX - this.touchStartX > 50) { this.prevImage(); }
+                     }
+                 }"
+                 @touchstart="handleTouchStart"
+                 @touchend="handleTouchEnd">
+
+                <div class="modal-gallery__main">
+                    <a href="#" @click.prevent="openLightbox(mainImage)" class="gallery-main-link" title="Увеличить изображение">
+                        <img :src="mainImage" alt="Основное изображение" x-show="mainImage", loading="lazy">
+                    </a>
+                </div>
+                
+                {% if all_images|length > 1 %}
+                <div class="modal-gallery__thumbnails">
+                    {% for image_path in all_images %}
+                    <img src="{{ media(request, image_path) }}" 
+                         @click="mainImage = '{{ media(request, image_path) }}'" 
+                         :class="{ 'active': mainImage === '{{ media(request, image_path) }}' }">
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div x-show="lightboxOpen" class="lightbox-overlay" x-transition x-cloak>
+                    <div class="lightbox-content" @click.away="lightboxOpen = false">
+                        <button @click="prevImage()" class="lightbox-nav lightbox-prev" aria-label="Предыдущее изображение">&lt;</button>
+                        
+                        <img :src="images[currentIndex]" alt="Fullscreen image" class="lightbox-image">
+                        
+                        <div class="lightbox-counter" x-show="images.length > 1">
+                            <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
+                        </div>
+                        
+                        <button @click="nextImage()" class="lightbox-nav lightbox-next" aria-label="Next image">&gt;</button>
+
+                        <button @click="lightboxOpen = false" class="lightbox-close" aria-label="Close">&times;</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-info-scrollable">
+                <h2 class="modal-title">{{ t_get(request, product, 'name') }}</h2>
+                
+                {% set dimensions = t_get(request, product, 'dimensions') %}
+                {% set materials_list = product.materials_ru_list if request.state.locale == 'ru' else product.materials_uz_list %}
+                
+                {% if dimensions or materials_list or product.price_min %}
+                <div class="product-specs">
+                    {% if product.price_min %}
+                    <div class="spec-item">
+                        <h4 class="spec-title"><i class="fas fa-tag"></i> {% if request.state.locale == 'uz' %}Narxi (m² uchun){% else %}Цена за м²{% endif %}</h4>
+                        <p class="spec-value price-value">
+                            {% if request.state.locale == 'uz' %}
+                                {% if product.price_min and product.price_max %}
+                                    {{ product.price_min|format_number }} so'mdan {{ product.price_max|format_number }} so'mgacha
+                                {% else %}
+                                    {{ product.price_min|format_number }} so'mdan
+                                {% endif %}
+                            {% else %}
+                                {% if product.price_min and product.price_max %}
+                                    от {{ product.price_min|format_number }} до {{ product.price_max|format_number }} сум
+                                {% else %}
+                                    от {{ product.price_min|format_number }} сум
+                                {% endif %}
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if dimensions %}
+                    <div class="spec-item">
+                        <h4 class="spec-title"><i class="fas fa-ruler-combined"></i> {% if request.state.locale == 'uz' %}O'lchamlari{% else %}Размеры{% endif %}</h4>
+                        <p class="spec-value">{{ dimensions }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if materials_list %}
+                    <div class="spec-item">
+                        <h4 class="spec-title"><i class="fas fa-layer-group"></i> {% if request.state.locale == 'uz' %}Materiallar{% else %}Материалы{% endif %}</h4>
+                        <ul class="spec-list">
+                            {% for material in materials_list %}
+                            <li>{{ material }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% set full_desc = t_get(request, product, 'full_description') %}
+                {% if full_desc %}
+                    <h4 class="full-description-title"><i class="fas fa-info-circle"></i> {% if request.state.locale == 'uz' %}To'liq tavsif{% else %}Полное описание{% endif %}</h4>
+                    <div class="prose">
+                        {{ full_desc|replace("\n", "<br>")|safe }}
+                    </div>
+                {% endif %}
+
+                <div id="modal-form-wrapper">
+                    {% include 'shop/partials/_quote_form.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

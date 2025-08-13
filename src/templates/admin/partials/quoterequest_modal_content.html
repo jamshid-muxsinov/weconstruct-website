@@ -1,0 +1,41 @@
+<div class="modal-header">
+    <h2>Заявка #{{ req.id }}: {{ req.contact.name }}</h2>
+    <button class="modal-close">&times;</button>
+</div>
+<div class="modal-body" style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px;">
+    <div>
+        <h4 style="margin-bottom: 16px;">Детали заявки</h4>
+        <div style="font-size: 0.875rem; display: grid; gap: 12px;">
+            <p><strong>Клиент:</strong> {{ req.contact.name }} ({{ req.contact.phone }})</p>
+            <p><strong>Товар:</strong> {{ req.product.name or "Не указан" }}</p>
+            <p><strong>Статус:</strong> <span class="status-badge status-{{ req.status.value }}">{{ req.get_status_display() }}</span></p>
+            <p><strong>Ответственный:</strong> {{ req.assigned_to.username or "Не назначен" }}</p>
+        </div>
+        <h4 style="margin-top: 24px; margin-bottom: 16px;">Сообщение клиента</h4>
+        <p style="background: var(--bg-main); padding: 12px; border-radius: var(--border-radius-md); font-style: italic; color: var(--text-secondary);">
+            {{ req.message or "Нет сообщения." }}
+        </p>
+        <div style="margin-top: 24px;">
+            <a href="{{ request.url_for('admin_quoterequest_change', pk=req.id) }}" class="btn btn-primary">
+                <i class='bx bx-edit'></i> Перейти к редактированию
+            </a>
+        </div>
+    </div>
+    <div>
+        <h4 style="margin-bottom: 16px;">Задачи</h4>
+        <div class="task-list-container">
+            {% include 'admin/partials/_task_list_partial.html' %}
+        </div>
+        <form class="quick-task-form" style="margin-top: 16px;"
+              hx-post="{{ request.url_for('admin_htmx_add_task_to_quote', pk=req.id) }}"
+              hx-target=".task-list"
+              hx-swap="outerHTML"
+              hx-on::after-request="this.reset()">
+            <input type='text' name='title' class="input-field" placeholder='Название новой задачи...' required>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                {{ task_form.assigned_to_id(class_='select-field', style='flex-grow: 1;')|safe }}
+                <button type="submit" class="btn btn-primary">Добавить</button>
+            </div>
+        </form>
+    </div>
+</div>

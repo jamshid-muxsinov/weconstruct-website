@@ -1,0 +1,57 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ cl.opts.verbose_name_plural|capfirst }}</h1>
+    {% if has_add_permission and cl.opts.add_url_name %}
+    <a href="{{ request.url_for(cl.opts.add_url_name) }}" class="btn btn-primary">
+        <i class='bx bx-plus'></i>
+        <span>Добавить {{ cl.opts.verbose_name }}</span>
+    </a>
+    {% endif %}
+</div>
+
+<div class="table-wrapper">
+    <table class="styled-table">
+        <thead>
+            <tr>
+                {% for header in cl.list_display %}
+                <th>{{ header.replace('_', ' ')|capfirst }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in cl.result_list %}
+            <tr>
+                {% for field_name in cl.list_display %}
+                <td>
+                    {% if loop.first %}
+                    <a href="{{ request.url_for(cl.opts.change_url_name, pk=result.id) }}" class="link-to-change">
+                        {{ result[field_name] }}
+                    </a>
+                    {% elif field_name == 'status' and result.get_status_display %}
+                    <span class="status-badge status-{{ result.status.value }}">{{ result.get_status_display() }}</span>
+                    {% elif result[field_name] is mapping and result[field_name].name %}
+                    {{ result[field_name].name }}
+                    {% elif result[field_name] is none %}
+                    <span style="color: var(--text-secondary);">&mdash;</span>
+                    {% else %}
+                    {{ result[field_name] }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="{{ cl.list_display|length }}" class="empty-list-placeholder">
+                    Нет записей.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Пагинация, если нужна, может быть добавлена здесь -->
+
+{% endblock %}

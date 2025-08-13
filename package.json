@@ -1,0 +1,13 @@
+{
+  "name": "weconstruct-assets",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "esbuild src/static/css/main.css --bundle --minify --outfile=src/static/dist/bundle.min.css && esbuild src/static/js/main.js --bundle --minify --outfile=src/static/dist/bundle.min.js"
+  },
+  "devDependencies": {
+    "esbuild": "0.23.1"
+  }
+}
+
+

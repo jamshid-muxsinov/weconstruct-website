@@ -1,0 +1,73 @@
+<div class="slide-over-header">
+    <h2>Заявка #{{ req.id }}</h2>
+    <button class="slide-over-close"><i class='bx bx-x'></i></button>
+</div>
+<div class="slide-over-body" style="display: grid; grid-template-columns: 3fr 2fr; gap: 24px;">
+    
+    {# Левая колонка: Информация о заявке и управление #}
+    <div>
+        <h3 style="font-weight: 500; font-size: 1.1rem; margin-bottom: 8px;">Информация о клиенте</h3>
+        <div class="detail-item">
+            <strong>Имя</strong>
+            <span><a href="{{ request.url_for('admin_contact_detail', pk=req.contact_id) }}" class="link-to-change">{{ req.contact.full_name }}</a></span>
+        </div>
+        <div class="detail-item">
+            <strong>Телефон</strong>
+            <span>{{ req.contact.phone }}</span>
+        </div>
+
+        <h3 style="font-weight: 500; font-size: 1.1rem; margin-bottom: 8px; margin-top: 24px;">Детали заявки</h3>
+        <div class="detail-item">
+            <strong>Товар</strong>
+            <span>{{ req.product.name if req.product else "Общая заявка" }}</span>
+        </div>
+        <div class="detail-item">
+            <strong>Сообщение</strong>
+            <span style="white-space: pre-wrap; text-align: left; padding-top: 10px; color: var(--text-secondary); width: 100%;">{{ req.message or "Нет сообщения." }}</span>
+        </div>
+
+        <hr style="border-color: var(--border-color); margin: 24px 0;">
+
+        <h3 style="font-weight: 500; font-size: 1.1rem; margin-bottom: 16px;">Управление</h3>
+        <form hx-post="{{ request.url_for('admin_api_quote_assign', pk=req.id) }}" hx-trigger="submit">
+            <div class="input-group">
+                <label for="assignee-select">Назначить исполнителя</label>
+                <div style="display: flex; gap: 10px;">
+                    <select id="assignee-select" name="assigned_to_id" class="select-field" style="flex-grow: 1;">
+                        <option value="0">--- Не назначен ---</option>
+                        {% for u in staff_users %}
+                        <option value="{{ u.id }}" {% if req.assigned_to_id == u.id %}selected{% endif %}>{{ u.username }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </div>
+        </form>
+        
+        {# Возвращаем кнопку "Перейти к редактированию" #}
+        <div style="margin-top: 16px;">
+            <a href="{{ request.url_for('admin_quoterequest_change', pk=req.id) }}" class="btn btn-secondary">
+                <i class='bx bx-edit-alt'></i> Полное редактирование
+            </a>
+        </div>
+    </div>
+
+    {# Правая колонка: Задачи #}
+    <div>
+        <h3 style="font-weight: 500; font-size: 1.1rem; margin-bottom: 16px;">Задачи по заявке</h3>
+        <div class="task-list-container">
+            {% include 'admin/partials/_task_list_partial.html' %}
+        </div>
+        <form class="quick-task-form" style="margin-top: 16px;"
+              hx-post="{{ request.url_for('admin_htmx_add_task_to_quote', pk=req.id) }}"
+              hx-target=".task-list"
+              hx-swap="outerHTML"
+              hx-on::after-request="this.reset()">
+            <input type='text' name='title' class="input-field" placeholder='Название новой задачи...' required>
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                {{ task_form.assigned_to_id(class_='select-field', style='flex-grow: 1;')|safe }}
+                <button type="submit" class="btn btn-primary">Добавить</button>
+            </div>
+        </form>
+    </div>
+</div>

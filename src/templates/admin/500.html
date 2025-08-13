@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ошибка сервера | WeConstruct CRM</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+	<link rel="stylesheet" href="{{ static(request, 'css/crm.css') }}">
+</head>
+<body class="login-page">
+    <div class="card login-card" style="text-align: center; max-width: 550px;">
+        <i class='bx bxs-error' style="font-size: 4rem; color: var(--status-red); margin-bottom: 16px;"></i>
+        <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 8px;">Что-то пошло не так...</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 1.1rem; background-color: var(--bg-main); padding: 1rem; border-radius: var(--border-radius-md);">
+            {{ error_message|default("При обработке вашего запроса произошла непредвиденная ошибка.") }}
+        </p>
+        
+        <div style="text-align: left; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px;">
+            <p style="font-weight: 500; color: var(--text-primary); margin-bottom: 12px;">Что можно сделать?</p>
+            <ul style="list-style-type: disc; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+                <li>Вернитесь на предыдущую страницу и проверьте введенные данные.</li>
+                <li>Убедитесь, что вы не пытаетесь удалить объект (например, категорию), который используется в другом месте.</li>
+                <li>Если ошибка повторяется, обратитесь к администратору.</li>
+            </ul>
+        </div>
+
+        <div style="display: flex; gap: 16px; justify-content: center;">
+             <a href="javascript:history.back()" class="btn btn-secondary">Вернуться назад</a>
+             <a href="{{ request.url_for('admin_index') }}" class="btn btn-primary">Перейти на главную</a>
+        </div>
+    </div>
+</body>
+</html>

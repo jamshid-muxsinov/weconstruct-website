@@ -1,0 +1,36 @@
+<div class="kanban-card status-{{ req.status.value }}"
+     data-id="{{ req.id }}"
+     id="kanban-card-{{ req.id }}"
+     hx-get="{{ request.url_for('admin_htmx_quote_slide_over', pk=req.id) }}"
+     hx-target="#slide-over-content"
+     hx-trigger="click"
+     title="Нажмите, чтобы открыть детали">
+
+    <h4 class="card-title">
+        <a href="{{ request.url_for('admin_contact_detail', pk=req.contact_id) }}" 
+           onclick="event.stopPropagation()" 
+           title="Перейти к профилю клиента"
+           style="color: inherit; text-decoration: none;">
+            {{ req.contact.full_name }}
+        </a>
+    </h4>
+    <p class="card-subtitle">{{ req.product.name|truncate(35) if req.product else "Общая заявка" }}</p>
+
+    {# --- НОВЫЙ БЛОК ДЛЯ ЗАМЕТКИ --- #}
+    {% if req.contact.pinned_note %}
+    <div class="pinned-note" title="Закрепленная заметка">
+        <i class='bx bxs-pin'></i>
+        <span>{{ req.contact.pinned_note.note|truncate(50) }}</span>
+    </div>
+    {% endif %}
+
+    <div class="card-footer">
+        <span class="id">#{{ req.id }} &middot; {{ req.created_at.strftime('%d %b') }}</span>
+        {% if req.assigned_to %}
+        <span class="assignee" title="Ответственный: {{ req.assigned_to.username }}">
+            <i class='bx bxs-user'></i>
+            <span>{{ req.assigned_to.username|truncate(10) }}</span>
+        </span>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход | WeConstruct CRM</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{{ static(request, 'css/crm.css') }}">
+</head>
+
+<body class="login-page">
+
+    <div class="card login-card">
+        <div class="login-header">
+            <a href="#" class="brand">
+                <i class='bx bxs-color-fill logo-icon'></i>
+                <span class="text">WeConstruct CRM</span>
+            </a>
+            <p>Добро пожаловать. Авторизуйтесь для начала работы.</p>
+        </div>
+
+        {% if error %}
+        <div class="login-error-note" style="display: block;">{{ error }}</div>
+        {% endif %}
+
+        <form id="login-form" action="/admin/login/token" method="post">
+
+            <div class="input-group">
+                <label for="username">Имя пользователя</label>
+                <input class="input-field" type="text" id="username" name="username" required>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Пароль</label>
+                <input class="input-field" type="password" id="password" name="password" required>
+            </div>
+
+            <div class="form-actions" style="border: none; padding-top: 10px; margin-top: 10px;">
+                <button type="submit" class="btn btn-primary btn-full">Войти</button>
+            </div>
+        </form>
+
+    </div>
+
+    <script src="{{ static(request, 'js/crm.js') }}"></script>
+</body>
+
+</html>

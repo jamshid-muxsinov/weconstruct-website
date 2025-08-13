@@ -1,0 +1,34 @@
+<div class="modal-overlay" 
+     _="on keydown[key=='Escape'] from window call #modal-placeholder.remove()">
+    <div class="modal-content-inner" 
+         hx-target="this"
+         @click.away="#modal-placeholder.innerHTML = ''">
+        
+        <button @click="#modal-placeholder.innerHTML = ''" class="modal-close-btn">
+            <i class="fas fa-times"></i>
+        </button>
+
+        <div class="modal-header">
+            <h3 class="modal-title">Заявка на консультацию</h3>
+            <p class="modal-subtitle">Вы заинтересованы в: <strong>{{ product.name }}</strong></p>
+        </div>
+        
+        <form hx-post="{% url 'request_quote' product.id %}" hx-swap="outerHTML">
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}" class="form-label">Ваше имя</label>
+                {{ form.name }}
+                {% if form.name.errors %}<div class="form-error">{{ form.name.errors.as_text }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.phone.id_for_label }}" class="form-label">Ваш телефон</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}<div class="form-error">{{ form.phone.errors.as_text }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.message.id_for_label }}" class="form-label">Комментарий (необязательно)</label>
+                {{ form.message }}
+            </div>
+            <button type="submit" class="btn btn--primary btn--full">Отправить заявку</button>
+        </form>
+    </div>
+</div>

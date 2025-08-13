@@ -1,0 +1,38 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>
+        {% if original %}
+        <i class='bx bxs-edit-alt'></i> Редактирование: {{ original }}
+        {% else %}
+        <i class='bx bx-plus-circle'></i> Добавление: {{ opts.verbose_name }}
+        {% endif %}
+    </h1>
+</div>
+
+<div class="card form-container">
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% for field_name, field in form.items() %}
+        <div class="input-group">
+            <label for="{{ field.id }}">{{ field.label.text }}</label>
+            {{ field(class_='input-field') }}
+            {% if field.errors %}
+            <div class="error-text" style="color: var(--status-red); font-size: 0.8rem; margin-top: 4px;">
+                {{ field.errors[0] }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="form-actions">
+            <input type="submit" value="Сохранить" class="btn btn-primary">
+            {% if original and opts.delete_url_name %}
+            <a href="{{ request.url_for(opts.delete_url_name, pk=original.id) }}" class="btn btn-danger">Удалить</a>
+            {% endif %}
+            <a href="{{ request.url_for(opts.list_url_name) }}" class="btn btn-secondary"
+                style="margin-left: auto;">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

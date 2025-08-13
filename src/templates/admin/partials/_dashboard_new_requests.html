@@ -1,0 +1,28 @@
+{# /src/templates/admin/partials/_dashboard_new_requests.html #}
+
+<h3 style="margin-bottom: 16px; font-size: 1.1rem;">Новые заявки</h3>
+{% if new_unassigned_requests %}
+    <ul style="display: flex; flex-direction: column; gap: 12px;">
+    {% for req in new_unassigned_requests %}
+        <a href="#" 
+            class="kanban-card" 
+            style="margin: 0;"
+            hx-get="{{ request.url_for('admin_htmx_quote_slide_over', pk=req.id) }}"
+            hx-target="#slide-over-content"
+            hx-trigger="click">
+            <p class="card-title" style="margin: 0 0 4px 0;">{{ req.contact.full_name }}</p>
+            <p class="card-subtitle" style="margin: 0;">{{ req.product.name if req.product else 'Общий вопрос' }}</p>
+            
+            {# Отображаем закрепленную заметку, если она есть #}
+            {% if req.contact.pinned_note %}
+            <div class="pinned-note" title="Закрепленная заметка" style="font-size: 0.75rem; padding: 6px 8px;">
+                <i class='bx bxs-pin'></i>
+                <span>{{ req.contact.pinned_note.note|truncate(40) }}</span>
+            </div>
+            {% endif %}
+        </a>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p class="empty-list-placeholder" style="padding: 20px 0;">Нет новых нераспределенных заявок.</p>
+{% endif %}

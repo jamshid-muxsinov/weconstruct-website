@@ -1,0 +1,122 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Заявка #{{ quote.id }} от {{ quote.created_at.strftime('%d.%m.%Y') }}</h1>
+    <div>
+        <a href="{{ request.url_for('admin_quoterequest_list') }}" class="btn btn-secondary">
+            <i class='bx bx-list-ul'></i> К списку заявок
+        </a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: flex-start;">
+
+    <div class="card">
+        <form method="post">
+            <h2 style="font-weight: 500; font-size: 1.25rem; margin-bottom: 24px;">Детали заявки</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div class="input-group">
+                    <label>Клиент</label>
+                    <div class="input-field" style="background-color: var(--bg-sidebar);">{{ quote.contact.name }}</div>
+                </div>
+                <div class="input-group">
+                    <label>Телефон</label>
+                    <div class="input-field" style="background-color: var(--bg-sidebar);">{{ quote.contact.phone }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Товар</label>
+                <div class="input-field" style="background-color: var(--bg-sidebar);">{{ quote.product.name if
+                    quote.product else "Общая заявка" }}</div>
+            </div>
+
+            <div class="input-group">
+                <label>Сообщение от клиента</label>
+                <div class="textarea-field" style="background-color: var(--bg-sidebar); min-height: 80px;">{{
+                    quote.message or "Нет сообщения" }}</div>
+            </div>
+
+            <hr style="border-color: var(--border-color); margin: 24px 0;">
+            <h3 style="font-weight: 500; font-size: 1.1rem; margin-bottom: 16px;">Управление заявкой</h3>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="input-group">
+                    <label for="status">Статус</label>
+                    <select name="status" id="status" class="select-field">
+                        {% for choice in status_choices %}
+                        <option value="{{ choice.value }}" {% if quote.status==choice %}selected{% endif %}>
+                            {{ choice.value.replace('_', ' ')|capfirst }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="assigned_to_id">Ответственный</label>
+                    <select name="assigned_to_id" id="assigned_to_id" class="select-field">
+                        <option value="0">--- Не назначен ---</option>
+                        {% for u in staff_users %}
+                        <option value="{{ u.id }}" {% if quote.assigned_to_id==u.id %}selected{% endif %}>
+                            {{ u.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="internal_notes">Внутренние заметки</label>
+                <textarea name="internal_notes" id="internal_notes"
+                    class="textarea-field">{{ quote.internal_notes or '' }}</textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            </div>
+        </form>
+    </div>
+    <div class="card">
+        <h3 style="margin-bottom: 16px; font-size: 1.1rem;">История изменений</h3>
+        <ul style="list-style: none; position: relative;">
+            <div
+                style="position: absolute; left: 13px; top: 5px; bottom: 5px; width: 2px; background-color: var(--border-color);">
+            </div>
+            {% for log in status_history %}
+            <li style="display: flex; gap: 16px; margin-bottom: 20px; position: relative;">
+                <div
+                    style="width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); display: flex; align-items: center; justify-content: center; z-index: 1;">
+                    <i class='bx bx-git-commit' style="color: var(--text-secondary); font-size: 1.5rem;"></i>
+                </div>
+                <div>
+                    <p style="font-weight: 500;">
+                        {{ log.user.username if log.user else "Система" }} изменил(а) статус
+                    </p>
+                    <div style="display: flex; align-items: center; gap: 8px; margin: 4px 0;">
+                        <span class="status-badge status-{{ log.old_status.value }}">{{ log.get_old_status_display()
+                            }}</span>
+                        <i class='bx bx-right-arrow-alt'></i>
+                        <span class="status-badge status-{{ log.new_status.value }}">{{ log.get_new_status_display()
+                            }}</span>
+                    </div>
+                    <small style="color: var(--text-secondary);">{{ log.timestamp.strftime('%d.%m.%Y %H:%M') }}</small>
+                </div>
+            </li>
+            {% endfor %}
+            <li style="display: flex; gap: 16px; position: relative;">
+                <div
+                    style="width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); display: flex; align-items: center; justify-content: center; z-index: 1;">
+                    <i class='bx bx-plus-circle' style="color: var(--status-green); font-size: 1.2rem;"></i>
+                </div>
+                <div>
+                    <p style="font-weight: 500;">Заявка создана</p>
+                    <small style="color: var(--text-secondary);">{{ quote.created_at.strftime('%d.%m.%Y %H:%M')
+                        }}</small>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

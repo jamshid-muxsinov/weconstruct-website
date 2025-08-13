@@ -1,0 +1,122 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ title }}</h1>
+    <a href="{{ request.url_for(meta.list_url_name) }}" class="btn btn-secondary">
+        <i class='bx bx-arrow-back'></i> К списку заявок
+    </a>
+</div>
+
+<div class="card form-container">
+    <form method="post" novalidate id="quote-request-form">
+        <fieldset style="border: none; padding: 0; margin-bottom: 24px;">
+            <legend style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px; padding: 0;">Информация о клиенте
+            </legend>
+
+            {% if original %}
+            <div class="input-group">
+                <label>Клиент</label>
+                <div class="input-field readonly-field">{{ original.contact.full_name }}</div>
+            </div>
+            {% else %}
+            {{ form.contact_id() }}
+            <div class="input-group">
+                <label for="contact-search">Поиск клиента (по имени или телефону)</label>
+                <div style="position: relative;">
+                    <input type="text" id="contact-search" class="input-field" placeholder="Начните вводить..."
+                        autocomplete="off" hx-get="{{ request.url_for('admin_htmx_contact_search') }}"
+                        hx-trigger="keyup[target.value.length > 1] changed delay:300ms" hx-target="#search-results"
+                        name="q" onkeydown="if(event.keyCode===13){event.preventDefault();}">
+                    <div id="search-results" class="search-results-container"></div>
+                </div>
+            </div>
+            {% if form.contact_id.errors %}
+            <div class="error-text" style="color: var(--status-red); font-size: 0.8rem; margin-top: 4px;">{{
+                form.contact_id.errors[0] }}</div>
+            {% endif %}
+            <div id="new-contact-fields"
+                style="display: none; border: 1px solid var(--border-color); padding: 16px; border-radius: var(--border-radius-md); margin-top: 16px;">
+                <p style="font-weight: 500; margin-bottom: 16px;">Новый клиент</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="input-group">
+                        <label for="{{ form.new_contact_name.id }}">{{ form.new_contact_name.label.text }}</label>
+                        {{ form.new_contact_name(class_='input-field') }}
+                    </div>
+                    <div class="input-group">
+                        <label for="{{ form.new_contact_phone.id }}">{{ form.new_contact_phone.label.text }}</label>
+                        {{ form.new_contact_phone(class_='input-field') }}
+                    </div>
+                </div>
+                <a href="#" onclick="hideNewContactForm(event)" style="font-size: 0.8rem;">Отмена</a>
+            </div>
+            {% endif %}
+        </fieldset>
+
+        <hr style="border-color: var(--border-color); margin: 24px 0;">
+        <fieldset style="border: none; padding: 0;">
+            <legend style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px; padding: 0;">Детали заявки
+            </legend>
+            <div class="input-group">
+                <label for="{{ form.product_id.id }}">{{ form.product_id.label.text }}</label>
+                {{ form.product_id(class_='select-field') }}
+            </div>
+            <div class="input-group">
+                <label for="{{ form.message.id }}">{{ form.message.label.text }}</label>
+                {{ form.message(class_='textarea-field') }}
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="input-group">
+                    <label for="{{ form.status.id }}">{{ form.status.label.text }}</label>
+                    {{ form.status(class_='select-field') }}
+                </div>
+                <div class="input-group">
+                    <label for="{{ form.assigned_to_id.id }}">{{ form.assigned_to_id.label.text }}</label>
+                    {{ form.assigned_to_id(class_='select-field') }}
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            {% if original %}
+            <a href="{{ request.url_for('admin_quoterequest_delete', pk=original.id) }}" class="btn btn-danger">Удалить
+                заявку</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script>
+    const contactIdInput = document.getElementById('contact_id');
+    const contactSearchInput = document.getElementById('contact-search');
+    const searchResultsContainer = document.getElementById('search-results');
+    const newContactFields = document.getElementById('new-contact-fields');
+
+    function selectContact(id, name) {
+        if (contactIdInput) contactIdInput.value = id;
+        if (contactSearchInput) contactSearchInput.value = name;
+        if (searchResultsContainer) searchResultsContainer.innerHTML = '';
+        if (newContactFields) hideNewContactForm();
+    }
+    function showNewContactForm() {
+        if (newContactFields) newContactFields.style.display = 'block';
+        if (contactSearchInput) contactSearchInput.value = '';
+        if (contactIdInput) contactIdInput.value = '';
+        if (searchResultsContainer) searchResultsContainer.innerHTML = '';
+    }
+    function hideNewContactForm(event) {
+        if (event) event.preventDefault();
+        if (newContactFields) newContactFields.style.display = 'none';
+        const newName = document.getElementById('new_contact_name');
+        if (newName) newName.value = '';
+        const newPhone = document.getElementById('new_contact_phone');
+        if (newPhone) newPhone.value = '';
+    }
+    document.addEventListener('click', function (event) {
+        if (contactSearchInput && searchResultsContainer && !contactSearchInput.contains(event.target) && !searchResultsContainer.contains(event.target)) {
+            searchResultsContainer.innerHTML = '';
+        }
+    });
+</script>
+{% endblock %}

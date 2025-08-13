@@ -1,0 +1,7 @@
+<select name="category_id" id="category_id" class="select-field" style="flex-grow: 1;">
+    {% for category in categories %}
+        <option value="{{ category.id }}" {% if selected_id == category.id %}selected{% endif %}>
+            {{ category.name }}
+        </option>
+    {% endfor %}
+</select>

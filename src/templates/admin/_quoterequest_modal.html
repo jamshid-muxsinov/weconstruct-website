@@ -1,0 +1,22 @@
+<div class="modal-header">
+    <h2>Заявка #{{ req.id }}: {{ req.contact.name }}</h2>
+    <button class="modal-close">&times;</button>
+</div>
+<div class="modal-body">
+    <p><strong>Клиент:</strong> {{ req.contact.name }} ({{ req.contact.phone }})</p>
+    <p><strong>Товар:</strong> {{ req.product.name or "Не указан" }}</p>
+    <p><strong>Статус:</strong> <span class="status-badge status-{{ req.status.value }}">{{ req.get_status_display()
+            }}</span></p>
+    <p><strong>Ответственный:</strong> {{ req.assigned_to.username or "Не назначен" }}</p>
+
+    <hr style="border-color: var(--border-color); margin: 20px 0;">
+    <h4>Сообщение клиента:</h4>
+    <p style="background: var(--bg-main); padding: 10px; border-radius: var(--border-radius-md);">{{ req.message or "Нет
+        сообщения." }}</p>
+
+    <div style="margin-top: 24px;">
+        <a href="{{ request.url_for('shop_quoterequest_change', pk=req.id) }}" class="btn btn-primary">
+            <i class='bx bx-edit'></i> Перейти к редактированию
+        </a>
+    </div>
+</div>

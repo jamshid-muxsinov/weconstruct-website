@@ -1,0 +1,34 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Воронка продаж</h1>
+    <div style="display: flex; gap: 16px; align-items: center;">
+
+        <form class="filter-form" hx-get="{{ request.url_for('admin_htmx_kanban_content') }}"
+            hx-target="#kanban-board-container" hx-swap="innerHTML" hx-push-url="true">
+            <label class="switch">
+                <input type="checkbox" name="show_archived" value="true" {% if show_archived %}checked{% endif %}
+                    onchange="this.form.requestSubmit()">
+                <span class="slider"></span>
+            </label>
+            <span style="font-size: 0.9rem; color: var(--text-secondary);">Показать архивные</span>
+        </form>
+
+        <a href="{{ request.url_for('admin_quoterequest_add') }}" class="btn btn-primary"><i class='bx bx-plus'></i>
+            Новая заявка</a>
+    </div>
+</div>
+
+<div id="kanban-board-container" 
+     hx-get="{{ request.url_for('admin_htmx_kanban_content') }}"
+     hx-trigger="load, updateKanban from:body"
+     hx-swap="innerHTML"
+     hx-include="[name='show_archived']">
+
+    <div class="modal-loading-placeholder" style="padding: 100px 0;">
+        <i class='bx bx-loader-alt bx-spin'></i><span>Загрузка канбан-доски...</span>
+    </div>
+</div>
+
+{% endblock %}

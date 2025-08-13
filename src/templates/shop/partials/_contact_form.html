@@ -1,0 +1,27 @@
+<form hx-post="{% url 'submit_contact_form' %}" 
+      hx-target="#contact-form-wrapper" 
+      hx-swap="outerHTML" 
+      class="contact-form__form">
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="{{ form.name.id_for_label }}" class="form-label">Ваше имя *</label>
+        {{ form.name }}
+        {% if form.name.errors %}<div class="form-error">{{ form.name.errors.as_text }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.phone.id_for_label }}" class="form-label">Ваш телефон *</label>
+        {{ form.phone }}
+        {% if form.phone.errors %}<div class="form-error">{{ form.phone.errors.as_text }}</div>{% endif %}
+      </div>
+    </div>
+    <div class="form-group form-group--full">
+      <label for="{{ form.message.id_for_label }}" class="form-label">Сообщение *</label>
+      {{ form.message }}
+       {% if form.message.errors %}<div class="form-error">{{ form.message.errors.as_text }}</div>{% endif %}
+    </div>
+    <button type="submit" class="btn btn--primary btn--lg btn--full htmx-indicator-parent">
+      <span>Отправить сообщение</span>
+      <i class="fas fa-arrow-right"></i>
+      <i class="fas fa-spinner fa-spin htmx-indicator"></i>
+    </button>
+</form>

@@ -1,0 +1,81 @@
+<ul id="timeline-list" style="list-style: none; display: flex; flex-direction: column; gap: 16px;">
+    {% for item in timeline %}
+        <li class="timeline-item" style="display: flex; gap: 16px; padding: 12px; border-radius: var(--border-radius-md); background-color: {{ 'var(--surface-2)' if item.obj.is_pinned else 'transparent' }};">
+            <div style="flex-shrink: 0; width: 40px; text-align: center;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ item.timestamp.strftime('%b') }}</div>
+                <div style="font-size: 1.25rem; font-weight: 600;">{{ item.timestamp.strftime('%d') }}</div>
+            </div>
+            <div style="border-left: 2px solid var(--border-color); padding-left: 16px; flex-grow: 1;">
+                
+                {% if item.type == 'request' %}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <p style="font-weight: 500;">
+                                Новая заявка 
+                                <a href="{{ request.url_for('admin_quoterequest_change', pk=item.obj.id) }}">#{{ item.obj.id }}</a>
+                                на "{{ item.obj.product.name if item.obj.product else 'Общая' }}"
+                            </p>
+                            <span class="status-badge status-{{ item.obj.status.value }}">{{ item.obj.get_status_display() }}</span>
+                            {% if item.obj.assigned_to %}
+                                <small style="color: var(--text-secondary); margin-left: 8px;">
+                                    <i class='bx bxs-user'></i> {{ item.obj.assigned_to.username }}
+                                </small>
+                            {% endif %}
+                        </div>
+                        {# --- НОВЫЙ БЛОК --- #}
+                        <div class="timeline-item-actions">
+                            <a href="{{ request.url_for('admin_quoterequest_change', pk=item.obj.id) }}" class="btn-icon" title="Редактировать заявку">
+                                <i class='bx bxs-edit-alt'></i>
+                            </a>
+                            <a href="{{ request.url_for('admin_quoterequest_delete', pk=item.obj.id) }}" class="btn-icon btn-icon-danger" title="Удалить заявку">
+                                <i class='bx bxs-trash'></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    {% elif item.type == 'task' %}
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" 
+                               id="task-{{ item.obj.id }}"
+                               class="task-checkbox"
+                               hx-post="{{ request.url_for('admin_htmx_toggle_task', pk=item.obj.id) }}"
+                               hx-target="#timeline-list"
+                               hx-swap="outerHTML"
+                               {% if item.obj.completed %}checked{% endif %}>
+                        <label for="task-{{ item.obj.id }}" 
+                               style="font-weight: 500; text-decoration: {{ 'line-through' if item.obj.completed else 'none' }}; opacity: {{ '0.6' if item.obj.completed else '1' }}; cursor: pointer;">
+                            Задача: {{ item.obj.title }}
+                        </label>
+                    </div>
+                     {% if item.obj.assigned_to %}
+                        <small style="color: var(--text-secondary);">
+                            Исполнитель: {{ item.obj.assigned_to.username }}
+                        </small>
+                    {% endif %}
+
+                {% elif item.type == 'note' %}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <p style="font-weight: 500;">
+                                <i class='bx bxs-note'></i>
+                                Заметка от {{ item.obj.user.username }}
+                            </p>
+                            <p style="color: var(--text-secondary); font-style: italic; margin-top: 4px; white-space: pre-wrap;">"{{ item.obj.note }}"</p>
+                        </div>
+                        <button class="btn-icon" 
+                                hx-post="{{ request.url_for('admin_contact_pin_note', pk=item.obj.contact_id, note_id=item.obj.id) }}"
+                                hx-target="#timeline-list"
+                                hx-swap="outerHTML"
+                                title="{{ 'Открепить заметку' if item.obj.is_pinned else 'Закрепить заметку' }}"
+                                style="background: none; border: none; cursor: pointer; color: {{ 'var(--status-yellow)' if item.obj.is_pinned else 'var(--text-secondary)' }}; font-size: 1.25rem;">
+                            <i class='bx bxs-pin'></i>
+                        </button>
+                    </div>
+                {% endif %}
+
+            </div>
+        </li>
+    {% else %}
+    <li class="empty-list-placeholder">Нет истории взаимодействий с этим клиентом.</li>
+    {% endfor %}
+</ul>

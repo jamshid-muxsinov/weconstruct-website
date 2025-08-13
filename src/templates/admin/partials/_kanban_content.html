@@ -1,0 +1,17 @@
+{# /src/templates/admin/partials/_kanban_content.html #}
+
+<div class="kanban-board">
+    {% for status_group in requests_by_status %}
+    <div class="kanban-column" data-status="{{ status_group.status_code }}">
+        <div class="kanban-column-header">
+            <h3>{{ status_group.display_name }}</h3>
+            <span class="kanban-count">{{ status_group.requests|length }}</span>
+        </div>
+        <div class="kanban-column-body">
+            {% for req in status_group.requests %}
+            {% include "admin/partials/_kanban_card.html" %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>

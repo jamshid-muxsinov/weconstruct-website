@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token(request) }}">
+    
+    <title>{{ title|default("Панель управления") }} | WeConstruct CRM</title>
+    
+    <!-- ================= FAVICONS START ================= -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ static(request, 'favicons/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ static(request, 'favicons/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ static(request, 'favicons/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ static(request, 'favicons/site.webmanifest') }}">
+    <link rel="shortcut icon" href="{{ static(request, 'favicons/favicon.ico') }}">
+    <meta name="msapplication-TileColor" content="#07385a">
+    <meta name="theme-color" content="#ffffff">
+
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+	<link rel="stylesheet" href="{{ static(request, 'css/crm.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+
+    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <script>
+        (function() {
+            try {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    document.documentElement.classList.add('sidebar-collapsed-init');
+                }
+            } catch (e) {
+                console.error('Could not access localStorage for sidebar state.');
+            }
+        })();
+    </script>
+</head>
+<body class="dark" hx-ext="class-tools">
+    <div id="crm-container">
+        <aside id="sidebar">
+            <div class="sidebar-header"> 
+                <i class='bx bxs-color-fill logo-icon'></i> 
+                <span class="logo-text">WeConstruct</span>
+                <button id="sidebar-collapse-btn" class="btn-icon"><i class='bx bx-menu'></i></button>
+            </div>
+            <nav>
+                <a href="{{ request.url_for('admin_kanban_board') }}" class="nav-link {% if 'kanban' in request.url.path or request.url.path == '/admin/' %}active{% endif %}"> <i class='bx bxs-grid-alt nav-icon'></i><span class="nav-text">Канбан-доска</span> </a>
+                <a href="{{ request.url_for('admin_quoterequest_list') }}" class="nav-link {% if 'quoterequest' in request.url.path %}active{% endif %}"> <i class='bx bx-list-ul nav-icon'></i><span class="nav-text">Заявки</span> </a>
+                <a href="{{ request.url_for('admin_product_list') }}" class="nav-link {% if 'product' in request.url.path %}active{% endif %}"> <i class='bx bxs-package nav-icon'></i><span class="nav-text">Товары</span> </a>
+                <a href="{{ request.url_for('admin_category_list') }}" class="nav-link {% if 'category' in request.url.path %}active{% endif %}"> <i class='bx bxs-component nav-icon'></i><span class="nav-text">Категории</span> </a>
+                <a href="{{ request.url_for('admin_dashboard') }}" class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}"> <i class='bx bxs-bar-chart-alt-2 nav-icon'></i><span class="nav-text">Статистика</span> </a>
+            </nav>
+            <div class="sidebar-footer"> <a href="{{ request.url_for('admin_logout') }}" class="logout-trigger nav-link"> <i class='bx bx-log-out nav-icon'></i><span class="nav-text">Выйти</span> </a> </div>
+        </aside>
+        <!-- /SIDEBAR -->
+        
+        <!-- CONTENT -->
+        <div id="content-wrapper">
+            <button id="sidebar-expand-btn" class="btn-icon"><i class='bx bx-menu'></i></button>
+
+            <header style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background-color: rgba(17, 19, 23, 0.8); backdrop-filter: blur(8px); z-index: 100;">
+                <div></div>
+                {% if user %}
+                <div class="user-profile" style="position: relative;" x-data="{ open: false }" @click.away="open = false">
+                    <button @click="open = !open" id="profile-menu-button" style="background: none; border: none; color: inherit; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px; border-radius: var(--border-radius-md);">
+                        <span style="font-weight: 500;">Привет, {{ user.username }}!</span>
+                        <div id="notification-indicator-wrapper" style="position: relative;">
+                            <i class='bx bxs-user-circle' style="font-size: 2rem;"></i>
+                            {% if unread_notifications_count > 0 %}
+                            <span id="notification-counter" style="position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; background-color: var(--status-red); color: white; border-radius: 50%; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface-1);">{{ unread_notifications_count }}</span>
+                            {% endif %}
+                        </div>
+                        <i class='bx bx-chevron-down' :class="{'bx-rotate-180': open}" style="transition: transform 0.2s;"></i>
+                    </button>
+                    <div x-show="open"
+                         x-transition
+                         id="profile-menu" 
+                         style="display: none; position: absolute; top: 110%; right: 0; background-color: var(--surface-1); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); width: 320px; box-shadow: var(--shadow-lg); z-index: 101;">
+                        
+                        <div id="notifications-container"
+                             hx-get="{{ request.url_for('admin_htmx_notifications') }}"
+                             hx-trigger="click from:#profile-menu-button, notifications-read from:body"
+                             hx-swap="innerHTML">
+                             <div class="modal-loading-placeholder" style="padding: 20px 0;"><i class='bx bx-loader-alt bx-spin'></i></div>
+                        </div>
+                        
+                        <ul style="padding: 8px; border-top: 1px solid var(--border-color);">
+                            <li><a href="{{ request.url_for('admin_profile') }}" style="display: block; padding: 10px 12px; border-radius: 4px; color: var(--text-primary);">Профиль</a></li>
+                            <li><a href="{{ request.url_for('admin_invites') }}" style="display: block; padding: 10px 12px; border-radius: 4px; color: var(--text-primary);">Приглашения</a></li>
+                            <li><hr style="margin: 8px 0; border-color: var(--border-color);"></li>
+                            <li><a href="{{ request.url_for('admin_logout') }}" class="logout-trigger" style="display: block; padding: 10px 12px; border-radius: 4px; color: var(--status-red);">Выйти</a></li>
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+            </header>
+            <main> {% block content %}{% endblock %} </main>
+        </div>
+        <!-- /CONTENT -->
+    </div>
+    
+    <div id="modal-overlay" class="modal-overlay">
+        <div id="modal-body-content" class="modal-content"><div class="modal-loading-placeholder"><i class='bx bx-loader-alt bx-spin'></i><span>Загрузка...</span></div></div>
+    </div>
+    
+    <div id="slide-over-overlay" class="slide-over-overlay">
+        <div id="slide-over-panel" class="slide-over-panel">
+            <div id="slide-over-content"><div class="modal-loading-placeholder"><i class='bx bx-loader-alt bx-spin'></i><span>Загрузка...</span></div></div>
+        </div>
+    </div>
+
+	<script src="{{ static(request, 'js/crm.js') }}"></script>
+    <script>
+        const notyf = new Notyf({ duration: 4000, position: { x: 'right', y: 'top' }, dismissible: true });
+        
+        document.body.addEventListener('show-toast', function (e) { notyf.open({ type: e.detail.type || 'success', message: e.detail.message || 'Сохранено!' }); });
+
+        document.body.addEventListener('notifications-read', function() {
+            const counter = document.getElementById('notification-counter');
+            if (counter) {
+                counter.style.display = 'none';
+            }
+            const notificationsContainer = document.getElementById('notifications-container');
+            if (notificationsContainer) {
+                htmx.trigger(notificationsContainer, 'notifications-read');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<div 
+    x-data="{ shake: false }" 
+    class="modal-overlay" 
+    @keydown.escape.window="$el.remove()" 
+    @click.self="shake = true; setTimeout(() => shake = false, 500)">
+    <div 
+        class="modal-content" 
+        :class="{ 'shake-it': shake }"
+        @click.away="!shake && $el.parentElement.remove()"
+        style="max-width: 500px;">
+        
+        <button class="modal-close-btn" @click="$el.parentElement.parentElement.remove()">&times;</button>
+        <div class="modal-body">
+            <div id="modal-form-wrapper" hx-ext="class-tools">
+                {% include 'shop/partials/_general_quote_form.html' %}
+            </div>
+        </div>
+
+    </div>
+</div>

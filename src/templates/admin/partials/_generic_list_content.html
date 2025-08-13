@@ -1,0 +1,92 @@
+<div class="table-wrapper">
+    <table class="styled-table">
+        <thead>
+            <tr>
+                 {% if meta.model_name == 'quoterequest' %}
+                <th style="width: 40px;">
+                    <input type="checkbox" id="select-all-checkbox" title="Выбрать все на странице">
+                </th>
+                {% endif %}
+
+                {% for header in list_display %}
+                    <th>{{ header.replace('_', ' ')|capfirst }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in page.items %}
+                <tr>
+                    {% if meta.model_name == 'quoterequest' %}
+                    <td>
+                        <input type="checkbox" class="row-checkbox" value="{{ item.id }}">
+                    </td>
+                    {% endif %}
+
+                    {% for field_name in list_display %}
+                        <td>
+                            {% set value = getattr(item, field_name, '') %}
+
+                            {% if field_name == 'name' and meta.model_name == 'quoterequest' %}
+                                <a href="{{ request.url_for('admin_contact_detail', pk=item.contact_id) }}" class="link-to-change" title="Перейти к профилю клиента">
+                                   {{ value }}
+                                </a>
+                            {% elif loop.first %}
+                                <a href="{{ request.url_for(meta.change_url_name, pk=item.id) }}" class="link-to-change">
+                                    {{ value }}
+                                </a>
+                            {# --- ИЗМЕНЕНИЕ ЗДЕСЬ --- #}
+                            {% elif field_name == 'status' and hasattr(item, 'get_status_display') %}
+                                <span class="status-badge status-{{ item.status.value }}">{{ item.get_status_display() }}</span>
+                            {% elif field_name == 'source' and hasattr(item, 'get_source_display') %}
+                                {{ item.get_source_display() }}
+                            {% elif field_name == 'category' and value %}
+                                {{ value.name }}
+                            {% elif field_name == 'price' and value is not none %}
+                                {{ value|format_number }} сум
+                            {% elif value is none %}
+                                <span style="color: var(--text-secondary);">&mdash;</span>
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="{{ list_display|length }}" class="empty-list-placeholder">
+                        Записей не найдено.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- БЛОК ПАГИНАЦИИ -->
+{% if page.pages > 1 %}
+<div class="card" style="margin-top: 24px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        Страница {{ page.page }} из {{ page.pages }}. Всего: {{ page.total }}
+    </div>
+    <div style="display: flex; gap: 8px;">
+        {% if page.previous %}
+        <a href="{{ request.url.include_query_params(page=page.previous) }}" 
+           class="btn btn-secondary"
+           hx-get="{{ request.url.include_query_params(page=page.previous) }}"
+           hx-target="#list-content"
+           hx-push-url="true">
+            <i class='bx bx-chevron-left'></i> Назад
+        </a>
+        {% endif %}
+        {% if page.next %}
+        <a href="{{ request.url.include_query_params(page=page.next) }}" 
+           class="btn btn-secondary"
+           hx-get="{{ request.url.include_query_params(page=page.next) }}"
+           hx-target="#list-content"
+           hx-push-url="true">
+            Вперед <i class='bx bx-chevron-right'></i>
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

@@ -1,0 +1,88 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Мой профиль: {{ profile_user.username }}</h1>
+</div>
+
+<h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Сводка производительности (за 30 дней)</h2>
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px;">
+
+    <div class="card" style="padding: 16px; text-align: center;">
+        <i class='bx bx-check-double' style="font-size: 2rem; color: var(--status-green); margin-bottom: 8px;"></i>
+        <h3 style="font-size: 2rem; font-weight: 600;">{{ stats.requests_completed }}</h3>
+        <p style="color: var(--text-secondary);">Заявок закрыто</p>
+    </div>
+
+    <div class="card" style="padding: 16px; text-align: center;">
+        <i class='bx bx-rocket' style="font-size: 2rem; color: var(--status-blue); margin-bottom: 8px;"></i>
+        <h3 style="font-size: 2rem; font-weight: 600;">{{ stats.requests_in_progress }}</h3>
+        <p style="color: var(--text-secondary);">Взято в работу</p>
+    </div>
+
+    <div class="card" style="padding: 16px; text-align: center;">
+        <i class='bx bx-line-chart' style="font-size: 2rem; color: var(--accent-primary); margin-bottom: 8px;"></i>
+        <h3 style="font-size: 2rem; font-weight: 600;">{{ stats.conversion_rate }}%</h3>
+        <p style="color: var(--text-secondary);">Конверсия</p>
+    </div>
+
+    <div class="card" style="padding: 16px; text-align: center;">
+        <i class='bx bxs-check-square' style="font-size: 2rem; color: var(--status-yellow); margin-bottom: 8px;"></i>
+        <h3 style="font-size: 2rem; font-weight: 600;">{{ stats.tasks_completed }}</h3>
+        <p style="color: var(--text-secondary);">Задач выполнено</p>
+    </div>
+
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: flex-start;">
+    <div class="card">
+        <h3 style="margin-bottom: 16px; font-size: 1.1rem;">Мои последние действия</h3>
+        {% if feed %}
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+            {% for log in feed %}
+            <li
+                style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-main); border-radius: var(--border-radius-md);">
+                <i class='bx bx-git-commit' style="font-size: 1.5rem; color: var(--text-secondary);"></i>
+                <div style="flex-grow: 1;">
+                    <p>
+                        Вы изменили статус заявки
+                        <a href="{{ request.url_for('admin_quoterequest_change', pk=log.quote_request_id) }}">#{{
+                            log.quote_request_id }}</a>
+                    </p>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                        <span class="status-badge status-{{ log.old_status.value }}">{{ log.get_old_status_display()
+                            }}</span>
+                        <i class='bx bx-right-arrow-alt'></i>
+                        <span class="status-badge status-{{ log.new_status.value }}">{{ log.get_new_status_display()
+                            }}</span>
+                    </div>
+                </div>
+                <small style="color: var(--text-secondary);">{{ log.timestamp.strftime('%d.%m.%Y') }}</small>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-list-placeholder">Пока нет записей о ваших действиях.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom: 16px; font-size: 1.1rem;">Смена пароля</h3>
+        <form method="post" action="{{ request.url_for('admin_profile_post') }}" novalidate>
+            {% for field in form %}
+            <div class="input-group">
+                <label for="{{ field.id }}">{{ field.label.text }}</label>
+                {{ field(class_='input-field', type='password') }}
+                {% if field.errors %}
+                <div class="error-text" style="color: var(--status-red); font-size: 0.8rem; margin-top: 4px;">{{
+                    field.errors[0] }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-secondary">Сохранить новый пароль</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
