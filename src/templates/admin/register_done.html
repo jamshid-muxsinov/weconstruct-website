@@ -12,7 +12,7 @@
         <i class='bx bxs-check-circle' style="font-size: 4rem; color: var(--status-green); margin-bottom: 16px;"></i>
         <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 8px;">Регистрация успешна!</h2>
         <p style="color: var(--text-secondary); margin-bottom: 24px;">Теперь вы можете войти в систему, используя свои данные.</p>
-        <a href="{{ url_for('admin_login') }}" class="btn btn-primary">Перейти ко входу</a>
+        <a href="{{ request.url_for('admin_login') }}" class="btn btn-primary">Перейти ко входу</a>
     </div>
 </body>
 </html>

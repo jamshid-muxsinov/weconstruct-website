@@ -113,7 +113,7 @@
         </div>
     </div>
 
-	<script src="{{ static(request, 'js/crm.js') }}"></script>
+	<script src="{{ url_for('static', path='js/crm.js') }}"></script>
     <script>
         const notyf = new Notyf({ duration: 4000, position: { x: 'right', y: 'top' }, dismissible: true });
         
