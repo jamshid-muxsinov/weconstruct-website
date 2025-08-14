@@ -10,6 +10,7 @@ translation_cache = TTLCache(maxsize=2000, ttl=3600)
 
 def static(request: Request, path: str) -> str:
     try:
+        # Убедитесь, что здесь именно url_path_for
         return request.url_path_for('static', path=path)
     except RuntimeError:
         return f"/static/{path}"
@@ -21,7 +22,7 @@ def media(request: Request, path: str) -> str:
         return request.url_path_for('media', path=path)
     except RuntimeError:
         return f"/media/{path}"
-
+    
 def format_number(value):
     if value is None:
         return ""
