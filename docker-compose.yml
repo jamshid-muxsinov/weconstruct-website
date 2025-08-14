@@ -40,6 +40,7 @@ services:
       web:
         condition: service_healthy
     restart: unless-stopped
+    command: /bin/sh -c "mkdir -p /var/run/nginx && nginx -g 'daemon off;'"
 
 volumes:
   db_data:
