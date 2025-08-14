@@ -14,8 +14,8 @@ class GeneralQuoteForm(StarletteForm):
         DataRequired(message="Пожалуйста, укажите ваше имя."),
         Length(min=9, max=13, message="Некорректная длина номера."),
         Regexp(
-            regex=r'^\+?[0-9]{9,12}$', 
-            message="Пожалуйста, введите корректный номер телефона (например, +998901234567)."
+            regex=r'^\+?[0-9\s()-]*$', 
+            message="Номер телефона может содержать только цифры и знак +"
         )
     ],
     render_kw={"placeholder": " ", "type": "tel"}
@@ -38,8 +38,8 @@ class QuoteForm(StarletteForm):
         DataRequired(message="Пожалуйста, укажите ваш телефон."),
         Length(min=9, max=13, message="Некорректная длина номера."),
         Regexp(
-            regex=r'^\+?[0-9]{9,12}$',
-            message="Пожалуйста, введите корректный номер телефона."
+            regex=r'^\+?[0-9\s()-]*$', 
+            message="Номер телефона может содержать только цифры и знак +"
         )
     ],
     render_kw={"placeholder": " ", "type": "tel"}
