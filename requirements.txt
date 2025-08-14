@@ -1,27 +1,40 @@
 # Core FastAPI Framework
-fastapi
-uvicorn[standard]
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+starlette==0.37.2
+
+# Async & Networking
+anyio>=3.7.1,<5
+aiofiles
+h11
+
 # Database & ORM
 sqlalchemy
 psycopg2-binary
 asyncpg
 alembic
+
 # Caching
 redis
 aioredis
 cachetools
+
 # Data Validation & Settings
 pydantic
 pydantic-settings
 email_validator
+
 # Security & Authentication
 passlib[bcrypt]
 python-jose[cryptography]
+
 # Templating & Forms
 jinja2
 starlette-wtf
+
 # Pagination
 fastapi-pagination
+
 # Utilities
 python-dotenv
 python-multipart
