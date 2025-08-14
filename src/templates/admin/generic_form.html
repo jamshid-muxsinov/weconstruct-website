@@ -193,7 +193,7 @@
             {% elif field.name == 'main_image' %}
             {% if original and original.main_image %}
             <div style="margin-bottom: 10px;">
-                <img src="{{ media(request, original.main_image) }}" alt="Current image" class="form-image-preview">
+                <img src="{{ url_for('media', path=original.main_image) }}" alt="Current image" class="form-image-preview">
                 <p class="form-image-note">Текущее изображение. Загрузите новое для замены.</p>
             </div>
             {% endif %}
@@ -206,7 +206,7 @@
             <div class="gallery-preview">
                 {% for img in original.images %}
                 <div class="gallery-item" id="gallery-item-{{ img.id }}">
-                    <img src="{{ media(request, img.image) }}" alt="Image">
+                    <img src="{{ url_for('media', path=img.image) }}    " alt="Image">
                     <button type="button" class="btn-icon btn-icon-danger gallery-delete-btn"
                         hx-delete="{{ request.url_for('admin_htmx_delete_product_image', pk=img.id) }}"
                         hx-target="#gallery-item-{{ img.id }}" hx-swap="outerHTML"

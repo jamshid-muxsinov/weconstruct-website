@@ -22,10 +22,10 @@
 
             <div class="modal-gallery" 
                  x-data="{ 
-                     mainImage: '{{ media(request, all_images[0]) if all_images else '' }}',
+                     mainImage: '{{ url_for('media', path=(all_images[0])) if all_images else '' }}',
                      lightboxOpen: false,
                      images: [
-                         {% for image_path in all_images %}'{{ media(request, image_path) }}',{% endfor %}
+                            {% for image_path in all_images %}'{{ url_for('media', path=image_path) }}',{% endfor %}
                      ],
                      currentIndex: 0,
                      openLightbox(clickedImage) {
@@ -65,9 +65,9 @@
                 {% if all_images|length > 1 %}
                 <div class="modal-gallery__thumbnails">
                     {% for image_path in all_images %}
-                    <img src="{{ media(request, image_path) }}" 
-                         @click="mainImage = '{{ media(request, image_path) }}'" 
-                         :class="{ 'active': mainImage === '{{ media(request, image_path) }}' }">
+                    <img src="{{ url_for('media', path=image_path) }}" 
+                        @click="mainImage = '{{ url_for('media', path=image_path) }}'" 
+                        :class="{ 'active': mainImage === '{{ url_for('media', path=image_path) }}' }">
                     {% endfor %}
                 </div>
                 {% endif %}
