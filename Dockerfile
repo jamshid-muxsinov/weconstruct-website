@@ -3,8 +3,8 @@
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
+RUN apt-get update && apt-get install -y curl 
 
-# Устанавливаем системные утилиты, нужные для компиляции некоторых пакетов (например, psycopg2)
 RUN apt-get update && apt-get install -y gcc libpq-dev && rm -rf /var/lib/apt/lists/*
 
 # Копируем только файл с зависимостями. Docker будет кэшировать этот слой
