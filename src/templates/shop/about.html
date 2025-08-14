@@ -109,7 +109,7 @@
     <div class="team__grid">
       <div class="team-member">
         <div class="team-member__image">
-          <img src="{{ static(request, 'img/photo_2025-07-29_11-08-03.jpg') }}" alt="Sobir Qayumov">
+          <img src="{{ url_for('static', path='img/photo_2025-07-29_11-08-03.jpg') }}" alt="Sobir Qayumov">
         </div>
         <div class="team-member__info">
           <h3 class="team-member__name">{% if request.state.locale == 'uz' %}Sobir Qayumov{% else %}Собир Каюмов{% endif %}</h3>
