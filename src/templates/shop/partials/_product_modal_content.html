@@ -21,12 +21,13 @@
             {% endfor %}
 
             <div class="modal-gallery" 
-                 x-data="{ 
-                     mainImage: '{{ url_for('media', path=(all_images[0])) if all_images else '' }}',
-                     lightboxOpen: false,
-                     images: [
-                            {% for image_path in all_images %}'{{ url_for('media', path=image_path) }}',{% endfor %}
-                     ],
+                x-data="{ 
+                    mainImage: '{{ url_for('media', path=(all_images[0])) if all_images else url_for('static', path='img/placeholder.png') }}',
+                    images: [
+                        {% for image_path in all_images %}
+                            '{{ url_for('media', path=image_path) }}',
+                        {% endfor %}
+                    ],
                      currentIndex: 0,
                      openLightbox(clickedImage) {
                          this.currentIndex = this.images.indexOf(clickedImage);
