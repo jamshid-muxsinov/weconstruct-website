@@ -10,7 +10,7 @@ translation_cache = TTLCache(maxsize=2000, ttl=3600)
 
 def static(request: Request, path: str) -> str:
     try:
-        return request.url_for('static', path=path)
+        return request.url_path_for('static', path=path)
     except RuntimeError:
         return f"/static/{path}"
 
@@ -18,7 +18,7 @@ def media(request: Request, path: str) -> str:
     if not path:
         return static(request, 'img/placeholder.png')
     try:
-        return request.url_for('media', path=path)
+        return request.url_path_for('media', path=path)
     except RuntimeError:
         return f"/media/{path}"
 
