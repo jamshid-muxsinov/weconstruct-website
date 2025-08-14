@@ -22,40 +22,49 @@
 
             <div class="modal-gallery" 
                 x-data="{ 
-                    mainImage: '{{ url_for('media', path=(all_images[0])) if all_images else url_for('static', path='img/placeholder.png') }}',
                     images: [
-                        {% for image_path in all_images %}
-                            '{{ url_for('media', path=image_path) }}',
-                        {% endfor %}
+                        {% if all_images %}
+                            {% for image_path in all_images %}'{{ url_for('media', path=image_path) }}',{% endfor %}
+                        {% else %}
+                            '{{ url_for('static', path='img/placeholder.png') }}'
+                        {% endif %}
                     ],
-                     currentIndex: 0,
-                     openLightbox(clickedImage) {
-                         this.currentIndex = this.images.indexOf(clickedImage);
-                         if (this.currentIndex === -1) this.currentIndex = 0;
-                         this.lightboxOpen = true;
-                     },
-                     nextImage() {
-                         this.currentIndex = (this.currentIndex + 1) % this.images.length;
-                     },
-                     prevImage() {
-                         this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
-                     }
-                 }"
-                 @keydown.escape.window="lightboxOpen = false"
-                 @keydown.arrow-right.window="if(lightboxOpen) { nextImage() }"
-                 @keydown.arrow-left.window="if(lightboxOpen) { prevImage() }"
-                 x-data="{ 
-                     touchStartX: 0,
-                     touchEndX: 0,
-                     handleTouchStart(e) { this.touchStartX = e.touches[0].clientX; },
-                     handleTouchEnd(e) { 
-                         this.touchEndX = e.changedTouches[0].clientX;
-                         if (this.touchStartX - this.touchEndX > 50) { this.nextImage(); }
-                         if (this.touchEndX - this.touchStartX > 50) { this.prevImage(); }
-                     }
-                 }"
-                 @touchstart="handleTouchStart"
-                 @touchend="handleTouchEnd">
+                    mainImage: null,
+                    lightboxOpen: false,
+                    currentIndex: 0,
+                    
+                    init() {
+                        this.mainImage = this.images[0];
+                    },
+
+                    openLightbox(clickedImage) {
+                        this.currentIndex = this.images.indexOf(clickedImage);
+                        if (this.currentIndex === -1) this.currentIndex = 0;
+                        this.lightboxOpen = true;
+                    },
+                    nextImage() {
+                        this.currentIndex = (this.currentIndex + 1) % this.images.length;
+                    },
+                    prevImage() {
+                        this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+                    }
+                }"
+                x-init="init()"
+                @keydown.escape.window="lightboxOpen = false"
+                @keydown.arrow-right.window="if(lightboxOpen) { nextImage() }"
+                @keydown.arrow-left.window="if(lightboxOpen) { prevImage() }"
+                x-data="{ 
+                    touchStartX: 0,
+                    touchEndX: 0,
+                    handleTouchStart(e) { this.touchStartX = e.touches[0].clientX; },
+                    handleTouchEnd(e) { 
+                        this.touchEndX = e.changedTouches[0].clientX;
+                        if (this.touchStartX - this.touchEndX > 50) { this.nextImage(); }
+                        if (this.touchEndX - this.touchStartX > 50) { this.prevImage(); }
+                    }
+                }"
+                @touchstart="handleTouchStart"
+                @touchend="handleTouchEnd">
 
                 <div class="modal-gallery__main">
                     <a href="#" @click.prevent="openLightbox(mainImage)" class="gallery-main-link" title="Увеличить изображение">
