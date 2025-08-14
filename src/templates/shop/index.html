@@ -82,7 +82,11 @@
                hx-swap="innerHTML"
                title="{{ t_get(request, product, 'name') }} haqida batafsil">
         <div class="product-card__image">
-          <img src="{{ url_for('media', path=product.main_image) }}" alt="{{ t_get(request, product, 'name') }}">
+          {% if product.main_image %}
+              <img src="{{ url_for('media', path=product.main_image) }}" alt="{{ t_get(request, product, 'name') }}">
+          {% else %}
+              <img src="{{ url_for('static', path='img/placeholder.png') }}" alt="{{ t_get(request, product, 'name') }}">
+          {% endif %}
           <div class="product-card__overlay">
             <span class="product-card__view-text">
                 <i class="fas fa-eye"></i>
