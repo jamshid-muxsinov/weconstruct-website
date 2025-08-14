@@ -32,8 +32,10 @@ services:
     image: nginx:latest
     ports:
       - "80:80"
+      - "443:443" 
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
       - static_volume:/app/src/static:ro
       - media_volume:/app/media:ro
     depends_on:
@@ -41,7 +43,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     command: /bin/sh -c "mkdir -p /var/run/nginx && nginx -g 'daemon off;'"
-
+    
 volumes:
   db_data:
   static_volume:
