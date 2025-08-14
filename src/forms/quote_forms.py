@@ -1,6 +1,6 @@
 from starlette_wtf import StarletteForm
 from wtforms import StringField, TextAreaField
-from wtforms.validators import DataRequired, Length, Optional as Opt
+from wtforms.validators import DataRequired, Length, Optional as Opt, Regexp
 
 class GeneralQuoteForm(StarletteForm):
     name = StringField(
@@ -9,13 +9,17 @@ class GeneralQuoteForm(StarletteForm):
         render_kw={"placeholder": " "}
     )
     phone = StringField(
-        'Ваш телефон',
-        validators=[
-            DataRequired(message="Пожалуйста, укажите ваш телефон."),
-            Length(min=9, message="Номер телефона кажется слишком коротким.")
-        ],
-        render_kw={"placeholder": " ", "type": "tel"}
-    )
+    'Ваш телефон',
+    validators=[
+        DataRequired(message="Пожалуйста, укажите ваше имя."),
+        Length(min=9, max=13, message="Некорректная длина номера."),
+        Regexp(
+            regex=r'^\+?[0-9]{9,12}$', 
+            message="Пожалуйста, введите корректный номер телефона (например, +998901234567)."
+        )
+    ],
+    render_kw={"placeholder": " ", "type": "tel"}
+)
     message = TextAreaField(
         'Ваше сообщение (необязательно)',
         validators=[Opt(), Length(max=2000)],
@@ -29,11 +33,15 @@ class QuoteForm(StarletteForm):
         render_kw={"placeholder": " "}
     )
     phone = StringField(
-        'Ваш телефон *',
-        validators=[
-            DataRequired(message="Пожалуйста, укажите ваш телефон."),
-            Length(min=9, message="Номер телефона кажется слишком коротким.")
-        ],
-        render_kw={"placeholder": " ", "type": "tel"}
-    )
+    'Ваш телефон *',
+    validators=[
+        DataRequired(message="Пожалуйста, укажите ваш телефон."),
+        Length(min=9, max=13, message="Некорректная длина номера."),
+        Regexp(
+            regex=r'^\+?[0-9]{9,12}$',
+            message="Пожалуйста, введите корректный номер телефона."
+        )
+    ],
+    render_kw={"placeholder": " ", "type": "tel"}
+)
     message = TextAreaField('Комментарий', validators=[Opt()])
