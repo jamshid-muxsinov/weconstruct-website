@@ -12,20 +12,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
 
-  <link rel="stylesheet" href="{{ static(request, 'css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='dist/bundle.min.css') }}">
   <!-- ================= FAVICONS START ================= -->
-  <link rel="apple-touch-icon" sizes="180x180" href="{{ static(request, 'favicons/apple-touch-icon.png') }}">
-  <link rel="icon" type="image/png" sizes="32x32" href="{{ static(request, 'favicons/favicon-32x32.png') }}">
-  <link rel="icon" type="image/png" sizes="16x16" href="{{ static(request, 'favicons/favicon-16x16.png') }}">
-  <link rel="manifest" href="{{ static(request, 'favicons/site.webmanifest') }}">
-  <link rel="shortcut icon" href="{{ static(request, 'favicons/favicon.ico') }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
+  <link rel="manifest" href="{{ url_for('static', path='favicons/site.webmanifest') }}">
+  <link rel="shortcut icon" href="{{ url_for('static', path='favicons/favicon.ico') }}">
   <meta name="msapplication-TileColor" content="#07385a">
   <meta name="theme-color" content="#ffffff">
 
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <script src="{{ static(request, 'js/main.js') }}" defer></script>
+  <script src="{{ url_for('static', path='dist/bundle.min.js') }}" defer></script>
 </head>
 
 <body x-data="{ mobileMenuOpen: false }" @keydown.escape.window="mobileMenuOpen = false">
