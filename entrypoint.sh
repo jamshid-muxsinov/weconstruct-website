@@ -1,3 +1,4 @@
+#!/bin/sh
 set -e
 
 echo "--> Waiting for database at host 'db' on port 5432..."
