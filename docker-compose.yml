@@ -12,6 +12,7 @@ services:
 
   web:
     build: .
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
     volumes:
       - static_volume:/app/src/static
       - media_volume:/app/media
@@ -20,6 +21,12 @@ services:
       - redis
     env_file: .env
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/ru"]
+      interval: 30s    
+      timeout: 10s     
+      retries: 5        
+      start_period: 30s 
       
   nginx:
     image: nginx:latest
@@ -30,7 +37,8 @@ services:
       - static_volume:/app/src/static:ro
       - media_volume:/app/media:ro
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
