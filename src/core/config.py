@@ -1,11 +1,9 @@
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional, List 
-
+from typing import Optional, List
 class Settings(BaseSettings):
     PROJECT_NAME: str = "WeConstruct CRM"
     DEBUG: bool = True
-    
     LOG_LEVEL: str = "INFO" 
     CORS_ORIGINS: List[str] = []
 
@@ -13,12 +11,12 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30 * 24 * 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 43200
 
     FIRST_SUPERUSER: Optional[str] = None
     FIRST_SUPERUSER_PASSWORD: Optional[str] = None
     
-    REDIS_URL: Optional[str] = "redis://localhost:6379/0"
+    REDIS_URL: Optional[str] = "redis://redis:6379/0"
     REDIS_TTL: int = 300
     CACHE_ENABLED: bool = True
 
