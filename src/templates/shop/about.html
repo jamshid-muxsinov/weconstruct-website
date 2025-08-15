@@ -99,15 +99,16 @@
   </div>
 </section>
 
+<!-- src/templates/shop/about.html -->
+
 <section class="team">
   <div class="container">
+    <!-- Блок Основателя -->
     <div class="team__header section-header">
-      <h2 class="section-title">{% if request.state.locale == 'uz' %}Bizning jamoamiz{% else %}Наша команда{% endif %}</h2>
-      <p class="section-subtitle">{% if request.state.locale == 'uz' %}Bizning asosiy qadriyatimiz — bu o'z ishini sevadigan va har bir loyihada mukammallikka intiladigan professionallar jamoasi.{% else %}Наша главная ценность — это команда профессионалов, которые любят свое дело и стремятся к совершенству в каждом проекте.{% endif %}</p>
+      <h2 class="section-title">{% if request.state.locale == 'uz' %}WeConstruct'ni yaratayotgan inson{% else %}Человек, который создает WeConstruct{% endif %}</h2>
+      <p class="section-subtitle">{% if request.state.locale == 'uz' %}Kompaniya asosida uning g'oyaviy ilhomlantiruvchisi turadi.{% else %}В основе компании стоит её идейный вдохновитель.{% endif %}</p>
     </div>
-    
-    <div class="team__grid">
-      <!-- Карточка Основателя -->
+    <div class="team__founder">
       <div class="team-member">
         <div class="team-member__image">
           <img src="{{ url_for('static', path='img/photo_2025-07-29_11-08-03.jpg') }}" alt="Sobir Qayumov">
@@ -126,7 +127,13 @@
           </div>
         </div>
       </div>
+    </div>
 
+    <div class="team__header section-header" style="margin-top: 80px;">
+        <h2 class="section-title">{% if request.state.locale == 'uz' %}Asosiy jamoa{% else %}Ключевая команда{% endif %}</h2>
+        <p class="section-subtitle">{% if request.state.locale == 'uz' %}Bizning asosiy qadriyatimiz — bu o'z ishini sevadigan va har bir loyihada mukammallikka intiladigan professionallar jamoasi.{% else %}Наша главная ценность — это команда профессионалов, которые любят свое дело и стремятся к совершенству в каждом проекте.{% endif %}</p>
+    </div>
+    <div class="team__grid">
       <div class="team-member team-member--no-image">
         <div class="team-member__icon"><i class="fas fa-user-tie"></i></div>
         <div class="team-member__info">
