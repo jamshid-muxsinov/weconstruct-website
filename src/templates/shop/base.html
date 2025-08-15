@@ -7,44 +7,35 @@
   <title>{% block title %}WeConstruct — Модульные решения{% endblock %}</title>
   <meta name="description" content="{% if request.state.locale == 'uz' %}Hayot va biznes uchun zamonaviy modulli yechimlar. Biz O'zbekistonda tez quriladigan binolarni loyihalashtiramiz, ishlab chiqaramiz va o'rnatamiz.{% else %}Современные модульные решения для жизни и бизнеса. Проектируем, производим и монтируем быстровозводимые здания в Узбекистане.{% endif %}">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
-  <link rel="preload" href="{{ url_for(request, 'static', path='css/main.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="{{ url_for(request, 'static', path='css/main.css') }}"></noscript>
   
-  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for(request, 'static', path='favicons/apple-touch-icon.png') }}">
-  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for(request, 'static', path='favicons/favicon-32x32.png') }}">
-  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for(request, 'static', path='favicons/favicon-16x16.png') }}">
-  <link rel="manifest" href="{{ url_for(request, 'static', path='favicons/site.webmanifest') }}">
-  <link rel="shortcut icon" href="{{ url_for(request, 'static', path='favicons/favicon.ico') }}">
+  <!-- ИЗМЕНЕНИЕ: Используем относительные пути для Font Awesome и наших стилей -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}">
+  
+  <!-- FAVICONS -->
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
+  <link rel="manifest" href="{{ url_for('static', path='favicons/site.webmanifest') }}">
+  <link rel="shortcut icon" href="{{ url_for('static', path='favicons/favicon.ico') }}">
   <meta name="msapplication-TileColor" content="#07385a">
   <meta name="theme-color" content="#ffffff">
 
+  <!-- SCRIPTS -->
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <script src="{{ url_for(request, 'static', path='js/main.js') }}" defer></script>
-  
-  <style>
-    .footer__description, .footer__copyright, .footer__link span {
-        color: #495057; 
-    }
-  </style>
+  <script src="{{ url_for('static', path='js/main.js') }}" defer></script>
 </head>
 
 <body x-data="{ mobileMenuOpen: false }" @keydown.escape.window="mobileMenuOpen = false">
   <header class="site-header" :class="{ 'menu-open': mobileMenuOpen }">
     <nav class="navbar">
       <div class="container navbar__content">
-        <a href="{{ url_for(request, 'index', locale=request.state.locale) }}" class="navbar__logo">
+        <a href="{{ url_for('index', locale=request.state.locale) }}" class="navbar__logo">
           <div class="navbar__logo-icon">
             {% include 'shop/partials/_logo.html' %}
           </div>
@@ -52,10 +43,10 @@
         </a>
         
         <div class="navbar__links desktop-nav">
-          <a href="{{ url_for(request, 'index', locale=request.state.locale) }}" class="navbar__link {% if request.scope['route'].name == 'index' %}navbar__link--active{% endif %}">{% if request.state.locale == 'uz' %}Bosh sahifa{% else %}Главная{% endif %}</a>
-          <a href="{{ url_for(request, 'about', locale=request.state.locale) }}" class="navbar__link {% if request.scope['route'].name == 'about' %}navbar__link--active{% endif %}">{% if request.state.locale == 'uz' %}Kompaniya haqida{% else %}О компании{% endif %}</a>
+          <a href="{{ url_for('index', locale=request.state.locale) }}" class="navbar__link {% if request.scope.get('route') and request.scope['route'].name == 'index' %}navbar__link--active{% endif %}">{% if request.state.locale == 'uz' %}Bosh sahifa{% else %}Главная{% endif %}</a>
+          <a href="{{ url_for('about', locale=request.state.locale) }}" class="navbar__link {% if request.scope.get('route') and request.scope['route'].name == 'about' %}navbar__link--active{% endif %}">{% if request.state.locale == 'uz' %}Kompaniya haqida{% else %}О компании{% endif %}</a>
 
-          <button hx-get="{{ url_for(request, 'htmx_general_quote_form', locale=request.state.locale) }}" hx-target="#modal-placeholder" hx-swap="innerHTML" class="btn btn--secondary btn--sm">
+          <button hx-get="{{ url_for('htmx_general_quote_form', locale=request.state.locale) }}" hx-target="#modal-placeholder" hx-swap="innerHTML" class="btn btn--secondary btn--sm">
             {% if request.state.locale == 'uz' %}Bog'lanish{% else %}Связаться с нами{% endif %}
           </button>
 
@@ -69,10 +60,10 @@
               {% set path_params = request.path_params.copy() %}
               {% if request.state.locale == 'ru' %}
                 {% set _ = path_params.update({'locale': 'uz'}) %}
-                <a href="{{ url_for(request, route_name, **path_params) }}" class="lang-switcher__link">UZ</a>
+                <a href="{{ url_for(route_name, **path_params) }}" class="lang-switcher__link">UZ</a>
               {% else %}
                 {% set _ = path_params.update({'locale': 'ru'}) %}
-                <a href="{{ url_for(request, route_name, **path_params) }}" class="lang-switcher__link">RU</a>
+                <a href="{{ url_for(route_name, **path_params) }}" class="lang-switcher__link">RU</a>
               {% endif %}
             </div>
           </div>
@@ -84,9 +75,9 @@
       </div>
 
       <div x-show="mobileMenuOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-4" class="mobile-menu" @click.away="mobileMenuOpen = false" x-cloak>
-        <a href="{{ url_for(request, 'index', locale=request.state.locale) }}" class="mobile-menu__link">{% if request.state.locale == 'uz' %}Bosh sahifa{% else %}Главная{% endif %}</a>
-        <a href="{{ url_for(request, 'about', locale=request.state.locale) }}" class="mobile-menu__link">{% if request.state.locale == 'uz' %}Kompaniya haqida{% else %}О компании{% endif %}</a>
-        <button hx-get="{{ url_for(request, 'htmx_general_quote_form', locale=request.state.locale) }}" hx-target="#modal-placeholder" hx-swap="innerHTML" @click="mobileMenuOpen = false" class="btn btn--primary btn--full">
+        <a href="{{ url_for('index', locale=request.state.locale) }}" class="mobile-menu__link">{% if request.state.locale == 'uz' %}Bosh sahifa{% else %}Главная{% endif %}</a>
+        <a href="{{ url_for('about', locale=request.state.locale) }}" class="mobile-menu__link">{% if request.state.locale == 'uz' %}Kompaniya haqida{% else %}О компании{% endif %}</a>
+        <button hx-get="{{ url_for('htmx_general_quote_form', locale=request.state.locale) }}" hx-target="#modal-placeholder" hx-swap="innerHTML" @click="mobileMenuOpen = false" class="btn btn--primary btn--full">
           {% if request.state.locale == 'uz' %}Bog'lanish{% else %}Связаться с нами{% endif %}
         </button>
         <div class="lang-switcher lang-switcher--mobile">
@@ -94,10 +85,10 @@
           {% set path_params = request.path_params.copy() %}
           {% if request.state.locale == 'ru' %}
             {% set _ = path_params.update({'locale': 'uz'}) %}
-            <a href="{{ url_for(request, route_name, **path_params) }}" class="lang-switcher__link">O'zbekcha</a>
+            <a href="{{ url_for(route_name, **path_params) }}" class="lang-switcher__link">O'zbekcha</a>
           {% else %}
             {% set _ = path_params.update({'locale': 'ru'}) %}
-            <a href="{{ url_for(request, route_name, **path_params) }}" class="lang-switcher__link">Русский</a>
+            <a href="{{ url_for(route_name, **path_params) }}" class="lang-switcher__link">Русский</a>
           {% endif %}
         </div>
       </div>
@@ -113,7 +104,7 @@
     <div class="container footer-content">
       <div class="footer__main">
         <div class="footer__brand">
-          <a href="{{ url_for(request, 'index', locale=request.state.locale) }}" class="footer__logo">
+          <a href="{{ url_for('index', locale=request.state.locale) }}" class="footer__logo">
             <div class="navbar__logo-icon">
               {% include 'shop/partials/_logo.html' %}
             </div>
@@ -125,8 +116,8 @@
           <div>
             <h3 class="footer__section-title">{% if request.state.locale == 'uz' %}Navigatsiya{% else %}Навигация{% endif %}</h3>
             <ul class="footer__links">
-              <li><a href="{{ url_for(request, 'index', locale=request.state.locale) }}" class="footer__link">{% if request.state.locale == 'uz' %}Bosh sahifa{% else %}Главная{% endif %}</a></li>
-              <li><a href="{{ url_for(request, 'about', locale=request.state.locale) }}" class="footer__link">{% if request.state.locale == 'uz' %}Kompaniya haqida{% else %}О компании{% endif %}</a></li>
+              <li><a href="{{ url_for('index', locale=request.state.locale) }}" class="footer__link">{% if request.state.locale == 'uz' %}Bosh sahifa{% else %}Главная{% endif %}</a></li>
+              <li><a href="{{ url_for('about', locale=request.state.locale) }}" class="footer__link">{% if request.state.locale == 'uz' %}Kompaniya haqida{% else %}О компании{% endif %}</a></li>
             </ul>
           </div>
           <div>
