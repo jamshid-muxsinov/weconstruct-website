@@ -32,9 +32,10 @@
 </div>
 
 <!-- Скрытый элемент, который будет добавлять новую карточку на доску -->
-<div hx-get="{{ request.url_for('admin_htmx_kanban_newest_card') }}"
+<div id="kanban-new-card-loader"
+     hx-get="{{ request.url_for('admin_htmx_kanban_new_card') }}"
      hx-trigger="weconstruct:new-quote from:body"
-     hx-target=".kanban-column[data-status='new'] .kanban-column-body"
+     hx-target=".kanban-column[data-status='new'] > .kanban-column-body"
      hx-swap="afterbegin">
 </div>
 

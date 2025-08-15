@@ -33,20 +33,19 @@ class TaskForm(wtforms.Form):
     assigned_to_id = SelectField('Assigned To', coerce=int)
 
 # --- НОВЫЙ ЭНДПОИНТ ---
-@router.get("/kanban/newest-card", response_class=HTMLResponse, name="admin_htmx_kanban_newest_card")
-async def get_kanban_newest_card(
+@router.get("/kanban/new-card", response_class=HTMLResponse, name="admin_htmx_kanban_new_card")
+async def get_kanban_new_card(
     request: Request,
     db: AsyncSession = Depends(get_db_session)
 ):
     """
     Получает самую последнюю заявку и рендерит для нее карточку канбана.
-    Это используется для real-time добавления на доску без полной перезагрузки.
+    Используется для real-time добавления на доску без полной перезагрузки.
     """
     latest_quote = await crm_service.get_latest_quote_request(db)
     if not latest_quote:
         return Response(status_code=204) # No Content
     
-    # Мы рендерим только одну карточку
     return templates.TemplateResponse(
         "admin/partials/_kanban_card.html",
         {"request": request, "req": latest_quote},

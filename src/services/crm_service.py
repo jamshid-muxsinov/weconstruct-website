@@ -8,8 +8,24 @@ import wtforms
 from src.models.shop_models import QuoteRequest, Task, StatusChangeLog, Contact, ContactNote, User
 from src.schemas.crm_schemas import QuoteRequestStatusUpdate, TaskCreate
 
+# --- НОВАЯ ФУНКЦИЯ ---
+async def get_latest_quote_request(db: AsyncSession) -> QuoteRequest | None:
+    """Возвращает самую последнюю созданную заявку со всеми необходимыми связями для рендеринга карточки."""
+    stmt = (
+        select(QuoteRequest)
+        .options(
+            joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
+            joinedload(QuoteRequest.product),
+            joinedload(QuoteRequest.assigned_to)
+        )
+        .order_by(QuoteRequest.id.desc())
+        .limit(1)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().first()
+# --- КОНЕЦ НОВОЙ ФУНКЦИИ ---
+
 async def get_dashboard_data(db: AsyncSession, user_id: int):
-    # My Tasks - добавили joinedload(Task.contact)
     my_tasks_stmt = (
         select(Task)
         .where(Task.assigned_to_id == user_id, Task.completed == False)
@@ -20,7 +36,6 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
     my_tasks_result = await db.execute(my_tasks_stmt)
     my_tasks = my_tasks_result.scalars().all()
     
-    # Sales Funnel
     funnel_stmt = select(QuoteRequest.status, func.count(QuoteRequest.id)).group_by(QuoteRequest.status)
     funnel_result = await db.execute(funnel_stmt)
     funnel_counts = {status.value: count for status, count in funnel_result.all()}
@@ -33,7 +48,6 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
             "status": status_enum.value
         })
 
-    # New unassigned requests - ДОБАВЛЯЕМ ПРЕДЗАГРУЗКУ
     new_req_stmt = (
         select(QuoteRequest)
         .where(
@@ -50,7 +64,6 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
     new_req_result = await db.execute(new_req_stmt)
     new_unassigned_requests = new_req_result.scalars().unique().all()
     
-    # Activity Log
     activity_log_stmt = select(StatusChangeLog).order_by(StatusChangeLog.timestamp.desc()).limit(10)
     activity_log_result = await db.execute(activity_log_stmt)
     activity_log = activity_log_result.scalars().all()
@@ -63,10 +76,6 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
     }
 
 async def get_kanban_data(db: AsyncSession, show_archived: bool = False):
-    """
-    Получает данные для канбан-доски.
-    По умолчанию скрывает "архивные" статусы.
-    """
     archived_statuses = [
         QuoteRequest.StatusEnum.COMPLETED,
         QuoteRequest.StatusEnum.CANCELLED,
@@ -104,23 +113,6 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False):
         })
         
     return kanban_data
-
-# --- НОВАЯ ФУНКЦИЯ ---
-async def get_latest_quote_request(db: AsyncSession) -> QuoteRequest | None:
-    """Возвращает самую последнюю созданную заявку."""
-    stmt = (
-        select(QuoteRequest)
-        .options(
-            joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
-            joinedload(QuoteRequest.product),
-            joinedload(QuoteRequest.assigned_to)
-        )
-        .order_by(QuoteRequest.id.desc())
-        .limit(1)
-    )
-    result = await db.execute(stmt)
-    return result.scalars().first()
-# --- КОНЕЦ НОВОЙ ФУНКЦИИ ---
 
 async def update_quote_request_status(db: AsyncSession, update_data: QuoteRequestStatusUpdate, user_id: int):
     req = await db.get(QuoteRequest, update_data.id)
@@ -323,7 +315,6 @@ async def toggle_pin_contact_note(db: AsyncSession, note_id: int, contact_id: in
     return note_to_pin
 
 async def get_top_managers(db: AsyncSession, days: int = 30):
-    """Возвращает рейтинг менеджеров по количеству закрытых заявок."""
     start_date = datetime.utcnow() - timedelta(days=days)
     completed_subq = (
         select(
