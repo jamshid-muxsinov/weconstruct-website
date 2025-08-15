@@ -1,24 +1,20 @@
 import traceback
 from starlette.responses import Response, FileResponse
-from src.pages.jinja_config import templates
+from src.pages.jinja_config import templates 
 import uvicorn
-from fastapi import FastAPI, Request, Depends, APIRouter, Path
+from fastapi import FastAPI, Request, Depends, APIRouter, Path 
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_pagination import add_pagination
-from pathlib import Path as FilePath
+from pathlib import Path as FilePath 
 from starlette.middleware.sessions import SessionMiddleware
 from starlette_wtf import CSRFProtectMiddleware
-
-# --- ИЗМЕНЕНИЕ: Импортируем Middleware для принудительного HTTPS ---
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseCall
-
 from src.core.config import get_settings
 from src.core.db import check_db_connection
 from src.core.security import get_current_active_user
 from src.pages.admin.router import router as admin_router, unprotected_router
 from src.pages.shop_pages import router as shop_router, root_router as shop_root_router
-from src.core.db import check_db_connection, async_session_factory
+from src.core.db import check_db_connection, async_session_factory 
 from src.services.user_service import create_first_superuser
 from src.core.cache import init_cache, cleanup_cache
 from src.core.middleware import CacheMiddleware, RateLimitMiddleware
@@ -31,24 +27,11 @@ app = FastAPI(
 )
 
 settings = get_settings()
-BASE_DIR = FilePath(__file__).resolve().parent
-
-# --- ИЗМЕНЕНИЕ: Добавляем Middleware для принудительной установки HTTPS ---
-# Это самый надежный способ исправить Mixed Content, когда заголовки от прокси не работают.
-class ForceHTTPSMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next: RequestResponseCall):
-        if request.scope['scheme'] != 'https':
-            request.scope['scheme'] = 'https'
-        response = await call_next(request)
-        return response
-
-app.add_middleware(ForceHTTPSMiddleware)
-# --- КОНЕЦ ИЗМЕНЕНИЯ ---
-
+BASE_DIR = FilePath(__file__).resolve().parent 
 
 async def set_locale(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
     if locale not in ["ru", "uz"]:
-        locale = "ru"
+        locale = "ru" 
     request.state.locale = locale
 
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
@@ -57,7 +40,6 @@ app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.SECRET_KEY)
 if settings.CACHE_ENABLED:
     app.add_middleware(CacheMiddleware, cache_ttl=settings.REDIS_TTL)
 app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
-
 
 @app.on_event("startup")
 async def on_startup():
@@ -106,7 +88,6 @@ async def root_redirect(request: Request):
 @app.get("/robots.txt/", include_in_schema=False)
 async def robots_txt():
     return FileResponse(BASE_DIR / "src" / "static" / "robots.txt")
-
 
 @app.exception_handler(401)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
