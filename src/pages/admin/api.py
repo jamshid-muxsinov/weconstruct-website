@@ -25,10 +25,10 @@ async def update_request_status(
     if not req:
         raise HTTPException(status_code=404, detail="QuoteRequest not found")
     
-    # ИЗМЕНЕНИЕ: Добавляем HX-Trigger для обновления канбана
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
     trigger_payload = {
         "updateKanban": True,
+        "update-notifications": True,
         "show-toast": {"message": "Статус обновлен!"}
     }
     response.headers["HX-Trigger"] = json.dumps(trigger_payload)

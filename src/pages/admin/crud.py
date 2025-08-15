@@ -8,7 +8,7 @@ import io
 from fastapi.responses import StreamingResponse
 from urllib.parse import quote
 from pathlib import Path
-from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -394,7 +394,7 @@ async def quoterequest_change_form_post(request: Request, pk: int, context: dict
     return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
 
 @router.get("/quoterequest/{pk}/delete/", response_class=HTMLResponse, name="admin_quoterequest_delete")
-@router.post("/quoterequest/{pk}/delete/", response_class=HTMLResponse)
+@router.post("/quoterequest/{pk}/delete/", response_class=Response) # ИЗМЕНЕНИЕ: response_class=Response
 async def quoterequest_delete(
     request: Request,
     pk: int,
@@ -404,10 +404,7 @@ async def quoterequest_delete(
     quote_req = await db.get(
         QuoteRequest, 
         pk, 
-        options=[
-            selectinload(QuoteRequest.tasks),
-            joinedload(QuoteRequest.contact)
-        ]
+        options=[selectinload(QuoteRequest.tasks)]
     )
     if not quote_req:
         raise HTTPException(404, detail="QuoteRequest not found")
@@ -420,27 +417,28 @@ async def quoterequest_delete(
             await db.delete(quote_req)
             await db.commit()
             
+            # --- ИЗМЕНЕНИЕ: Вместо RedirectResponse используем HX-Redirect ---
+            response = Response(status_code=200) # Пустой ответ 200 OK
             redirect_url = request.url_for("admin_quoterequest_list")
-            
-            # --- ИЗМЕНЕНИЕ: Добавляем HX-Trigger для обновления канбана ---
-            response = RedirectResponse(url=redirect_url, status_code=303)
-            trigger_payload = json.dumps({
+            trigger_payload = {
                 "show-toast": {"message": "Заявка удалена", "type": "error"},
-                "updateKanban": True 
-            })
-            response.headers["HX-Trigger"] = quote(trigger_payload)
+                "updateKanban": True,
+                "update-notifications": True # Добавляем триггер для уведомлений
+            }
+            response.headers["HX-Redirect"] = redirect_url
+            response.headers["HX-Trigger"] = json.dumps(trigger_payload)
             return response
             # --- КОНЕЦ ИЗМЕНЕНИЯ ---
         
         except IntegrityError:
-            # ... (остальная часть функции без изменений)
             await db.rollback()
             context.update({
-                "error_message": "Не удалось удалить заявку из-за непредвиденных связанных записей в системе."
+                "error_message": "Не удалось удалить заявку."
             })
             return templates.TemplateResponse("admin/500.html", context, status_code=500)
 
-    back_url = request.url_for('admin_contact_detail', pk=quote_req.contact_id) if quote_req.contact else request.url_for(QUOTEREQUEST_META.list_url_name)
+    # Логика для GET запроса остается прежней
+    back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name))
     
     context.update({
         "meta": QUOTEREQUEST_META,
@@ -449,7 +447,6 @@ async def quoterequest_delete(
         "back_url": back_url
     })
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
-
 
 class InviteForm(wtforms.Form):
     note = wtforms.StringField('Заметка (для кого это приглашение)', validators=[wtforms.validators.DataRequired()])

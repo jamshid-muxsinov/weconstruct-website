@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token(request) }}">
+    
     <title>{{ title|default("Панель управления") }} | WeConstruct CRM</title>
+    
+    <!-- ================= FAVICONS START ================= -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
@@ -12,14 +15,17 @@
     <link rel="shortcut icon" href="{{ url_for('static', path='favicons/favicon.ico') }}">
     <meta name="msapplication-TileColor" content="#07385a">
     <meta name="theme-color" content="#ffffff">
+
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 	<link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
     <script>
         (function() {
             try {
@@ -50,15 +56,22 @@
             </nav>
             <div class="sidebar-footer"> <a href="{{ request.url_for('admin_logout') }}" class="logout-trigger nav-link"> <i class='bx bx-log-out nav-icon'></i><span class="nav-text">Выйти</span> </a> </div>
         </aside>
+        
         <div id="content-wrapper">
             <button id="sidebar-expand-btn" class="btn-icon"><i class='bx bx-menu'></i></button>
+
             <header style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background-color: rgba(17, 19, 23, 0.8); backdrop-filter: blur(8px); z-index: 100;">
                 <div></div>
                 {% if user %}
                 <div class="user-profile" style="position: relative;" x-data="{ open: false }" @click.away="open = false">
                     <button @click="open = !open" id="profile-menu-button" style="background: none; border: none; color: inherit; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px; border-radius: var(--border-radius-md);">
                         <span style="font-weight: 500;">Привет, {{ user.username }}!</span>
-                        <div id="notification-indicator-wrapper" style="position: relative;">
+                        <div id="notification-indicator-wrapper" 
+                             style="position: relative;"
+                             hx-get="{{ request.url_for('admin_htmx_notification_indicator') }}"
+                             hx-trigger="update-notifications from:body, load"
+                             hx-swap="innerHTML">
+                            <!-- Этот блок будет заменен HTMX -->
                             <i class='bx bxs-user-circle' style="font-size: 2rem;"></i>
                             {% if unread_notifications_count > 0 %}
                             <span id="notification-counter" style="position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; background-color: var(--status-red); color: white; border-radius: 50%; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface-1);">{{ unread_notifications_count }}</span>
@@ -73,7 +86,7 @@
                         
                         <div id="notifications-container"
                              hx-get="{{ request.url_for('admin_htmx_notifications') }}"
-                             hx-trigger="click from:#profile-menu-button, notifications-read from:body, new-quote-request from:body"
+                             hx-trigger="click from:#profile-menu-button, update-notifications from:body"
                              hx-swap="innerHTML">
                              <div class="modal-loading-placeholder" style="padding: 20px 0;"><i class='bx bx-loader-alt bx-spin'></i></div>
                         </div>
@@ -108,27 +121,25 @@
         
         document.body.addEventListener('show-toast', function (e) { notyf.open({ type: e.detail.type || 'success', message: e.detail.message || 'Сохранено!' }); });
 
-        document.body.addEventListener('notifications-read', function() {
-            const counter = document.getElementById('notification-counter');
-            if (counter) {
-                counter.style.display = 'none';
-            }
-        });
-        document.body.addEventListener('htmx:afterSwap', function(event) {
-            if (event.detail.xhr.getResponseHeader('HX-Trigger-After-Swap')?.includes('new-quote-request')) {
-                localStorage.setItem('broadcast_event', JSON.stringify({
-                    name: 'new-quote-request',
-                    timestamp: new Date().getTime() 
-                }));
-            }
+        // --- ИЗМЕНЕНИЕ: Упрощенная система событий ---
+        
+        // Событие от создания новой заявки с сайта
+        document.body.addEventListener('new-quote-request', function() {
+            // Запускаем общее событие для обновления всего, что нужно
+            htmx.trigger('body', 'update-dynamic-content');
         });
 
-        window.addEventListener('storage', function(event) {
-            if (event.key === 'broadcast_event') {
-                const data = JSON.parse(event.newValue);
-                if (data && data.name === 'new-quote-request') {
-                    htmx.trigger('body', 'new-quote-request');
-                }
+        // Событие от сервера после любого действия (удаление, смена статуса и т.д.)
+        document.body.addEventListener('update-dynamic-content', function() {
+            // Находим элементы, которые нужно обновить, и запускаем для них HTMX-запрос
+            const notifications = document.getElementById('notification-indicator-wrapper');
+            const kanban = document.getElementById('kanban-board-container');
+            
+            if (notifications) {
+                htmx.trigger(notifications, 'update-notifications');
+            }
+            if (kanban) {
+                htmx.trigger(kanban, 'updateKanban');
             }
         });
     </script>
