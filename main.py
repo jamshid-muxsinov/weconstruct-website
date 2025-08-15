@@ -8,6 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi_pagination import add_pagination
 from pathlib import Path as FilePath 
 from starlette.middleware.sessions import SessionMiddleware
+# ИМПОРТИРУЕМ НОВЫЙ MIDDLEWARE
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette_wtf import CSRFProtectMiddleware
 from src.core.config import get_settings
 from src.core.db import check_db_connection
@@ -28,6 +30,17 @@ app = FastAPI(
 
 settings = get_settings()
 BASE_DIR = FilePath(__file__).resolve().parent
+
+app.add_middleware(
+    TrustedHostMiddleware, allowed_hosts=["weconstruct.uz", "www.weconstruct.uz"]
+)
+
+@app.middleware("http")
+async def force_https_scheme(request: Request, call_next):
+    if not request.url.scheme == 'https':
+        request.scope['scheme'] = 'https'
+    response = await call_next(request)
+    return response
 
 async def set_locale(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
     if locale not in ["ru", "uz"]:
@@ -118,6 +131,7 @@ async def not_found_exception_handler(request: Request, exc: Exception) -> Respo
         }
         return templates.TemplateResponse("shop/error.html", context, status_code=404)
     else:
+        # Check if the route exists before trying to access its name
         if hasattr(request.scope.get('route'), 'name') and request.scope['route'].name == 'robots_txt':
             return Response(status_code=404, content="Not found")
         return JSONResponse(status_code=404, content={"detail": "Not found"})
