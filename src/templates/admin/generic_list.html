@@ -25,7 +25,7 @@
 
 <div class="card" style="margin-bottom: 24px; padding: 16px;">
     <form hx-get="{{ request.url.path }}" 
-          hx-target="#list-content"я
+          hx-target="#list-content"
           hx-trigger="keyup[target.value.length > 2 || target.value.length == 0] changed delay:300ms, search"
           hx-push-url="true">
         <div class="input-group" style="margin: 0; display: flex; gap: 10px;">
@@ -36,7 +36,10 @@
 </div>
 
 <!-- Контейнер, который будет обновляться -->
-<div id="list-content">
+<div id="list-content"
+     hx-get="{{ request.url }}"
+     hx-trigger="new-quote-request from:body"
+     hx-swap="innerHTML">
     {% include "admin/partials/_generic_list_content.html" %}
 </div>
 {% endblock %}

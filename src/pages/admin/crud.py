@@ -19,8 +19,8 @@ from typing import Optional, List
 from datetime import datetime
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
-# --- ИЗМЕНЕНИЕ: Добавляем Task в импорты ---
-from src.models.shop_models import User, Product, Category, QuoteRequest, Contact, RegistrationInvite, ProductImage, Task
+# --- ИЗМЕНЕНИЕ: Добавлен Notification ---
+from src.models.shop_models import User, Product, Category, QuoteRequest, Contact, RegistrationInvite, ProductImage, Task, Notification
 # --- КОНЕЦ ИЗМЕНЕНИЯ ---
 from src.core.security import get_current_active_user
 from .dependencies import get_common_context
@@ -411,10 +411,21 @@ async def quoterequest_delete(
     
     if request.method == "POST":
         try:
+            # --- НАЧАЛО ИЗМЕНЕНИЙ ---
+            # 1. Удаляем связанные уведомления
+            notification_link_pattern = f"/admin/quoterequest/{pk}/change/"
+            notifications_to_delete_stmt = select(Notification).where(Notification.link == notification_link_pattern)
+            notifications_to_delete = (await db.execute(notifications_to_delete_stmt)).scalars().all()
+            for notification in notifications_to_delete:
+                await db.delete(notification)
+            # --- КОНЕЦ ИЗМЕНЕНИЙ ---
+
+            # 2. Удаляем связанные задачи
             tasks_to_delete = await db.execute(select(Task).where(Task.quote_request_id == pk))
             for task in tasks_to_delete.scalars().all():
                 await db.delete(task)
             
+            # 3. Удаляем саму заявку
             await db.delete(quote_req)
             await db.commit()
             
@@ -427,9 +438,7 @@ async def quoterequest_delete(
                 "updateKanban": True,
                 "update-notifications": True
             }
-            # --- ИЗМЕНЕНИЕ: Преобразуем URL в строку ---
             response.headers["HX-Redirect"] = str(redirect_url)
-            # --- КОНЕЦ ИЗМЕНЕНИЯ ---
             response.headers["HX-Trigger"] = json.dumps(trigger_payload)
             return response
         
