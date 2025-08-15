@@ -18,7 +18,6 @@ from src.core.db import check_db_connection, async_session_factory
 from src.services.user_service import create_first_superuser
 from src.core.cache import init_cache, cleanup_cache
 from src.core.middleware import CacheMiddleware, RateLimitMiddleware
-from src.core.cache_utils import schedule_cache_cleanup     
 from src.core.cache_utils import schedule_cache_cleanup, warm_up_cache
 
 app = FastAPI(
@@ -28,7 +27,8 @@ app = FastAPI(
 )
 
 settings = get_settings()
-BASE_DIR = FilePath(__file__).resolve().parent 
+BASE_DIR = FilePath(__file__).resolve().parent
+
 async def set_locale(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
     if locale not in ["ru", "uz"]:
         locale = "ru" 
@@ -41,23 +41,18 @@ if settings.CACHE_ENABLED:
     app.add_middleware(CacheMiddleware, cache_ttl=settings.REDIS_TTL)
 app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
 
-
 @app.on_event("startup")
 async def on_startup():
     print("Application startup...")
     await check_db_connection()
-
     print("Creating first superuser if necessary...")
     async with async_session_factory() as session:
         await create_first_superuser(session)
     print("Superuser check complete.")
-    
     print("Initializing cache...")
     await init_cache()
     print("Cache initialization complete.")
-    
     await warm_up_cache()
-
     import asyncio
     asyncio.create_task(schedule_cache_cleanup())
     print("Cache cleanup scheduler started.")
@@ -86,6 +81,7 @@ async def root_redirect(request: Request):
     return RedirectResponse(url="/ru")
 
 @app.get("/robots.txt", include_in_schema=False)
+@app.get("/robots.txt/", include_in_schema=False)
 async def robots_txt():
     return FileResponse(BASE_DIR / "src" / "static" / "robots.txt")
 
@@ -122,12 +118,14 @@ async def not_found_exception_handler(request: Request, exc: Exception) -> Respo
         }
         return templates.TemplateResponse("shop/error.html", context, status_code=404)
     else:
+        if hasattr(request.scope.get('route'), 'name') and request.scope['route'].name == 'robots_txt':
+            return Response(status_code=404, content="Not found")
         return JSONResponse(status_code=404, content={"detail": "Not found"})
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception) -> Response:
     print("="*100)
-    print("Unhandled exception:")
+    print(f"Unhandled exception for path: {request.url.path}")
     traceback.print_exc()
     print("="*100)
     

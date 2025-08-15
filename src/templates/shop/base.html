@@ -4,23 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- SEO: Заголовок и Мета-описание -->
   <title>{% block title %}WeConstruct — Модульные решения{% endblock %}</title>
   <meta name="description" content="{% if request.state.locale == 'uz' %}Hayot va biznes uchun zamonaviy modulli yechimlar. Biz O'zbekistonda tez quriladigan binolarni loyihalashtiramiz, ishlab chiqaramiz va o'rnatamiz.{% else %}Современные модульные решения для жизни и бизнеса. Проектируем, производим и монтируем быстровозводимые здания в Узбекистане.{% endif %}">
 
-  <!-- PERFORMANCE: Предварительное подключение к ключевым доменам для ускорения загрузки -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <!-- ИЗМЕНЕНИЕ: Добавлен dns-prefetch для дополнительной оптимизации -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
 
-  <!-- PERFORMANCE: Асинхронная загрузка стилей, чтобы не блокировать отрисовку страницы -->
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
   <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
   <link rel="preload" href="{{ url_for('static', path='css/main.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}"></noscript>
   
-  <!-- FAVICONS -->
   <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
   <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
   <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
@@ -29,11 +30,15 @@
   <meta name="msapplication-TileColor" content="#07385a">
   <meta name="theme-color" content="#ffffff">
 
-  <!-- SCRIPTS -->
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script src="{{ url_for('static', path='js/main.js') }}" defer></script>
+  <style>
+    .footer__description, .footer__copyright, .footer__link span {
+        color: #495057; 
+    }
+  </style>
 </head>
 
 <body x-data="{ mobileMenuOpen: false }" @keydown.escape.window="mobileMenuOpen = false">
@@ -61,7 +66,6 @@
               <i class="fas fa-chevron-down" :class="{ 'rotate-180': open }"></i>
             </button>
             <div x-show="open" class="lang-switcher__dropdown" x-transition x-cloak>
-              {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
               {% set route_name = request.scope['route'].name %}
               {% set path_params = request.path_params.copy() %}
               {% if request.state.locale == 'ru' %}
@@ -87,7 +91,6 @@
           {% if request.state.locale == 'uz' %}Bog'lanish{% else %}Связаться с нами{% endif %}
         </button>
         <div class="lang-switcher lang-switcher--mobile">
-          {# --- И ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
           {% set route_name = request.scope['route'].name %}
           {% set path_params = request.path_params.copy() %}
           {% if request.state.locale == 'ru' %}
