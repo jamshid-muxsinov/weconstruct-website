@@ -313,6 +313,7 @@
   padding: var(--space-16) 0;
   background: transparent;
 }
+/* ИЗМЕНЕНО: Стили для центрирования карточки основателя */
 .team__founder {
   display: flex;
   justify-content: center;
@@ -436,12 +437,12 @@
 
 .figure-card {
   background: linear-gradient(145deg, var(--bg-card), var(--bg-secondary));
-  border: none;
+  border: 1px solid var(--gray-200);
   border-radius: var(--radius-xl);
   padding: 40px 32px;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--elevation-4);
+  box-shadow: var(--elevation-2);
   transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
   position: relative;
   overflow: hidden;
@@ -464,7 +465,7 @@
 
 .figure-card:hover {
   transform: translateY(-10px);
-  box-shadow: var(--elevation-16);
+  box-shadow: var(--elevation-8);
 }
 
 .figure-card:hover::before {
@@ -679,9 +680,15 @@
   .team-member {
     grid-template-columns: 1fr;
     max-width: 500px;
+    text-align: center;
   }
   
   .team-member__image {
     height: 250px;
+    margin: 0 auto;
+  }
+
+  .team-member__info {
+    align-items: center;
   }
 }
