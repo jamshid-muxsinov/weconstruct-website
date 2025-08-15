@@ -1,15 +1,14 @@
-# src/pages/admin/crud.py (полный исправленный файл)
+# src/pages/admin/crud.py
 
 import os
 import uuid
 import json
 import csv
 import io
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, HTMLResponse
 from urllib.parse import quote
 from pathlib import Path
-from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File, Response 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import or_, func
@@ -20,7 +19,9 @@ from typing import Optional, List
 from datetime import datetime
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
-from src.models.shop_models import User, Product, Category, QuoteRequest, Contact, RegistrationInvite, ProductImage
+# --- ИЗМЕНЕНИЕ: Добавляем Task в импорты ---
+from src.models.shop_models import User, Product, Category, QuoteRequest, Contact, RegistrationInvite, ProductImage, Task
+# --- КОНЕЦ ИЗМЕНЕНИЯ ---
 from src.core.security import get_current_active_user
 from .dependencies import get_common_context
 from src.services import user_service, shop_service
@@ -52,13 +53,11 @@ class ProductForm(wtforms.Form):
     full_description_ru = wtforms.TextAreaField('Полное описание (RU)', render_kw={"rows": 10})
     dimensions_ru = wtforms.StringField('Размеры (RU)')
     materials_ru = wtforms.TextAreaField('Материалы (RU)', render_kw={"rows": 6}, description="Каждый материал с новой строки")
-    
     name_uz = wtforms.StringField('Название (UZ)')
     short_description_uz = wtforms.TextAreaField('Краткое описание (UZ)', render_kw={"rows": 3})
     full_description_uz = wtforms.TextAreaField('Полное описание (UZ)', render_kw={"rows": 10})
     dimensions_uz = wtforms.StringField("O'lchamlari (UZ)")
     materials_uz = wtforms.TextAreaField("Materiallar (UZ)", render_kw={"rows": 6}, description="Har bir material yangi qatordan")
-    
     price_min = wtforms.DecimalField('Цена за м² от (сум)', places=0, validators=[wtforms.validators.Optional()])
     price_max = wtforms.DecimalField('Цена за м² до (сум)', places=0, validators=[wtforms.validators.Optional()])
     category_id = wtforms.SelectField('Категория', coerce=int, validators=[wtforms.validators.DataRequired()])
@@ -69,7 +68,6 @@ class ProductForm(wtforms.Form):
 class CategoryForm(wtforms.Form):
     name_ru = wtforms.StringField('Название (RU)', validators=[wtforms.validators.DataRequired()])
     description_ru = wtforms.TextAreaField('Описание (RU)', render_kw={"rows": 4})
-
     name_uz = wtforms.StringField('Название (UZ)')
     description_uz = wtforms.TextAreaField('Описание (UZ)', render_kw={"rows": 4})
 
@@ -105,7 +103,7 @@ PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], 
 CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "Категория", "Категории")
 QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'product', 'status', 'source'], QuoteRequestForm, "Заявка", "Заявки")
 
-def set_hx_trigger_header(response: RedirectResponse, message: str, type: str = "success"):
+def set_hx_trigger_header(response: Response, message: str, type: str = "success"):
     payload = json.dumps({"show-toast": {"message": message, "type": type}})
     response.headers["HX-Trigger"] = quote(payload)
     return response
@@ -401,21 +399,26 @@ async def quoterequest_delete(
     context: dict = Depends(get_common_context),
     db: AsyncSession = Depends(get_db_session)
 ):
-    quote_req = await db.get(QuoteRequest, pk)
+    quote_req = await db.get(
+        QuoteRequest, 
+        pk, 
+        options=[
+            selectinload(QuoteRequest.tasks)
+        ]
+    )
     if not quote_req:
         raise HTTPException(404, detail="QuoteRequest not found")
     
     if request.method == "POST":
         try:
-            # Сначала удаляем связанные задачи, если они есть
             tasks_to_delete = await db.execute(select(Task).where(Task.quote_request_id == pk))
             for task in tasks_to_delete.scalars().all():
                 await db.delete(task)
-
+            
             await db.delete(quote_req)
             await db.commit()
             
-            response = Response(status_code=200, content="Заявка удалена") # Пустой ответ для HTMX
+            response = Response(status_code=200, content="Заявка удалена")
             
             redirect_url = request.url_for(QUOTEREQUEST_META.list_url_name)
             
@@ -424,7 +427,6 @@ async def quoterequest_delete(
                 "updateKanban": True,
                 "update-notifications": True
             }
-            # Используем заголовок HX-Redirect для редиректа на стороне клиента
             response.headers["HX-Redirect"] = redirect_url
             response.headers["HX-Trigger"] = json.dumps(trigger_payload)
             return response
@@ -436,7 +438,6 @@ async def quoterequest_delete(
             })
             return templates.TemplateResponse("admin/500.html", context, status_code=500)
 
-    # Логика для GET-запроса (показ страницы подтверждения)
     back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name))
     
     context.update({
