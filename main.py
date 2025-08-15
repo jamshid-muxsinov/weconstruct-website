@@ -1,22 +1,24 @@
 import traceback
 from starlette.responses import Response, FileResponse
-from src.pages.jinja_config import templates 
+from src.pages.jinja_config import templates
 import uvicorn
-from fastapi import FastAPI, Request, Depends, APIRouter, Path 
+from fastapi import FastAPI, Request, Depends, APIRouter, Path
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_pagination import add_pagination
-from pathlib import Path as FilePath 
+from pathlib import Path as FilePath
 from starlette.middleware.sessions import SessionMiddleware
-# ИМПОРТИРУЕМ НОВЫЙ MIDDLEWARE
-from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette_wtf import CSRFProtectMiddleware
+
+# --- ИЗМЕНЕНИЕ: Импортируем Middleware для принудительного HTTPS ---
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseCall
+
 from src.core.config import get_settings
 from src.core.db import check_db_connection
 from src.core.security import get_current_active_user
 from src.pages.admin.router import router as admin_router, unprotected_router
 from src.pages.shop_pages import router as shop_router, root_router as shop_root_router
-from src.core.db import check_db_connection, async_session_factory 
+from src.core.db import check_db_connection, async_session_factory
 from src.services.user_service import create_first_superuser
 from src.core.cache import init_cache, cleanup_cache
 from src.core.middleware import CacheMiddleware, RateLimitMiddleware
@@ -31,20 +33,22 @@ app = FastAPI(
 settings = get_settings()
 BASE_DIR = FilePath(__file__).resolve().parent
 
-app.add_middleware(
-    TrustedHostMiddleware, allowed_hosts=["weconstruct.uz", "www.weconstruct.uz"]
-)
+# --- ИЗМЕНЕНИЕ: Добавляем Middleware для принудительной установки HTTPS ---
+# Это самый надежный способ исправить Mixed Content, когда заголовки от прокси не работают.
+class ForceHTTPSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseCall):
+        if request.scope['scheme'] != 'https':
+            request.scope['scheme'] = 'https'
+        response = await call_next(request)
+        return response
 
-@app.middleware("http")
-async def force_https_scheme(request: Request, call_next):
-    if not request.url.scheme == 'https':
-        request.scope['scheme'] = 'https'
-    response = await call_next(request)
-    return response
+app.add_middleware(ForceHTTPSMiddleware)
+# --- КОНЕЦ ИЗМЕНЕНИЯ ---
+
 
 async def set_locale(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
     if locale not in ["ru", "uz"]:
-        locale = "ru" 
+        locale = "ru"
     request.state.locale = locale
 
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
@@ -54,18 +58,23 @@ if settings.CACHE_ENABLED:
     app.add_middleware(CacheMiddleware, cache_ttl=settings.REDIS_TTL)
 app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
 
+
 @app.on_event("startup")
 async def on_startup():
     print("Application startup...")
     await check_db_connection()
+
     print("Creating first superuser if necessary...")
     async with async_session_factory() as session:
         await create_first_superuser(session)
     print("Superuser check complete.")
+    
     print("Initializing cache...")
     await init_cache()
     print("Cache initialization complete.")
+    
     await warm_up_cache()
+
     import asyncio
     asyncio.create_task(schedule_cache_cleanup())
     print("Cache cleanup scheduler started.")
@@ -97,6 +106,7 @@ async def root_redirect(request: Request):
 @app.get("/robots.txt/", include_in_schema=False)
 async def robots_txt():
     return FileResponse(BASE_DIR / "src" / "static" / "robots.txt")
+
 
 @app.exception_handler(401)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
@@ -131,7 +141,6 @@ async def not_found_exception_handler(request: Request, exc: Exception) -> Respo
         }
         return templates.TemplateResponse("shop/error.html", context, status_code=404)
     else:
-        # Check if the route exists before trying to access its name
         if hasattr(request.scope.get('route'), 'name') and request.scope['route'].name == 'robots_txt':
             return Response(status_code=404, content="Not found")
         return JSONResponse(status_code=404, content={"detail": "Not found"})
@@ -163,7 +172,6 @@ async def generic_exception_handler(request: Request, exc: Exception) -> Respons
     else:
         context = {"request": request, "error_message": "Произошла внутренняя ошибка сервера."}
         return templates.TemplateResponse("admin/500.html", context, status_code=500)
-
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
