@@ -72,7 +72,6 @@
                              hx-get="{{ request.url_for('admin_htmx_notification_indicator') }}"
                              hx-trigger="load, weconstruct:new-quote from:body, notifications-read from:body"
                              hx-swap="innerHTML">
-                             <!-- Этот блок будет заменен HTMX -->
                              <i class='bx bxs-user-circle' style="font-size: 2rem;"></i>
                              {% if unread_notifications_count > 0 %}
                                 <span id="notification-counter" style="position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; background-color: var(--status-red); color: white; border-radius: 50%; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface-1);">{{ unread_notifications_count }}</span>
@@ -130,18 +129,19 @@
             // --- НОВАЯ СТАБИЛЬНАЯ ЛОГИКА ОБНОВЛЕНИЙ ---
             const newQuoteEvent = new CustomEvent('weconstruct:new-quote', { bubbles: true });
 
-            // 1. Для ТЕКУЩЕЙ вкладки: слушаем HTMX и генерируем наше событие
             document.body.addEventListener('htmx:afterSwap', function(event) {
                 const triggerHeader = event.detail.xhr.getResponseHeader('HX-Trigger-After-Swap');
-                if (triggerHeader && triggerHeader.includes('new-quote-request')) {
-                    // Оповещаем ДРУГИЕ вкладки
-                    localStorage.setItem('weconstruct:broadcast', JSON.stringify({ name: 'new-quote-request', timestamp: Date.now() }));
-                    // Оповещаем ТЕКУЩУЮ вкладку
-                    document.body.dispatchEvent(newQuoteEvent);
+                try {
+                    const triggers = triggerHeader ? JSON.parse(triggerHeader) : {};
+                    if ('new-quote-request' in triggers) {
+                        localStorage.setItem('weconstruct:broadcast', JSON.stringify({ name: 'new-quote-request', timestamp: Date.now() }));
+                        document.body.dispatchEvent(newQuoteEvent);
+                    }
+                } catch (e) {
+                    // Ignore parsing errors
                 }
             });
 
-            // 2. Для ДРУГИХ вкладок: слушаем localStorage и генерируем наше событие
             window.addEventListener('storage', function(event) {
                 if (event.key === 'weconstruct:broadcast') {
                     const data = JSON.parse(event.newValue);
