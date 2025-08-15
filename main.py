@@ -1,5 +1,5 @@
 import traceback
-from starlette.responses import Response
+from starlette.responses import Response, FileResponse
 from src.pages.jinja_config import templates 
 import uvicorn
 from fastapi import FastAPI, Request, Depends, APIRouter, Path 
@@ -85,6 +85,9 @@ app.include_router(site_router)
 async def root_redirect(request: Request):
     return RedirectResponse(url="/ru")
 
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    return FileResponse(BASE_DIR / "src" / "static" / "robots.txt")
 
 @app.exception_handler(401)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
@@ -97,30 +100,29 @@ async def unauthorized_exception_handler(request: Request, exc: Exception):
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+def _ensure_locale(request: Request):
+    if not hasattr(request.state, "locale"):
+        path_parts = request.url.path.split('/')
+        if len(path_parts) > 1 and path_parts[1] in ['ru', 'uz']:
+            request.state.locale = path_parts[1]
+        else:
+            request.state.locale = 'ru'
+
 @app.exception_handler(404)
 async def not_found_exception_handler(request: Request, exc: Exception) -> Response:
     is_main_site = request.url.path.startswith(("/ru", "/uz")) or request.url.path == "/"
     
     if is_main_site and "text/html" in request.headers.get("accept", ""):
-        if not hasattr(request.state, "locale"):
-            path_parts = request.url.path.split('/')
-            if len(path_parts) > 1 and path_parts[1] in ['ru', 'uz']:
-                request.state.locale = path_parts[1]
-            else:
-                request.state.locale = 'ru' 
-
+        _ensure_locale(request)
         context = {
             "request": request,
-            "error_message": "Страница не найдена. Возможно, она была удалена или перемещена.",
             "error_title": "Страница не найдена",
-            "error_code": "404"
+            "error_code": "404",
+            "error_message": "Запрашиваемая страница не существует. Возможно, она была удалена или перемещена."
         }
         return templates.TemplateResponse("shop/error.html", context, status_code=404)
     else:
-        return JSONResponse(
-            status_code=404,
-            content={"detail": "Not found"}
-        )
+        return JSONResponse(status_code=404, content={"detail": "Not found"})
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception) -> Response:
@@ -132,30 +134,24 @@ async def generic_exception_handler(request: Request, exc: Exception) -> Respons
     is_main_site = request.url.path.startswith(("/ru", "/uz")) or request.url.path == "/"
     
     if is_main_site and "text/html" in request.headers.get("accept", ""):
-        if not hasattr(request.state, "locale"):
-            path_parts = request.url.path.split('/')
-            if len(path_parts) > 1 and path_parts[1] in ['ru', 'uz']:
-                request.state.locale = path_parts[1]
-            else:
-                request.state.locale = 'ru' 
+        _ensure_locale(request)
         context = {
             "request": request,
-            "error_message": "Произошла внутренняя ошибка сервера. Мы уже работаем над этим.",
+            "error_title": "Внутренняя ошибка сервера",
+            "error_code": "500",
+            "error_message": "Произошла непредвиденная ошибка. Мы уже работаем над ее устранением.",
             "error_details": str(exc) if settings.DEBUG else None
         }
         return templates.TemplateResponse("shop/error.html", context, status_code=500)
+    elif "application/json" in request.headers.get("accept", ""):
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error", "error": str(exc) if settings.DEBUG else None}
+        )
     else:
-        if "application/json" in request.headers.get("accept", ""):
-            return JSONResponse(
-                status_code=500,
-                content={"detail": "Internal server error", "error": str(exc) if settings.DEBUG else None}
-            )
-        else:
-            context = {
-                "request": request,
-                "error_message": "Произошла внутренняя ошибка сервера. Мы уже работаем над этим."
-            }
-            return templates.TemplateResponse("admin/500.html", context, status_code=500)
+        context = {"request": request, "error_message": "Произошла внутренняя ошибка сервера."}
+        return templates.TemplateResponse("admin/500.html", context, status_code=500)
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

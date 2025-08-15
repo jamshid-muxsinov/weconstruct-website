@@ -85,7 +85,8 @@ select {
   
   /* Texts */
   --text-primary: #212529;
-  --text-secondary: #6c757d;
+  /* ИЗМЕНЕНИЕ: Сделали цвет темнее для лучшего контраста */
+  --text-secondary: #5a6268;
   --text-hint: #adb5bd;
   --text-white: #ffffff;
   
