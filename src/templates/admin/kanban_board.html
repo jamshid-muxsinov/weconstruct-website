@@ -20,11 +20,13 @@
     </div>
 </div>
 
+{# --- НАЧАЛО ИЗМЕНЕНИЯ --- #}
 <div id="kanban-board-container" 
      hx-get="{{ request.url_for('admin_htmx_kanban_content') }}"
-     hx-trigger="load, updateKanban from:body"
+     hx-trigger="load, new-quote-request from:body, updateKanban from:body"
      hx-swap="innerHTML"
      hx-include="[name='show_archived']">
+{# --- КОНЕЦ ИЗМЕНЕНИЯ --- #}
 
     <div class="modal-loading-placeholder" style="padding: 100px 0;">
         <i class='bx bx-loader-alt bx-spin'></i><span>Загрузка канбан-доски...</span>

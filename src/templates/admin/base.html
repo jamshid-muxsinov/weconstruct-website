@@ -16,13 +16,9 @@
     <meta name="msapplication-TileColor" content="#07385a">
     <meta name="theme-color" content="#ffffff">
 
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="preload" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="{{ url_for('static', path='css/crm.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+	<link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
 
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -71,11 +67,13 @@
                     <button @click="open = !open" id="profile-menu-button" style="background: none; border: none; color: inherit; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px; border-radius: var(--border-radius-md);">
                         <span style="font-weight: 500;">Привет, {{ user.username }}!</span>
                         
+                        {# --- НАЧАЛО ИЗМЕНЕНИЯ --- #}
                         <div id="notification-indicator-wrapper" 
                              style="position: relative;"
                              hx-get="{{ request.url_for('admin_htmx_notification_indicator') }}"
-                             hx-trigger="load, update-notifications from:body"
+                             hx-trigger="load, new-quote-request from:body, notifications-read from:body"
                              hx-swap="innerHTML">
+                             {# --- КОНЕЦ ИЗМЕНЕНИЯ --- #}
                              <!-- Этот блок будет заменен HTMX -->
                              <i class='bx bxs-user-circle' style="font-size: 2rem;"></i>
                              {% if unread_notifications_count > 0 %}
@@ -91,10 +89,12 @@
                          id="profile-menu" 
                          style="display: none; position: absolute; top: 110%; right: 0; background-color: var(--surface-1); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); width: 320px; box-shadow: var(--shadow-lg); z-index: 101;">
                         
+                        {# --- НАЧАЛО ИЗМЕНЕНИЯ --- #}
                         <div id="notifications-container"
                              hx-get="{{ request.url_for('admin_htmx_notifications') }}"
-                             hx-trigger="click from:#profile-menu-button, update-notifications from:body"
+                             hx-trigger="click from:#profile-menu-button, new-quote-request from:body"
                              hx-swap="innerHTML">
+                             {# --- КОНЕЦ ИЗМЕНЕНИЯ --- #}
                              <div class="modal-loading-placeholder" style="padding: 20px 0;"><i class='bx bx-loader-alt bx-spin'></i></div>
                         </div>
                         
@@ -130,12 +130,15 @@
 
         // Система межвкладочного взаимодействия для уведомлений
         document.body.addEventListener('htmx:afterSwap', function(event) {
+            // Ищем заголовок от HTMX, который говорит, что была создана новая заявка
             if (event.detail.xhr.getResponseHeader('HX-Trigger-After-Swap')?.includes('new-quote-request')) {
-                // Отправляем сигнал другим вкладкам
+                // Отправляем сигнал другим открытым вкладкам через localStorage
                 localStorage.setItem('broadcast_event', JSON.stringify({
                     name: 'new-quote-request',
                     timestamp: new Date().getTime() 
                 }));
+                 // Триггерим событие и в текущей вкладке, чтобы не ждать ответа от localStorage
+                htmx.trigger('body', 'new-quote-request');
             }
         });
 
@@ -143,19 +146,12 @@
         window.addEventListener('storage', function(event) {
             if (event.key === 'broadcast_event') {
                 const data = JSON.parse(event.newValue);
-                if (data && data.name) {
+                // Проверяем, что событие не слишком старое, чтобы избежать дублирования
+                if (data && data.name && (new Date().getTime() - data.timestamp < 1500)) {
                     // Генерируем событие HTMX в этой вкладке
                     htmx.trigger('body', data.name);
                 }
             }
-        });
-
-        // Локальные триггеры для обновления уведомлений
-        document.body.addEventListener('new-quote-request', function() {
-            htmx.trigger('body', 'update-notifications');
-        });
-        document.body.addEventListener('notifications-read', function() {
-            htmx.trigger('body', 'update-notifications');
         });
     </script>
 </body>

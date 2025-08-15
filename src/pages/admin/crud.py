@@ -411,14 +411,12 @@ async def quoterequest_delete(
     
     if request.method == "POST":
         try:
-            # --- НАЧАЛО ИЗМЕНЕНИЙ ---
             # 1. Удаляем связанные уведомления
             notification_link_pattern = f"/admin/quoterequest/{pk}/change/"
             notifications_to_delete_stmt = select(Notification).where(Notification.link == notification_link_pattern)
             notifications_to_delete = (await db.execute(notifications_to_delete_stmt)).scalars().all()
             for notification in notifications_to_delete:
                 await db.delete(notification)
-            # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
             # 2. Удаляем связанные задачи
             tasks_to_delete = await db.execute(select(Task).where(Task.quote_request_id == pk))
@@ -436,7 +434,7 @@ async def quoterequest_delete(
             trigger_payload = {
                 "show-toast": {"message": "Заявка удалена", "type": "error"},
                 "updateKanban": True,
-                "update-notifications": True
+                "new-quote-request": True # Обновляем все компоненты, как при новой заявке
             }
             response.headers["HX-Redirect"] = str(redirect_url)
             response.headers["HX-Trigger"] = json.dumps(trigger_payload)

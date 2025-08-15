@@ -22,6 +22,7 @@ from pathlib import Path
 MEDIA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "media"
 router = APIRouter(prefix="/htmx", tags=["Admin HTMX"])
 
+# Заголовки для предотвращения кэширования HTMX-ответов браузером
 NO_CACHE_HEADERS = {
     "Cache-Control": "no-cache, no-store, must-revalidate",
     "Pragma": "no-cache",
@@ -230,7 +231,7 @@ async def htmx_get_notification_indicator(
     context: dict = Depends(get_common_context)
 ):
     """Возвращает только HTML для иконки и счетчика уведомлений."""
-    return templates.TemplateResponse("admin/partials/_notification_indicator.html", context)
+    return templates.TemplateResponse("admin/partials/_notification_indicator.html", context, headers=NO_CACHE_HEADERS)
 
 @router.delete("/product-image/{pk}/delete/", response_class=Response, name="admin_htmx_delete_product_image")
 async def htmx_delete_product_image(pk: int, db: AsyncSession = Depends(get_db_session)):
