@@ -222,8 +222,8 @@ class QuoteRequest(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
     internal_notes: Mapped[Optional[str]] = mapped_column(Text)
 
-    tasks: Mapped[List["Task"]] = relationship(back_populates="quote_request")
-    status_logs: Mapped[List["StatusChangeLog"]] = relationship(back_populates="quote_request")
+    tasks: Mapped[List["Task"]] = relationship(back_populates="quote_request", cascade="all, delete-orphan")
+    status_logs: Mapped[List["StatusChangeLog"]] = relationship(back_populates="quote_request", cascade="all, delete-orphan")
 
     @property
     def name(self):
