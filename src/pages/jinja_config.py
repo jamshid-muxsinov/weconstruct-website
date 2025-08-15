@@ -33,19 +33,9 @@ def t_get(request: Request, obj: object, field_name: str) -> str:
         translation_cache[cache_key] = result
     return result
 
-def url_for_https(request: Request, name: str, **path_params):
-    """
-    Генератор URL, который принудительно использует схему HTTPS.
-    """
-    http_url = request.url_for(name, **path_params)
-    if http_url.startswith("http://"):
-        return http_url.replace("http://", "https://", 1)
-    return http_url
-
 templates.env.globals['hasattr'] = hasattr
 templates.env.globals['current_year'] = datetime.now().year
 templates.env.globals['t_get'] = t_get
 templates.env.globals['csrf_token'] = csrf_token
-templates.env.globals['url_for'] = url_for_https
 templates.env.filters['capfirst'] = lambda x: x.capitalize() if x else ''
 templates.env.filters['format_number'] = format_number

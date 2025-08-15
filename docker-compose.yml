@@ -13,6 +13,8 @@ services:
   web:
     build: .
     command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:app
+    environment:
+      - FORWARDED_ALLOW_IPS=*
     volumes:
       - static_volume:/app/src/static
       - media_volume:/app/media

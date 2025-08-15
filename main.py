@@ -118,7 +118,6 @@ async def not_found_exception_handler(request: Request, exc: Exception) -> Respo
         }
         return templates.TemplateResponse("shop/error.html", context, status_code=404)
     else:
-        # Check if the route exists before trying to access its name
         if hasattr(request.scope.get('route'), 'name') and request.scope['route'].name == 'robots_txt':
             return Response(status_code=404, content="Not found")
         return JSONResponse(status_code=404, content={"detail": "Not found"})
