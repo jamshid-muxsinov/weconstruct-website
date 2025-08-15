@@ -38,7 +38,7 @@
 <!-- Контейнер, который будет обновляться -->
 <div id="list-content"
      hx-get="{{ request.url }}"
-     hx-trigger="new-quote-request from:body"
+     hx-trigger="load, weconstruct:new-quote from:body"
      hx-swap="innerHTML">
     {% include "admin/partials/_generic_list_content.html" %}
 </div>
