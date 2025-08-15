@@ -105,6 +105,23 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False):
         
     return kanban_data
 
+# --- НОВАЯ ФУНКЦИЯ ---
+async def get_latest_quote_request(db: AsyncSession) -> QuoteRequest | None:
+    """Возвращает самую последнюю созданную заявку."""
+    stmt = (
+        select(QuoteRequest)
+        .options(
+            joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
+            joinedload(QuoteRequest.product),
+            joinedload(QuoteRequest.assigned_to)
+        )
+        .order_by(QuoteRequest.id.desc())
+        .limit(1)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().first()
+# --- КОНЕЦ НОВОЙ ФУНКЦИИ ---
+
 async def update_quote_request_status(db: AsyncSession, update_data: QuoteRequestStatusUpdate, user_id: int):
     req = await db.get(QuoteRequest, update_data.id)
     if not req:

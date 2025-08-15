@@ -22,7 +22,6 @@ from pathlib import Path
 MEDIA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "media"
 router = APIRouter(prefix="/htmx", tags=["Admin HTMX"])
 
-# Заголовки для предотвращения кэширования HTMX-ответов браузером
 NO_CACHE_HEADERS = {
     "Cache-Control": "no-cache, no-store, must-revalidate",
     "Pragma": "no-cache",
@@ -32,6 +31,28 @@ NO_CACHE_HEADERS = {
 class TaskForm(wtforms.Form):
     title = StringField('Title')
     assigned_to_id = SelectField('Assigned To', coerce=int)
+
+# --- НОВЫЙ ЭНДПОИНТ ---
+@router.get("/kanban/newest-card", response_class=HTMLResponse, name="admin_htmx_kanban_newest_card")
+async def get_kanban_newest_card(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session)
+):
+    """
+    Получает самую последнюю заявку и рендерит для нее карточку канбана.
+    Это используется для real-time добавления на доску без полной перезагрузки.
+    """
+    latest_quote = await crm_service.get_latest_quote_request(db)
+    if not latest_quote:
+        return Response(status_code=204) # No Content
+    
+    # Мы рендерим только одну карточку
+    return templates.TemplateResponse(
+        "admin/partials/_kanban_card.html",
+        {"request": request, "req": latest_quote},
+        headers=NO_CACHE_HEADERS
+    )
+# --- КОНЕЦ НОВОГО ЭНДПОИНТА ---
 
 @router.get("/quoterequest-modal/{pk}", response_class=HTMLResponse, name="admin_htmx_quoterequest_modal")
 async def get_quote_request_modal(
@@ -231,7 +252,7 @@ async def htmx_get_notification_indicator(
     context: dict = Depends(get_common_context)
 ):
     """Возвращает только HTML для иконки и счетчика уведомлений."""
-    return templates.TemplateResponse("admin/partials/_notification_indicator.html", context, headers=NO_CACHE_HEADERS)
+    return templates.TemplateResponse("admin/partials/_notification_indicator.html", context)
 
 @router.delete("/product-image/{pk}/delete/", response_class=Response, name="admin_htmx_delete_product_image")
 async def htmx_delete_product_image(pk: int, db: AsyncSession = Depends(get_db_session)):
