@@ -438,37 +438,3 @@
   font-size: 0.9rem;
   line-height: 1.6;
 }
-
-.team-member--no-image {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding-top: 20px;
-}
-
-.team-member--no-image .team-member__info {
-  margin-left: 0;
-  margin-top: 20px;
-}
-
-.team-member__icon {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background-color: var(--bg-secondary);
-  color: var(--accent-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 3rem;
-  margin-bottom: 20px;
-  border: 4px solid var(--bg-main);
-  box-shadow: 0 0 0 4px var(--accent-primary-light);
-}
-
-@media (max-width: 768px) {
-  .team-member--no-image {
-    padding-top: 0;
-  }
-}
