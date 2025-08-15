@@ -2,7 +2,7 @@
 fastapi==0.111.0
 uvicorn[standard]==0.29.0
 starlette==0.37.2
-
+gunicorn
 # Async & Networking
 anyio>=3.7.1,<5
 aiofiles
