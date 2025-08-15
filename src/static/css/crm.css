@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 :root {
     --font-primary: 'Inter', sans-serif;
     --bg-main: #111317;
@@ -8,14 +6,14 @@
     --surface-2: #2A2E36;
     --border-color: #31353F;
     --text-primary: #E5E7EB;
-    --text-secondary: #9DA3B0;
-    --text-hyperlink: #60A5FA;
+    --text-secondary: #A0A7B5;      
+    --text-hyperlink: #8BBEFF;      
     --accent-primary: #3B82F6;
     --accent-primary-hover: #2563EB;
-    --status-green: #22C55E;
-    --status-yellow: #EAB308;
-    --status-red: #EF4444;
-    --status-blue: #60A5FA;
+    --status-green: #4ADE80;        
+    --status-yellow: #FCD34D;       
+    --status-red: #F87171;        
+    --status-blue: #8BBEFF;   
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
     --border-radius-md: 8px;
@@ -198,7 +196,7 @@ body.login-page { display: flex; justify-content: center; align-items: center; m
 .kanban-card .card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-secondary); margin-top: 12px; }
 .kanban-card .assignee { display: flex; align-items: center; gap: 6px; }
 .kanban-card .assignee .bx { font-size: 1.2rem; }
-.kanban-card .pinned-note { background-color: rgba(234, 179, 8, 0.1); color: #f6d161; padding: 8px 10px; border-radius: var(--border-radius-md); font-size: 0.8rem; display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.kanban-card .pinned-note { background-color: rgba(234, 179, 8, 0.1); color: var(--status-yellow); padding: 8px 10px; border-radius: var(--border-radius-md); font-size: 0.8rem; display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .kanban-card .pinned-note .bx { font-size: 1rem; }
 
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 9998; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; backdrop-filter: blur(5px); }

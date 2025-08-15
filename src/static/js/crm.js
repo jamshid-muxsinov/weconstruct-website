@@ -235,4 +235,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const { message, type = 'success' } = event.detail;
         notyf[type](message);
     });
+    document.body.addEventListener('new-quote-request', function() {
+            htmx.trigger('body', 'update-notifications');
+            htmx.trigger('body', 'updateKanban'); 
+        });
 });
