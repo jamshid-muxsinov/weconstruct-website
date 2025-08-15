@@ -1,6 +1,6 @@
 import json
 from urllib.parse import quote
-from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response
+from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -32,26 +32,42 @@ class TaskForm(wtforms.Form):
     title = StringField('Title')
     assigned_to_id = SelectField('Assigned To', coerce=int)
 
-# --- НОВЫЙ ЭНДПОИНТ ---
-@router.get("/kanban/new-card", response_class=HTMLResponse, name="admin_htmx_kanban_new_card")
-async def get_kanban_new_card(
+# --- НОВЫЙ ЭНДПОИНТ ДЛЯ ПОЛЛИНГА КАНБАН-ДОСКИ ---
+@router.get("/kanban/poll-new", response_class=HTMLResponse, name="admin_htmx_kanban_poll_new")
+async def poll_new_kanban_cards(
     request: Request,
+    latest_id: int = Query(0),
     db: AsyncSession = Depends(get_db_session)
 ):
     """
-    Получает самую последнюю заявку и рендерит для нее карточку канбана.
-    Используется для real-time добавления на доску без полной перезагрузки.
+    Возвращает HTML-фрагменты для всех новых заявок, у которых ID больше, чем latest_id.
     """
-    latest_quote = await crm_service.get_latest_quote_request(db)
-    if not latest_quote:
-        return Response(status_code=204) # No Content
-    
-    return templates.TemplateResponse(
-        "admin/partials/_kanban_card.html",
-        {"request": request, "req": latest_quote},
-        headers=NO_CACHE_HEADERS
+    stmt = (
+        select(QuoteRequest)
+        .where(QuoteRequest.id > latest_id, QuoteRequest.status == QuoteRequest.StatusEnum.NEW)
+        .options(
+            joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
+            joinedload(QuoteRequest.product),
+            joinedload(QuoteRequest.assigned_to)
+        )
+        .order_by(QuoteRequest.id.asc()) # Важно, чтобы они вставлялись в правильном порядке
     )
-# --- КОНЕЦ НОВОГО ЭНДПОИНТА ---
+    result = await db.execute(stmt)
+    new_quotes = result.scalars().all()
+
+    if not new_quotes:
+        return Response(status_code=204) # No Content, ничего не делаем
+
+    # Рендерим каждую новую карточку и объединяем их HTML
+    html_fragments = []
+    for quote in new_quotes:
+        fragment = templates.TemplateResponse(
+            "admin/partials/_kanban_card.html",
+            {"request": request, "req": quote}
+        ).body.decode("utf-8")
+        html_fragments.append(fragment)
+    
+    return HTMLResponse("".join(html_fragments))
 
 @router.get("/quoterequest-modal/{pk}", response_class=HTMLResponse, name="admin_htmx_quoterequest_modal")
 async def get_quote_request_modal(
@@ -251,7 +267,7 @@ async def htmx_get_notification_indicator(
     context: dict = Depends(get_common_context)
 ):
     """Возвращает только HTML для иконки и счетчика уведомлений."""
-    return templates.TemplateResponse("admin/partials/_notification_indicator.html", context)
+    return templates.TemplateResponse("admin/partials/_notification_indicator.html", context, headers=NO_CACHE_HEADERS)
 
 @router.delete("/product-image/{pk}/delete/", response_class=Response, name="admin_htmx_delete_product_image")
 async def htmx_delete_product_image(pk: int, db: AsyncSession = Depends(get_db_session)):

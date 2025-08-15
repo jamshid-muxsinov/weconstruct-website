@@ -31,12 +31,12 @@
     </div>
 </div>
 
-<!-- Скрытый элемент, который будет добавлять новую карточку на доску -->
-<div id="kanban-new-card-loader"
-     hx-get="{{ request.url_for('admin_htmx_kanban_new_card') }}"
-     hx-trigger="weconstruct:new-quote from:body"
-     hx-target=".kanban-column[data-status='new'] > .kanban-column-body"
-     hx-swap="afterbegin">
+<!-- Скрытый элемент-поллер, который будет добавлять новые карточки -->
+<div hx-get="{{ request.url_for('admin_htmx_kanban_poll_new') }}"
+     hx-trigger="every 5s"
+     hx-vals="js:{latest_id: document.querySelector('.kanban-column[data-status=\'new\'] .kanban-card')?.dataset.id || 0}"
+     hx-swap="afterbegin"
+     hx-target=".kanban-column[data-status='new'] > .kanban-column-body">
 </div>
 
 {% endblock %}

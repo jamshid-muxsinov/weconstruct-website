@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
     <link rel="manifest" href="{{ url_for('static', path='favicons/site.webmanifest') }}">
-    <link rel="shortcut icon" href="{{ url_for('static', path='favicons/favicon.ico') }}">
+    <link rel="shortcut icon" href="{{ url_for('static',path='favicons/favicon.ico') }}">
     <meta name="msapplication-TileColor" content="#07385a">
     <meta name="theme-color" content="#ffffff">
 
@@ -70,8 +70,9 @@
                         <div id="notification-indicator-wrapper" 
                              style="position: relative;"
                              hx-get="{{ request.url_for('admin_htmx_notification_indicator') }}"
-                             hx-trigger="load, weconstruct:new-quote from:body, notifications-read from:body"
+                             hx-trigger="load, every 8s, notifications-read from:body"
                              hx-swap="innerHTML">
+                             <!-- Этот блок будет заменен HTMX -->
                              <i class='bx bxs-user-circle' style="font-size: 2rem;"></i>
                              {% if unread_notifications_count > 0 %}
                                 <span id="notification-counter" style="position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; background-color: var(--status-red); color: white; border-radius: 50%; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface-1);">{{ unread_notifications_count }}</span>
@@ -88,7 +89,7 @@
                         
                         <div id="notifications-container"
                              hx-get="{{ request.url_for('admin_htmx_notifications') }}"
-                             hx-trigger="click from:#profile-menu-button, weconstruct:new-quote from:body"
+                             hx-trigger="click from:#profile-menu-button"
                              hx-swap="innerHTML">
                              <div class="modal-loading-placeholder" style="padding: 20px 0;"><i class='bx bx-loader-alt bx-spin'></i></div>
                         </div>
@@ -124,31 +125,6 @@
             
             document.body.addEventListener('show-toast', function (e) {
                 notyf.open({ type: e.detail.type || 'success', message: e.detail.message || 'Сохранено!' });
-            });
-
-            // --- НОВАЯ СТАБИЛЬНАЯ ЛОГИКА ОБНОВЛЕНИЙ ---
-            const newQuoteEvent = new CustomEvent('weconstruct:new-quote', { bubbles: true });
-
-            document.body.addEventListener('htmx:afterSwap', function(event) {
-                const triggerHeader = event.detail.xhr.getResponseHeader('HX-Trigger-After-Swap');
-                try {
-                    const triggers = triggerHeader ? JSON.parse(triggerHeader) : {};
-                    if ('new-quote-request' in triggers) {
-                        localStorage.setItem('weconstruct:broadcast', JSON.stringify({ name: 'new-quote-request', timestamp: Date.now() }));
-                        document.body.dispatchEvent(newQuoteEvent);
-                    }
-                } catch (e) {
-                    // Ignore parsing errors
-                }
-            });
-
-            window.addEventListener('storage', function(event) {
-                if (event.key === 'weconstruct:broadcast') {
-                    const data = JSON.parse(event.newValue);
-                    if (data && data.name === 'new-quote-request' && (Date.now() - data.timestamp < 2000)) {
-                        document.body.dispatchEvent(newQuoteEvent);
-                    }
-                }
             });
         });
     </script>
