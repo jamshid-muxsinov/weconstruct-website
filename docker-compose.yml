@@ -42,7 +42,7 @@ services:
       web:
         condition: service_healthy
     restart: unless-stopped
-    command: /bin/sh -c "nginx -g 'daemon off;'"
+    command: nginx -g 'daemon off;'
     
 volumes:
   db_data:
