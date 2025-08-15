@@ -66,19 +66,22 @@
                 <div class="user-profile" style="position: relative;" x-data="{ open: false }" @click.away="open = false">
                     <button @click="open = !open" id="profile-menu-button" style="background: none; border: none; color: inherit; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px; border-radius: var(--border-radius-md);">
                         <span style="font-weight: 500;">Привет, {{ user.username }}!</span>
+                        
                         <div id="notification-indicator-wrapper" 
                              style="position: relative;"
                              hx-get="{{ request.url_for('admin_htmx_notification_indicator') }}"
-                             hx-trigger="update-notifications from:body, load"
+                             hx-trigger="load, update-notifications from:body"
                              hx-swap="innerHTML">
-                            <!-- Этот блок будет заменен HTMX -->
-                            <i class='bx bxs-user-circle' style="font-size: 2rem;"></i>
-                            {% if unread_notifications_count > 0 %}
-                            <span id="notification-counter" style="position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; background-color: var(--status-red); color: white; border-radius: 50%; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface-1);">{{ unread_notifications_count }}</span>
-                            {% endif %}
+                             <!-- Этот блок будет заменен HTMX -->
+                             <i class='bx bxs-user-circle' style="font-size: 2rem;"></i>
+                             {% if unread_notifications_count > 0 %}
+                                <span id="notification-counter" style="position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; background-color: var(--status-red); color: white; border-radius: 50%; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface-1);">{{ unread_notifications_count }}</span>
+                             {% endif %}
                         </div>
+                        
                         <i class='bx bx-chevron-down' :class="{'bx-rotate-180': open}" style="transition: transform 0.2s;"></i>
                     </button>
+
                     <div x-show="open"
                          x-transition
                          id="profile-menu" 
@@ -121,26 +124,34 @@
         
         document.body.addEventListener('show-toast', function (e) { notyf.open({ type: e.detail.type || 'success', message: e.detail.message || 'Сохранено!' }); });
 
-        // --- ИЗМЕНЕНИЕ: Упрощенная система событий ---
-        
-        // Событие от создания новой заявки с сайта
-        document.body.addEventListener('new-quote-request', function() {
-            // Запускаем общее событие для обновления всего, что нужно
-            htmx.trigger('body', 'update-dynamic-content');
+        // Система межвкладочного взаимодействия для уведомлений
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            if (event.detail.xhr.getResponseHeader('HX-Trigger-After-Swap')?.includes('new-quote-request')) {
+                // Отправляем сигнал другим вкладкам
+                localStorage.setItem('broadcast_event', JSON.stringify({
+                    name: 'new-quote-request',
+                    timestamp: new Date().getTime() 
+                }));
+            }
         });
 
-        // Событие от сервера после любого действия (удаление, смена статуса и т.д.)
-        document.body.addEventListener('update-dynamic-content', function() {
-            // Находим элементы, которые нужно обновить, и запускаем для них HTMX-запрос
-            const notifications = document.getElementById('notification-indicator-wrapper');
-            const kanban = document.getElementById('kanban-board-container');
-            
-            if (notifications) {
-                htmx.trigger(notifications, 'update-notifications');
+        // Слушаем сигналы от других вкладок
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'broadcast_event') {
+                const data = JSON.parse(event.newValue);
+                if (data && data.name) {
+                    // Генерируем событие HTMX в этой вкладке
+                    htmx.trigger('body', data.name);
+                }
             }
-            if (kanban) {
-                htmx.trigger(kanban, 'updateKanban');
-            }
+        });
+
+        // Локальные триггеры для обновления уведомлений
+        document.body.addEventListener('new-quote-request', function() {
+            htmx.trigger('body', 'update-notifications');
+        });
+        document.body.addEventListener('notifications-read', function() {
+            htmx.trigger('body', 'update-notifications');
         });
     </script>
 </body>

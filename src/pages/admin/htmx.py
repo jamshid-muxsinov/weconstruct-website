@@ -225,6 +225,13 @@ async def htmx_get_notifications(
     
     return templates.TemplateResponse("admin/partials/_notifications_dropdown.html", context, headers=NO_CACHE_HEADERS)
 
+@router.get("/notification-indicator/", response_class=HTMLResponse, name="admin_htmx_notification_indicator")
+async def htmx_get_notification_indicator(
+    context: dict = Depends(get_common_context)
+):
+    """Возвращает только HTML для иконки и счетчика уведомлений."""
+    return templates.TemplateResponse("admin/partials/_notification_indicator.html", context)
+
 @router.delete("/product-image/{pk}/delete/", response_class=Response, name="admin_htmx_delete_product_image")
 async def htmx_delete_product_image(pk: int, db: AsyncSession = Depends(get_db_session)):
     image = await db.get(ProductImage, pk)
