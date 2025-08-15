@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token(request) }}">
-    
     <title>{{ title|default("Панель управления") }} | WeConstruct CRM</title>
-    
-    <!-- Favicons -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
@@ -15,17 +12,14 @@
     <link rel="shortcut icon" href="{{ url_for('static', path='favicons/favicon.ico') }}">
     <meta name="msapplication-TileColor" content="#07385a">
     <meta name="theme-color" content="#ffffff">
-
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 	<link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
-
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
     <script>
         (function() {
             try {
@@ -56,10 +50,8 @@
             </nav>
             <div class="sidebar-footer"> <a href="{{ request.url_for('admin_logout') }}" class="logout-trigger nav-link"> <i class='bx bx-log-out nav-icon'></i><span class="nav-text">Выйти</span> </a> </div>
         </aside>
-        
         <div id="content-wrapper">
             <button id="sidebar-expand-btn" class="btn-icon"><i class='bx bx-menu'></i></button>
-
             <header style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background-color: rgba(17, 19, 23, 0.8); backdrop-filter: blur(8px); z-index: 100;">
                 <div></div>
                 {% if user %}
@@ -79,14 +71,12 @@
                          id="profile-menu" 
                          style="display: none; position: absolute; top: 110%; right: 0; background-color: var(--surface-1); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); width: 320px; box-shadow: var(--shadow-lg); z-index: 101;">
                         
-                        <!-- --- ИЗМЕНЕНИЕ: Добавляем hx-trigger --- -->
                         <div id="notifications-container"
                              hx-get="{{ request.url_for('admin_htmx_notifications') }}"
                              hx-trigger="click from:#profile-menu-button, notifications-read from:body, new-quote-request from:body"
                              hx-swap="innerHTML">
                              <div class="modal-loading-placeholder" style="padding: 20px 0;"><i class='bx bx-loader-alt bx-spin'></i></div>
                         </div>
-                        <!-- --- КОНЕЦ ИЗМЕНЕНИЯ --- -->
                         
                         <ul style="padding: 8px; border-top: 1px solid var(--border-color);">
                             <li><a href="{{ request.url_for('admin_profile') }}" style="display: block; padding: 10px 12px; border-radius: 4px; color: var(--text-primary);">Профиль</a></li>
@@ -122,6 +112,23 @@
             const counter = document.getElementById('notification-counter');
             if (counter) {
                 counter.style.display = 'none';
+            }
+        });
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            if (event.detail.xhr.getResponseHeader('HX-Trigger-After-Swap')?.includes('new-quote-request')) {
+                localStorage.setItem('broadcast_event', JSON.stringify({
+                    name: 'new-quote-request',
+                    timestamp: new Date().getTime() 
+                }));
+            }
+        });
+
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'broadcast_event') {
+                const data = JSON.parse(event.newValue);
+                if (data && data.name === 'new-quote-request') {
+                    htmx.trigger('body', 'new-quote-request');
+                }
             }
         });
     </script>

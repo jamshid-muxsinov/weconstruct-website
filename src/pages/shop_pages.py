@@ -68,11 +68,9 @@ async def htmx_post_request_quote(
             product_id=product_id, 
             source="website"
         )
-        # --- ИЗМЕНЕНИЕ: Добавляем заголовок HX-Trigger ---
         response = templates.TemplateResponse("shop/partials/_quote_success.html", {"request": request, "product": product})
-        response.headers["HX-Trigger"] = json.dumps({"new-quote-request": None})
+        response.headers["HX-Trigger-After-Swap"] = json.dumps({"new-quote-request": None})
         return response
-        # --- КОНЕЦ ИЗМЕНЕНИЯ ---
     else:
         context = {"request": request, "product": product, "form": form}
         return templates.TemplateResponse("shop/partials/_quote_form.html", context, status_code=422)
@@ -104,7 +102,7 @@ async def htmx_post_general_quote(
             source="contact_form"
         )
         response = templates.TemplateResponse("shop/partials/_quote_success.html", {"request": request, "product": None})
-        response.headers["HX-Trigger"] = json.dumps({"new-quote-request": None})
+        response.headers["HX-Trigger-After-Swap"] = json.dumps({"new-quote-request": None})
         return response
     else:
         context = {"request": request, "form": form}
