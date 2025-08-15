@@ -68,14 +68,18 @@ app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
 add_pagination(app)
 
-app.include_router(unprotected_router)
-app.include_router(admin_router, dependencies=[Depends(get_current_active_user)])
+app.include_router(unprotected_router) # /admin/login, /admin/register
+app.include_router(admin_router, dependencies=[Depends(get_current_active_user)]) # /admin/*
 
+# 2. Затем создаем отдельный роутер для публичного сайта с префиксом /{locale}
 site_router = APIRouter(prefix="/{locale}", dependencies=[Depends(set_locale)])
-site_router.include_router(shop_root_router)
-site_router.include_router(shop_router, prefix="/shop")
+site_router.include_router(shop_root_router) # /{locale}/
+site_router.include_router(shop_router, prefix="/shop") # /{locale}/shop/*
+
+# 3. Подключаем роутер публичного сайта к основному приложению
 app.include_router(site_router)
 
+# 4. Корневой редирект на /ru
 @app.get("/", include_in_schema=False)
 async def root_redirect(request: Request):
     return RedirectResponse(url="/ru")
@@ -83,12 +87,12 @@ async def root_redirect(request: Request):
 @app.get("/robots.txt", include_in_schema=False, name="robots_txt")
 @app.get("/robots.txt/", include_in_schema=False)
 async def robots_txt():
-    # ИЗМЕНЕНИЕ: Используем BASE_DIR для правильного пути внутри контейнера
     return FileResponse(BASE_DIR / "src/static/robots.txt")
 
 @app.exception_handler(401)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
     if "text/html" in request.headers.get("accept", ""):
+        # ИЗМЕНЕНИЕ: Убеждаемся, что редирект идет на правильный URL без локали
         login_url = request.url_for('admin_login')
         return RedirectResponse(url=f"{login_url}?next={request.url.path}", status_code=302)
     return JSONResponse(
@@ -119,7 +123,6 @@ async def not_found_exception_handler(request: Request, exc: Exception) -> Respo
         }
         return templates.TemplateResponse("shop/error.html", context, status_code=404)
     else:
-        # Check if the route exists before trying to access its name
         if hasattr(request.scope.get('route'), 'name') and request.scope['route'].name == 'robots_txt':
             return Response(status_code=404, content="Not found")
         return JSONResponse(status_code=404, content={"detail": "Not found"})
