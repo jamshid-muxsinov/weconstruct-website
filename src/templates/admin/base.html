@@ -7,7 +7,7 @@
     
     <title>{{ title|default("Панель управления") }} | WeConstruct CRM</title>
     
-    <!-- ================= FAVICONS START ================= -->
+    <!-- Favicons -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
@@ -56,9 +56,7 @@
             </nav>
             <div class="sidebar-footer"> <a href="{{ request.url_for('admin_logout') }}" class="logout-trigger nav-link"> <i class='bx bx-log-out nav-icon'></i><span class="nav-text">Выйти</span> </a> </div>
         </aside>
-        <!-- /SIDEBAR -->
         
-        <!-- CONTENT -->
         <div id="content-wrapper">
             <button id="sidebar-expand-btn" class="btn-icon"><i class='bx bx-menu'></i></button>
 
@@ -81,12 +79,14 @@
                          id="profile-menu" 
                          style="display: none; position: absolute; top: 110%; right: 0; background-color: var(--surface-1); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); width: 320px; box-shadow: var(--shadow-lg); z-index: 101;">
                         
+                        <!-- --- ИЗМЕНЕНИЕ: Добавляем hx-trigger --- -->
                         <div id="notifications-container"
                              hx-get="{{ request.url_for('admin_htmx_notifications') }}"
-                             hx-trigger="click from:#profile-menu-button, notifications-read from:body"
+                             hx-trigger="click from:#profile-menu-button, notifications-read from:body, new-quote-request from:body"
                              hx-swap="innerHTML">
                              <div class="modal-loading-placeholder" style="padding: 20px 0;"><i class='bx bx-loader-alt bx-spin'></i></div>
                         </div>
+                        <!-- --- КОНЕЦ ИЗМЕНЕНИЯ --- -->
                         
                         <ul style="padding: 8px; border-top: 1px solid var(--border-color);">
                             <li><a href="{{ request.url_for('admin_profile') }}" style="display: block; padding: 10px 12px; border-radius: 4px; color: var(--text-primary);">Профиль</a></li>
@@ -100,7 +100,6 @@
             </header>
             <main> {% block content %}{% endblock %} </main>
         </div>
-        <!-- /CONTENT -->
     </div>
     
     <div id="modal-overlay" class="modal-overlay">
@@ -123,10 +122,6 @@
             const counter = document.getElementById('notification-counter');
             if (counter) {
                 counter.style.display = 'none';
-            }
-            const notificationsContainer = document.getElementById('notifications-container');
-            if (notificationsContainer) {
-                htmx.trigger(notificationsContainer, 'notifications-read');
             }
         });
     </script>

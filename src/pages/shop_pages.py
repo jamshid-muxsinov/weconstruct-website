@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Request, Depends
+import json
+from fastapi import APIRouter, Request, Depends, Response
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
@@ -67,7 +68,11 @@ async def htmx_post_request_quote(
             product_id=product_id, 
             source="website"
         )
-        return templates.TemplateResponse("shop/partials/_quote_success.html", {"request": request, "product": product})
+        # --- ИЗМЕНЕНИЕ: Добавляем заголовок HX-Trigger ---
+        response = templates.TemplateResponse("shop/partials/_quote_success.html", {"request": request, "product": product})
+        response.headers["HX-Trigger"] = json.dumps({"new-quote-request": None})
+        return response
+        # --- КОНЕЦ ИЗМЕНЕНИЯ ---
     else:
         context = {"request": request, "product": product, "form": form}
         return templates.TemplateResponse("shop/partials/_quote_form.html", context, status_code=422)
@@ -98,7 +103,9 @@ async def htmx_post_general_quote(
             product_id=None, 
             source="contact_form"
         )
-        return templates.TemplateResponse("shop/partials/_quote_success.html", {"request": request, "product": None})
+        response = templates.TemplateResponse("shop/partials/_quote_success.html", {"request": request, "product": None})
+        response.headers["HX-Trigger"] = json.dumps({"new-quote-request": None})
+        return response
     else:
         context = {"request": request, "form": form}
         return templates.TemplateResponse("shop/partials/_general_quote_form.html", context, status_code=422)

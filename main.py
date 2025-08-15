@@ -68,18 +68,14 @@ app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
 add_pagination(app)
 
-app.include_router(unprotected_router) # /admin/login, /admin/register
-app.include_router(admin_router, dependencies=[Depends(get_current_active_user)]) # /admin/*
+app.include_router(unprotected_router)
+app.include_router(admin_router, dependencies=[Depends(get_current_active_user)]) 
 
-# 2. Затем создаем отдельный роутер для публичного сайта с префиксом /{locale}
 site_router = APIRouter(prefix="/{locale}", dependencies=[Depends(set_locale)])
-site_router.include_router(shop_root_router) # /{locale}/
-site_router.include_router(shop_router, prefix="/shop") # /{locale}/shop/*
-
-# 3. Подключаем роутер публичного сайта к основному приложению
+site_router.include_router(shop_root_router) 
+site_router.include_router(shop_router, prefix="/shop") 
 app.include_router(site_router)
 
-# 4. Корневой редирект на /ru
 @app.get("/", include_in_schema=False)
 async def root_redirect(request: Request):
     return RedirectResponse(url="/ru")
@@ -92,7 +88,6 @@ async def robots_txt():
 @app.exception_handler(401)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
     if "text/html" in request.headers.get("accept", ""):
-        # ИЗМЕНЕНИЕ: Убеждаемся, что редирект идет на правильный URL без локали
         login_url = request.url_for('admin_login')
         return RedirectResponse(url=f"{login_url}?next={request.url.path}", status_code=302)
     return JSONResponse(
