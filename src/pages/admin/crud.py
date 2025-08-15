@@ -394,50 +394,49 @@ async def quoterequest_change_form_post(request: Request, pk: int, context: dict
     return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
 
 @router.get("/quoterequest/{pk}/delete/", response_class=HTMLResponse, name="admin_quoterequest_delete")
-@router.post("/quoterequest/{pk}/delete/", response_class=Response) # ИЗМЕНЕНИЕ: response_class=Response
+@router.post("/quoterequest/{pk}/delete/", response_class=Response)
 async def quoterequest_delete(
     request: Request,
     pk: int,
     context: dict = Depends(get_common_context),
     db: AsyncSession = Depends(get_db_session)
 ):
-    quote_req = await db.get(
-        QuoteRequest, 
-        pk, 
-        options=[selectinload(QuoteRequest.tasks)]
-    )
+    quote_req = await db.get(QuoteRequest, pk)
     if not quote_req:
         raise HTTPException(404, detail="QuoteRequest not found")
     
     if request.method == "POST":
         try:
-            for task in quote_req.tasks:
+            # Сначала удаляем связанные задачи, если они есть
+            tasks_to_delete = await db.execute(select(Task).where(Task.quote_request_id == pk))
+            for task in tasks_to_delete.scalars().all():
                 await db.delete(task)
-            
+
             await db.delete(quote_req)
             await db.commit()
             
-            # --- ИЗМЕНЕНИЕ: Вместо RedirectResponse используем HX-Redirect ---
-            response = Response(status_code=200) # Пустой ответ 200 OK
-            redirect_url = request.url_for("admin_quoterequest_list")
+            response = Response(status_code=200, content="Заявка удалена") # Пустой ответ для HTMX
+            
+            redirect_url = request.url_for(QUOTEREQUEST_META.list_url_name)
+            
             trigger_payload = {
                 "show-toast": {"message": "Заявка удалена", "type": "error"},
                 "updateKanban": True,
-                "update-notifications": True # Добавляем триггер для уведомлений
+                "update-notifications": True
             }
+            # Используем заголовок HX-Redirect для редиректа на стороне клиента
             response.headers["HX-Redirect"] = redirect_url
             response.headers["HX-Trigger"] = json.dumps(trigger_payload)
             return response
-            # --- КОНЕЦ ИЗМЕНЕНИЯ ---
         
         except IntegrityError:
             await db.rollback()
             context.update({
-                "error_message": "Не удалось удалить заявку."
+                "error_message": "Не удалось удалить заявку из-за связанных записей."
             })
             return templates.TemplateResponse("admin/500.html", context, status_code=500)
 
-    # Логика для GET запроса остается прежней
+    # Логика для GET-запроса (показ страницы подтверждения)
     back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name))
     
     context.update({
