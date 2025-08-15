@@ -53,14 +53,17 @@
               <i class="fas fa-chevron-down" :class="{ 'rotate-180': open }"></i>
             </button>
             <div x-show="open" class="lang-switcher__dropdown" x-transition x-cloak>
-              {% set route_name = request.scope['route'].name %}
-              {% set path_params = request.path_params.copy() %}
-              {% if request.state.locale == 'ru' %}
-                {% set _ = path_params.update({'locale': 'uz'}) %}
-                <a href="{{ url_for(route_name, **path_params) }}" class="lang-switcher__link">UZ</a>
-              {% else %}
-                {% set _ = path_params.update({'locale': 'ru'}) %}
-                <a href="{{ url_for(route_name, **path_params) }}" class="lang-switcher__link">RU</a>
+              {# --- ИЗМЕНЕНИЕ: Добавляем проверку на существование route --- #}
+              {% if request.scope.route %}
+                {% set route_name = request.scope.route.name %}
+                {% set path_params = request.path_params.copy() %}
+                {% if request.state.locale == 'ru' %}
+                  {% set _ = path_params.update({'locale': 'uz'}) %}
+                  <a href="{{ url_for(route_name, **path_params) }}" class="lang-switcher__link">UZ</a>
+                {% else %}
+                  {% set _ = path_params.update({'locale': 'ru'}) %}
+                  <a href="{{ url_for(route_name, **path_params) }}" class="lang-switcher__link">RU</a>
+                {% endif %}
               {% endif %}
             </div>
           </div>
@@ -78,14 +81,17 @@
           {% if request.state.locale == 'uz' %}Bog'lanish{% else %}Связаться с нами{% endif %}
         </button>
         <div class="lang-switcher lang-switcher--mobile">
-          {% set route_name = request.scope['route'].name %}
-          {% set path_params = request.path_params.copy() %}
-          {% if request.state.locale == 'ru' %}
-            {% set _ = path_params.update({'locale': 'uz'}) %}
-            <a href="{{ url_for(route_name, **path_params) }}" class="lang-switcher__link">O'zbekcha</a>
-          {% else %}
-            {% set _ = path_params.update({'locale': 'ru'}) %}
-            <a href="{{ url_for(route_name, **path_params) }}" class="lang-switcher__link">Русский</a>
+          {# --- ИЗМЕНЕНИЕ: Добавляем проверку на существование route --- #}
+          {% if request.scope.route %}
+            {% set route_name = request.scope.route.name %}
+            {% set path_params = request.path_params.copy() %}
+            {% if request.state.locale == 'ru' %}
+              {% set _ = path_params.update({'locale': 'uz'}) %}
+              <a href="{{ url_for(route_name, **path_params) }}" class="lang-switcher__link">O'zbekcha</a>
+            {% else %}
+              {% set _ = path_params.update({'locale': 'ru'}) %}
+              <a href="{{ url_for(route_name, **path_params) }}" class="lang-switcher__link">Русский</a>
+            {% endif %}
           {% endif %}
         </div>
       </div>
