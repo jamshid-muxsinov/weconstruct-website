@@ -427,7 +427,9 @@ async def quoterequest_delete(
                 "updateKanban": True,
                 "update-notifications": True
             }
-            response.headers["HX-Redirect"] = redirect_url
+            # --- ИЗМЕНЕНИЕ: Преобразуем URL в строку ---
+            response.headers["HX-Redirect"] = str(redirect_url)
+            # --- КОНЕЦ ИЗМЕНЕНИЯ ---
             response.headers["HX-Trigger"] = json.dumps(trigger_payload)
             return response
         
@@ -447,6 +449,7 @@ async def quoterequest_delete(
         "back_url": back_url
     })
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
+
 
 class InviteForm(wtforms.Form):
     note = wtforms.StringField('Заметка (для кого это приглашение)', validators=[wtforms.validators.DataRequired()])
