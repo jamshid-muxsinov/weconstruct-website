@@ -99,11 +99,8 @@
   </div>
 </section>
 
-<!-- src/templates/shop/about.html -->
-
 <section class="team">
   <div class="container">
-    <!-- Блок Основателя -->
     <div class="team__header section-header">
       <h2 class="section-title">{% if request.state.locale == 'uz' %}WeConstruct'ni yaratayotgan inson{% else %}Человек, который создает WeConstruct{% endif %}</h2>
       <p class="section-subtitle">{% if request.state.locale == 'uz' %}Kompaniya asosida uning g'oyaviy ilhomlantiruvchisi turadi.{% else %}В основе компании стоит её идейный вдохновитель.{% endif %}</p>
@@ -133,30 +130,31 @@
         <h2 class="section-title">{% if request.state.locale == 'uz' %}Asosiy jamoa{% else %}Ключевая команда{% endif %}</h2>
         <p class="section-subtitle">{% if request.state.locale == 'uz' %}Bizning asosiy qadriyatimiz — bu o'z ishini sevadigan va har bir loyihada mukammallikka intiladigan professionallar jamoasi.{% else %}Наша главная ценность — это команда профессионалов, которые любят свое дело и стремятся к совершенству в каждом проекте.{% endif %}</p>
     </div>
-    <div class="team__grid">
-      <div class="team-member team-member--no-image">
-        <div class="team-member__icon"><i class="fas fa-user-tie"></i></div>
-        <div class="team-member__info">
-          <h3 class="team-member__name">{% if request.state.locale == 'uz' %}Ibragimov Abduhamid{% else %}Ибрагимов Абдухамид{% endif %}</h3>
-          <p class="team-member__position">{% if request.state.locale == 'uz' %}Kompaniya direktori{% else %}Директор компании{% endif %}</p>
-          <p class="team-member__bio">{% if request.state.locale == 'uz' %}30 yillik biznes vakili. Qurilish, ishlab chiqarish, xo‘jalik yurituvchi subyekt va firmalar nazorati bo‘yicha mutaxassis.{% else %}30 лет в бизнесе. Специалист по контролю в сферах строительства, производства, а также надзору за хозяйствующими субъектами и фирмами.{% endif %}</p>
+    
+    <div class="figure-grid">
+      <div class="figure-card">
+        <div class="figure-card__icon"><i class="fas fa-user-tie"></i></div>
+        <div class="figure-card__content">
+            <h3 class="figure-card__name">{% if request.state.locale == 'uz' %}Ibragimov Abduhamid{% else %}Ибрагимов Абдухамид{% endif %}</h3>
+            <p class="figure-card__position">{% if request.state.locale == 'uz' %}Kompaniya direktori{% else %}Директор компании{% endif %}</p>
+            <p class="figure-card__bio">{% if request.state.locale == 'uz' %}30 yillik biznes vakili. Qurilish, ishlab chiqarish, xo‘jalik yurituvchi subyekt va firmalar nazorati bo‘yicha mutaxassis.{% else %}30 лет в бизнесе. Специалист по контролю в сферах строительства, производства, а также надзору за хозяйствующими субъектами и фирмами.{% endif %}</p>
         </div>
       </div>
 
-      <div class="team-member team-member--no-image">
-        <div class="team-member__icon"><i class="fas fa-hard-hat"></i></div>
-        <div class="team-member__info">
-          <h3 class="team-member__name">{% if request.state.locale == 'uz' %}Abduxukurov Abdug'affor{% else %}Абдушукуров Абдугаффор{% endif %}</h3>
-          <p class="team-member__position">{% if request.state.locale == 'uz' %}Qurilish - loyihalash ishlari rahbari{% else %}Руководитель строительно-проектных работ{% endif %}</p>
-          <p class="team-member__bio">{% if request.state.locale == 'uz' %}28 yillik qurilish konstruksiya sohasida tajriba. Sochi 2014, Kazan Arena, Flowers Garden kabi konstruktiv loyihalar hammuallifi va bosh quruvchisi.{% else %}28 лет опыта в сфере строительных конструкций. Соавтор и главный строитель конструктивных проектов, таких как Сочи 2014, Казань Арена, Flowers Garden.{% endif %}</p>
+      <div class="figure-card">
+        <div class="figure-card__icon"><i class="fas fa-hard-hat"></i></div>
+        <div class="figure-card__content">
+            <h3 class="figure-card__name">{% if request.state.locale == 'uz' %}Abduxukurov Abdug'affor{% else %}Абдушукуров Абдугаффор{% endif %}</h3>
+            <p class="figure-card__position">{% if request.state.locale == 'uz' %}Qurilish - loyihalash ishlari rahbari{% else %}Руководитель строительно-проектных работ{% endif %}</p>
+            <p class="figure-card__bio">{% if request.state.locale == 'uz' %}28 yillik qurilish konstruksiya sohasida tajriba. Sochi 2014, Kazan Arena, Flowers Garden kabi konstruktiv loyihalar hammuallifi va bosh quruvchisi.{% else %}28 лет опыта в сфере строительных конструкций. Соавтор и главный строитель конструктивных проектов, таких как Сочи 2014, Казань Арена, Flowers Garden.{% endif %}</p>
         </div>
       </div>
       
-      <div class="team-member team-member--no-image">
-        <div class="team-member__icon"><i class="fas fa-balance-scale"></i></div>
-        <div class="team-member__info">
-          <h3 class="team-member__name">{% if request.state.locale == 'uz' %}Qayumov Bahodir{% else %}Каюмов Баходир{% endif %}</h3>
-          <p class="team-member__position">{% if request.state.locale == 'uz' %}Yuridik masalalar va rejim bo'yicha maslahatchi{% else %}Советник по юридическим вопросам и режиму{% endif %}</p>
+      <div class="figure-card">
+        <div class="figure-card__icon"><i class="fas fa-balance-scale"></i></div>
+        <div class="figure-card__content">
+            <h3 class="figure-card__name">{% if request.state.locale == 'uz' %}Qayumov Bahodir{% else %}Каюмов Баходир{% endif %}</h3>
+            <p class="figure-card__position">{% if request.state.locale == 'uz' %}Yuridik masalalar va rejim bo'yicha maslahatchi{% else %}Советник по юридическим вопросам и режиму{% endif %}</p>
         </div>
       </div>
     </div>

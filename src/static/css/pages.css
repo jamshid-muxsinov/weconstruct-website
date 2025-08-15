@@ -308,15 +308,15 @@
   font-weight: 500;
 }
 
-/* ===== ABOUT PAGE: TEAM ===== */
+/* ===== ABOUT PAGE: TEAM (Основатель) ===== */
 .team {
   padding: var(--space-16) 0;
   background: transparent;
 }
-.team__grid {
+.team__founder {
   display: flex;
   justify-content: center;
-  align-items: center;
+  margin-top: 40px;
 }
 .team-member {
   display: grid;
@@ -328,7 +328,7 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--elevation-4);
   max-width: 800px;
-    transition: var(--transition-standard); 
+  transition: var(--transition-standard); 
 }
 .team-member:hover {
   transform: translateY(-8px);
@@ -384,6 +384,63 @@
     transform: translateY(-3px);
     box-shadow: var(--elevation-4);
 }
+
+/* ===== ABOUT PAGE: КЛЮЧЕВАЯ КОМАНДА (Новые стили) ===== */
+.figure-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+.figure-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--elevation-2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.figure-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--elevation-8);
+}
+.figure-card__icon {
+  font-size: 2rem;
+  color: var(--primary);
+  margin-bottom: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--primary-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.figure-card__content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Растягивает контент, чтобы карточки были одной высоты */
+}
+.figure-card__name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.figure-card__position {
+  color: var(--primary);
+  font-weight: 500;
+  margin-bottom: 16px;
+  min-height: 48px; /* Гарантирует одинаковую высоту для заголовка и должности */
+}
+.figure-card__bio {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-top: auto; /* Прижимает описание к низу, если карточка выше */
+}
+
 
 /* ===== ABOUT PAGE: PRODUCTION & LOGO STORY ===== */
 .production, .logo-story {
@@ -455,20 +512,17 @@
   align-items: center;
   padding: var(--space-16) 0;
 }
-
 .error-content {
   text-align: center;
   max-width: 600px;
   margin: 0 auto;
 }
-
 .error-icon {
   font-size: 6rem;
   color: var(--secondary);
   margin-bottom: var(--space-6);
   animation: pulse 2s infinite;
 }
-
 .error-title {
   font-size: var(--font-size-3xl);
   font-weight: 700;
@@ -476,7 +530,6 @@
   margin-bottom: var(--space-2);
   line-height: 1.2;
 }
-
 .error-code {
   font-size: var(--font-size-2xl);
   font-weight: 600;
@@ -484,14 +537,12 @@
   margin-bottom: var(--space-4);
   font-family: 'Courier New', monospace;
 }
-
 .error-message {
   font-size: var(--font-size-lg);
   color: var(--text-secondary);
   margin-bottom: var(--space-8);
   line-height: 1.6;
 }
-
 .error-actions {
   display: flex;
   gap: var(--space-4);
@@ -499,7 +550,6 @@
   flex-wrap: wrap;
   margin-bottom: var(--space-8);
 }
-
 .error-details {
   margin-top: var(--space-6);
   text-align: left;
@@ -507,14 +557,12 @@
   border-radius: var(--radius-md);
   padding: var(--space-4);
 }
-
 .error-details summary {
   cursor: pointer;
   font-weight: 600;
   color: var(--primary);
   margin-bottom: var(--space-3);
 }
-
 .error-stack {
   background: var(--bg-tertiary);
   padding: var(--space-3);
