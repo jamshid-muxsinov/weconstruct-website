@@ -5,17 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <title>{% block title %}WeConstruct — Модульные решения{% endblock %}</title>
-  <meta name="description" content="{% if request.state.locale == 'uz' %}Hayot va biznes uchun zamonaviy modulli yechimlar. Biz O'zbekistonda tez quriladigan binolarni loyihalashtiramiz, ishlab chiqaramiz va o'rnatamiz.{% else %}Современные модульные решения для жизни и бизнеса. Проектируем, производим и монтируем быстровозводимые здания в Узбекистане.{% endif %}">
+  <meta name="description" content="{% if request.state.locale == 'uz' %}Hayot va biznes uchun zamonaviy modulli yechimlar.{% else %}Современные модульные решения для жизни и бизнеса.{% endif %}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- ИЗМЕНЕНИЕ: Используем относительные пути для Font Awesome и наших стилей -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}">
   
-  <!-- FAVICONS -->
   <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
   <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
   <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
@@ -24,7 +22,6 @@
   <meta name="msapplication-TileColor" content="#07385a">
   <meta name="theme-color" content="#ffffff">
 
-  <!-- SCRIPTS -->
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
