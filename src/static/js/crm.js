@@ -1,5 +1,3 @@
-// src/static/js/crm.js
-
 document.addEventListener('DOMContentLoaded', function() {
 
     // --- Глобальная инициализация ---
@@ -107,13 +105,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ id: quoteId, status: newStatus })
             });
 
-            if (!response.ok) { // Успешным считаем любой 2xx статус
+            if (!response.ok) {
                 throw new Error(`Server error: ${response.status}`);
             }
             
             notyf.success('Статус обновлен!');
             
-            // После успешного сохранения, мы даем команду HTMX обновить доску.
             const kanbanContainer = document.getElementById('kanban-board-container');
             if (kanbanContainer) {
                 htmx.trigger(kanbanContainer, 'updateKanban');
@@ -121,7 +118,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('Failed to update status:', error);
-            // Возвращаем карточку на исходное место
             evt.from.insertBefore(card, evt.from.children[evt.oldIndex]);
             notyf.error('Не удалось обновить статус.');
         }
@@ -231,12 +227,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Показ уведомлений, отправленных с бэкенда через заголовок HX-Trigger
-    document.body.addEventListener('show-toast', function(event) {
-        const { message, type = 'success' } = event.detail;
-        notyf[type](message);
-    });
-    document.body.addEventListener('new-quote-request', function() {
-            htmx.trigger('body', 'update-notifications');
-            htmx.trigger('body', 'updateKanban'); 
-        });
+    // Этот обработчик теперь находится в base.html, так как он глобальный
 });

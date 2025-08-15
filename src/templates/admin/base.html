@@ -67,13 +67,11 @@
                     <button @click="open = !open" id="profile-menu-button" style="background: none; border: none; color: inherit; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px; border-radius: var(--border-radius-md);">
                         <span style="font-weight: 500;">Привет, {{ user.username }}!</span>
                         
-                        {# --- НАЧАЛО ИЗМЕНЕНИЯ --- #}
                         <div id="notification-indicator-wrapper" 
                              style="position: relative;"
                              hx-get="{{ request.url_for('admin_htmx_notification_indicator') }}"
                              hx-trigger="load, new-quote-request from:body, notifications-read from:body"
                              hx-swap="innerHTML">
-                             {# --- КОНЕЦ ИЗМЕНЕНИЯ --- #}
                              <!-- Этот блок будет заменен HTMX -->
                              <i class='bx bxs-user-circle' style="font-size: 2rem;"></i>
                              {% if unread_notifications_count > 0 %}
@@ -89,12 +87,10 @@
                          id="profile-menu" 
                          style="display: none; position: absolute; top: 110%; right: 0; background-color: var(--surface-1); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); width: 320px; box-shadow: var(--shadow-lg); z-index: 101;">
                         
-                        {# --- НАЧАЛО ИЗМЕНЕНИЯ --- #}
                         <div id="notifications-container"
                              hx-get="{{ request.url_for('admin_htmx_notifications') }}"
                              hx-trigger="click from:#profile-menu-button, new-quote-request from:body"
                              hx-swap="innerHTML">
-                             {# --- КОНЕЦ ИЗМЕНЕНИЯ --- #}
                              <div class="modal-loading-placeholder" style="padding: 20px 0;"><i class='bx bx-loader-alt bx-spin'></i></div>
                         </div>
                         
@@ -124,32 +120,42 @@
 
 	<script src="{{ url_for('static', path='js/crm.js') }}"></script>
     <script>
+        // Глобальный Notyf для всплывающих сообщений
         const notyf = new Notyf({ duration: 4000, position: { x: 'right', y: 'top' }, dismissible: true });
         
-        document.body.addEventListener('show-toast', function (e) { notyf.open({ type: e.detail.type || 'success', message: e.detail.message || 'Сохранено!' }); });
+        // Слушаем кастомное событие для показа сообщений
+        document.body.addEventListener('show-toast', function (e) {
+            notyf.open({ type: e.detail.type || 'success', message: e.detail.message || 'Сохранено!' });
+        });
 
-        // Система межвкладочного взаимодействия для уведомлений
+        // --- НОВАЯ СТАБИЛЬНАЯ ЛОГИКА ОБНОВЛЕНИЙ ---
+        
+        // 1. Слушаем событие htmx:afterSwap, которое происходит после любого успешного HTMX-запроса
         document.body.addEventListener('htmx:afterSwap', function(event) {
-            // Ищем заголовок от HTMX, который говорит, что была создана новая заявка
-            if (event.detail.xhr.getResponseHeader('HX-Trigger-After-Swap')?.includes('new-quote-request')) {
-                // Отправляем сигнал другим открытым вкладкам через localStorage
+            // Проверяем, есть ли в ответе от сервера заголовок 'HX-Trigger-After-Swap' с нашим событием
+            const triggerHeader = event.detail.xhr.getResponseHeader('HX-Trigger-After-Swap');
+            if (triggerHeader && triggerHeader.includes('new-quote-request')) {
+                
+                // Оповещаем ДРУГИЕ вкладки через localStorage
                 localStorage.setItem('broadcast_event', JSON.stringify({
                     name: 'new-quote-request',
                     timestamp: new Date().getTime() 
                 }));
-                 // Триггерим событие и в текущей вкладке, чтобы не ждать ответа от localStorage
+
+                // Немедленно оповещаем ТЕКУЩУЮ вкладку
                 htmx.trigger('body', 'new-quote-request');
             }
         });
 
-        // Слушаем сигналы от других вкладок
+        // 2. Слушаем изменения в localStorage, чтобы обновить ФОНОВЫЕ вкладки
         window.addEventListener('storage', function(event) {
+            // Убеждаемся, что событие наше
             if (event.key === 'broadcast_event') {
                 const data = JSON.parse(event.newValue);
-                // Проверяем, что событие не слишком старое, чтобы избежать дублирования
-                if (data && data.name && (new Date().getTime() - data.timestamp < 1500)) {
+                // Проверяем, что событие свежее (меньше 2 секунд), чтобы избежать дублей при открытии старой вкладки
+                if (data && data.name === 'new-quote-request' && (new Date().getTime() - data.timestamp < 2000)) {
                     // Генерируем событие HTMX в этой вкладке
-                    htmx.trigger('body', data.name);
+                    htmx.trigger('body', 'new-quote-request');
                 }
             }
         });
