@@ -420,10 +420,20 @@ async def quoterequest_delete(
             await db.delete(quote_req)
             await db.commit()
             
-            response = RedirectResponse(url=request.url_for(QUOTEREQUEST_META.list_url_name), status_code=303)
-            return set_hx_trigger_header(response, "Заявка удалена", "error")
+            redirect_url = request.url_for("admin_quoterequest_list")
+            
+            # --- ИЗМЕНЕНИЕ: Добавляем HX-Trigger для обновления канбана ---
+            response = RedirectResponse(url=redirect_url, status_code=303)
+            trigger_payload = json.dumps({
+                "show-toast": {"message": "Заявка удалена", "type": "error"},
+                "updateKanban": True 
+            })
+            response.headers["HX-Trigger"] = quote(trigger_payload)
+            return response
+            # --- КОНЕЦ ИЗМЕНЕНИЯ ---
         
         except IntegrityError:
+            # ... (остальная часть функции без изменений)
             await db.rollback()
             context.update({
                 "error_message": "Не удалось удалить заявку из-за непредвиденных связанных записей в системе."
@@ -439,6 +449,7 @@ async def quoterequest_delete(
         "back_url": back_url
     })
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
+
 
 class InviteForm(wtforms.Form):
     note = wtforms.StringField('Заметка (для кого это приглашение)', validators=[wtforms.validators.DataRequired()])

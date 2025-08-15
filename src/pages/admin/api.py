@@ -24,7 +24,15 @@ async def update_request_status(
     req = await crm_service.update_quote_request_status(db, update_data, current_user.id)
     if not req:
         raise HTTPException(status_code=404, detail="QuoteRequest not found")
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    
+    # ИЗМЕНЕНИЕ: Добавляем HX-Trigger для обновления канбана
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    trigger_payload = {
+        "updateKanban": True,
+        "show-toast": {"message": "Статус обновлен!"}
+    }
+    response.headers["HX-Trigger"] = json.dumps(trigger_payload)
+    return response
 
 
 @router.post("/quoterequests/{pk}/assign", name="admin_api_quote_assign")
@@ -42,6 +50,7 @@ async def assign_quote_request(
         raise HTTPException(status_code=404, detail="Заявка не найдена")
     
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    # ИЗМЕНЕНИЕ: Добавляем updateKanban в триггер
     trigger_payload = {
         "updateKanban": True,
         "closeSlideOver": True,

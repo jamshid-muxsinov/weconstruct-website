@@ -7,12 +7,15 @@
 
 <div class="card form-container">
     <p style="margin-bottom: 24px; font-size: 1.1rem;">Вы уверены, что хотите удалить "{{ original }}"? Это действие необратимо.</p>
-    
-    <form method="post">
+
+    <form hx-post="{{ request.url }}" 
+          hx-target="body" 
+          hx-push-url="true">
         <div class="form-actions">
-            <input type="submit" value="Да, я уверен" class="btn btn-danger">
+            <button type="submit" class="btn btn-danger">Да, я уверен</button>
             <a href="{{ back_url }}" class="btn btn-secondary">Отмена</a>
         </div>
     </form>
+    {# --- КОНЕЦ ИЗМЕНЕНИЯ --- #}
 </div>
 {% endblock %}
