@@ -1,3 +1,5 @@
+// src/static/js/crm.js
+
 document.addEventListener('DOMContentLoaded', function() {
 
     // --- Глобальная инициализация ---
@@ -126,26 +128,43 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Логика сайдбара ---
     function initSidebar() {
         const sidebar = document.getElementById('sidebar');
-        const collapseBtn = document.getElementById('sidebar-collapse-btn');
-        const expandBtn = document.getElementById('sidebar-expand-btn');
-        if (!sidebar || !collapseBtn || !expandBtn) return;
-        
-        document.documentElement.classList.remove('sidebar-collapsed-init');
-        
-        const applyState = (isCollapsed) => {
-            document.body.classList.toggle('sidebar-collapsed', isCollapsed);
-            sidebar.classList.toggle('collapsed', isCollapsed);
-        };
-        
-        const toggle = () => {
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            localStorage.setItem('sidebarCollapsed', !isCollapsed);
-            applyState(!isCollapsed);
-        };
+        if (!sidebar) return;
 
-        applyState(localStorage.getItem('sidebarCollapsed') === 'true');
-        collapseBtn.addEventListener('click', toggle);
-        expandBtn.addEventListener('click', toggle);
+        // Логика для десктопа (сворачивание)
+        const collapseBtn = document.getElementById('sidebar-collapse-btn');
+        const expandBtnDesktop = document.getElementById('sidebar-expand-btn'); // Кнопка на контенте
+        
+        if(collapseBtn && expandBtnDesktop) {
+            document.documentElement.classList.remove('sidebar-collapsed-init');
+            
+            const applyDesktopState = (isCollapsed) => {
+                document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+                sidebar.classList.toggle('collapsed', isCollapsed);
+            };
+            
+            const toggleDesktop = () => {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                localStorage.setItem('sidebarCollapsed', !isCollapsed);
+                applyDesktopState(!isCollapsed);
+            };
+
+            applyDesktopState(localStorage.getItem('sidebarCollapsed') === 'true');
+            collapseBtn.addEventListener('click', toggleDesktop);
+            expandBtnDesktop.addEventListener('click', toggleDesktop);
+        }
+
+        // --- НОВАЯ ЛОГИКА ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ ---
+        const mobileToggleBtn = document.getElementById('sidebar-expand-btn'); // Гамбургер
+        
+        if (mobileToggleBtn) {
+            mobileToggleBtn.addEventListener('click', (e) => {
+                // Предотвращаем срабатывание десктопной логики, если она тоже на этой кнопке
+                if (window.innerWidth <= 768) {
+                    e.stopPropagation();
+                    document.body.classList.toggle('sidebar-mobile-open');
+                }
+            });
+        }
     }
     
     // --- Логика экспорта ---
@@ -181,6 +200,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
         
+        // Используем MutationObserver чтобы отслеживать изменения в таблице (пагинация)
+        const observer = new MutationObserver(() => {
+            updateButtonState();
+        });
+        observer.observe(listContent, { childList: true, subtree: true });
+
         listContent.addEventListener('change', (event) => {
             const target = event.target;
             
@@ -223,9 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('slide-over-overlay')?.classList.add('show');
         }
         
+        // Переинициализируем компоненты, которые могли быть заменены через HTMX
         initializePageComponents();
     });
-
-    // Показ уведомлений, отправленных с бэкенда через заголовок HX-Trigger
-    // Этот обработчик теперь находится в base.html, так как он глобальный
 });

@@ -17,13 +17,13 @@
             {% for item in page.items %}
                 <tr>
                     {% if meta.model_name == 'quoterequest' %}
-                    <td>
+                    <td data-label="Select">
                         <input type="checkbox" class="row-checkbox" value="{{ item.id }}">
                     </td>
                     {% endif %}
 
                     {% for field_name in list_display %}
-                        <td>
+                        <td data-label="{{ field_name.replace('_', ' ')|capfirst }}">
                             {% set value = getattr(item, field_name, '') %}
 
                             {% if field_name == 'name' and meta.model_name == 'quoterequest' %}
@@ -34,7 +34,6 @@
                                 <a href="{{ request.url_for(meta.change_url_name, pk=item.id) }}" class="link-to-change">
                                     {{ value }}
                                 </a>
-                            {# --- ИЗМЕНЕНИЕ ЗДЕСЬ --- #}
                             {% elif field_name == 'status' and hasattr(item, 'get_status_display') %}
                                 <span class="status-badge status-{{ item.status.value }}">{{ item.get_status_display() }}</span>
                             {% elif field_name == 'source' and hasattr(item, 'get_source_display') %}
@@ -53,7 +52,7 @@
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="{{ list_display|length }}" class="empty-list-placeholder">
+                    <td colspan="{{ (list_display|length) + (1 if meta.model_name == 'quoterequest' else 0) }}" class="empty-list-placeholder">
                         Записей не найдено.
                     </td>
                 </tr>
@@ -62,7 +61,6 @@
     </table>
 </div>
 
-<!-- БЛОК ПАГИНАЦИИ -->
 {% if page.pages > 1 %}
 <div class="card" style="margin-top: 24px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
     <div>
