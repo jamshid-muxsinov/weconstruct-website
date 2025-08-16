@@ -22,17 +22,20 @@
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" as="style">
     <link rel="preload" href="{{ url_for('static', path='css/production.css') }}" as="style">
 
-    <!-- 2. Асинхронная загрузка стилей, которая не блокирует отрисовку -->
+    <!-- 2. Асинхронная загрузка стилей -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="{{ url_for('static', path='css/production.css') }}" media="print" onload="this.media='all'">
 
-    <!-- 3. Fallback для браузеров без JavaScript -->
+    <!-- 3. Fallback -->
     <noscript>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap">
         <link rel="stylesheet" href="{{ url_for('static', path='css/production.css') }}">
     </noscript>
 
+    <!-- СКРИПТЫ -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <!-- НОВАЯ СТРОКА: Подключаем плагин Intersect для Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 
 <body x-data="{ mobileMenuOpen: false }" @keydown.escape.window="mobileMenuOpen = false">
