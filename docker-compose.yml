@@ -12,10 +12,7 @@ services:
 
   web:
     build: .
-    # --- ИЗМЕНЕНИЕ: Убираем флаги из команды ---
     command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:app
-    # --- ИЗМЕНЕНИЕ: Добавляем переменную окружения для Gunicorn ---
-    # Это правильный способ сказать Gunicorn/Uvicorn доверять Nginx
     environment:
       - FORWARDED_ALLOW_IPS=*
     volumes:
