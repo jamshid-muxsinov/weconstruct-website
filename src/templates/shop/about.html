@@ -173,7 +173,7 @@
         <p class="production__description">{% if request.state.locale == 'uz' %}Biz Xitoydagi yetakchi zavod-ishlab chiqaruvchilar bilan bevosita hamkorlik qilamiz. Hamkorlarni sinchkovlik bilan tanlash va ishlab chiqarishning barcha bosqichlarida qat'iy nazorat qilish bizga yuqori sifatli mahsulot, zamonaviy texnologiyalar va ishonchli materiallardan foydalanishni kafolatlash imkonini beradi. Siz texnologik mahsulotni optimal narxda olasiz.{% else %}Мы сотрудничаем напрямую с ведущими заводами-производителями в Китае. Тщательный отбор партнёров и строгий контроль на всех этапах производства позволяют нам гарантировать высокое качество продукции, использование современных технологий и надёжных материалов. Вы получаете технологичный продукт по оптимальной цене.{% endif %}</p>
         <a href="{{ request.url_for('index', locale=request.state.locale) }}" class="btn btn--primary btn--lg">
           <span>{% if request.state.locale == 'uz' %}Mahsulotlarni ko'rish{% else %}Посмотреть продукцию{% endif %}</span>
-          <i class="fas fa-arrow-right"></i>
+          <svg class="icon icon-arrow" width="24" height="24"><use xlink:href="#icon-arrow-right"></use></svg>
         </a>
       </div>
     </div>
