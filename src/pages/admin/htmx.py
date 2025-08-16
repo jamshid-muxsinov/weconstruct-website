@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, 
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, desc
 from sqlalchemy.orm import selectinload, joinedload
 from slugify import slugify
 import wtforms
@@ -32,7 +32,6 @@ class TaskForm(wtforms.Form):
     title = StringField('Title')
     assigned_to_id = SelectField('Assigned To', coerce=int)
 
-# --- НОВЫЙ ЭНДПОИНТ ДЛЯ ПОЛЛИНГА КАНБАН-ДОСКИ ---
 @router.get("/kanban/poll-new", response_class=HTMLResponse, name="admin_htmx_kanban_poll_new")
 async def poll_new_kanban_cards(
     request: Request,
@@ -50,15 +49,14 @@ async def poll_new_kanban_cards(
             joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.assigned_to)
         )
-        .order_by(QuoteRequest.id.asc()) # Важно, чтобы они вставлялись в правильном порядке
+        .order_by(QuoteRequest.id.desc())
     )
     result = await db.execute(stmt)
     new_quotes = result.scalars().all()
 
     if not new_quotes:
-        return Response(status_code=204) # No Content, ничего не делаем
+        return Response(status_code=204)
 
-    # Рендерим каждую новую карточку и объединяем их HTML
     html_fragments = []
     for quote in new_quotes:
         fragment = templates.TemplateResponse(

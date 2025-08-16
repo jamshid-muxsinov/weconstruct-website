@@ -76,6 +76,9 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
     }
 
 async def get_kanban_data(db: AsyncSession, show_archived: bool = False):
+    """
+    Получает данные для канбан-доски.
+    """
     archived_statuses = [
         QuoteRequest.StatusEnum.COMPLETED,
         QuoteRequest.StatusEnum.CANCELLED,
@@ -88,7 +91,7 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False):
             joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.assigned_to)
         )
-        .order_by(QuoteRequest.created_at)
+        .order_by(QuoteRequest.created_at.desc())
     )
     
     if not show_archived:
