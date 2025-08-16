@@ -240,138 +240,377 @@ body.login-page { display: flex; justify-content: center; align-items: center; m
 .slide-over-body .detail-item span { text-align: left; }
 .slide-over-body .detail-item:last-child { border-bottom: none; }
 
-/* ... (весь ваш остальной CSS до конца) ... */
-
-
-/* --- НОВЫЙ БЛОК ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ --- */
+/* --- УЛУЧШЕННЫЙ И ОПТИМИЗИРОВАННЫЙ БЛОК ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ --- */
 @media (max-width: 992px) {
+    /* --- Основной контейнер и обертка --- */
+    #crm-container {
+        flex-direction: column; /* Временно, для упрощения логики */
+    }
+
+    #content-wrapper {
+        /* Убираем min-height, так как высота определяется контентом */
+        /* height: calc(100vh - 60px); */ /* Примерная высота хедера */
+        padding-top: 60px; /* Компенсируем высоту фиксированного хедера */
+    }
+
+    /* --- Сайдбар --- */
     #sidebar {
         position: fixed;
-        left: 0;
         top: 0;
+        left: 0;
+        width: 80vw; /* Ширина 80% экрана */
+        max-width: 300px; /* Максимальная ширина */
+        height: 100vh;
         transform: translateX(-100%);
+        z-index: 1050; /* Выше, чем оверлей */
+        box-shadow: var(--shadow-lg); /* Тень для выделения */
+        transition: transform 0.3s ease-in-out; /* Плавная анимация */
     }
-    
+
     body.sidebar-mobile-open #sidebar {
         transform: translateX(0);
     }
 
+    /* --- Оверлей для сайдбара --- */
     #content-wrapper::before {
         content: '';
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.5);
-        z-index: 1000;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background-color: rgba(0, 0, 0, 0.6); /* Темнее оверлей */
+        z-index: 1040; /* Ниже сайдбара */
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.3s ease, visibility 0.3s ease;
     }
-    
+
     body.sidebar-mobile-open #content-wrapper::before {
         opacity: 1;
         visibility: visible;
     }
-    
+
+    /* --- Кнопки сайдбара --- */
     #sidebar-collapse-btn {
-        display: none;
+        display: none; /* Скрываем кнопку сворачивания на моб. */
     }
 
     #sidebar-expand-btn {
         display: inline-flex;
-        position: fixed;
-        top: 16px;
-        left: 16px;
+        position: fixed; /* Фиксированное позиционирование */
+        top: 12px; /* Отступ сверху */
+        left: 12px; /* Отступ слева */
+        z-index: 1030; /* Выше контента, ниже сайдбара */
+        padding: 8px; /* Меньше паддинг */
+        border-radius: 50%; /* Круглая кнопка */
+        background-color: var(--surface-1); /* Фон */
+        border: 1px solid var(--border-color); /* Граница */
+        box-shadow: var(--shadow-md); /* Тень */
     }
 
-    #content-wrapper main {
-        padding: 16px;
-    }
-
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .page-header > div {
-        width: 100%;
-        display: flex;
-        justify-content: flex-start;
-        gap: 12px;
-    }
-
-    .page-header h1 {
-        font-size: 1.5rem;
-    }
-
-    .kanban-board {
-        flex-direction: column;
-        gap: 24px;
-        overflow-x: hidden;
-    }
-
-    .kanban-column {
-        width: 100%;
-    }
-
-    .table-wrapper {
-        overflow-x: auto;
-    }
-
-    .styled-table thead {
-        display: none;
-    }
-
-    .styled-table tr {
-        display: block;
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius-md);
-        margin-bottom: 16px;
-        padding: 8px;
-    }
-
-    .styled-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        text-align: right;
-        padding: 12px 8px;
-        border-top: none;
-    }
-
-    .styled-table td:not(:last-child) {
+    /* --- Хедер --- */
+    header {
+        position: fixed; /* Фиксируем хедер */
+        top: 0; left: 0; right: 0; /* Растягиваем на всю ширину */
+        padding: 12px 16px; /* Меньше паддинги */
+        z-index: 1020; /* Ниже кнопки меню */
+        /* background-color уже задан, оставляем */
+        /* backdrop-filter уже задан, оставляем */
         border-bottom: 1px solid var(--border-color);
     }
 
+    .page-header {
+        margin-top: 0; /* Убираем верхний отступ, так как хедер фиксирован */
+        padding-top: 60px; /* Компенсируем высоту фиксированного хедера */
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px; /* Меньше отступ */
+    }
+
+    .page-header > div {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap; /* Позволяем кнопкам переноситься */
+        justify-content: flex-start;
+        gap: 8px; /* Меньше отступ между кнопками */
+    }
+
+    .page-header h1 {
+        font-size: 1.5rem; /* Размер заголовка */
+        margin-bottom: 0; /* Убираем нижний отступ */
+    }
+
+    /* --- Профиль пользователя --- */
+    .user-profile {
+        /* ... стили для контейнера ... */
+    }
+
+    #profile-menu-button {
+        padding: 6px; /* Меньше паддинг */
+        gap: 6px; /* Меньше отступ */
+    }
+
+    .profile-name {
+        font-size: 0.9rem; /* Меньше шрифт */
+        max-width: 120px; /* Ограничиваем ширину */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    #notification-indicator-wrapper {
+        position: relative;
+    }
+
+    #notification-counter {
+        top: -4px; right: -4px; /* Подправляем позицию */
+        width: 16px; height: 16px; /* Меньше счетчик */
+        font-size: 10px;
+    }
+
+    .bx.bxs-user-circle {
+        font-size: 1.8rem; /* Размер иконки */
+    }
+
+    .bx.bx-chevron-down {
+        font-size: 1.4rem; /* Размер иконки */
+    }
+
+    #profile-menu {
+        width: 90vw; /* Ширина 90% экрана */
+        max-width: 300px; /* Максимальная ширина */
+        right: 0; left: auto; /* Прижимаем к правому краю */
+        margin-right: 12px; /* Отступ справа */
+    }
+
+    /* --- Основной контент --- */
+    #content-wrapper main {
+        padding: 16px; /* Отступы вокруг контента */
+    }
+
+    /* --- Карточки и формы --- */
+    .card {
+        padding: 16px; /* Меньше паддинг */
+    }
+
+    .form-container {
+        padding: 0; /* Убираем паддинг у контейнера формы */
+    }
+
+    .form-actions {
+        flex-direction: column; /* Кнопки в колонку */
+        align-items: stretch; /* Растягиваем кнопки */
+        gap: 8px; /* Отступ между кнопками */
+    }
+
+    .btn {
+        justify-content: center; /* Центрируем текст в кнопке */
+        width: 100%; /* Ширина 100% */
+    }
+
+    /* --- Таблицы --- */
+    .table-wrapper {
+        border-radius: var(--border-radius-md); /* Скругление углов */
+        box-shadow: var(--shadow-md); /* Тень */
+        overflow-x: auto; /* Горизонтальная прокрутка */
+        border: none; /* Убираем внешнюю границу */
+    }
+
+    .styled-table {
+        /* min-width: 600px; */ /* Минимальная ширина для прокрутки */
+    }
+
+    .styled-table thead {
+        display: none; /* Скрываем стандартный заголовок */
+    }
+
+    .styled-table,
+    .styled-table tbody,
+    .styled-table tr,
+    .styled-table td {
+        display: block; /* Блочная модель */
+        width: 100%; /* Ширина 100% */
+    }
+
+    .styled-table tr {
+        margin-bottom: 16px; /* Отступ между строками */
+        border: 1px solid var(--border-color); /* Граница строки */
+        border-radius: var(--border-radius-md); /* Скругление углов строки */
+        background-color: var(--surface-1); /* Фон строки */
+        box-shadow: var(--shadow-md); /* Тень строки */
+    }
+
+    .styled-table td {
+        position: relative; /* Для позиционирования псевдоэлемента */
+        padding: 12px 16px 12px 40%; /* Паддинг слева для метки */
+        text-align: right; /* Текст справа */
+        border-bottom: 1px solid var(--border-color); /* Граница снизу ячейки */
+    }
+
+    .styled-table td:last-child {
+        border-bottom: none; /* Убираем границу у последней ячейки */
+    }
+
     .styled-table td::before {
-        content: attr(data-label);
+        content: attr(data-label); /* Берем текст из data-label */
+        position: absolute;
+        left: 16px; /* Отступ слева */
+        top: 50%;
+        transform: translateY(-50%); /* Центрируем по вертикали */
+        width: 35%; /* Ширина метки */
+        text-align: left; /* Текст метки слева */
         font-weight: 600;
         color: var(--text-secondary);
-        text-align: left;
-        margin-right: 16px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .styled-table .link-to-change {
-        font-size: 1rem;
+        font-size: 1rem; /* Размер шрифта ссылки */
+        display: block; /* Блочный элемент */
+        text-align: right; /* Текст справа */
     }
 
-    .form-container, .card {
-        padding: 16px;
+    /* --- Канбан-доска --- */
+    .kanban-board {
+        flex-direction: column; /* Колонки в ряд */
+        gap: 20px; /* Отступ между колонками */
+        padding-bottom: 20px; /* Отступ снизу */
+        overflow-x: hidden; /* Убираем горизонтальную прокрутку у доски */
     }
-    
-    [style*="grid-template-columns"] {
-        grid-template-columns: 1fr !important;
+
+    .kanban-column {
+        width: 100%; /* Ширина 100% */
+        min-width: auto; /* Убираем минимальную ширину */
+    }
+
+    .kanban-column-header {
+        padding: 12px 16px; /* Меньше паддинг */
+    }
+
+    .kanban-column-body {
+        padding: 6px; /* Меньше паддинг */
+        min-height: 100px; /* Минимальная высота для перетаскивания */
+    }
+
+    .kanban-card {
+        padding: 12px; /* Меньше паддинг */
+        margin-bottom: 6px; /* Меньше отступ */
+    }
+
+    .kanban-card .card-title {
+        font-size: 1rem; /* Размер шрифта заголовка */
+    }
+
+    .kanban-card .card-subtitle {
+        font-size: 0.8rem; /* Размер шрифта подзаголовка */
+    }
+
+    .kanban-card .card-footer {
+        font-size: 0.7rem; /* Размер шрифта футера */
+    }
+
+    /* --- Модальные окна и слайд-оверы --- */
+    .modal-content {
+        width: 95vw; /* Ширина 95% экрана */
+        max-width: none; /* Убираем максимальную ширину */
+        margin: 10px; /* Отступы */
+        max-height: calc(100vh - 20px); /* Максимальная высота */
     }
 
     .slide-over-panel {
-        max-width: 100%;
+        width: 100vw; /* Ширина 100% экрана */
+        max-width: none; /* Убираем максимальную ширину */
     }
-}
 
-@media (max-width: 480px) {
-    .profile-name {
-        display: none;
+    .slide-over-header,
+    .modal-header {
+        padding: 12px 16px; /* Меньше паддинг */
+    }
+
+    .slide-over-body,
+    .modal-body {
+        padding: 16px; /* Меньше паддинг */
+    }
+
+    /* --- Страница входа --- */
+    body.login-page {
+        padding: 16px; /* Отступы вокруг */
+    }
+
+    .login-card {
+        padding: 24px; /* Меньше паддинг */
+        max-width: none; /* Убираем максимальную ширину */
+        width: 100%; /* Ширина 100% */
+        margin: 0; /* Убираем отступы */
+    }
+
+    /* --- Страница профиля --- */
+    .profile-grid {
+        grid-template-columns: 1fr; /* Одна колонка */
+        gap: 16px; /* Отступ между блоками */
+    }
+
+    .profile-card {
+        padding: 16px; /* Меньше паддинг */
+    }
+
+    /* --- Страница приглашений --- */
+    .invite-card {
+        padding: 16px; /* Меньше паддинг */
+    }
+
+    .invite-card-header {
+        flex-direction: column; /* Элементы в колонку */
+        align-items: flex-start; /* Выравнивание по левому краю */
+        gap: 8px; /* Отступ между элементами */
+    }
+
+    .invite-card-actions {
+        width: 100%; /* Ширина 100% */
+        justify-content: space-between; /* Кнопки по краям */
+    }
+
+    /* --- Очень маленькие экраны (до 480px) --- */
+    @media (max-width: 480px) {
+        #sidebar {
+            width: 90vw; /* Ширина 90% экрана */
+            max-width: 280px; /* Максимальная ширина */
+        }
+
+        #profile-menu {
+            width: 95vw; /* Ширина 95% экрана */
+            max-width: 280px; /* Максимальная ширина */
+            margin-right: 8px; /* Меньше отступ справа */
+        }
+
+        .page-header h1 {
+            font-size: 1.3rem; /* Ещё меньше размер заголовка */
+        }
+
+        .profile-name {
+            display: none; /* Скрываем имя пользователя */
+        }
+
+        .bx.bxs-user-circle {
+            font-size: 2rem; /* Размер иконки */
+        }
+
+        .bx.bx-chevron-down {
+            display: none; /* Скрываем стрелку */
+        }
+
+        .kanban-card .assignee .profile-name {
+            display: inline; /* Показываем имя пользователя в карточке */
+        }
+
+        .status-badge {
+            font-size: 0.7rem; /* Меньше шрифт */
+            padding: 2px 6px; /* Меньше паддинг */
+        }
+
+        .status-badge::before {
+            width: 5px; height: 5px; /* Меньше точка */
+        }
     }
 }
