@@ -1,5 +1,13 @@
 {% extends 'shop/base.html' %}
+{% block title %}{% if request.state.locale == 'uz' %}WeConstruct — O'zbekiston bo'ylab tez quriladigan binolar{% else %}WeConstruct — Быстровозводимые здания по всему Узбекистану{% endif %}{% endblock %}
 
+{% block meta_description %}
+{% if request.state.locale == 'uz' %}
+Zamonaviy modulli va karkasli uylar, ofislar va pavilyonlarni loyihalash, ishlab chiqarish va o'rnatish. WeConstruct bilan O'zbekistonda tez va sifatli qurilish.
+{% else %}
+Проектирование, производство и монтаж современных модульных и каркасных домов, офисов и павильонов. Быстрое и качественное строительство в Узбекистане с WeConstruct.
+{% endif %}
+{% endblock %}
 {% block content %}
 <section class="hero">
   <div class="hero__background-overlay"></div>
