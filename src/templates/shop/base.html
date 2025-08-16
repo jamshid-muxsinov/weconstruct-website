@@ -7,7 +7,7 @@
     <title>{{ t_get(page, 'title') if page else 'WeConstruct' }} | WeConstruct</title>
     <meta name="description" content="{{ t_get(page, 'meta_description') if page else 'Строительная компания WeConstruct' }}">
     
-    <!-- ================= FAVICONS START ================= -->
+    <!-- FAVICONS -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
@@ -16,30 +16,26 @@
     <meta name="msapplication-TileColor" content="#07385a">
     <meta name="theme-color" content="#ffffff">
 
-    <!-- 1. Предзагрузка шрифтов и стилей -->
+    <!-- СТИЛИ -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" as="style">
-    <link rel="preload" href="{{ url_for('static', path='css/production.css') }}" as="style">
-
-    <!-- 2. Асинхронная загрузка стилей -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="{{ url_for('static', path='css/production.css') }}" media="print" onload="this.media='all'">
-
-    <!-- 3. Fallback -->
     <noscript>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap">
         <link rel="stylesheet" href="{{ url_for('static', path='css/production.css') }}">
     </noscript>
 
-    <!-- СКРИПТЫ -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <!-- НОВАЯ СТРОКА: Подключаем плагин Intersect для Alpine.js -->
+    <!-- СКРИПТЫ (ИСПРАВЛЕН ПОРЯДОК) -->
     <script src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="{{ url_for('static', path='js/main.js') }}" defer></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
 </head>
 
 <body x-data="{ mobileMenuOpen: false }" @keydown.escape.window="mobileMenuOpen = false">
   {% include "shop/partials/_svg_icons.html" %}
+  
   <header class="site-header" :class="{ 'menu-open': mobileMenuOpen }">
     <nav class="navbar">
       <div class="container navbar__content">
@@ -61,10 +57,9 @@
           <div class="lang-switcher" x-data="{ open: false }" @click.away="open = false">
             <button @click="open = !open" class="lang-switcher__button">
               <span>{{ request.state.locale.upper() }}</span>
-              <i class="fas fa-chevron-down" :class="{ 'rotate-180': open }"></i>
+              <svg class="icon icon-chevron" width="16" height="16" :class="{ 'rotate-180': open }"><use xlink:href="#icon-chevron-down"></use></svg>
             </button>
             <div x-show="open" class="lang-switcher__dropdown" x-transition x-cloak>
-              {# --- ИЗМЕНЕНИЕ: Добавляем проверку на существование route --- #}
               {% if request.scope.route %}
                 {% set route_name = request.scope.route.name %}
                 {% set path_params = request.path_params.copy() %}
@@ -81,7 +76,7 @@
         </div>
 
         <button @click="mobileMenuOpen = !mobileMenuOpen" class="navbar__toggle" aria-label="Открыть меню" :aria-expanded="mobileMenuOpen.toString()">
-          <div class="navbar__toggle-icon"><span></span><span></span><span></span></div>
+          <svg class="icon icon-menu" width="24" height="24"><use xlink:href="#icon-menu"></use></svg>
         </button>
       </div>
 
@@ -92,7 +87,6 @@
           {% if request.state.locale == 'uz' %}Bog'lanish{% else %}Связаться с нами{% endif %}
         </button>
         <div class="lang-switcher lang-switcher--mobile">
-          {# --- ИЗМЕНЕНИЕ: Добавляем проверку на существование route --- #}
           {% if request.scope.route %}
             {% set route_name = request.scope.route.name %}
             {% set path_params = request.path_params.copy() %}
@@ -137,8 +131,8 @@
           <div>
             <h3 class="footer__section-title">{% if request.state.locale == 'uz' %}Kontaktlar{% else %}Контакты{% endif %}</h3>
             <ul class="footer__links footer__contacts">
-              <li><a href="tel:+998771308888" class="footer__contact"><i class="fas fa-phone-alt"></i><span>+998 77 130 88 88</span></a></li>
-              <li><a href="mailto:weconstructuz@gmail.com" class="footer__contact"><i class="fas fa-envelope"></i><span>weconstructuz@gmail.com</span></a></li>
+              <li><a href="tel:+998771308888" class="footer__contact"><svg class="icon icon-phone" width="24" height="24"><use xlink:href="#icon-phone"></use></svg><span>+998 77 130 88 88</span></a></li>
+              <li><a href="mailto:weconstructuz@gmail.com" class="footer__contact"><svg class="icon icon-envelope" width="24" height="24"><use xlink:href="#icon-envelope"></use></svg><span>weconstructuz@gmail.com</span></a></li>
             </ul>
           </div>
         </div>
