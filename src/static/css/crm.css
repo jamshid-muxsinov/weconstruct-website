@@ -57,7 +57,7 @@ html.sidebar-collapsed-init #sidebar-expand-btn {
     top: 0;
     display: flex;
     flex-direction: column;
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, transform 0.3s ease;
     z-index: 1001; 
 }
 
@@ -213,10 +213,10 @@ body.login-page { display: flex; justify-content: center; align-items: center; m
 .modal-loading-placeholder { padding: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); }
 .modal-loading-placeholder .bx { font-size: 40px; margin-bottom: 15px; }
 
-.table-wrapper { background-color: var(--surface-1); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); overflow: hidden; }
+.table-wrapper { background-color: var(--surface-1); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); overflow: auto; }
 .styled-table { width: 100%; border-collapse: collapse; }
 .styled-table thead { background-color: var(--bg-sidebar); }
-.styled-table th { padding: 12px 16px; text-align: left; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.styled-table th { padding: 12px 16px; text-align: left; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
 .styled-table td { padding: 16px; border-top: 1px solid var(--border-color); font-size: 0.875rem; }
 .styled-table tbody tr:hover { background-color: var(--surface-2); }
 .styled-table .link-to-change { font-weight: 500; color: var(--text-primary); }
@@ -224,7 +224,7 @@ body.login-page { display: flex; justify-content: center; align-items: center; m
 .empty-list-placeholder { padding: 40px; text-align: center; color: var(--text-secondary); font-style: italic; }
 
 .form-container { max-width: 800px; }
-.form-actions { border-top: 1px solid var(--border-color); padding-top: 24px; margin-top: 24px; display: flex; justify-content: flex-start; gap: 12px; }
+.form-actions { border-top: 1px solid var(--border-color); padding-top: 24px; margin-top: 24px; display: flex; justify-content: flex-start; gap: 12px; flex-wrap: wrap; }
 
 .slide-over-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 9990; opacity: 0; visibility: hidden; transition: var(--transition-medium); }
 .slide-over-overlay.show { opacity: 1; visibility: visible; }
@@ -242,34 +242,64 @@ body.login-page { display: flex; justify-content: center; align-items: center; m
 
 /* ... (весь ваш остальной CSS до конца) ... */
 
+
 /* --- НОВЫЙ БЛОК ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ --- */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     #sidebar {
         position: fixed;
         left: 0;
         top: 0;
         transform: translateX(-100%);
-        transition: transform 0.3s ease;
     }
     
     body.sidebar-mobile-open #sidebar {
         transform: translateX(0);
     }
+
+    #content-wrapper::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    
+    body.sidebar-mobile-open #content-wrapper::before {
+        opacity: 1;
+        visibility: visible;
+    }
     
     #sidebar-collapse-btn {
-        display: none; /* Скрываем кнопку сворачивания на десктопе */
+        display: none;
     }
 
-    /* Показываем кнопку-гамбургер всегда */
     #sidebar-expand-btn {
         display: inline-flex;
-        position: fixed; /* Фиксируем, чтобы была доступна при прокрутке */
+        position: fixed;
         top: 16px;
         left: 16px;
     }
 
     #content-wrapper main {
         padding: 16px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .page-header > div {
+        width: 100%;
+        display: flex;
+        justify-content: flex-start;
+        gap: 12px;
     }
 
     .page-header h1 {
@@ -279,13 +309,17 @@ body.login-page { display: flex; justify-content: center; align-items: center; m
     .kanban-board {
         flex-direction: column;
         gap: 24px;
+        overflow-x: hidden;
     }
 
     .kanban-column {
         width: 100%;
     }
 
-    /* Трансформация таблиц в карточки */
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
     .styled-table thead {
         display: none;
     }
@@ -320,10 +354,9 @@ body.login-page { display: flex; justify-content: center; align-items: center; m
     }
 
     .styled-table .link-to-change {
-        font-size: 1rem; /* Увеличим для удобства нажатия */
+        font-size: 1rem;
     }
 
-    /* Адаптация форм и многоколоночных сеток */
     .form-container, .card {
         padding: 16px;
     }
@@ -335,8 +368,10 @@ body.login-page { display: flex; justify-content: center; align-items: center; m
     .slide-over-panel {
         max-width: 100%;
     }
+}
 
-    .user-profile .profile-name { /* Добавим класс для имени пользователя */
+@media (max-width: 480px) {
+    .profile-name {
         display: none;
     }
 }

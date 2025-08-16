@@ -65,7 +65,7 @@
                 {% if user %}
                 <div class="user-profile" style="position: relative;" x-data="{ open: false }" @click.away="open = false">
                     <button @click="open = !open" id="profile-menu-button" style="background: none; border: none; color: inherit; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px; border-radius: var(--border-radius-md);">
-                        <span style="font-weight: 500;">Привет, {{ user.username }}!</span>
+                        <span class="profile-name" style="font-weight: 500;">Привет, {{ user.username }}!</span>
                         
                         <div id="notification-indicator-wrapper" 
                              style="position: relative;"

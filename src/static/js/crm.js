@@ -1,5 +1,3 @@
-// src/static/js/crm.js
-
 document.addEventListener('DOMContentLoaded', function() {
 
     // --- Глобальная инициализация ---
@@ -42,6 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Управление модальными окнами и сайд-оверами ---
     function initPopups() {
         const closeModal = (overlay) => {
+            if (!overlay) return;
             overlay.classList.remove('show');
             const content = overlay.querySelector('#modal-body-content, #slide-over-content');
             if (content) {
@@ -130,9 +129,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
 
-        // Логика для десктопа (сворачивание)
+        // --- ЛОГИКА ДЛЯ ДЕСКТОПА (СВОРАЧИВАНИЕ) ---
         const collapseBtn = document.getElementById('sidebar-collapse-btn');
-        const expandBtnDesktop = document.getElementById('sidebar-expand-btn'); // Кнопка на контенте
+        const expandBtnDesktop = document.querySelector('body:not(.sidebar-mobile-open) #sidebar-expand-btn');
         
         if(collapseBtn && expandBtnDesktop) {
             document.documentElement.classList.remove('sidebar-collapsed-init');
@@ -143,6 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             
             const toggleDesktop = () => {
+                if (window.innerWidth <= 992) return;
                 const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
                 localStorage.setItem('sidebarCollapsed', !isCollapsed);
                 applyDesktopState(!isCollapsed);
@@ -153,15 +153,38 @@ document.addEventListener('DOMContentLoaded', function() {
             expandBtnDesktop.addEventListener('click', toggleDesktop);
         }
 
-        // --- НОВАЯ ЛОГИКА ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ ---
-        const mobileToggleBtn = document.getElementById('sidebar-expand-btn'); // Гамбургер
+        // --- УЛУЧШЕННАЯ ЛОГИКА ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ ---
+        const mobileToggleBtn = document.getElementById('sidebar-expand-btn');
+        const contentWrapper = document.getElementById('content-wrapper');
+
+        function openMobileMenu() {
+            document.body.classList.add('sidebar-mobile-open');
+            contentWrapper.addEventListener('click', closeMobileMenuOnOverlayClick, { once: true });
+        }
+
+        function closeMobileMenu() {
+            document.body.classList.remove('sidebar-mobile-open');
+        }
+        
+        function closeMobileMenuOnOverlayClick(e) {
+            // Закрываем только если клик был по оверлею, а не по контенту внутри
+            if (e.target === contentWrapper) {
+                closeMobileMenu();
+            } else {
+                // Если клик был не по оверлею, снова вешаем слушатель
+                contentWrapper.addEventListener('click', closeMobileMenuOnOverlayClick, { once: true });
+            }
+        }
         
         if (mobileToggleBtn) {
             mobileToggleBtn.addEventListener('click', (e) => {
-                // Предотвращаем срабатывание десктопной логики, если она тоже на этой кнопке
-                if (window.innerWidth <= 768) {
-                    e.stopPropagation();
-                    document.body.classList.toggle('sidebar-mobile-open');
+                if (window.innerWidth <= 992) {
+                    e.stopPropagation(); // Важно, чтобы не сработал десктопный клик
+                    if (document.body.classList.contains('sidebar-mobile-open')) {
+                        closeMobileMenu();
+                    } else {
+                        openMobileMenu();
+                    }
                 }
             });
         }
@@ -185,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const selectedIds = getSelectedIds();
             const count = selectedIds.length;
 
-            exportBtn.disabled = count === 0;
+            if (exportBtn) exportBtn.disabled = count === 0;
             
             if (exportBtnText) {
                 exportBtnText.textContent = count > 0 
@@ -200,7 +223,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
         
-        // Используем MutationObserver чтобы отслеживать изменения в таблице (пагинация)
         const observer = new MutationObserver(() => {
             updateButtonState();
         });
@@ -219,12 +241,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        exportBtn.addEventListener('click', () => {
-            const ids = getSelectedIds().join(',');
-            if (ids) {
-                window.location.href = `/admin/quoterequest/export/?ids=${ids}`;
-            }
-        });
+        if(exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                const ids = getSelectedIds().join(',');
+                if (ids) {
+                    window.location.href = `/admin/quoterequest/export/?ids=${ids}`;
+                }
+            });
+        }
         
         updateButtonState();
     }
@@ -248,7 +272,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('slide-over-overlay')?.classList.add('show');
         }
         
-        // Переинициализируем компоненты, которые могли быть заменены через HTMX
         initializePageComponents();
     });
 });
