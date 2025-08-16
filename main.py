@@ -1,3 +1,5 @@
+# main.py
+
 import traceback
 from starlette.responses import Response, FileResponse
 from src.pages.jinja_config import templates 
@@ -20,14 +22,26 @@ from src.core.cache import init_cache, cleanup_cache
 from src.core.middleware import CacheMiddleware, RateLimitMiddleware
 from src.core.cache_utils import schedule_cache_cleanup, warm_up_cache
 
-app = FastAPI(
-    title="WeConstruct CRM & Website",
-    description="Backend for WeConstruct CRM and public website",
-    version="1.0.0"
-)
-
 settings = get_settings()
 BASE_DIR = FilePath(__file__).resolve().parent
+
+# +++ ИЗМЕНЕНИЕ 1: Создаем словарь с параметрами для FastAPI +++
+# Это позволит нам динамически отключать документацию в продакшене.
+fastapi_kwargs = {
+    "title": "WeConstruct CRM & Website",
+    "description": "Backend for WeConstruct CRM and public website",
+    "version": "1.0.0"
+}
+
+# Если DEBUG=False (т.е. в продакшене), отключаем документацию
+if not settings.DEBUG:
+    fastapi_kwargs["docs_url"] = None
+    fastapi_kwargs["redoc_url"] = None
+    fastapi_kwargs["openapi_url"] = None
+
+# +++ ИЗМЕНЕНИЕ 2: Используем распаковку словаря для инициализации FastAPI +++
+app = FastAPI(**fastapi_kwargs)
+# +++ КОНЕЦ ИЗМЕНЕНИЙ +++
 
 async def set_locale(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
     if locale not in ["ru", "uz"]:
@@ -87,10 +101,8 @@ async def robots_txt():
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def get_sitemap():
-    """
-    Отдаёт статический файл sitemap.xml.
-    """
     return FileResponse(BASE_DIR / "src/static/sitemap.xml", media_type="application/xml")
+
 @app.exception_handler(401)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
     if "text/html" in request.headers.get("accept", ""):
@@ -124,7 +136,6 @@ async def not_found_exception_handler(request: Request, exc: Exception) -> Respo
         }
         return templates.TemplateResponse("shop/error.html", context, status_code=404)
     else:
-        # --- ИЗМЕНЕНИЕ: Добавляем проверку, чтобы не было рекурсии при запросе robots.txt ---
         if hasattr(request.scope.get('route'), 'name') and request.scope['route'].name in ['robots_txt', 'get_sitemap']:
             return Response(status_code=404, content="Not found")
         return JSONResponse(status_code=404, content={"detail": "Not found"})
