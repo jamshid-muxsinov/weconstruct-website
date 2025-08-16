@@ -14,28 +14,14 @@
     <link rel="canonical" href="{{ request.url }}">
     <meta name="robots" content="index, follow">
 
-    <!-- =================================================================================== -->
-    <!-- 2. OPEN GRAPH / FACEBOOK / TELEGRAM -->
-    <!-- =================================================================================== -->
-    {% set og_image_url = block('og_image') or url_for('static', path='img/weconstruct_og_image.jpg') %}
-    
-    <meta property="og:title" content="{% block og_title %}{% block title_og_fallback %}{% endblock %}{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}{% block meta_description_og_fallback %}{% endblock %}{% endblock %}">
-    <meta property="og:image" content="{{ request.url.scheme }}://{{ request.url.netloc }}{{ og_image_url }}">
+    <meta property="og:title" content="{% block og_title %}{% block title %}{% endblock %}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{% block meta_description %}{% endblock %}{% endblock %}">
+    <meta property="og:image" content="{{ request.url.scheme }}://{{ request.url.netloc }}{% block og_image %}{{ url_for('static', path='img/weconstruct_og_image.jpg') }}{% endblock %}">
     <meta property="og:url" content="{{ request.url }}">
     <meta property="og:site_name" content="WeConstruct">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="{{ 'ru_RU' if request.state.locale == 'ru' else 'uz_UZ' }}">
 
-    <!-- =================================================================================== -->
-    <!-- 3. TWITTER CARD -->
-    <!-- =================================================================================== -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block twitter_title %}{% block title_twitter_fallback %}{% endblock %}{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}{% block meta_description_twitter_fallback %}{% endblock %}{% endblock %}">
-    <meta name="twitter:image" content="{{ request.url.scheme }}://{{ request.url.netloc }}{{ og_image_url }}">
-
-    <!-- ... остальная часть <head> без изменений ... -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
