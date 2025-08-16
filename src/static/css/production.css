@@ -220,7 +220,6 @@ select {
   opacity: 0;
   transform: translateY(20px);
 }
-
 /* ===== WECONSTRUCT - LAYOUT STYLES (Cleaned) ===== */
 
 /* ===== LAYOUT: NAVIGATION ===== */
@@ -650,7 +649,6 @@ select {
 .lang-switcher--mobile .lang-switcher__link:hover {
   color: var(--primary);
 }
-
 
 .btn {
   display: inline-flex;
@@ -1591,7 +1589,6 @@ select {
     align-items: center;
   }
 }
-
 /* ===== WECONSTRUCT - RESPONSIVE & ACCESSIBILITY STYLES (Final) ===== */
 
 /* ===== ANIMATIONS ===== */
@@ -1976,17 +1973,3 @@ select {
   * { background: white !important; color: black !important; box-shadow: none !important; }
   .page-title, .section-title, .text-primary { color: black !important; }
 }
-
-.icon {
-    display: inline-block;
-    vertical-align: middle;
-    width: 1em;
-    height: 1em;
-    fill: currentColor;
-}
-
-@import url('base.css');
-@import url('layout.css');
-@import url('components.css');
-@import url('pages.css');
-@import url('responsive.css');
