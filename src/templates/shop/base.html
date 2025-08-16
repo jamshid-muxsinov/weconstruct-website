@@ -23,7 +23,13 @@
     <meta property="og:type" content="website">
     <meta property="og:locale" content="{{ 'ru_RU' if request.state.locale == 'ru' else 'uz_UZ' }}">
 
-    <!-- ... FAVICONS И СТИЛИ (оставляем без изменений) ... -->
+    <!-- =================================================================================== -->
+    <!-- 4. FAVICONS И СТИЛИ -->
+    <!-- =================================================================================== -->
+    <!-- Главная иконка в формате SVG для современных браузеров -->
+    <link rel="icon" href="{{ url_for('static', path='favicons/favicon.svg') }}" type="image/svg+xml">
+
+    <!-- Фолбэки для старых браузеров и Apple-устройств -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
