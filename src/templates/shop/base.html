@@ -1,27 +1,29 @@
 <!DOCTYPE html>
 <html lang="{{ request.state.locale }}">
-<!-- src/templates/shop/base.html -->
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token(request) }}">
 
     <!-- =================================================================================== -->
-    <!-- 1. ОСНОВНЫЕ SEO-ТЕГИ -->
+    <!-- SEO-ТЕГИ (будут определены в дочерних шаблонах) -->
     <!-- =================================================================================== -->
     <title>{% block title %}WeConstruct{% endblock %}</title>
-    <meta name="description" content="{% block meta_description %}{% if request.state.locale == 'uz' %}O'zbekistonda tez quriladigan zamonaviy binolar.{% else %}Современные быстровозводимые здания в Узбекистане.{% endif %}{% endblock %}">
+    <meta name="description" content="{% block meta_description %}Современные быстровозводимые здания в Узбекистане.{% endblock %}">
     <link rel="canonical" href="{{ request.url }}">
     <meta name="robots" content="index, follow">
 
-    <meta property="og:title" content="{% block og_title %}{% block title %}{% endblock %}{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}{% block meta_description %}{% endblock %}{% endblock %}">
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="{% block og_title %}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{% endblock %}">
     <meta property="og:image" content="{{ request.url.scheme }}://{{ request.url.netloc }}{% block og_image %}{{ url_for('static', path='img/weconstruct_og_image.jpg') }}{% endblock %}">
     <meta property="og:url" content="{{ request.url }}">
     <meta property="og:site_name" content="WeConstruct">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="{{ 'ru_RU' if request.state.locale == 'ru' else 'uz_UZ' }}">
 
+    <!-- ... FAVICONS И СТИЛИ (оставляем без изменений) ... -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">

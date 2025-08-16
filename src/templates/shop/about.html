@@ -1,13 +1,18 @@
 {% extends 'shop/base.html' %}
-{% block title %}{% if request.state.locale == 'uz' %}Kompaniya haqida — WeConstruct{% else %}О компании — WeConstruct{% endif %}{% endblock %}
 
-{% block meta_description %}
+{% set page_title %}{% if request.state.locale == 'uz' %}Kompaniya haqida — WeConstruct{% else %}О компании — WeConstruct{% endif %}{% endset %}
+{% set page_description %}
 {% if request.state.locale == 'uz' %}
 WeConstruct — bu O'zbekistonda har bir inson uchun zamonaviy va qulay makonlarni yaratish missiyasi bilan birlashgan muhandislar, dizaynerlar va quruvchilar jamoasi.
 {% else %}
 WeConstruct — это команда инженеров, дизайнеров и строителей, объединенных миссией сделать современные и комфортные пространства доступными для каждого в Узбекистане.
 {% endif %}
-{% endblock %}
+{% endset %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block meta_description %}{{ page_description }}{% endblock %}
+{% block og_title %}{{ page_title }}{% endblock %}
+{% block og_description %}{{ page_description }}{% endblock %}
 
 {% block content %}
 <section class="page-header">
