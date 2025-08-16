@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- Логика сайдбара (улучшенная для мобильных) ---
+    // --- Логика сайдбара ---
     function initSidebar() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
@@ -155,53 +155,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // --- УЛУЧШЕННАЯ ЛОГИКА ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ ---
         const mobileToggleBtn = document.getElementById('sidebar-expand-btn');
-        const contentWrapper = document.getElementById('content-wrapper'); // Оверлей
+        const contentWrapper = document.getElementById('content-wrapper');
 
-        // Функция для закрытия мобильного меню
-        function closeMobileMenu() {
-            document.body.classList.remove('sidebar-mobile-open');
-            // Убираем обработчик клика по оверлею
-            contentWrapper.removeEventListener('click', closeMobileMenuOnOverlayClick);
-        }
-
-        // Функция для открытия мобильного меню
         function openMobileMenu() {
             document.body.classList.add('sidebar-mobile-open');
-            // Добавляем обработчик клика по оверлею (самому contentWrapper)
-            // Это работает, потому что оверлей это псевдоэлемент, но сам contentWrapper
-            // перекрывает весь экран когда меню открыто.
-            contentWrapper.addEventListener('click', closeMobileMenuOnOverlayClick);
+            contentWrapper.addEventListener('click', closeMobileMenuOnOverlayClick, { once: true });
         }
 
-        // Обработчик клика по оверлею (contentWrapper)
+        function closeMobileMenu() {
+            document.body.classList.remove('sidebar-mobile-open');
+        }
+        
         function closeMobileMenuOnOverlayClick(e) {
-            // Проверяем, что клик был не по самому сайдбару
-            if (!sidebar.contains(e.target)) {
+            // Закрываем только если клик был по оверлею, а не по контенту внутри
+            if (e.target === contentWrapper) {
                 closeMobileMenu();
+            } else {
+                // Если клик был не по оверлею, снова вешаем слушатель
+                contentWrapper.addEventListener('click', closeMobileMenuOnOverlayClick, { once: true });
             }
         }
-
-
-        // Обработчик клика по кнопке меню
+        
         if (mobileToggleBtn) {
             mobileToggleBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Останавливаем всплытие, чтобы не сработал клик по contentWrapper
-                if (document.body.classList.contains('sidebar-mobile-open')) {
-                    closeMobileMenu();
-                } else {
-                    openMobileMenu();
+                if (window.innerWidth <= 992) {
+                    e.stopPropagation(); // Важно, чтобы не сработал десктопный клик
+                    if (document.body.classList.contains('sidebar-mobile-open')) {
+                        closeMobileMenu();
+                    } else {
+                        openMobileMenu();
+                    }
                 }
             });
         }
-
-        // Закрытие меню при изменении размера экрана на десктоп
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 992) {
-                closeMobileMenu(); // Закрываем мобильное меню
-            }
-            // Тут можно добавить логику для десктопа, если нужно
-            // applyDesktopState(localStorage.getItem('sidebarCollapsed') === 'true');
-        });
     }
     
     // --- Логика экспорта ---
