@@ -85,6 +85,12 @@ async def root_redirect(request: Request):
 async def robots_txt():
     return FileResponse(BASE_DIR / "src/static/robots.txt")
 
+@app.get("/sitemap.xml", include_in_schema=False)
+async def get_sitemap():
+    """
+    Отдаёт статический файл sitemap.xml.
+    """
+    return FileResponse(BASE_DIR / "src/static/sitemap.xml", media_type="application/xml")
 @app.exception_handler(401)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
     if "text/html" in request.headers.get("accept", ""):
@@ -118,7 +124,8 @@ async def not_found_exception_handler(request: Request, exc: Exception) -> Respo
         }
         return templates.TemplateResponse("shop/error.html", context, status_code=404)
     else:
-        if hasattr(request.scope.get('route'), 'name') and request.scope['route'].name == 'robots_txt':
+        # --- ИЗМЕНЕНИЕ: Добавляем проверку, чтобы не было рекурсии при запросе robots.txt ---
+        if hasattr(request.scope.get('route'), 'name') and request.scope['route'].name in ['robots_txt', 'get_sitemap']:
             return Response(status_code=404, content="Not found")
         return JSONResponse(status_code=404, content={"detail": "Not found"})
 
