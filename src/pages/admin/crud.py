@@ -81,6 +81,12 @@ class QuoteRequestForm(wtforms.Form):
     status = wtforms.SelectField('Статус', choices=[(s.value, s.name.replace('_', ' ').capitalize()) for s in QuoteRequest.StatusEnum], default=QuoteRequest.StatusEnum.NEW.value)
     assigned_to_id = wtforms.SelectField('Ответственный', coerce=int, validators=[wtforms.validators.Optional()])
     
+    business_type = wtforms.StringField('Тип бизнеса', validators=[wtforms.validators.Optional()])
+    dimensions = wtforms.StringField('Предполагаемые размеры', validators=[wtforms.validators.Optional()])
+    investment_details = wtforms.TextAreaField('Бюджет и детали (Sarmoysi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
+    conclusion = wtforms.TextAreaField('Выводы менеджера (Xulosasi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
+    additional_info = wtforms.TextAreaField('Дополнительные сведения', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
+
     def validate(self, extra_validators=None):
         rv = super().validate(extra_validators)
         if not rv: return False

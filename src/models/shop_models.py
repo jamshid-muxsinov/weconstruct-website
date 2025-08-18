@@ -62,6 +62,7 @@ class ContactNote(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     note: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
     is_pinned: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     
     contact_id: Mapped[int] = mapped_column(ForeignKey("shop_contact.id", ondelete="CASCADE"))
@@ -224,6 +225,12 @@ class QuoteRequest(Base):
 
     tasks: Mapped[List["Task"]] = relationship(back_populates="quote_request", cascade="all, delete-orphan")
     status_logs: Mapped[List["StatusChangeLog"]] = relationship(back_populates="quote_request", cascade="all, delete-orphan")
+
+    business_type: Mapped[Optional[str]] = mapped_column(String(255), comment="Тип бизнеса клиента")
+    dimensions: Mapped[Optional[str]] = mapped_column(String(255), comment="Размеры объекта")
+    investment_details: Mapped[Optional[str]] = mapped_column(Text, comment="Бюджет/Инвестиции (Sarmoysi)")
+    conclusion: Mapped[Optional[str]] = mapped_column(Text, comment="Заключение/Выводы (Xulosasi)")
+    additional_info: Mapped[Optional[str]] = mapped_column(Text, comment="Дополнительные сведения")
 
     @property
     def name(self):

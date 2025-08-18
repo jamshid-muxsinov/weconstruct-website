@@ -12,12 +12,12 @@ DB_SERVICE="db"
 BACKUP_DIR="/var/backups/weconstruct_db"
 # --- КОНЕЦ НАСТРОЕК ---
 
-# --- ИСПРАВЛЕНИЕ №1: Надежная загрузка .env файла ---
-# Этот метод корректно работает со сложными значениями (URL, пробелы и т.д.)
+# --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: Безопасная загрузка переменных из .env ---
+# Этот метод не исполняет файл, а читает его, что предотвращает ошибки синтаксиса.
 if [ -f "$COMPOSE_PROJECT_DIR/.env" ]; then
-  set -o allexport
-  source "$COMPOSE_PROJECT_DIR/.env"
-  set +o allexport
+    # Фильтруем .env файл, чтобы получить только нужные переменные,
+    # и экспортируем их. `grep` ищет строки, начинающиеся с POSTGRES_USER= или POSTGRES_DB=
+    export $(grep -E '^POSTGRES_USER=|^POSTGRES_DB=' "$COMPOSE_PROJECT_DIR/.env" | xargs)
 fi
 
 # Берём имя пользователя и базы из переменных окружения
@@ -26,7 +26,7 @@ DB_NAME=${POSTGRES_DB}
 
 # Проверяем, что переменные определены
 if [ -z "$DB_USER" ] || [ -z "$DB_NAME" ]; then
-  echo "ERROR: POSTGRES_USER or POSTGRES_DB is not set. Please check your .env file."
+  echo "ERROR: POSTGRES_USER or POSTGRES_DB is not set or not found in your .env file."
   exit 1
 fi
 
@@ -38,11 +38,10 @@ BACKUP_FILE="$BACKUP_DIR/backup_$(date +%Y-%m-%d_%H-%M-%S).dump"
 
 echo "Starting backup of database '$DB_NAME' to $BACKUP_FILE..."
 
-# --- ИСПРАВЛЕНИЕ №2: Используем `docker compose` (с пробелом) ---
+# Используем `docker compose` (с пробелом)
 docker compose -f "$COMPOSE_PROJECT_DIR/docker-compose.yml" exec -T "$DB_SERVICE" pg_dump -U "$DB_USER" -d "$DB_NAME" -Fc > "$BACKUP_FILE"
 
 # Проверяем, что бэкап был создан
-# PIPESTATUS[0] проверяет код завершения именно команды pg_dump, а не `>`
 if [ ${PIPESTATUS[0]} -eq 0 ]; then
   echo "Backup successfully created: $BACKUP_FILE"
 else
