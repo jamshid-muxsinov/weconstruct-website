@@ -55,25 +55,28 @@
 
         <hr style="border-color: var(--border-color); margin: 24px 0;">
         <fieldset style="border: none; padding: 0;">
-            <legend style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px; padding: 0;">Детали заявки
-            </legend>
-            <div class="input-group">
-                <label for="{{ form.product_id.id }}">{{ form.product_id.label.text }}</label>
-                {{ form.product_id(class_='select-field') }}
-            </div>
-            <div class="input-group">
-                <label for="{{ form.message.id }}">{{ form.message.label.text }}</label>
-                {{ form.message(class_='textarea-field') }}
-            </div>
+            <legend style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px; padding: 0;">Информация от менеджера</legend>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div class="input-group">
-                    <label for="{{ form.status.id }}">{{ form.status.label.text }}</label>
-                    {{ form.status(class_='select-field') }}
+                    <label for="{{ form.business_type.id }}">{{ form.business_type.label.text }}</label>
+                    {{ form.business_type(class_='input-field') }}
                 </div>
                 <div class="input-group">
-                    <label for="{{ form.assigned_to_id.id }}">{{ form.assigned_to_id.label.text }}</label>
-                    {{ form.assigned_to_id(class_='select-field') }}
+                    <label for="{{ form.dimensions.id }}">{{ form.dimensions.label.text }}</label>
+                    {{ form.dimensions(class_='input-field') }}
                 </div>
+            </div>
+             <div class="input-group">
+                <label for="{{ form.investment_details.id }}">{{ form.investment_details.label.text }}</label>
+                {{ form.investment_details(class_='textarea-field') }}
+            </div>
+            <div class="input-group">
+                <label for="{{ form.conclusion.id }}">{{ form.conclusion.label.text }}</label>
+                {{ form.conclusion(class_='textarea-field') }}
+            </div>
+             <div class="input-group">
+                <label for="{{ form.additional_info.id }}">{{ form.additional_info.label.text }}</label>
+                {{ form.additional_info(class_='textarea-field') }}
             </div>
         </fieldset>
 

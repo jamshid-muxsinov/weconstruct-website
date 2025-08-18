@@ -19,9 +19,7 @@ from typing import Optional, List
 from datetime import datetime
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
-# --- ИЗМЕНЕНИЕ: Добавлен Notification ---
 from src.models.shop_models import User, Product, Category, QuoteRequest, Contact, RegistrationInvite, ProductImage, Task, Notification
-# --- КОНЕЦ ИЗМЕНЕНИЯ ---
 from src.core.security import get_current_active_user
 from .dependencies import get_common_context
 from src.services import user_service, shop_service
@@ -81,12 +79,14 @@ class QuoteRequestForm(wtforms.Form):
     status = wtforms.SelectField('Статус', choices=[(s.value, s.name.replace('_', ' ').capitalize()) for s in QuoteRequest.StatusEnum], default=QuoteRequest.StatusEnum.NEW.value)
     assigned_to_id = wtforms.SelectField('Ответственный', coerce=int, validators=[wtforms.validators.Optional()])
     
+    # --- ИЗМЕНЕНИЕ: Добавлены новые поля для менеджера ---
     business_type = wtforms.StringField('Тип бизнеса', validators=[wtforms.validators.Optional()])
     dimensions = wtforms.StringField('Предполагаемые размеры', validators=[wtforms.validators.Optional()])
     investment_details = wtforms.TextAreaField('Бюджет и детали (Sarmoysi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
     conclusion = wtforms.TextAreaField('Выводы менеджера (Xulosasi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
     additional_info = wtforms.TextAreaField('Дополнительные сведения', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
-
+    # --- КОНЕЦ ИЗМЕНЕНИЯ ---
+    
     def validate(self, extra_validators=None):
         rv = super().validate(extra_validators)
         if not rv: return False
@@ -342,7 +342,15 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
             )
             if form.assigned_to_id.data:
                 new_quote_request.assigned_to_id = form.assigned_to_id.data
-            
+
+            # --- ИЗМЕНЕНИЕ: Сохранение новых полей при создании ---
+            new_quote_request.business_type = form.business_type.data
+            new_quote_request.dimensions = form.dimensions.data
+            new_quote_request.investment_details = form.investment_details.data
+            new_quote_request.conclusion = form.conclusion.data
+            new_quote_request.additional_info = form.additional_info.data
+            # --- КОНЕЦ ИЗМЕНЕНИЯ ---
+
             await shop_service._notify_managers(db, new_quote_request, contact.full_name)
 
         else:
@@ -352,7 +360,14 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
                 message=form.message.data, 
                 status=form.status.data, 
                 assigned_to_id=form.assigned_to_id.data if form.assigned_to_id.data else None, 
-                source=QuoteRequest.SourceEnum.CONTACT_FORM
+                source=QuoteRequest.SourceEnum.CONTACT_FORM,
+                # --- ИЗМЕНЕНИЕ: Сохранение новых полей при создании ---
+                business_type=form.business_type.data,
+                dimensions=form.dimensions.data,
+                investment_details=form.investment_details.data,
+                conclusion=form.conclusion.data,
+                additional_info=form.additional_info.data
+                # --- КОНЕЦ ИЗМЕНЕНИЯ ---
             )
             db.add(new_quote)
         
@@ -388,6 +403,14 @@ async def quoterequest_change_form_post(request: Request, pk: int, context: dict
         quote.message = form.message.data
         quote.status = form.status.data
         quote.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None
+        
+        # --- ИЗМЕНЕНИЕ: Обновление новых полей ---
+        quote.business_type = form.business_type.data
+        quote.dimensions = form.dimensions.data
+        quote.investment_details = form.investment_details.data
+        quote.conclusion = form.conclusion.data
+        quote.additional_info = form.additional_info.data
+        # --- КОНЕЦ ИЗМЕНЕНИЯ ---
         
         db.add(quote)
         await db.commit()

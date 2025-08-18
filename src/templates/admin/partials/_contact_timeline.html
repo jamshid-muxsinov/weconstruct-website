@@ -59,6 +59,9 @@
                             <p style="font-weight: 500;">
                                 <i class='bx bxs-note'></i>
                                 Заметка от {{ item.obj.user.username }}
+                                <small style="color: var(--text-secondary); font-weight: 400; margin-left: 8px;">
+                                    {{ item.obj.created_at.strftime('%H:%M') }}
+                                </small>
                             </p>
                             <p style="color: var(--text-secondary); font-style: italic; margin-top: 4px; white-space: pre-wrap;">"{{ item.obj.note }}"</p>
                         </div>
