@@ -10,14 +10,17 @@
 
 <div class="card form-container">
     <form method="post" novalidate id="quote-request-form">
-        <fieldset style="border: none; padding: 0; margin-bottom: 24px;">
-            <legend style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px; padding: 0;">Информация о клиенте
-            </legend>
+        
+        {# --- БЛОК 1: ИНФОРМАЦИЯ ОТ КЛИЕНТА --- #}
+        <fieldset style="border: 1px solid var(--border-color); padding: 24px; border-radius: var(--border-radius-md); margin-bottom: 24px;">
+            <legend style="font-size: 1.25rem; font-weight: 500; padding: 0 10px; margin-left: 10px;">Информация от клиента</legend>
 
             {% if original %}
             <div class="input-group">
                 <label>Клиент</label>
-                <div class="input-field readonly-field">{{ original.contact.full_name }}</div>
+                <div class="input-field readonly-field">
+                    <a href="{{ request.url_for('admin_contact_detail', pk=original.contact_id) }}" class="link-to-change">{{ original.contact.full_name }} ({{ original.contact.phone }})</a>
+                </div>
             </div>
             {% else %}
             {{ form.contact_id() }}
@@ -32,31 +35,42 @@
                 </div>
             </div>
             {% if form.contact_id.errors %}
-            <div class="error-text" style="color: var(--status-red); font-size: 0.8rem; margin-top: 4px;">{{
-                form.contact_id.errors[0] }}</div>
+            <div class="error-text">{{ form.contact_id.errors[0] }}</div>
             {% endif %}
-            <div id="new-contact-fields"
-                style="display: none; border: 1px solid var(--border-color); padding: 16px; border-radius: var(--border-radius-md); margin-top: 16px;">
+            <div id="new-contact-fields" style="display: none; border-top: 1px solid var(--border-color); padding-top: 16px; margin-top: 16px;">
                 <p style="font-weight: 500; margin-bottom: 16px;">Новый клиент</p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="input-group">
-                        <label for="{{ form.new_contact_name.id }}">{{ form.new_contact_name.label.text }}</label>
-                        {{ form.new_contact_name(class_='input-field') }}
-                    </div>
-                    <div class="input-group">
-                        <label for="{{ form.new_contact_phone.id }}">{{ form.new_contact_phone.label.text }}</label>
-                        {{ form.new_contact_phone(class_='input-field') }}
-                    </div>
+                    <div class="input-group"><label for="{{ form.new_contact_name.id }}">{{ form.new_contact_name.label.text }}</label>{{ form.new_contact_name(class_='input-field') }}</div>
+                    <div class="input-group"><label for="{{ form.new_contact_phone.id }}">{{ form.new_contact_phone.label.text }}</label>{{ form.new_contact_phone(class_='input-field') }}</div>
                 </div>
                 <a href="#" onclick="hideNewContactForm(event)" style="font-size: 0.8rem;">Отмена</a>
             </div>
             {% endif %}
+            
+            <div class="form-row">
+                <div class="input-group">
+                    <label for="{{ form.product_id.id }}">{{ form.product_id.label.text }}</label>
+                    {{ form.product_id(class_='select-field') }}
+                </div>
+                <div class="input-group">
+                    <label for="{{ form.status.id }}">{{ form.status.label.text }}</label>
+                    {{ form.status(class_='select-field') }}
+                </div>
+                <div class="input-group">
+                    <label for="{{ form.assigned_to_id.id }}">{{ form.assigned_to_id.label.text }}</label>
+                    {{ form.assigned_to_id(class_='select-field') }}
+                </div>
+            </div>
+             <div class="input-group">
+                <label for="{{ form.message.id }}">{{ form.message.label.text }}</label>
+                {{ form.message(class_='textarea-field') }}
+            </div>
         </fieldset>
 
-        <hr style="border-color: var(--border-color); margin: 24px 0;">
-        <fieldset style="border: none; padding: 0;">
-            <legend style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px; padding: 0;">Информация от менеджера</legend>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        {# --- БЛОК 2: ИНФОРМАЦИЯ ОТ МЕНЕДЖЕРА --- #}
+        <fieldset style="border: 1px solid var(--border-color); padding: 24px; border-radius: var(--border-radius-md);">
+            <legend style="font-size: 1.25rem; font-weight: 500; padding: 0 10px; margin-left: 10px;">Информация от менеджера</legend>
+            <div class="form-row">
                 <div class="input-group">
                     <label for="{{ form.business_type.id }}">{{ form.business_type.label.text }}</label>
                     {{ form.business_type(class_='input-field') }}
@@ -83,8 +97,7 @@
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Сохранить</button>
             {% if original %}
-            <a href="{{ request.url_for('admin_quoterequest_delete', pk=original.id) }}" class="btn btn-danger">Удалить
-                заявку</a>
+            <a href="{{ request.url_for('admin_quoterequest_delete', pk=original.id) }}" class="btn btn-danger">Удалить заявку</a>
             {% endif %}
         </div>
     </form>

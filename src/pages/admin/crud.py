@@ -71,17 +71,20 @@ class CategoryForm(wtforms.Form):
 
 
 class QuoteRequestForm(wtforms.Form):
+    # Поля клиента
     contact_id = wtforms.HiddenField('Контакт', validators=[wtforms.validators.Optional()])
     new_contact_name = wtforms.StringField('Имя и Фамилия нового клиента', validators=[wtforms.validators.Optional()])
     new_contact_phone = wtforms.StringField('Телефон нового клиента', validators=[wtforms.validators.Optional()])
     product_id = wtforms.SelectField('Товар (необязательно)', coerce=int, validators=[wtforms.validators.Optional()])
-    message = wtforms.TextAreaField('Сообщение клиента')
+    message = wtforms.TextAreaField('Сообщение клиента', render_kw={"rows": 4})
+    
+    # Поля управления
     status = wtforms.SelectField('Статус', choices=[(s.value, s.name.replace('_', ' ').capitalize()) for s in QuoteRequest.StatusEnum], default=QuoteRequest.StatusEnum.NEW.value)
     assigned_to_id = wtforms.SelectField('Ответственный', coerce=int, validators=[wtforms.validators.Optional()])
     
     # --- ИЗМЕНЕНИЕ: Добавлены новые поля для менеджера ---
-    business_type = wtforms.StringField('Тип бизнеса', validators=[wtforms.validators.Optional()])
-    dimensions = wtforms.StringField('Предполагаемые размеры', validators=[wtforms.validators.Optional()])
+    business_type = wtforms.StringField('Тип бизнеса клиента', validators=[wtforms.validators.Optional()])
+    dimensions = wtforms.StringField('Предполагаемые размеры объекта', validators=[wtforms.validators.Optional()])
     investment_details = wtforms.TextAreaField('Бюджет и детали (Sarmoysi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
     conclusion = wtforms.TextAreaField('Выводы менеджера (Xulosasi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
     additional_info = wtforms.TextAreaField('Дополнительные сведения', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
@@ -330,6 +333,7 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
     contact_id = int(form.contact_id.data) if form.contact_id.data else None
     
     if form.validate():
+        new_quote_request = None
         if not contact_id:
             contact = await shop_service._get_or_create_contact(db, form.new_contact_name.data, form.new_contact_phone.data)
             await db.flush()
@@ -340,9 +344,18 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
                 form.product_id.data if form.product_id.data else None,
                 "contact_form"
             )
-            if form.assigned_to_id.data:
-                new_quote_request.assigned_to_id = form.assigned_to_id.data
-
+        else:
+            new_quote_request = QuoteRequest(
+                contact_id=contact_id, 
+                product_id=form.product_id.data if form.product_id.data else None, 
+                message=form.message.data, 
+                status=form.status.data, 
+                source=QuoteRequest.SourceEnum.CONTACT_FORM
+            )
+        
+        # Обновляем все поля
+        if new_quote_request:
+            new_quote_request.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None
             # --- ИЗМЕНЕНИЕ: Сохранение новых полей при создании ---
             new_quote_request.business_type = form.business_type.data
             new_quote_request.dimensions = form.dimensions.data
@@ -350,27 +363,12 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
             new_quote_request.conclusion = form.conclusion.data
             new_quote_request.additional_info = form.additional_info.data
             # --- КОНЕЦ ИЗМЕНЕНИЯ ---
+            db.add(new_quote_request)
+            await db.flush()
 
-            await shop_service._notify_managers(db, new_quote_request, contact.full_name)
+            if not contact_id:
+                await shop_service._notify_managers(db, new_quote_request, contact.full_name)
 
-        else:
-            new_quote = QuoteRequest(
-                contact_id=contact_id, 
-                product_id=form.product_id.data if form.product_id.data else None, 
-                message=form.message.data, 
-                status=form.status.data, 
-                assigned_to_id=form.assigned_to_id.data if form.assigned_to_id.data else None, 
-                source=QuoteRequest.SourceEnum.CONTACT_FORM,
-                # --- ИЗМЕНЕНИЕ: Сохранение новых полей при создании ---
-                business_type=form.business_type.data,
-                dimensions=form.dimensions.data,
-                investment_details=form.investment_details.data,
-                conclusion=form.conclusion.data,
-                additional_info=form.additional_info.data
-                # --- КОНЕЦ ИЗМЕНЕНИЯ ---
-            )
-            db.add(new_quote)
-        
         await db.commit()
         response = RedirectResponse(request.url_for(QUOTEREQUEST_META.list_url_name), status_code=303)
         return set_hx_trigger_header(response, "Заявка успешно создана!")

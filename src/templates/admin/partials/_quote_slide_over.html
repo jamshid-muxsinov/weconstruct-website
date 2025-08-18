@@ -6,7 +6,7 @@
     
     {# Левая колонка: Информация о заявке и управление #}
     <div>
-        <h3 style="font-weight: 500; font-size: 1.1rem; margin-bottom: 8px;">Информация о клиенте</h3>
+        <h3 class="slide-over-section-title">Информация о клиенте</h3>
         <div class="detail-item">
             <strong>Имя</strong>
             <span><a href="{{ request.url_for('admin_contact_detail', pk=req.contact_id) }}" class="link-to-change">{{ req.contact.full_name }}</a></span>
@@ -16,19 +16,39 @@
             <span>{{ req.contact.phone }}</span>
         </div>
 
-        <h3 style="font-weight: 500; font-size: 1.1rem; margin-bottom: 8px; margin-top: 24px;">Детали заявки</h3>
+        <h3 class="slide-over-section-title">Детали заявки</h3>
         <div class="detail-item">
             <strong>Товар</strong>
             <span>{{ req.product.name if req.product else "Общая заявка" }}</span>
         </div>
         <div class="detail-item">
             <strong>Сообщение</strong>
-            <span style="white-space: pre-wrap; text-align: left; padding-top: 10px; color: var(--text-secondary); width: 100%;">{{ req.message or "Нет сообщения." }}</span>
+            <span class="detail-item-message">{{ req.message or "Нет сообщения." }}</span>
         </div>
 
+        {# --- НОВЫЙ БЛОК: СВЕДЕНИЯ ОТ МЕНЕДЖЕРА --- #}
+        {% if req.business_type or req.dimensions or req.investment_details or req.conclusion or req.additional_info %}
+        <h3 class="slide-over-section-title">Сведения от менеджера</h3>
+        {% if req.business_type %}
+        <div class="detail-item"><strong>Тип бизнеса</strong><span>{{ req.business_type }}</span></div>
+        {% endif %}
+        {% if req.dimensions %}
+        <div class="detail-item"><strong>Размеры</strong><span>{{ req.dimensions }}</span></div>
+        {% endif %}
+        {% if req.investment_details %}
+        <div class="detail-item"><strong>Бюджет/Детали</strong><span class="detail-item-message">{{ req.investment_details }}</span></div>
+        {% endif %}
+        {% if req.conclusion %}
+        <div class="detail-item"><strong>Выводы</strong><span class="detail-item-message">{{ req.conclusion }}</span></div>
+        {% endif %}
+         {% if req.additional_info %}
+        <div class="detail-item"><strong>Доп. инфо</strong><span class="detail-item-message">{{ req.additional_info }}</span></div>
+        {% endif %}
+        {% endif %}
+        
         <hr style="border-color: var(--border-color); margin: 24px 0;">
 
-        <h3 style="font-weight: 500; font-size: 1.1rem; margin-bottom: 16px;">Управление</h3>
+        <h3 class="slide-over-section-title">Управление</h3>
         <form hx-post="{{ request.url_for('admin_api_quote_assign', pk=req.id) }}" hx-trigger="submit">
             <div class="input-group">
                 <label for="assignee-select">Назначить исполнителя</label>
@@ -44,9 +64,9 @@
             </div>
         </form>
         
-        {# Возвращаем кнопку "Перейти к редактированию" #}
+        {# --- ИЗМЕНЕНИЕ: Заметная кнопка для редактирования --- #}
         <div style="margin-top: 16px;">
-            <a href="{{ request.url_for('admin_quoterequest_change', pk=req.id) }}" class="btn btn-secondary">
+            <a href="{{ request.url_for('admin_quoterequest_change', pk=req.id) }}" class="btn btn-secondary btn-full">
                 <i class='bx bx-edit-alt'></i> Полное редактирование
             </a>
         </div>
@@ -54,7 +74,7 @@
 
     {# Правая колонка: Задачи #}
     <div>
-        <h3 style="font-weight: 500; font-size: 1.1rem; margin-bottom: 16px;">Задачи по заявке</h3>
+        <h3 class="slide-over-section-title">Задачи по заявке</h3>
         <div class="task-list-container">
             {% include 'admin/partials/_task_list_partial.html' %}
         </div>
