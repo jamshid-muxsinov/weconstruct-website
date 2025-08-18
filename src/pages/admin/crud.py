@@ -82,13 +82,12 @@ class QuoteRequestForm(wtforms.Form):
     status = wtforms.SelectField('Статус', choices=[(s.value, s.name.replace('_', ' ').capitalize()) for s in QuoteRequest.StatusEnum], default=QuoteRequest.StatusEnum.NEW.value)
     assigned_to_id = wtforms.SelectField('Ответственный', coerce=int, validators=[wtforms.validators.Optional()])
     
-    # --- ИЗМЕНЕНИЕ: Добавлены новые поля для менеджера ---
+    # Поля для менеджера
     business_type = wtforms.StringField('Тип бизнеса клиента', validators=[wtforms.validators.Optional()])
     dimensions = wtforms.StringField('Предполагаемые размеры объекта', validators=[wtforms.validators.Optional()])
     investment_details = wtforms.TextAreaField('Бюджет и детали (Sarmoysi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
     conclusion = wtforms.TextAreaField('Выводы менеджера (Xulosasi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
     additional_info = wtforms.TextAreaField('Дополнительные сведения', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
-    # --- КОНЕЦ ИЗМЕНЕНИЯ ---
     
     def validate(self, extra_validators=None):
         rv = super().validate(extra_validators)
@@ -353,16 +352,13 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
                 source=QuoteRequest.SourceEnum.CONTACT_FORM
             )
         
-        # Обновляем все поля
         if new_quote_request:
             new_quote_request.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None
-            # --- ИЗМЕНЕНИЕ: Сохранение новых полей при создании ---
             new_quote_request.business_type = form.business_type.data
             new_quote_request.dimensions = form.dimensions.data
             new_quote_request.investment_details = form.investment_details.data
             new_quote_request.conclusion = form.conclusion.data
             new_quote_request.additional_info = form.additional_info.data
-            # --- КОНЕЦ ИЗМЕНЕНИЯ ---
             db.add(new_quote_request)
             await db.flush()
 
@@ -402,13 +398,11 @@ async def quoterequest_change_form_post(request: Request, pk: int, context: dict
         quote.status = form.status.data
         quote.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None
         
-        # --- ИЗМЕНЕНИЕ: Обновление новых полей ---
         quote.business_type = form.business_type.data
         quote.dimensions = form.dimensions.data
         quote.investment_details = form.investment_details.data
         quote.conclusion = form.conclusion.data
         quote.additional_info = form.additional_info.data
-        # --- КОНЕЦ ИЗМЕНЕНИЯ ---
         
         db.add(quote)
         await db.commit()
@@ -438,19 +432,16 @@ async def quoterequest_delete(
     
     if request.method == "POST":
         try:
-            # 1. Удаляем связанные уведомления
             notification_link_pattern = f"/admin/quoterequest/{pk}/change/"
             notifications_to_delete_stmt = select(Notification).where(Notification.link == notification_link_pattern)
             notifications_to_delete = (await db.execute(notifications_to_delete_stmt)).scalars().all()
             for notification in notifications_to_delete:
                 await db.delete(notification)
 
-            # 2. Удаляем связанные задачи
             tasks_to_delete = await db.execute(select(Task).where(Task.quote_request_id == pk))
             for task in tasks_to_delete.scalars().all():
                 await db.delete(task)
             
-            # 3. Удаляем саму заявку
             await db.delete(quote_req)
             await db.commit()
             
@@ -461,7 +452,7 @@ async def quoterequest_delete(
             trigger_payload = {
                 "show-toast": {"message": "Заявка удалена", "type": "error"},
                 "updateKanban": True,
-                "new-quote-request": True # Обновляем все компоненты, как при новой заявке
+                "new-quote-request": True
             }
             response.headers["HX-Redirect"] = str(redirect_url)
             response.headers["HX-Trigger"] = json.dumps(trigger_payload)
@@ -508,6 +499,8 @@ async def invites_page_post(request: Request, context: dict = Depends(get_common
     context.update({"title": "Управление приглашениями", "invites": invites, "form": form})
     return templates.TemplateResponse("admin/invites.html", context)
 
+
+# --- ИЗМЕНЕНИЕ: Полностью переработанная функция экспорта ---
 @router.get("/quoterequest/export/", name="admin_quoterequest_export")
 async def quoterequest_export(
     request: Request,
@@ -515,11 +508,14 @@ async def quoterequest_export(
     db: AsyncSession = Depends(get_db_session)
 ):
     output = io.StringIO()
+    # Используем точку с запятой как разделитель для лучшей совместимости с русским Excel
     writer = csv.writer(output, delimiter=';', quotechar='"', quoting=csv.QUOTE_ALL)
 
+    # --- ИЗМЕНЕНИЕ: Добавлены новые заголовки ---
     headers = [
-        "ID Заявки", "Дата Создания", "Статус", "Клиент", "Телефон", 
-        "Товар", "Источник", "Ответственный", "Сообщение"
+        "ID", "Дата Создания", "Статус", "Клиент", "Телефон", "Товар", 
+        "Источник", "Ответственный", "Сообщение клиента",
+        "Тип бизнеса", "Размеры объекта", "Бюджет/Детали", "Выводы менеджера", "Доп. сведения"
     ]
     writer.writerow(headers)
 
@@ -543,6 +539,7 @@ async def quoterequest_export(
     result = await db.execute(query)
     requests_to_export = result.scalars().all()
 
+    # --- ИЗМЕНЕНИЕ: Добавлены новые поля в каждую строку ---
     for req in requests_to_export:
         writer.writerow([
             req.id,
@@ -553,7 +550,13 @@ async def quoterequest_export(
             req.product.name_ru if req.product else "Общая заявка",
             req.get_source_display(),
             req.assigned_to.username if req.assigned_to else "Не назначен",
-            req.message or ""
+            req.message or "",
+            # Новые поля
+            req.business_type or "",
+            req.dimensions or "",
+            req.investment_details or "",
+            req.conclusion or "",
+            req.additional_info or ""
         ])
 
     output.seek(0)
