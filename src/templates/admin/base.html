@@ -83,6 +83,7 @@
                          id="profile-menu" 
                          style="display: none; position: absolute; top: 110%; right: 0; background-color: var(--surface-1); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); width: 320px; box-shadow: var(--shadow-lg); z-index: 101;">
                         
+                        {# Блок для подгрузки уведомлений #}
                         <div id="notifications-container"
                              hx-get="{{ request.url_for('admin_htmx_notifications') }}"
                              hx-trigger="load, click from:#profile-menu-button"
@@ -90,7 +91,7 @@
                              <div class="modal-loading-placeholder" style="padding: 20px 0;"><i class='bx bx-loader-alt bx-spin'></i></div>
                         </div>
                         
-                        {# --- ИЗМЕНЕНИЕ: Добавлены <a> теги и классы --- #}
+                        {# --- ИСПРАВЛЕННАЯ СТРУКТУРА МЕНЮ --- #}
                         <ul class="profile-menu-list">
                             <li><a href="{{ request.url_for('admin_profile') }}" class="profile-menu-link"><i class='bx bxs-user-circle'></i><span>Профиль</span></a></li>
                             <li><a href="{{ request.url_for('admin_invites') }}" class="profile-menu-link"><i class='bx bxs-paper-plane'></i><span>Приглашения</span></a></li>
