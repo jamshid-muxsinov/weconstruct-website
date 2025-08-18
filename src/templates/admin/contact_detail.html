@@ -2,26 +2,20 @@
 
 {% block content %}
 <div class="page-header">
-    {# Используем полное имя для заголовка #}
     <h1><i class='bx bxs-user-rectangle' style="vertical-align: middle;"></i> Клиент: {{ contact.full_name }}</h1>
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: flex-start;">
+    {# Левая колонка с информацией о контакте #}
     <div class="card">
         <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Контактная информация</h2>
         <form method="post" action="{{ request.url_for('post_contact_detail_page', pk=contact.id) }}" novalidate>
             {% for field in form %}
             <div class="input-group">
                 <label for="{{ field.id }}">{{ field.label.text }}</label>
-                {% if field.type == 'TextAreaField' %}
-                {# Этот блок корректно отобразит существующие заметки #}
-                {{ field(class_='textarea-field', rows=5) }}
-                {% else %}
                 {{ field(class_='input-field') }}
-                {% endif %}
                 {% if field.errors %}
-                <div class="error-text" style="color: var(--status-red); font-size: 0.8rem; margin-top: 4px;">{{
-                    field.errors[0] }}</div>
+                <div class="error-text">{{ field.errors[0] }}</div>
                 {% endif %}
             </div>
             {% endfor %}
@@ -30,18 +24,22 @@
             </div>
         </form>
     </div>
+
+    {# Правая колонка с лентой взаимодействий #}
     <div class="card">
         <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Лента взаимодействий</h2>
+        
+        {# Форма добавления заметки #}
         <form hx-post="{{ request.url_for('admin_contact_add_note', pk=contact.id) }}" hx-target="#timeline-list"
             hx-swap="outerHTML" hx-on::after-request="this.reset()"
             style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color);">
-            <textarea name="note" class="textarea-field" rows="3"
-                placeholder="Добавить заметку о звонке или встрече..."></textarea>
+            <textarea name="note" class="textarea-field" rows="3" placeholder="Добавить заметку о звонке или встрече..."></textarea>
             <div style="text-align: right; margin-top: 10px;">
                 <button type="submit" class="btn btn-secondary">Добавить заметку</button>
             </div>
         </form>
 
+        {# Подключаем обновленный partial для самой ленты #}
         {% include 'admin/partials/_contact_timeline.html' %}
     </div>
 </div>

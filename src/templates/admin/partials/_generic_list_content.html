@@ -15,9 +15,12 @@
         </thead>
         <tbody>
             {% for item in page.items %}
-                <tr>
+                {# --- ИЗМЕНЕНИЕ: Добавляем class и onclick для всей строки --- #}
+                <tr class="clickable-row" 
+                    onclick="window.location.href='{{ request.url_for(meta.change_url_name, pk=item.id) }}';">
+                    
                     {% if meta.model_name == 'quoterequest' %}
-                    <td data-label="Select">
+                    <td data-label="Select" onclick="event.stopPropagation();"> {# Предотвращаем переход при клике на чекбокс #}
                         <input type="checkbox" class="row-checkbox" value="{{ item.id }}">
                     </td>
                     {% endif %}
@@ -26,11 +29,16 @@
                         <td data-label="{{ field_name.replace('_', ' ')|capfirst }}">
                             {% set value = getattr(item, field_name, '') %}
 
+                            {# --- ИЗМЕНЕНИЕ: Имя клиента становится ссылкой на его карточку --- #}
                             {% if field_name == 'name' and meta.model_name == 'quoterequest' %}
-                                <a href="{{ request.url_for('admin_contact_detail', pk=item.contact_id) }}" class="link-to-change" title="Перейти к профилю клиента">
+                                <a href="{{ request.url_for('admin_contact_detail', pk=item.contact_id) }}" 
+                                   class="link-to-change" 
+                                   onclick="event.stopPropagation();" {# Предотвращаем двойной переход #}
+                                   title="Перейти к профилю клиента">
                                    {{ value }}
                                 </a>
                             {% elif loop.first %}
+                                {# Основная ссылка остается, но теперь вся строка работает #}
                                 <a href="{{ request.url_for(meta.change_url_name, pk=item.id) }}" class="link-to-change">
                                     {{ value }}
                                 </a>
@@ -40,7 +48,9 @@
                                 {{ item.get_source_display() }}
                             {% elif field_name == 'category' and value %}
                                 {{ value.name }}
-                            {% elif field_name == 'price' and value is not none %}
+                            {% elif field_name == 'product' and value %}
+                                {{ value.name }}
+                            {% elif field_name == 'price_min' and value is not none %}
                                 {{ value|format_number }} сум
                             {% elif value is none %}
                                 <span style="color: var(--text-secondary);">&mdash;</span>
