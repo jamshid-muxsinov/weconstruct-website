@@ -375,3 +375,128 @@ body.login-page { display: flex; justify-content: center; align-items: center; m
         display: none;
     }
 }
+
+#profile-menu .profile-menu-list {
+    padding: 8px;
+    border-top: 1px solid var(--border-color);
+    list-style: none;
+    margin: 0;
+}
+
+.profile-menu-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--border-radius-md);
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: background-color 0.2s;
+    font-size: 0.9rem;
+}
+
+.profile-menu-link i {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.profile-menu-link:hover {
+    background-color: var(--surface-2);
+}
+
+.profile-menu-link.logout {
+    color: var(--status-red);
+}
+
+.profile-menu-link.logout i {
+    color: var(--status-red);
+}
+
+/* --- Notification Dropdown Styles --- */
+
+#notifications-list {
+    padding-top: 8px;
+}
+
+.notification-header {
+    padding: 0 12px 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 8px;
+}
+
+.notification-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 8px 8px 8px;
+    list-style: none;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: var(--border-radius-md);
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: background-color 0.2s;
+}
+
+.notification-item:hover {
+    background-color: var(--surface-2);
+}
+
+.notification-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--surface-2);
+    border-radius: 50%;
+    color: var(--accent-primary);
+}
+
+.notification-content {
+    flex-grow: 1;
+}
+
+.notification-message {
+    font-size: 0.85rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.notification-time {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.empty-notification-placeholder {
+    padding: 24px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+}
+.btn-link:hover {
+    color: var(--text-primary);
+    background-color: var(--surface-2);
+}

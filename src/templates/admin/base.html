@@ -72,11 +72,7 @@
                              hx-get="{{ request.url_for('admin_htmx_notification_indicator') }}"
                              hx-trigger="load, every 8s, notifications-read from:body"
                              hx-swap="innerHTML">
-                             <!-- Этот блок будет заменен HTMX -->
-                             <i class='bx bxs-user-circle' style="font-size: 2rem;"></i>
-                             {% if unread_notifications_count > 0 %}
-                                <span id="notification-counter" style="position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; background-color: var(--status-red); color: white; border-radius: 50%; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid var(--surface-1);">{{ unread_notifications_count }}</span>
-                             {% endif %}
+                             {% include "admin/partials/_notification_indicator.html" %}
                         </div>
                         
                         <i class='bx bx-chevron-down' :class="{'bx-rotate-180': open}" style="transition: transform 0.2s;"></i>
@@ -89,16 +85,17 @@
                         
                         <div id="notifications-container"
                              hx-get="{{ request.url_for('admin_htmx_notifications') }}"
-                             hx-trigger="click from:#profile-menu-button"
+                             hx-trigger="load, click from:#profile-menu-button"
                              hx-swap="innerHTML">
                              <div class="modal-loading-placeholder" style="padding: 20px 0;"><i class='bx bx-loader-alt bx-spin'></i></div>
                         </div>
                         
-                        <ul style="padding: 8px; border-top: 1px solid var(--border-color);">
-                            <li><a href="{{ request.url_for('admin_profile') }}" style="display: block; padding: 10px 12px; border-radius: 4px; color: var(--text-primary);">Профиль</a></li>
-                            <li><a href="{{ request.url_for('admin_invites') }}" style="display: block; padding: 10px 12px; border-radius: 4px; color: var(--text-primary);">Приглашения</a></li>
+                        {# --- ИЗМЕНЕНИЕ: Добавлены <a> теги и классы --- #}
+                        <ul class="profile-menu-list">
+                            <li><a href="{{ request.url_for('admin_profile') }}" class="profile-menu-link"><i class='bx bxs-user-circle'></i><span>Профиль</span></a></li>
+                            <li><a href="{{ request.url_for('admin_invites') }}" class="profile-menu-link"><i class='bx bxs-paper-plane'></i><span>Приглашения</span></a></li>
                             <li><hr style="margin: 8px 0; border-color: var(--border-color);"></li>
-                            <li><a href="{{ request.url_for('admin_logout') }}" class="logout-trigger" style="display: block; padding: 10px 12px; border-radius: 4px; color: var(--status-red);">Выйти</a></li>
+                            <li><a href="{{ request.url_for('admin_logout') }}" class="profile-menu-link logout"><i class='bx bx-log-out'></i><span>Выйти</span></a></li>
                         </ul>
                     </div>
                 </div>
