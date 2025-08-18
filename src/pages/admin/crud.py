@@ -71,18 +71,13 @@ class CategoryForm(wtforms.Form):
 
 
 class QuoteRequestForm(wtforms.Form):
-    # Поля клиента
     contact_id = wtforms.HiddenField('Контакт', validators=[wtforms.validators.Optional()])
     new_contact_name = wtforms.StringField('Имя и Фамилия нового клиента', validators=[wtforms.validators.Optional()])
     new_contact_phone = wtforms.StringField('Телефон нового клиента', validators=[wtforms.validators.Optional()])
     product_id = wtforms.SelectField('Товар (необязательно)', coerce=int, validators=[wtforms.validators.Optional()])
     message = wtforms.TextAreaField('Сообщение клиента', render_kw={"rows": 4})
-    
-    # Поля управления
     status = wtforms.SelectField('Статус', choices=[(s.value, s.name.replace('_', ' ').capitalize()) for s in QuoteRequest.StatusEnum], default=QuoteRequest.StatusEnum.NEW.value)
     assigned_to_id = wtforms.SelectField('Ответственный', coerce=int, validators=[wtforms.validators.Optional()])
-    
-    # Поля для менеджера
     business_type = wtforms.StringField('Тип бизнеса клиента', validators=[wtforms.validators.Optional()])
     dimensions = wtforms.StringField('Предполагаемые размеры объекта', validators=[wtforms.validators.Optional()])
     investment_details = wtforms.TextAreaField('Бюджет и детали (Sarmoysi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
@@ -143,6 +138,8 @@ async def populate_request_form_choices(db: AsyncSession, form: QuoteRequestForm
     form.product_id.choices = [(0, '--- Общая заявка ---')] + [(p.id, p.name_ru) for p in products]
     staff_users = (await db.execute(select(User).where(User.is_staff == True).order_by(User.username))).scalars().all()
     form.assigned_to_id.choices = [(0, '--- Не назначен ---')] + [(u.id, u.username) for u in staff_users]
+
+# ... (остальные CRUD функции для Product и Category остаются без изменений) ...
 
 @router.get("/product/", response_class=HTMLResponse, name="admin_product_list")
 async def product_list(request: Request, q: Optional[str] = None, params: Params = Depends(), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
@@ -307,7 +304,6 @@ async def category_delete(request: Request, pk: int, context: dict = Depends(get
             return templates.TemplateResponse("admin/500.html", context, status_code=500)
     context.update({"meta": CATEGORY_META, "original": category, "back_url": request.url_for(CATEGORY_META.change_url_name, pk=pk)})
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
-
 
 @router.get("/quoterequest/", response_class=HTMLResponse, name="admin_quoterequest_list")
 async def quoterequest_list(request: Request, q: Optional[str] = None, params: Params = Depends(), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
@@ -499,8 +495,6 @@ async def invites_page_post(request: Request, context: dict = Depends(get_common
     context.update({"title": "Управление приглашениями", "invites": invites, "form": form})
     return templates.TemplateResponse("admin/invites.html", context)
 
-
-# --- ИЗМЕНЕНИЕ: Полностью переработанная функция экспорта ---
 @router.get("/quoterequest/export/", name="admin_quoterequest_export")
 async def quoterequest_export(
     request: Request,
@@ -508,14 +502,12 @@ async def quoterequest_export(
     db: AsyncSession = Depends(get_db_session)
 ):
     output = io.StringIO()
-    # Используем точку с запятой как разделитель для лучшей совместимости с русским Excel
     writer = csv.writer(output, delimiter=';', quotechar='"', quoting=csv.QUOTE_ALL)
 
-    # --- ИЗМЕНЕНИЕ: Добавлены новые заголовки ---
+    # --- ИЗМЕНЕНИЕ: Новые, более чистые заголовки ---
     headers = [
-        "ID", "Дата Создания", "Статус", "Клиент", "Телефон", "Товар", 
-        "Источник", "Ответственный", "Сообщение клиента",
-        "Тип бизнеса", "Размеры объекта", "Бюджет/Детали", "Выводы менеджера", "Доп. сведения"
+        "ID", "Дата", "Статус", "Клиент", "Телефон", "Сообщение",
+        "Тип бизнеса", "Размеры", "Бюджет/Детали", "Выводы", "Доп. сведения"
     ]
     writer.writerow(headers)
 
@@ -539,19 +531,14 @@ async def quoterequest_export(
     result = await db.execute(query)
     requests_to_export = result.scalars().all()
 
-    # --- ИЗМЕНЕНИЕ: Добавлены новые поля в каждую строку ---
     for req in requests_to_export:
         writer.writerow([
             req.id,
-            req.created_at.strftime('%Y-%m-%d %H:%M'),
+            req.created_at.strftime('%d.%m.%Y %H:%M'), # Новый формат даты
             req.get_status_display(),
             req.contact.full_name if req.contact else "",
             req.contact.phone if req.contact else "",
-            req.product.name_ru if req.product else "Общая заявка",
-            req.get_source_display(),
-            req.assigned_to.username if req.assigned_to else "Не назначен",
             req.message or "",
-            # Новые поля
             req.business_type or "",
             req.dimensions or "",
             req.investment_details or "",
