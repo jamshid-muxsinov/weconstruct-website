@@ -15,12 +15,11 @@
         </thead>
         <tbody>
             {% for item in page.items %}
-                {# --- ИЗМЕНЕНИЕ: Добавляем class и onclick для всей строки --- #}
                 <tr class="clickable-row" 
                     onclick="window.location.href='{{ request.url_for(meta.change_url_name, pk=item.id) }}';">
                     
                     {% if meta.model_name == 'quoterequest' %}
-                    <td data-label="Select" onclick="event.stopPropagation();"> {# Предотвращаем переход при клике на чекбокс #}
+                    <td data-label="Select" onclick="event.stopPropagation();">
                         <input type="checkbox" class="row-checkbox" value="{{ item.id }}">
                     </td>
                     {% endif %}
@@ -29,16 +28,15 @@
                         <td data-label="{{ field_name.replace('_', ' ')|capfirst }}">
                             {% set value = getattr(item, field_name, '') %}
 
-                            {# --- ИЗМЕНЕНИЕ: Имя клиента становится ссылкой на его карточку --- #}
                             {% if field_name == 'name' and meta.model_name == 'quoterequest' %}
-                                <a href="{{ request.url_for('admin_contact_detail', pk=item.contact_id) }}" 
+                                <!-- ИЗМЕНЕНИЕ: Добавлена проверка if item.contact -->
+                                <a href="{{ request.url_for('admin_contact_detail', pk=item.contact_id) if item.contact else '#' }}" 
                                    class="link-to-change" 
-                                   onclick="event.stopPropagation();" {# Предотвращаем двойной переход #}
+                                   onclick="event.stopPropagation();"
                                    title="Перейти к профилю клиента">
-                                   {{ value }}
+                                   {{ item.contact.full_name if item.contact else 'Контакт удален' }}
                                 </a>
                             {% elif loop.first %}
-                                {# Основная ссылка остается, но теперь вся строка работает #}
                                 <a href="{{ request.url_for(meta.change_url_name, pk=item.id) }}" class="link-to-change">
                                     {{ value }}
                                 </a>
@@ -49,7 +47,8 @@
                             {% elif field_name == 'category' and value %}
                                 {{ value.name }}
                             {% elif field_name == 'product' and value %}
-                                {{ value.name }}
+                                <!-- ИЗМЕНЕНИЕ: Добавлена проверка if item.product -->
+                                {{ item.product.name if item.product else 'Товар удален' }}
                             {% elif field_name == 'price_min' and value is not none %}
                                 {{ value|format_number }} сум
                             {% elif value is none %}

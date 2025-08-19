@@ -119,25 +119,32 @@ def set_hx_trigger_header(response: Response, message: str, type: str = "success
     return response
 
 async def handle_list_view(db: AsyncSession, meta: Meta, params: Params, search_query: Optional[str] = None):
-    query = select(meta.model)
-    if search_query:
-        search_like = f"%{search_query}%"
-        if meta.model == Product: 
-            query = query.where(Product.name_ru.ilike(search_like))
-        elif meta.model == Category: 
-            query = query.where(Category.name_ru.ilike(search_like))
-        elif meta.model == QuoteRequest: 
+    query = select(meta.model).order_by(getattr(meta.model, 'id').desc())
+
+    if meta.model == QuoteRequest:
+        # Явно подгружаем связанные модели для заявок
+        query = query.options(
+            joinedload(QuoteRequest.contact), 
+            joinedload(QuoteRequest.product)
+        )
+        if search_query:
+            search_like = f"%{search_query}%"
+            # Присоединяем Contact для поиска
             query = query.join(Contact).where(
                 or_(
                     func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like),
                     Contact.phone.ilike(search_like)
                 )
             )
-    
-    query = query.order_by(getattr(meta.model, 'id').desc())
-    if hasattr(meta.model, 'category'): query = query.options(joinedload(meta.model.category))
-    if hasattr(meta.model, 'contact'): query = query.options(joinedload(meta.model.contact))
-    if hasattr(meta.model, 'product'): query = query.options(joinedload(meta.model.product))
+    elif meta.model == Product:
+        query = query.options(joinedload(Product.category))
+        if search_query:
+            search_like = f"%{search_query}%"
+            query = query.where(Product.name_ru.ilike(search_like))
+    elif meta.model == Category and search_query:
+        search_like = f"%{search_query}%"
+        query = query.where(Category.name_ru.ilike(search_like))
+
     return await paginate(db, query, params)
 
 async def populate_request_form_choices(db: AsyncSession, form: QuoteRequestForm):
