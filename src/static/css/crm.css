@@ -51,7 +51,7 @@ input, button, select, textarea { font-family: inherit; color: inherit; border: 
     display: flex;
     flex-direction: column;
     transition: width 0.3s ease, transform 0.3s ease;
-    z-index: 1001; 
+    z-index: 1000; /* ИЗМЕНЕНИЕ: z-index понижен, чтобы шапка была выше */
     flex-shrink: 0;
 }
 
@@ -82,7 +82,7 @@ input, button, select, textarea { font-family: inherit; color: inherit; border: 
     top: 0;
     background-color: rgba(17, 19, 23, 0.8);
     backdrop-filter: blur(8px);
-    z-index: 100;
+    z-index: 1001; /* ИЗМЕНЕНИЕ: z-index повышен, чтобы быть выше сайдбара */
     flex-shrink: 0;
 }
 
@@ -156,9 +156,6 @@ body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; }
 /* ==========================================================================
    User Profile Dropdown Menu
    ========================================================================== */
-/* ==========================================================================
-   User Profile Dropdown Menu
-   ========================================================================== */
 .user-profile { 
     position: relative; 
 }
@@ -181,24 +178,19 @@ body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; }
     transition: var(--transition-fast); 
 }
 
-/* --- ИСПРАВЛЕННЫЙ БЛОК СТИЛЕЙ --- */
 #profile-menu { 
-    display: none; /* Скрыто по умолчанию, Alpine.js будет управлять видимостью */
+    display: none; /* Hidden by default, Alpine.js handles visibility */
     position: absolute; 
     top: 110%; 
     right: 0; 
     width: 320px; 
-    z-index: 101; 
+    z-index: 101;
     overflow: hidden;
-    
-    /* Этих стилей не хватало: */
     background-color: var(--surface-1); 
     border: 1px solid var(--border-color); 
     border-radius: var(--border-radius-md); 
     box-shadow: var(--shadow-lg); 
 }
-/* --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА --- */
-
 
 .profile-menu-list { 
     padding: 8px; 
@@ -344,7 +336,11 @@ body.login-page { display: flex; justify-content: center; align-items: center; m
    Responsive
    ========================================================================== */
 @media (max-width: 992px) {
-    #sidebar { position: fixed; transform: translateX(-100%); }
+    #sidebar { 
+        position: fixed; 
+        transform: translateX(-100%); 
+        z-index: 1010; /* ИЗМЕНЕНИЕ: Добавлен высокий z-index для мобильного оверлея */
+    }
     body.sidebar-mobile-open #sidebar { transform: translateX(0); }
     #content-wrapper::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
     body.sidebar-mobile-open #content-wrapper::before { opacity: 1; visibility: visible; }
