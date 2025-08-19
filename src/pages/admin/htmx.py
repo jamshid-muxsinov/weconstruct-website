@@ -1,5 +1,6 @@
 import json
 import asyncio
+from datetime import datetime, timezone # Добавьте импорт timezone
 from urllib.parse import quote
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -41,13 +42,16 @@ class TaskForm(wtforms.Form):
 async def stream_new_kanban_cards(request: Request):
     """
     Создает поток Server-Sent Events, который слушает Redis Pub/Sub 
-    и ретранслирует готовый HTML клиенту.
+    и отправляет только те заявки, которые были созданы ПОСЛЕ подключения клиента.
     """
     if not cache_manager.is_redis_available:
         print("SSE stream stopped: Redis is not available.")
         return Response(status_code=204)
 
     async def event_generator():
+        # --- ИЗМЕНЕНИЕ: Запоминаем время подключения клиента ---
+        client_connect_time = datetime.now(timezone.utc)
+        
         pubsub = cache_manager.redis_client.pubsub()
         await pubsub.subscribe("kanban_updates")
         
@@ -57,18 +61,23 @@ async def stream_new_kanban_cards(request: Request):
                     print("Client disconnected from SSE stream.")
                     break
 
-                # Ждем сообщения из канала Redis
                 message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=60)
                 
                 if message and message.get("type") == "message":
-                    # Просто берем готовый HTML из сообщения
-                    card_html = message["data"]
-                    
-                    # И отправляем его клиенту
-                    yield {
-                        "event": "new_quote",
-                        "data": card_html
-                    }
+                    try:
+                        payload = json.loads(message["data"])
+                        card_html = payload["html"]
+                        quote_created_at = datetime.fromisoformat(payload["created_at"])
+                        
+                        if quote_created_at >= client_connect_time:
+                            yield {
+                                "event": "new_quote",
+                                "data": card_html
+                            }
+                    except (json.JSONDecodeError, KeyError, TypeError) as e:
+                        print(f"Error processing SSE message: {e}")
+                        continue
+
         except asyncio.CancelledError:
             print("SSE stream cancelled.")
         finally:
@@ -78,6 +87,7 @@ async def stream_new_kanban_cards(request: Request):
     return EventSourceResponse(event_generator())
 
 
+# Остальной код в этом файле остается без изменений
 @router.get("/quoterequest-modal/{pk}", response_class=HTMLResponse, name="admin_htmx_quoterequest_modal")
 async def get_quote_request_modal(
     pk: int,

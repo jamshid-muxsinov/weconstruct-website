@@ -1,4 +1,5 @@
 # /src/pages/admin/dependencies.py
+import json # Добавьте этот импорт
 from fastapi import Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -36,7 +37,8 @@ async def get_common_context(
 
 async def publish_kanban_update(db: AsyncSession, quote_id: int, request: Request):
     """
-    Находит заявку, рендерит её HTML-карточку и публикует в Redis.
+    Находит заявку, рендерит её HTML-карточку и публикует в Redis 
+    вместе с временной меткой.
     """
     if not cache_manager.is_redis_available:
         return
@@ -58,4 +60,10 @@ async def publish_kanban_update(db: AsyncSession, quote_id: int, request: Reques
             {"request": request, "req": quote_to_render}
         ).body.decode("utf-8")
         
-        await cache_manager.redis_client.publish("kanban_updates", card_html)
+        payload = {
+            "html": card_html,
+            "created_at": quote_to_render.created_at.isoformat() 
+        }
+        
+        # Публикуем JSON-строку
+        await cache_manager.redis_client.publish("kanban_updates", json.dumps(payload))
