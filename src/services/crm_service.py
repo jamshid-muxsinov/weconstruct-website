@@ -23,9 +23,9 @@ async def get_latest_quote_request(db: AsyncSession) -> QuoteRequest | None:
     )
     result = await db.execute(stmt)
     return result.scalars().first()
-# --- КОНЕЦ НОВОЙ ФУНКЦИИ ---
 
 async def get_dashboard_data(db: AsyncSession, user_id: int):
+    # Запрос для задач остается без изменений
     my_tasks_stmt = (
         select(Task)
         .where(Task.assigned_to_id == user_id, Task.completed == False)
@@ -36,18 +36,22 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
     my_tasks_result = await db.execute(my_tasks_stmt)
     my_tasks = my_tasks_result.scalars().all()
     
+    # Запрос для воронки остается без изменений
     funnel_stmt = select(QuoteRequest.status, func.count(QuoteRequest.id)).group_by(QuoteRequest.status)
     funnel_result = await db.execute(funnel_stmt)
-    funnel_counts = {status.value: count for status, count in funnel_result.all()}
+    # Здесь мы получаем словарь вида {'new': 5, 'in_progress': 10}
+    funnel_counts = {status_enum.value: count for status_enum, count in funnel_result.all()}
     
+    # --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
     sales_funnel = []
     for status_enum in QuoteRequest.StatusEnum:
         sales_funnel.append({
-            "name": status_enum.name.replace('_', ' ').capitalize(),
+            "display_name": status_enum.value.replace('_', ' ').capitalize(), # Используем .value для имени
             "count": funnel_counts.get(status_enum.value, 0),
-            "status": status_enum.value
+            "status": status_enum # <-- Теперь мы передаем ВЕСЬ ОБЪЕКТ ENUM
         })
 
+    # Запрос для новых заявок остается без изменений
     new_req_stmt = (
         select(QuoteRequest)
         .where(
@@ -64,6 +68,7 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
     new_req_result = await db.execute(new_req_stmt)
     new_unassigned_requests = new_req_result.scalars().unique().all()
     
+    # Запрос для логов активности остается без изменений
     activity_log_stmt = select(StatusChangeLog).order_by(StatusChangeLog.timestamp.desc()).limit(10)
     activity_log_result = await db.execute(activity_log_stmt)
     activity_log = activity_log_result.scalars().all()
