@@ -1,82 +1,110 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // --- Глобальная инициализация ---
-    const csrfToken = getCsrfToken();
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const notyf = new Notyf({
         duration: 3000,
         position: { x: 'right', y: 'top' },
         dismissible: true
     });
 
-    // --- Утилиты ---
-    function getCsrfToken() {
-        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-    }
-
-    // --- Настройка HTMX ---
+    // --- HTMX SETUP ---
     function setupHtmx() {
         document.body.addEventListener('htmx:configRequest', (event) => {
             if (event.detail.verb !== 'get') {
                 event.detail.headers['X-CSRFToken'] = csrfToken;
             }
         });
-        
-        document.body.addEventListener('htmx:responseError', (event) => {
-            if (event.detail.xhr.status === 401) { 
-                notyf.error('Сессия истекла. Перезагрузка страницы...');
-                setTimeout(() => window.location.reload(), 1500);
-            }
+        document.body.addEventListener('htmx:responseError', () => {
+            notyf.error('Произошла ошибка сети. Попробуйте обновить страницу.');
         });
     }
-    
-    // --- Обработчик выхода ---
-    document.body.addEventListener('click', function(event) {
-        if (event.target.closest('.logout-trigger')) {
-            event.preventDefault();
-            window.location.href = event.target.closest('.logout-trigger').href;
-        }
-    });
 
-    // --- Управление модальными окнами и сайд-оверами ---
+    // --- POPUP (MODAL/SLIDE-OVER) LOGIC ---
     function initPopups() {
-        const closeModal = (overlay) => {
-            if (!overlay) return;
-            overlay.classList.remove('show');
-            const content = overlay.querySelector('#modal-body-content, #slide-over-content');
-            if (content) {
-                content.innerHTML = `<div class="modal-loading-placeholder"><i class='bx bx-loader-alt bx-spin'></i><span>Загрузка...</span></div>`;
+        const closePopup = (overlay) => {
+            if (overlay && overlay.classList.contains('show')) {
+                overlay.classList.remove('show');
             }
         };
 
-        document.querySelectorAll('.modal-overlay, .slide-over-overlay').forEach(overlay => {
-            overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay); });
-        });
-
-        document.addEventListener('keydown', e => { 
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal-overlay.show, .slide-over-overlay.show').forEach(closeModal);
-            } 
-        });
-
         document.body.addEventListener('click', event => {
-            const closeButton = event.target.closest('.modal-close, .slide-over-close');
-            if (closeButton) {
+            const overlay = event.target.closest('.modal-overlay, .slide-over-overlay');
+            if (event.target.closest('.modal-close, .slide-over-close')) {
                 event.preventDefault();
-                closeModal(closeButton.closest('.modal-overlay, .slide-over-overlay'));
+                closePopup(overlay);
+            } else if (overlay && event.target === overlay) {
+                closePopup(overlay);
+            }
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.show, .slide-over-overlay.show').forEach(closePopup);
             }
         });
         
-        document.body.addEventListener('closeModal', () => {
-            const modal = document.getElementById('modal-overlay');
-            if (modal) closeModal(modal);
-        });
-        document.body.addEventListener('closeSlideOver', () => {
-            const slideOver = document.getElementById('slide-over-overlay');
-            if (slideOver) closeModal(slideOver);
-        });
+        document.body.addEventListener('closeModal', () => closePopup(document.getElementById('modal-overlay')));
+        document.body.addEventListener('closeSlideOver', () => closePopup(document.getElementById('slide-over-overlay')));
     }
 
-    // --- Логика канбан-доски ---
+    // --- SIDEBAR LOGIC (SIMPLE & FINAL VERSION) ---
+    function initSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const collapseBtn = document.getElementById('sidebar-collapse-btn');
+        const expandBtn = document.getElementById('sidebar-expand-btn');
+        const body = document.body;
+        const contentWrapper = document.getElementById('content-wrapper');
+
+        if (!sidebar || !collapseBtn || !expandBtn || !contentWrapper) return;
+        
+        const isDesktop = () => window.innerWidth > 992;
+
+        const applySidebarState = () => {
+            if (!isDesktop()) {
+                // On mobile, ensure desktop classes are removed and mobile is closed
+                body.classList.remove('sidebar-collapsed');
+                sidebar.classList.remove('collapsed');
+                body.classList.remove('sidebar-mobile-open');
+                return;
+            }
+            // On desktop, apply saved state
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            body.classList.toggle('sidebar-collapsed', isCollapsed);
+            sidebar.classList.toggle('collapsed', isCollapsed);
+        };
+        
+        collapseBtn.addEventListener('click', () => {
+            if (isDesktop()) {
+                const isCollapsed = body.classList.contains('sidebar-collapsed');
+                localStorage.setItem('sidebarCollapsed', !isCollapsed);
+                body.classList.toggle('sidebar-collapsed');
+                sidebar.classList.toggle('collapsed');
+            }
+        });
+        
+        expandBtn.addEventListener('click', () => {
+            if (isDesktop()) {
+                localStorage.setItem('sidebarCollapsed', false);
+                body.classList.remove('sidebar-collapsed');
+                sidebar.classList.remove('collapsed');
+            } else {
+                body.classList.add('sidebar-mobile-open');
+            }
+        });
+        
+        // Close mobile sidebar on overlay click
+        contentWrapper.addEventListener('click', () => {
+            if (body.classList.contains('sidebar-mobile-open')) {
+                body.classList.remove('sidebar-mobile-open');
+            }
+        });
+        
+        // Initial setup and on resize
+        applySidebarState();
+        window.addEventListener('resize', applySidebarState);
+    }
+    
+    // --- KANBAN DRAG & DROP ---
     function initializeSortable() {
         document.querySelectorAll('.kanban-column-body').forEach(column => {
             if (Sortable.get(column)) { Sortable.get(column).destroy(); }
@@ -84,187 +112,77 @@ document.addEventListener('DOMContentLoaded', function() {
                 group: 'kanban',
                 animation: 150,
                 ghostClass: 'kanban-card-ghost',
-                onEnd: handleKanbanDrop
-            });
-        });
-    }
+                onEnd: async (evt) => {
+                    if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
+                    
+                    const card = evt.item;
+                    const quoteId = card.dataset.id;
+                    const newStatus = evt.to.closest('.kanban-column').dataset.status;
 
-    async function handleKanbanDrop(evt) {
-        if (evt.from === evt.to) return;
-
-        const card = evt.item;
-        const quoteId = parseInt(card.dataset.id);
-        const newStatus = evt.to.closest('.kanban-column').dataset.status;
-
-        try {
-            const response = await fetch('/admin/api/quoterequests/update-status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({ id: quoteId, status: newStatus })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
-            }
-            
-            notyf.success('Статус обновлен!');
-            
-            const kanbanContainer = document.getElementById('kanban-board-container');
-            if (kanbanContainer) {
-                htmx.trigger(kanbanContainer, 'updateKanban');
-            }
-
-        } catch (error) {
-            console.error('Failed to update status:', error);
-            evt.from.insertBefore(card, evt.from.children[evt.oldIndex]);
-            notyf.error('Не удалось обновить статус.');
-        }
-    }
-
-    // --- Логика сайдбара ---
-    function initSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        if (!sidebar) return;
-
-        // --- ЛОГИКА ДЛЯ ДЕСКТОПА (СВОРАЧИВАНИЕ) ---
-        const collapseBtn = document.getElementById('sidebar-collapse-btn');
-        const expandBtnDesktop = document.querySelector('body:not(.sidebar-mobile-open) #sidebar-expand-btn');
-        
-        if(collapseBtn && expandBtnDesktop) {
-            document.documentElement.classList.remove('sidebar-collapsed-init');
-            
-            const applyDesktopState = (isCollapsed) => {
-                document.body.classList.toggle('sidebar-collapsed', isCollapsed);
-                sidebar.classList.toggle('collapsed', isCollapsed);
-            };
-            
-            const toggleDesktop = () => {
-                if (window.innerWidth <= 992) return;
-                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                localStorage.setItem('sidebarCollapsed', !isCollapsed);
-                applyDesktopState(!isCollapsed);
-            };
-
-            applyDesktopState(localStorage.getItem('sidebarCollapsed') === 'true');
-            collapseBtn.addEventListener('click', toggleDesktop);
-            expandBtnDesktop.addEventListener('click', toggleDesktop);
-        }
-
-        // --- УЛУЧШЕННАЯ ЛОГИКА ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ ---
-        const mobileToggleBtn = document.getElementById('sidebar-expand-btn');
-        const contentWrapper = document.getElementById('content-wrapper');
-
-        function openMobileMenu() {
-            document.body.classList.add('sidebar-mobile-open');
-            contentWrapper.addEventListener('click', closeMobileMenuOnOverlayClick, { once: true });
-        }
-
-        function closeMobileMenu() {
-            document.body.classList.remove('sidebar-mobile-open');
-        }
-        
-        function closeMobileMenuOnOverlayClick(e) {
-            // Закрываем только если клик был по оверлею, а не по контенту внутри
-            if (e.target === contentWrapper) {
-                closeMobileMenu();
-            } else {
-                // Если клик был не по оверлею, снова вешаем слушатель
-                contentWrapper.addEventListener('click', closeMobileMenuOnOverlayClick, { once: true });
-            }
-        }
-        
-        if (mobileToggleBtn) {
-            mobileToggleBtn.addEventListener('click', (e) => {
-                if (window.innerWidth <= 992) {
-                    e.stopPropagation(); // Важно, чтобы не сработал десктопный клик
-                    if (document.body.classList.contains('sidebar-mobile-open')) {
-                        closeMobileMenu();
-                    } else {
-                        openMobileMenu();
+                    try {
+                        const response = await fetch('/admin/api/quoterequests/update-status', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                            body: JSON.stringify({ id: parseInt(quoteId), status: newStatus })
+                        });
+                        if (!response.ok) throw new Error('Server response was not ok.');
+                        notyf.success('Статус обновлен!');
+                        htmx.trigger('#kanban-board-container', 'updateKanban');
+                    } catch (error) {
+                        evt.from.insertBefore(card, evt.from.children[evt.oldIndex]);
+                        notyf.error('Не удалось обновить статус.');
                     }
                 }
             });
-        }
+        });
     }
     
-    // --- Логика экспорта ---
+    // --- EXPORT LOGIC ---
     function setupExportLogic() {
         const listContent = document.getElementById('list-content');
         if (!listContent || !document.getElementById('export-selected-btn')) return;
 
-        const selectAllCheckbox = document.getElementById('select-all-checkbox');
-        const exportBtn = document.getElementById('export-selected-btn');
-        const exportBtnText = document.getElementById('export-btn-text');
-        
-        const getSelectedIds = () => {
-            return Array.from(listContent.querySelectorAll('.row-checkbox:checked'))
-                .map(cb => cb.value);
-        };
-        
         const updateButtonState = () => {
-            const selectedIds = getSelectedIds();
+            const selectedIds = Array.from(listContent.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
             const count = selectedIds.length;
-
-            if (exportBtn) exportBtn.disabled = count === 0;
-            
-            if (exportBtnText) {
-                exportBtnText.textContent = count > 0 
-                    ? `Экспорт выбранных (${count})` 
-                    : 'Экспорт выбранных';
-            }
-
-            const allRowCheckboxes = listContent.querySelectorAll('.row-checkbox');
-            if (selectAllCheckbox) {
-                selectAllCheckbox.checked = allRowCheckboxes.length > 0 && 
-                                           count === allRowCheckboxes.length;
-            }
+            const exportBtn = document.getElementById('export-selected-btn');
+            const exportBtnText = document.getElementById('export-btn-text');
+            if(exportBtn) exportBtn.disabled = count === 0;
+            if(exportBtnText) exportBtnText.textContent = count > 0 ? `Экспорт выбранных (${count})` : 'Экспорт выбранных';
         };
         
-        const observer = new MutationObserver(() => {
+        listContent.addEventListener('change', (e) => {
+            if(e.target.id === 'select-all-checkbox') {
+                listContent.querySelectorAll('.row-checkbox').forEach(cb => { cb.checked = e.target.checked; });
+            }
             updateButtonState();
         });
-        observer.observe(listContent, { childList: true, subtree: true });
 
-        listContent.addEventListener('change', (event) => {
-            const target = event.target;
-            
-            if (target.matches('.row-checkbox')) {
-                updateButtonState();
-            } else if (target.matches('#select-all-checkbox')) {
-                listContent.querySelectorAll('.row-checkbox').forEach(checkbox => {
-                    checkbox.checked = target.checked;
-                });
-                updateButtonState();
-            }
-        });
-        
-        if(exportBtn) {
+        const exportBtn = document.getElementById('export-selected-btn');
+        if (exportBtn) {
             exportBtn.addEventListener('click', () => {
-                const ids = getSelectedIds().join(',');
-                if (ids) {
-                    window.location.href = `/admin/quoterequest/export/?ids=${ids}`;
-                }
+                const ids = Array.from(listContent.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value).join(',');
+                if (ids) window.location.href = `/admin/quoterequest/export/?ids=${ids}`;
             });
         }
         
         updateButtonState();
     }
 
-    // --- Централизованная инициализация ---
-    function initializePageComponents() {
+
+    // --- INITIALIZATION ---
+    function init() {
+        setupHtmx();
+        initPopups();
         initSidebar();
         initializeSortable();
         setupExportLogic();
     }
-    
-    setupHtmx();
-    initPopups();
-    initializePageComponents();
 
-    document.body.addEventListener('htmx:afterSwap', function (event) {
+    init();
+
+    // Re-initialize dynamic components after HTMX swaps
+    document.body.addEventListener('htmx:afterSwap', (event) => {
         if (event.detail.target.id === 'modal-body-content') {
             document.getElementById('modal-overlay')?.classList.add('show');
         }
@@ -272,6 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('slide-over-overlay')?.classList.add('show');
         }
         
-        initializePageComponents();
+        initializeSortable();
+        setupExportLogic();
     });
 });
