@@ -18,7 +18,10 @@
 
     <!-- Styles & Fonts -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+	
+    <!-- ИЗМЕНЕНИЕ ЗДЕСЬ: Обновлена версия для сброса кэша -->
     <link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}?v=1.2">
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
 
     <!-- Scripts -->
@@ -28,11 +31,24 @@
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</head>
-<body>
     
+    <!-- Sidebar collapse handler -->
+    <script>
+        (function() {
+            try {
+                if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                    document.documentElement.classList.add('sidebar-collapsed-init');
+                }
+            } catch (e) { console.error('Could not access localStorage for sidebar state.'); }
+        })();
+    </script>
+</head>
+<body class="dark" hx-ext="class-tools">
+    
+    <!-- ГЛАВНЫЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ -->
     <div id="crm-container">
         
+        <!-- БОКОВАЯ ПАНЕЛЬ -->
         <aside id="sidebar">
             <div class="sidebar-header"> 
                 <i class='bx bxs-color-fill logo-icon'></i> 
@@ -47,7 +63,7 @@
                 <a href="{{ request.url_for('admin_dashboard') }}" class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}"> <i class='bx bxs-bar-chart-alt-2 nav-icon'></i><span class="nav-text">Статистика</span> </a>
             </nav>
             <div class="sidebar-footer"> 
-                <a href="{{ request.url_for('admin_logout') }}" class="nav-link"> <i class='bx bx-log-out nav-icon'></i><span class="nav-text">Выйти</span> </a> 
+                <a href="{{ request.url_for('admin_logout') }}" class="logout-trigger nav-link"> <i class='bx bx-log-out nav-icon'></i><span class="nav-text">Выйти</span> </a> 
             </div>
         </aside>
         
@@ -55,6 +71,7 @@
             <header class="main-header">
                 <button id="sidebar-expand-btn" class="btn-icon"><i class='bx bx-menu'></i></button>
                 
+                <!-- Этот div растягивается, чтобы прижать профиль к правому краю -->
                 <div class="header-spacer"></div> 
 
                 {% if user %}
@@ -64,7 +81,15 @@
                         <div id="notification-indicator-wrapper" 
                             hx-get="{{ request.url_for('admin_htmx_notification_indicator') }}"
                             hx-trigger="load, every 8s, notifications-read from:body"
-                            hx-swap="innerHTML">
+                            hx-swap="innerHTML"
+                            hx-on::after-request="
+                                const currentCount = this.querySelector('#notification-counter')?.textContent || '0';
+                                const prevCount = this.prevCount || '0';
+                                if (parseInt(currentCount) > parseInt(prevCount)) {
+                                    htmx.trigger('#kanban-board-container', 'updateKanban');
+                                }
+                                this.prevCount = currentCount;
+                            ">
                             {% include "admin/partials/_notification_indicator.html" %}
                         </div>
                         <i class='bx bx-chevron-down' :class="{'bx-rotate-180': open}"></i>
@@ -81,8 +106,8 @@
                         <ul class="profile-menu-list">
                             <li><a href="{{ request.url_for('admin_profile') }}" class="profile-menu-link"><i class='bx bxs-user-circle'></i><span>Профиль</span></a></li>
                             <li><a href="{{ request.url_for('admin_invites') }}" class="profile-menu-link"><i class='bx bxs-paper-plane'></i><span>Приглашения</span></a></li>
-                            <li><hr style="margin: 8px 0; border-color: var(--border-color);"></li>
-                            <li><a href="{{ request.url_for('admin_logout') }}" class="profile-menu-link" style="color: var(--status-red);"><i class='bx bx-log-out'></i><span>Выйти</span></a></li>
+                            <li><hr class="menu-divider"></li>
+                            <li><a href="{{ request.url_for('admin_logout') }}" class="profile-menu-link logout"><i class='bx bx-log-out'></i><span>Выйти</span></a></li>
                         </ul>
                     </div>
                 </div>
@@ -106,6 +131,14 @@
         </div>
     </div>
 
-	<script src="{{ url_for('static', path='js/crm.js') }}"></script>
+	<script src="{{ url_for('static', path='js/crm.js') }}?v=1.2"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const notyf = new Notyf({ duration: 4000, position: { x: 'right', y: 'top' }, dismissible: true });
+            document.body.addEventListener('show-toast', e => {
+                notyf.open({ type: e.detail.type || 'success', message: e.detail.message || 'Сохранено!' });
+            });
+        });
+    </script>
 </body>
 </html>
