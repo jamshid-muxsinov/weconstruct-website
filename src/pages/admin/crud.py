@@ -39,6 +39,70 @@ def sanitize_for_csv(value):
         
     return text
 
+@router.get("/quoterequest/export/", name="admin_quoterequest_export")
+async def quoterequest_export(
+    request: Request,
+    ids: Optional[str] = None,
+    db: AsyncSession = Depends(get_db_session)
+):
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';', quotechar='"', quoting=csv.QUOTE_ALL)
+
+    headers = [
+        "ID", "Дата", "Статус", "Клиент", "Телефон", "Сообщение",
+        "Тип бизнеса", "Размеры", "Бюджет/Детали", "Выводы", "Доп. сведения"
+    ]
+    writer.writerow(headers)
+
+    query = (
+        select(QuoteRequest)
+        .options(
+            joinedload(QuoteRequest.contact),
+            joinedload(QuoteRequest.product),
+            joinedload(QuoteRequest.assigned_to)
+        )
+        .order_by(QuoteRequest.id.desc())
+    )
+
+    if ids:
+        try:
+            selected_ids = [int(id_str) for id_str in ids.split(',')]
+            query = query.where(QuoteRequest.id.in_(selected_ids))
+        except (ValueError, TypeError):
+            pass
+            
+    result = await db.execute(query)
+    requests_to_export = result.scalars().all()
+
+    for req in requests_to_export:
+        writer.writerow([
+            sanitize_for_csv(req.id),
+            sanitize_for_csv(req.created_at.strftime('%d.%m.%Y %H:%M')),
+            sanitize_for_csv(req.get_status_display()),
+            sanitize_for_csv(req.contact.full_name if req.contact else ""),
+            sanitize_for_csv(req.contact.phone if req.contact else ""),
+            sanitize_for_csv(req.message),
+            sanitize_for_csv(req.business_type),
+            sanitize_for_csv(req.dimensions),
+            sanitize_for_csv(req.investment_details),
+            sanitize_for_csv(req.conclusion),
+            sanitize_for_csv(req.additional_info)
+        ])
+
+    output.seek(0)
+    
+    BOM = b'\xef\xbb\xbf'
+    content_bytes = BOM + output.getvalue().encode('utf-8')
+    
+    response = StreamingResponse(
+        iter([content_bytes]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=weconstruct_requests_{datetime.now().strftime('%Y-%m-%d')}.csv"
+        }
+    )
+    return response
+
 class Meta:
     def __init__(self, model, list_display, form_class=None, verbose_name=None, verbose_name_plural=None):
         self.model = model
