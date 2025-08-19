@@ -5,6 +5,8 @@ services:
       - db_data:/var/lib/postgresql/data/
     env_file: .env 
     restart: unless-stopped
+    environment:
+      - TZ=Asia/Tashkent
 
   redis:
     image: redis:7-alpine
@@ -15,10 +17,9 @@ services:
     command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:app
     environment:
       - FORWARDED_ALLOW_IPS=*
+      - TZ=Asia/Tashkent
     volumes:
-      # ИЗМЕНЕНИЕ: Монтируем исходный код напрямую, чтобы `collectstatic` работал с актуальными файлами
       - ./src:/app/src
-      # ИЗМЕНЕНИЕ: Том для медиа оставляем, так как медиа-файлы загружаются пользователями
       - media_volume:/app/media
     depends_on:
       - db
@@ -40,9 +41,7 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
-      # ИЗМЕНЕНИЕ: Монтируем папку со статикой напрямую, а не через том
       - ./src/static:/app/src/static:ro
-      # ИЗМЕНЕНИЕ: Том для медиа оставляем, как и было
       - media_volume:/app/media:ro
     depends_on:
       web:
@@ -52,5 +51,4 @@ services:
     
 volumes:
   db_data:
-  # ИЗМЕНЕНИЕ: Убираем `static_volume`, он больше не нужен
   media_volume:
