@@ -4,7 +4,6 @@
 <div class="page-header">
     <h1>Воронка продаж</h1>
     <div class="page-header-actions">
-
         <form class="filter-form" 
               hx-get="{{ request.url_for('admin_htmx_kanban_content') }}"
               hx-target="#kanban-board-container" 
@@ -33,13 +32,4 @@
         <i class='bx bx-loader-alt bx-spin'></i><span>Загрузка канбан-доски...</span>
     </div>
 </div>
-
-<!-- Этот блок подключается к потоку данных с сервера -->
-<div hx-ext="sse" 
-     sse-connect="{{ request.url_for('admin_htmx_kanban_stream') }}" 
-     sse-swap="new_quote"
-     hx-swap="afterbegin"
-     hx-target=".kanban-column[data-status='new'] > .kanban-column-body">
-</div>
-
 {% endblock %}

@@ -1,11 +1,9 @@
-# src/pages/admin/crud.py
-
 import os
 import uuid
 import json
 import csv
 import io
-import re # Импортируем модуль для регулярных выражений
+import re
 from fastapi.responses import StreamingResponse, HTMLResponse, RedirectResponse
 from urllib.parse import quote
 from pathlib import Path
@@ -22,7 +20,7 @@ from src.pages.jinja_config import templates
 from src.core.db import get_db_session
 from src.models.shop_models import User, Product, Category, QuoteRequest, Contact, RegistrationInvite, ProductImage, Task, Notification
 from src.core.security import get_current_active_user
-from .dependencies import get_common_context, publish_kanban_update
+from .dependencies import get_common_context
 from src.services import user_service, shop_service
 from sqlalchemy.exc import IntegrityError
 from fastapi_pagination import Params
@@ -30,20 +28,12 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 
 router = APIRouter()
 
-# --- ИЗМЕНЕНИЕ: Улучшенная функция очистки текста для CSV ---
 def sanitize_for_csv(value):
-    """
-    Готовит значение для записи в CSV:
-    1. Убирает переносы строк.
-    2. "Защищает" от авто-форматирования дат в Excel.
-    """
     if value is None:
         return ""
     
     text = str(value).replace('\n', ' ').replace('\r', ' ').strip()
     
-    # Регулярное выражение для поиска значений, похожих на дату (ДД.ММ, ДД/ММ, ДД-ММ)
-    # Это предотвратит превращение "7/4" или "15.10" в дату.
     if re.match(r'^\d{1,2}[./-]\d{1,2}$', text):
         return f'="{text}"'
         
@@ -64,7 +54,6 @@ class Meta:
         self.delete_url_name = f"admin_{model_name_lower}_delete" if form_class else None
     def __str__(self): return self.verbose_name_plural
 
-# ... (все классы форм остаются без изменений) ...
 class ProductForm(wtforms.Form):
     name_ru = wtforms.StringField('Название (RU)', validators=[wtforms.validators.DataRequired()])
     short_description_ru = wtforms.TextAreaField('Краткое описание (RU)', render_kw={"rows": 3})
@@ -88,7 +77,6 @@ class CategoryForm(wtforms.Form):
     description_ru = wtforms.TextAreaField('Описание (RU)', render_kw={"rows": 4})
     name_uz = wtforms.StringField('Название (UZ)')
     description_uz = wtforms.TextAreaField('Описание (UZ)', render_kw={"rows": 4})
-
 
 class QuoteRequestForm(wtforms.Form):
     contact_id = wtforms.HiddenField('Контакт', validators=[wtforms.validators.Optional()])
@@ -117,7 +105,6 @@ class QuoteRequestForm(wtforms.Form):
             return False
         return True
 
-
 Product.__str__ = lambda self: self.name_ru
 Category.__str__ = lambda self: self.name_ru
 QuoteRequest.__str__ = lambda self: f"Заявка #{self.id}"
@@ -125,75 +112,6 @@ QuoteRequest.__str__ = lambda self: f"Заявка #{self.id}"
 PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], ProductForm, "Товар", "Товары")
 CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "Категория", "Категории")
 QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'product', 'status', 'source'], QuoteRequestForm, "Заявка", "Заявки")
-
-# ... (остальные функции CRUD остаются без изменений) ...
-
-@router.get("/quoterequest/export/", name="admin_quoterequest_export")
-async def quoterequest_export(
-    request: Request,
-    ids: Optional[str] = None,
-    db: AsyncSession = Depends(get_db_session)
-):
-    output = io.StringIO()
-    writer = csv.writer(output, delimiter=';', quotechar='"', quoting=csv.QUOTE_ALL)
-
-    headers = [
-        "ID", "Дата", "Статус", "Клиент", "Телефон", "Сообщение",
-        "Тип бизнеса", "Размеры", "Бюджет/Детали", "Выводы", "Доп. сведения"
-    ]
-    writer.writerow(headers)
-
-    query = (
-        select(QuoteRequest)
-        .options(
-            joinedload(QuoteRequest.contact),
-            joinedload(QuoteRequest.product),
-            joinedload(QuoteRequest.assigned_to)
-        )
-        .order_by(QuoteRequest.id.desc())
-    )
-
-    if ids:
-        try:
-            selected_ids = [int(id_str) for id_str in ids.split(',')]
-            query = query.where(QuoteRequest.id.in_(selected_ids))
-        except (ValueError, TypeError):
-            pass
-            
-    result = await db.execute(query)
-    requests_to_export = result.scalars().all()
-
-    for req in requests_to_export:
-        writer.writerow([
-            sanitize_for_csv(req.id),
-            sanitize_for_csv(req.created_at.strftime('%d.%m.%Y %H:%M')),
-            sanitize_for_csv(req.get_status_display()), # Теперь будет на русском
-            sanitize_for_csv(req.contact.full_name if req.contact else ""),
-            sanitize_for_csv(req.contact.phone if req.contact else ""),
-            sanitize_for_csv(req.message),
-            sanitize_for_csv(req.business_type),
-            sanitize_for_csv(req.dimensions), # Защищено от авто-форматирования
-            sanitize_for_csv(req.investment_details),
-            sanitize_for_csv(req.conclusion),
-            sanitize_for_csv(req.additional_info)
-        ])
-
-    output.seek(0)
-    
-    BOM = b'\xef\xbb\xbf'
-    content_bytes = BOM + output.getvalue().encode('utf-8')
-    
-    response = StreamingResponse(
-        iter([content_bytes]),
-        media_type="text/csv",
-        headers={
-            "Content-Disposition": f"attachment; filename=weconstruct_requests_{datetime.now().strftime('%Y-%m-%d')}.csv"
-        }
-    )
-    return response
-
-# ... (все остальные функции CRUD для Product, Category, QuoteRequest, Invite) ...
-# Код ниже оставлен для полноты файла и не содержит изменений.
 
 def set_hx_trigger_header(response: Response, message: str, type: str = "success"):
     payload = json.dumps({"show-toast": {"message": message, "type": type}})
@@ -415,7 +333,6 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
     if form.validate():
         contact_id = int(form.contact_id.data) if form.contact_id.data else None
         new_quote_request = None
-        contact = None
         if not contact_id:
             contact = await shop_service._get_or_create_contact(db, form.new_contact_name.data, form.new_contact_phone.data)
             await db.flush()
@@ -432,12 +349,10 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
             new_quote_request.additional_info = form.additional_info.data
             db.add(new_quote_request)
             await db.flush()
-            if not contact_id and contact:
+            if not contact_id:
                 await shop_service._notify_managers(db, new_quote_request, contact.full_name)
         
         await db.commit()
-        await publish_kanban_update(db, new_quote_request.id, request)
-        
         response = RedirectResponse(request.url_for(QUOTEREQUEST_META.list_url_name), status_code=303)
         return set_hx_trigger_header(response, "Заявка успешно создана!")
 

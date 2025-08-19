@@ -75,10 +75,18 @@
                     <button @click="open = !open" id="profile-menu-button" class="user-profile-button">
                         <span class="profile-name">Привет, {{ user.username }}!</span>
                         <div id="notification-indicator-wrapper" 
-                             hx-get="{{ request.url_for('admin_htmx_notification_indicator') }}"
-                             hx-trigger="load, every 8s, notifications-read from:body"
-                             hx-swap="innerHTML">
-                             {% include "admin/partials/_notification_indicator.html" %}
+                            hx-get="{{ request.url_for('admin_htmx_notification_indicator') }}"
+                            hx-trigger="load, every 8s, notifications-read from:body"
+                            hx-swap="innerHTML"
+                            hx-on::after-request="
+                                const currentCount = this.querySelector('#notification-counter')?.textContent || '0';
+                                const prevCount = this.prevCount || '0';
+                                if (parseInt(currentCount) > parseInt(prevCount)) {
+                                    htmx.trigger('#kanban-board-container', 'updateKanban');
+                                }
+                                this.prevCount = currentCount;
+                            ">
+                            {% include "admin/partials/_notification_indicator.html" %}
                         </div>
                         <i class='bx bx-chevron-down' :class="{'bx-rotate-180': open}"></i>
                     </button>
