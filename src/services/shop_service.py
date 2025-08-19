@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload, joinedload
-
+from src.core.cache import cache_manager, invalidate_cache 
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
 
@@ -64,8 +64,13 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
     await db.commit()
     await db.refresh(quote) 
 
-    return quote
+    if cache_manager.is_redis_available:
+        try:
+            await cache_manager.redis_client.publish("kanban_updates", str(quote.id))
+        except Exception as e:
+            print(f"Could not publish to Redis: {e}") 
 
+    return quote
 
 @cache_result("categories_with_products", ttl=1800)  
 async def get_categories_with_active_products(db: AsyncSession):

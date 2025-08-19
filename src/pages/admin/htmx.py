@@ -20,6 +20,7 @@ from src.schemas.crm_schemas import TaskCreate
 from .dependencies import get_common_context
 from pathlib import Path
 from sse_starlette.sse import EventSourceResponse
+from src.core.cache import cache_manager
 
 MEDIA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "media"
 router = APIRouter(prefix="/htmx", tags=["Admin HTMX"])
@@ -40,54 +41,59 @@ async def stream_new_kanban_cards(
     db: AsyncSession = Depends(get_db_session)
 ):
     """
-    Создает поток Server-Sent Events для отправки новых заявок на канбан-доску.
+    Создает поток Server-Sent Events, который слушает Redis Pub/Sub 
+    для мгновенной отправки новых заявок на канбан-доску.
     """
-    latest_id = 0
-    # Сначала найдем ID самой последней заявки в системе, чтобы не отправлять старые
-    initial_latest_req = await crm_service.get_latest_quote_request(db)
-    if initial_latest_req:
-        latest_id = initial_latest_req.id
+    if not cache_manager.is_redis_available:
+        print("SSE stream stopped: Redis is not available.")
+        return Response(status_code=204)
 
     async def event_generator():
-        nonlocal latest_id
-        while True:
-            # Проверяем, не отключился ли клиент
-            if await request.is_disconnected():
-                break
+        redis_client = cache_manager.redis_client
+        pubsub = redis_client.pubsub()
+        await pubsub.subscribe("kanban_updates")
+        
+        try:
+            while True:
+                if await request.is_disconnected():
+                    print("Client disconnected from SSE stream.")
+                    break
+                message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=30)
+                
+                if message and message.get("type") == "message":
+                    try:
+                        quote_id = int(message["data"])
+                    except (ValueError, TypeError):
+                        continue
 
-            # Ищем новые заявки, у которых ID больше, чем у последней известной
-            stmt = (
-                select(QuoteRequest)
-                .where(QuoteRequest.id > latest_id, QuoteRequest.status == QuoteRequest.StatusEnum.NEW)
-                .options(
-                    joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
-                    joinedload(QuoteRequest.product),
-                    joinedload(QuoteRequest.assigned_to)
-                )
-                .order_by(QuoteRequest.id.asc()) # Важно: по возрастанию, чтобы обработать по порядку
-            )
-            result = await db.execute(stmt)
-            new_quotes = result.scalars().all()
+                    stmt = (
+                        select(QuoteRequest).where(QuoteRequest.id == quote_id)
+                        .options(
+                            joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
+                            joinedload(QuoteRequest.product),
+                            joinedload(QuoteRequest.assigned_to)
+                        )
+                    )
+                    result = await db.execute(stmt)
+                    new_quote = result.scalars().first()
 
-            if new_quotes:
-                for quote in new_quotes:
-                    # Рендерим HTML-карточку для каждой новой заявки
-                    card_html = templates.TemplateResponse(
-                        "admin/partials/_kanban_card.html",
-                        {"request": request, "req": quote}
-                    ).body.decode("utf-8")
-                    
-                    # Отправляем событие клиенту
-                    yield {
-                        "event": "new_quote", # Название события, которое будет слушать HTMX
-                        "data": card_html
-                    }
-                    latest_id = quote.id # Обновляем ID последней отправленной заявки
-            
-            await asyncio.sleep(3) 
+                    if new_quote:
+                        card_html = templates.TemplateResponse(
+                            "admin/partials/_kanban_card.html",
+                            {"request": request, "req": new_quote}
+                        ).body.decode("utf-8")
+                        
+                        yield {
+                            "event": "new_quote",
+                            "data": card_html
+                        }
+        except asyncio.CancelledError:
+            print("SSE stream cancelled.")
+        finally:
+            await pubsub.unsubscribe("kanban_updates")
+            print("Unsubscribed from Redis channel.")
 
     return EventSourceResponse(event_generator())
-
 
 @router.get("/quoterequest-modal/{pk}", response_class=HTMLResponse, name="admin_htmx_quoterequest_modal")
 async def get_quote_request_modal(
