@@ -15,15 +15,15 @@
     <link rel="shortcut icon" href="{{ url_for('static',path='favicons/favicon.ico') }}">
     <meta name="msapplication-TileColor" content="#07385a">
     <meta name="theme-color" content="#ffffff">
-    
+
     <!-- Styles & Fonts -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 	<link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
 
+    <!-- Scripts -->
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
     <script src="https://unpkg.com/htmx.org/dist/ext/sse.js" defer></script>
-
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -64,17 +64,12 @@
             </div>
         </aside>
         
-        <!-- --- НАЧАЛО ИСПРАВЛЕННОЙ СТРУКТУРЫ --- -->
         <div id="content-wrapper">
-            <!-- Хедер приложения (шапка). Он всегда сверху. -->
             <header class="main-header">
-                <!-- Кнопка для мобильного меню -->
                 <button id="sidebar-expand-btn" class="btn-icon"><i class='bx bx-menu'></i></button>
                 
-                <!-- Распорка, чтобы оттолкнуть профиль вправо -->
                 <div style="flex-grow: 1;"></div> 
 
-                <!-- Профиль пользователя -->
                 {% if user %}
                 <div class="user-profile" x-data="{ open: false }" @click.away="open = false">
                     <button @click="open = !open" id="profile-menu-button" class="user-profile-button">
@@ -107,16 +102,13 @@
                 {% endif %}
             </header>
             
-            <!-- Основной контент страницы. Он идет ПОСЛЕ хедера. -->
             <main> 
                 {% block content %}{% endblock %} 
             </main>
         </div>
-        <!-- --- КОНЕЦ ИСПРАВЛЕННОЙ СТРУКТУРЫ --- -->
 
     </div>
     
-    <!-- Модальные окна -->
     <div id="modal-overlay" class="modal-overlay">
         <div id="modal-body-content" class="modal-content"><div class="modal-loading-placeholder"><i class='bx bx-loader-alt bx-spin'></i><span>Загрузка...</span></div></div>
     </div>
