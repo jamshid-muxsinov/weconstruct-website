@@ -66,7 +66,7 @@
                         </div>
                         <button class="btn-icon" 
                                 hx-post="{{ request.url_for('admin_contact_pin_note', pk=item.obj.contact_id, note_id=item.obj.id) }}"
-                                hx-target="#timeline-list" hx-swap="outerHTML"
+                    ф            hx-target="#timeline-list" hx-swap="outerHTML"
                                 title="{{ 'Открепить заметку' if item.obj.is_pinned else 'Закрепить заметку' }}"
                                 style="color: {{ 'var(--status-yellow)' if item.obj.is_pinned else 'var(--text-secondary)' }};">
                             <i class='bx bxs-pin'></i>
