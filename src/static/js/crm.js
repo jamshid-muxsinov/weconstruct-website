@@ -128,66 +128,36 @@ document.addEventListener('DOMContentLoaded', function() {
     function initSidebar() {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar) return;
-
-        // --- ЛОГИКА ДЛЯ ДЕСКТОПА (СВОРАЧИВАНИЕ) ---
+        
         const collapseBtn = document.getElementById('sidebar-collapse-btn');
-        const expandBtnDesktop = document.querySelector('body:not(.sidebar-mobile-open) #sidebar-expand-btn');
+        const expandBtn = document.getElementById('sidebar-expand-btn');
+
+        const applyState = (isCollapsed) => {
+            document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+        };
         
-        if(collapseBtn && expandBtnDesktop) {
-            document.documentElement.classList.remove('sidebar-collapsed-init');
-            
-            const applyDesktopState = (isCollapsed) => {
-                document.body.classList.toggle('sidebar-collapsed', isCollapsed);
-                sidebar.classList.toggle('collapsed', isCollapsed);
-            };
-            
-            const toggleDesktop = () => {
-                if (window.innerWidth <= 992) return;
-                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                localStorage.setItem('sidebarCollapsed', !isCollapsed);
-                applyDesktopState(!isCollapsed);
-            };
-
-            applyDesktopState(localStorage.getItem('sidebarCollapsed') === 'true');
-            collapseBtn.addEventListener('click', toggleDesktop);
-            expandBtnDesktop.addEventListener('click', toggleDesktop);
-        }
-
-        // --- УЛУЧШЕННАЯ ЛОГИКА ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ ---
-        const mobileToggleBtn = document.getElementById('sidebar-expand-btn');
-        const contentWrapper = document.getElementById('content-wrapper');
-
-        function openMobileMenu() {
-            document.body.classList.add('sidebar-mobile-open');
-            contentWrapper.addEventListener('click', closeMobileMenuOnOverlayClick, { once: true });
-        }
-
-        function closeMobileMenu() {
-            document.body.classList.remove('sidebar-mobile-open');
-        }
-        
-        function closeMobileMenuOnOverlayClick(e) {
-            // Закрываем только если клик был по оверлею, а не по контенту внутри
-            if (e.target === contentWrapper) {
-                closeMobileMenu();
+        const toggleSidebar = () => {
+             if (window.innerWidth > 992) {
+                const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+                localStorage.setItem('sidebarCollapsed', isCollapsed);
             } else {
-                // Если клик был не по оверлею, снова вешаем слушатель
-                contentWrapper.addEventListener('click', closeMobileMenuOnOverlayClick, { once: true });
+                document.body.classList.toggle('sidebar-mobile-open');
             }
-        }
+        };
         
-        if (mobileToggleBtn) {
-            mobileToggleBtn.addEventListener('click', (e) => {
-                if (window.innerWidth <= 992) {
-                    e.stopPropagation(); // Важно, чтобы не сработал десктопный клик
-                    if (document.body.classList.contains('sidebar-mobile-open')) {
-                        closeMobileMenu();
-                    } else {
-                        openMobileMenu();
-                    }
-                }
-            });
+        if (window.innerWidth > 992) {
+            applyState(localStorage.getItem('sidebarCollapsed') === 'true');
         }
+
+        collapseBtn?.addEventListener('click', toggleSidebar);
+        expandBtn?.addEventListener('click', toggleSidebar);
+        
+        const contentOverlay = document.querySelector('#content-wrapper');
+        contentOverlay?.addEventListener('click', () => {
+            if (window.innerWidth <= 992 && document.body.classList.contains('sidebar-mobile-open')) {
+                document.body.classList.remove('sidebar-mobile-open');
+            }
+        });
     }
     
     // --- Логика экспорта ---
@@ -272,6 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('slide-over-overlay')?.classList.add('show');
         }
         
+        // Переинициализируем компоненты после каждого HTMX-запроса
         initializePageComponents();
     });
 });
