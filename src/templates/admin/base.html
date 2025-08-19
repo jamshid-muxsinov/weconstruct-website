@@ -19,8 +19,8 @@
     <!-- Styles & Fonts -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 	
-    <!-- ИЗМЕНЕНИЕ ЗДЕСЬ: Обновлена версия для сброса кэша -->
-    <link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}?v=1.2">
+    <!-- ИЗМЕНЕНИЕ: Сменили имя файла, чтобы обойти кэш -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}">
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
 
@@ -31,29 +31,6 @@
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
-    <!-- Sidebar collapse handler -->
-    <script>
-        (function() {
-            try {
-                if (localStorage.getItem('sidebarCollapsed') === 'true') {
-                    document.documentElement.classList.add('sidebar-collapsed-init');
-                }
-            } catch (e) { console.error('Could not access localStorage for sidebar state.'); }
-        })();
-    </script>
-
-    <style>
-body { 
-    background-color: #111317 !important; 
-    color: #E5E7EB !important; 
-    font-family: 'Inter', sans-serif !important;
-}
-#sidebar { 
-    background-color: #181A20 !important; 
-    border-right: 1px solid #31353F !important;
-}
-</style>
 </head>
 <body class="dark" hx-ext="class-tools">
     
@@ -143,7 +120,7 @@ body {
         </div>
     </div>
 
-	<script src="{{ url_for('static', path='js/crm.js') }}?v=1.2"></script>
+	<script src="{{ url_for('static', path='js/crm.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const notyf = new Notyf({ duration: 4000, position: { x: 'right', y: 'top' }, dismissible: true });
