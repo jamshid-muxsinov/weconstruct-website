@@ -1,0 +1,67 @@
+{# /templates/admin/partials/_form_field.html #}
+{% if field.name == 'price_min' %}
+<div class="form-row">
+    <div class="input-group">
+        <label for="{{ form.price_min.id }}">{{ form.price_min.label.text }}</label>
+        <input type="number" name="{{ form.price_min.name }}" id="{{ form.price_min.id }}" class="input-field" value="{{ form.price_min.data if form.price_min.data is not none else '' }}">
+        {% if form.price_min.errors %}<div class="error-text">{{ form.price_min.errors[0] }}</div>{% endif %}
+    </div>
+    <div class="input-group">
+        <label for="{{ form.price_max.id }}">{{ form.price_max.label.text }}</label>
+        <input type="number" name="{{ form.price_max.name }}" id="{{ form.price_max.id }}" class="input-field" value="{{ form.price_max.data if form.price_max.data is not none else '' }}">
+        {% if form.price_max.errors %}<div class="error-text">{{ form.price_max.errors[0] }}</div>{% endif %}
+    </div>
+</div>
+{% elif field.name == 'price_max' %}
+{# This field is rendered along with price_min, so we do nothing here #}
+{% else %}
+<div class="input-group">
+    <label for="{{ field.id }}">{{ field.label.text }}</label>
+
+    {% if field.type == 'SelectField' %}
+        <div style="display: flex; gap: 10px; align-items: center;">
+            {{ field(class_='select-field', style='flex-grow: 1;') }}
+            {% if field.name == 'category_id' %}
+            <button type="button" class="btn btn-secondary" hx-get="{{ request.url_for('admin_htmx_category_add_modal') }}" hx-target="#modal-body-content" hx-trigger="click" title="Добавить новую категорию">
+                <i class='bx bx-plus'></i>
+            </button>
+            {% endif %}
+        </div>
+    {% elif field.type == 'TextAreaField' %}
+        {{ field(class_='textarea-field') }}
+    {% elif field.type == 'BooleanField' %}
+        <div style="display: flex; align-items: center; gap: 10px; padding-top: 8px;">
+            {{ field(style='width: 18px; height: 18px;') }}
+            <span>{{ field.description }}</span>
+        </div>
+    {% elif field.name == 'main_image' %}
+        {% if original and original.main_image %}
+        <div style="margin-bottom: 10px;">
+            <img src="{{ url_for('media', path=original.main_image) }}" alt="Current image" class="form-image-preview" loading="lazy">
+            <p class="form-image-note">Текущее изображение. Загрузите новое для замены.</p>
+        </div>
+        {% endif %}
+        <input type="file" name="{{ field.name }}" id="{{ field.id }}" class="input-field">
+    {% elif field.name == 'images' %}
+        <input type="file" name="{{ field.name }}" id="{{ field.id }}" class="input-field" multiple>
+        {% if original and original.images %}
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;">
+            {% for img in original.images %}
+            <div id="gallery-item-{{ img.id }}" style="position:relative;">
+                <img src="{{ url_for('media', path=img.image) }}" alt="Image" loading="lazy" style="width:100px; height:100px; object-fit:cover; border-radius:var(--border-radius-md);">
+                <button type="button" class="btn-icon btn-icon-danger" style="position:absolute; top:-5px; right:-5px; width:24px; height:24px; font-size:1rem;"
+                    hx-delete="{{ request.url_for('admin_htmx_delete_product_image', pk=img.id) }}"
+                    hx-target="#gallery-item-{{ img.id }}" hx-swap="outerHTML"
+                    hx-confirm="Вы уверены, что хотите удалить это изображение?">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% else %}
+        {{ field(class_='input-field') }}
+    {% endif %}
+
+    {% if field.description and field.type != 'BooleanField' %}<small class="form-field-description">{{ field.description }}</small>{% endif %}
+    {% if field.errors %}<div class="error-text">{{ field.errors[0] }}</div>{% endif %}
+</div>
+{% endif %}

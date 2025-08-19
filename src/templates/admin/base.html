@@ -7,7 +7,6 @@
     
     <title>{{ title|default("Панель управления") }} | WeConstruct CRM</title>
     
-    <!-- Favicons -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
@@ -16,12 +15,10 @@
     <meta name="msapplication-TileColor" content="#07385a">
     <meta name="theme-color" content="#ffffff">
 
-    <!-- Styles & Fonts -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
 
-    <!-- Scripts -->
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
     <script src="https://unpkg.com/htmx.org/dist/ext/sse.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -29,45 +26,21 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
-    <!-- ИСПРАВЛЕНИЕ "ДЕРГАНЬЯ": Этот скрипт выполняется мгновенно, до отрисовки body -->
+    <!-- Anti-flicker script -->
     <script>
         (function() {
             try {
                 if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 992) {
-                    // Мы добавляем класс к тегу <body> еще до того, как он будет отрисован.
-                    // Для этого мы используем специальный трюк с MutationObserver.
-                    const observer = new MutationObserver((mutations, obs) => {
-                        const body = document.querySelector('body');
-                        if (body) {
-                            body.classList.add('sidebar-collapsed-init');
-                            obs.disconnect(); // Отключаемся, как только задача выполнена
-                            return;
-                        }
-                    });
-                    observer.observe(document.documentElement, { childList: true, subtree: true });
+                    document.body.classList.add('sidebar-collapsed-init');
                 }
-            } catch (e) {
-                console.error('Could not access localStorage for sidebar state.');
-            }
+            } catch (e) { console.error(e); }
         })();
     </script>
-    <style>
-        /* Этот стиль скрывает "дерганье" на случай, если JS не успеет */
-        body.sidebar-collapsed-init #sidebar {
-            width: 80px;
-        }
-        body.sidebar-collapsed-init #sidebar .logo-text,
-        body.sidebar-collapsed-init #sidebar .nav-text {
-            display: none;
-        }
-    </style>
 </head>
 <body class="dark" hx-ext="class-tools">
     
-    <!-- ГЛАВНЫЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ -->
     <div id="crm-container">
         
-        <!-- БОКОВАЯ ПАНЕЛЬ -->
         <aside id="sidebar">
             <div class="sidebar-header"> 
                 <i class='bx bxs-color-fill logo-icon'></i> 
@@ -90,7 +63,6 @@
             <header class="main-header">
                 <button id="sidebar-expand-btn" class="btn-icon"><i class='bx bx-menu'></i></button>
                 
-                <!-- Этот div растягивается, чтобы прижать профиль к правому краю -->
                 <div class="header-spacer"></div> 
 
                 {% if user %}
@@ -100,15 +72,7 @@
                         <div id="notification-indicator-wrapper" 
                             hx-get="{{ request.url_for('admin_htmx_notification_indicator') }}"
                             hx-trigger="load, every 8s, notifications-read from:body"
-                            hx-swap="innerHTML"
-                            hx-on::after-request="
-                                const currentCount = this.querySelector('#notification-counter')?.textContent || '0';
-                                const prevCount = this.prevCount || '0';
-                                if (parseInt(currentCount) > parseInt(prevCount)) {
-                                    htmx.trigger('#kanban-board-container', 'updateKanban');
-                                }
-                                this.prevCount = currentCount;
-                            ">
+                            hx-swap="innerHTML">
                             {% include "admin/partials/_notification_indicator.html" %}
                         </div>
                         <i class='bx bx-chevron-down' :class="{'bx-rotate-180': open}"></i>
@@ -126,7 +90,7 @@
                             <li><a href="{{ request.url_for('admin_profile') }}" class="profile-menu-link"><i class='bx bxs-user-circle'></i><span>Профиль</span></a></li>
                             <li><a href="{{ request.url_for('admin_invites') }}" class="profile-menu-link"><i class='bx bxs-paper-plane'></i><span>Приглашения</span></a></li>
                             <li><hr class="menu-divider"></li>
-                            <li><a href="{{ request.url_for('admin_logout') }}" class="profile-menu-link logout"><i class='bx bx-log-out'></i><span>Выйти</span></a></li>
+                            <li><a href="{{ request.url_for('admin_logout') }}" class="profile-menu-link logout logout-trigger"><i class='bx bx-log-out'></i><span>Выйти</span></a></li>
                         </ul>
                     </div>
                 </div>
@@ -151,13 +115,5 @@
     </div>
 
 	<script src="{{ url_for('static', path='js/crm.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const notyf = new Notyf({ duration: 4000, position: { x: 'right', y: 'top' }, dismissible: true });
-            document.body.addEventListener('show-toast', e => {
-                notyf.open({ type: e.detail.type || 'success', message: e.detail.message || 'Сохранено!' });
-            });
-        });
-    </script>
 </body>
 </html>

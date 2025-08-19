@@ -1,9 +1,10 @@
+{# _generic_list_content.html #}
 <div class="table-wrapper">
     <table class="styled-table">
         <thead>
             <tr>
                  {% if meta.model_name == 'quoterequest' %}
-                <th style="width: 40px;">
+                <th style="width: 40px; text-align: center;">
                     <input type="checkbox" id="select-all-checkbox" title="Выбрать все на странице">
                 </th>
                 {% endif %}
@@ -19,7 +20,7 @@
                     onclick="window.location.href='{{ request.url_for(meta.change_url_name, pk=item.id) }}';">
                     
                     {% if meta.model_name == 'quoterequest' %}
-                    <td data-label="Select" onclick="event.stopPropagation();">
+                    <td data-label="Выбрать" onclick="event.stopPropagation();" style="text-align: center;">
                         <input type="checkbox" class="row-checkbox" value="{{ item.id }}">
                     </td>
                     {% endif %}
@@ -29,13 +30,16 @@
                             {% set value = getattr(item, field_name, '') %}
 
                             {% if field_name == 'name' and meta.model_name == 'quoterequest' %}
-                                <!-- ИЗМЕНЕНИЕ: Добавлена проверка if item.contact -->
-                                <a href="{{ request.url_for('admin_contact_detail', pk=item.contact_id) if item.contact else '#' }}" 
-                                   class="link-to-change" 
-                                   onclick="event.stopPropagation();"
-                                   title="Перейти к профилю клиента">
-                                   {{ item.contact.full_name if item.contact else 'Контакт удален' }}
-                                </a>
+                                {% if item.contact %}
+                                    <a href="{{ request.url_for('admin_contact_detail', pk=item.contact_id) }}" 
+                                       class="link-to-change" 
+                                       onclick="event.stopPropagation();"
+                                       title="Перейти к профилю клиента">
+                                       {{ item.contact.full_name }}
+                                    </a>
+                                {% else %}
+                                    <span style="color: var(--status-red);">Контакт удален</span>
+                                {% endif %}
                             {% elif loop.first %}
                                 <a href="{{ request.url_for(meta.change_url_name, pk=item.id) }}" class="link-to-change">
                                     {{ value }}
@@ -46,8 +50,7 @@
                                 {{ item.get_source_display() }}
                             {% elif field_name == 'category' and value %}
                                 {{ value.name }}
-                            {% elif field_name == 'product' and value %}
-                                <!-- ИЗМЕНЕНИЕ: Добавлена проверка if item.product -->
+                            {% elif field_name == 'product' and meta.model_name == 'quoterequest' %}
                                 {{ item.product.name if item.product else 'Товар удален' }}
                             {% elif field_name == 'price_min' and value is not none %}
                                 {{ value|format_number }} сум
@@ -71,7 +74,7 @@
 </div>
 
 {% if page.pages > 1 %}
-<div class="card" style="margin-top: 24px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+<div class="card" style="margin-top: 24px; padding: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
     <div>
         Страница {{ page.page }} из {{ page.pages }}. Всего: {{ page.total }}
     </div>

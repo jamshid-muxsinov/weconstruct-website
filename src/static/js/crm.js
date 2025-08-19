@@ -60,11 +60,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const isDesktop = () => window.innerWidth > 992;
 
         const applySidebarState = () => {
+            // Remove init class after first run
+            body.classList.remove('sidebar-collapsed-init');
+
             if (!isDesktop()) {
-                // On mobile, ensure desktop classes are removed and mobile is closed
+                // On mobile, ensure desktop classes are removed
                 body.classList.remove('sidebar-collapsed');
                 sidebar.classList.remove('collapsed');
-                body.classList.remove('sidebar-mobile-open');
                 return;
             }
             // On desktop, apply saved state
@@ -77,30 +79,25 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isDesktop()) {
                 const isCollapsed = body.classList.contains('sidebar-collapsed');
                 localStorage.setItem('sidebarCollapsed', !isCollapsed);
-                body.classList.toggle('sidebar-collapsed');
-                sidebar.classList.toggle('collapsed');
+                applySidebarState();
             }
         });
         
         expandBtn.addEventListener('click', () => {
             if (isDesktop()) {
                 localStorage.setItem('sidebarCollapsed', false);
-                body.classList.remove('sidebar-collapsed');
-                sidebar.classList.remove('collapsed');
+                applySidebarState();
             } else {
                 body.classList.add('sidebar-mobile-open');
             }
         });
         
-        // Close mobile sidebar on overlay click
         contentWrapper.addEventListener('click', () => {
             if (body.classList.contains('sidebar-mobile-open')) {
                 body.classList.remove('sidebar-mobile-open');
             }
         });
         
-        // Initial setup and on resize
-        applySidebarState();
         window.addEventListener('resize', applySidebarState);
     }
     

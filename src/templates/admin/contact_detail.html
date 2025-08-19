@@ -1,3 +1,4 @@
+{# contact_detail.html #}
 {% extends "admin/base.html" %}
 
 {% block content %}
@@ -6,7 +7,6 @@
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: flex-start;">
-    {# Левая колонка с информацией о контакте #}
     <div class="card">
         <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Контактная информация</h2>
         <form method="post" action="{{ request.url_for('post_contact_detail_page', pk=contact.id) }}" novalidate>
@@ -14,9 +14,7 @@
             <div class="input-group">
                 <label for="{{ field.id }}">{{ field.label.text }}</label>
                 {{ field(class_='input-field') }}
-                {% if field.errors %}
-                <div class="error-text">{{ field.errors[0] }}</div>
-                {% endif %}
+                {% if field.errors %}<div class="error-text">{{ field.errors[0] }}</div>{% endif %}
             </div>
             {% endfor %}
             <div class="form-actions" style="padding: 0; border: none; margin-top: 8px;">
@@ -25,13 +23,11 @@
         </form>
     </div>
 
-    {# Правая колонка с лентой взаимодействий #}
     <div class="card">
         <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Лента взаимодействий</h2>
         
-        {# Форма добавления заметки #}
         <form hx-post="{{ request.url_for('admin_contact_add_note', pk=contact.id) }}" hx-target="#timeline-list"
-            hx-swap="outerHTML" hx-on::after-request="this.reset()"
+            hx-swap="innerHTML" hx-on::after-request="this.reset()"
             style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color);">
             <textarea name="note" class="textarea-field" rows="3" placeholder="Добавить заметку о звонке или встрече..."></textarea>
             <div style="text-align: right; margin-top: 10px;">
@@ -39,7 +35,6 @@
             </div>
         </form>
 
-        {# Подключаем обновленный partial для самой ленты #}
         {% include 'admin/partials/_contact_timeline.html' %}
     </div>
 </div>
