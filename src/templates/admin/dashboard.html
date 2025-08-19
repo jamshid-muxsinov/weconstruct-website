@@ -11,14 +11,17 @@
     {% for item in sales_funnel %}
     <div class="card" style="padding: 16px;">
         <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="font-size: 2.5rem; color: var(--status-{{ item.status.value if item.status and item.status.value in ['new', 'in_progress', 'completed', 'cancelled'] else 'blue' }});">
-                {% if item.status.value == 'new' %}<i class='bx bx-log-in-circle'></i>
-                {% elif item.status.value == 'in_progress' %}<i class='bx bx-loader-circle'></i>
-                {% elif item.status.value == 'completed' %}<i class='bx bx-check-double'></i>
-                {% elif item.status.value == 'cancelled' %}<i class='bx bx-x-circle'></i>
+            
+            {% set status_val = item.status.value if item.status else 'unknown' %}
+            <div style="font-size: 2.5rem; color: var(--status-{{ status_val if status_val in ['new', 'in_progress', 'completed', 'cancelled'] else 'blue' }});">
+                {% if status_val == 'new' %}<i class='bx bx-log-in-circle'></i>
+                {% elif status_val == 'in_progress' %}<i class='bx bx-loader-circle'></i>
+                {% elif status_val == 'completed' %}<i class='bx bx-check-double'></i>
+                {% elif status_val == 'cancelled' %}<i class='bx bx-x-circle'></i>
                 {% else %}<i class='bx bxs-help-circle'></i>
                 {% endif %}
             </div>
+
             <div>
                 <h3 style="font-size: 2rem; font-weight: 600;">{{ item.count }}</h3>
                 <p style="color: var(--text-secondary);">{{ item.display_name }}</p>
