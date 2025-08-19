@@ -68,7 +68,8 @@
             <header class="main-header">
                 <button id="sidebar-expand-btn" class="btn-icon"><i class='bx bx-menu'></i></button>
                 
-                <div style="flex-grow: 1;"></div> 
+                <!-- Этот div растягивается, чтобы прижать профиль к правому краю -->
+                <div class="header-spacer"></div> 
 
                 {% if user %}
                 <div class="user-profile" x-data="{ open: false }" @click.away="open = false">

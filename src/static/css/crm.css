@@ -70,12 +70,12 @@ input, button, select, textarea { font-family: inherit; color: inherit; border: 
 }
 
 /* ==========================================================================
-   Header
+   Header (FIXED)
    ========================================================================== */
 .main-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    align-items: center; /* Vertically align items */
+    gap: 16px; /* Add some space between items */
     padding: 16px 24px;
     border-bottom: 1px solid var(--border-color);
     position: sticky;
@@ -84,6 +84,10 @@ input, button, select, textarea { font-family: inherit; color: inherit; border: 
     backdrop-filter: blur(8px);
     z-index: 1001;
     flex-shrink: 0;
+}
+
+.header-spacer {
+    flex-grow: 1; /* This pushes the profile button to the right */
 }
 
 /* ==========================================================================
@@ -359,7 +363,7 @@ body.login-page { display: flex; justify-content: center; align-items: center; m
     #content-wrapper::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
     body.sidebar-mobile-open #content-wrapper::before { opacity: 1; visibility: visible; }
     #sidebar-collapse-btn { display: none; }
-    #sidebar-expand-btn { display: inline-flex; position: fixed; top: 16px; left: 16px; z-index: 1; }
+    #sidebar-expand-btn { display: inline-flex; }
     .main-header { padding: 16px; }
     #content-wrapper main { padding: 16px; }
     .page-header { flex-direction: column; align-items: flex-start; }
