@@ -37,19 +37,17 @@ class TaskForm(wtforms.Form):
     title = StringField('Title')
     assigned_to_id = SelectField('Assigned To', coerce=int)
 
-
 @router.get("/kanban/stream", name="admin_htmx_kanban_stream")
 async def stream_new_kanban_cards(request: Request):
     """
     Создает поток Server-Sent Events, который слушает Redis Pub/Sub 
-    и отправляет только те заявки, которые были созданы ПОСЛЕ подключения клиента.
+    и ретранслирует готовый HTML клиенту.
     """
     if not cache_manager.is_redis_available:
         print("SSE stream stopped: Redis is not available.")
         return Response(status_code=204)
 
     async def event_generator():
-        # --- ИЗМЕНЕНИЕ: Запоминаем время подключения клиента ---
         client_connect_time = datetime.now(timezone.utc)
         
         pubsub = cache_manager.redis_client.pubsub()
@@ -67,9 +65,12 @@ async def stream_new_kanban_cards(request: Request):
                     try:
                         payload = json.loads(message["data"])
                         card_html = payload["html"]
-                        quote_created_at = datetime.fromisoformat(payload["created_at"])
+                        quote_created_at_str = payload["created_at"]
+                        quote_created_at = datetime.fromisoformat(quote_created_at_str)
                         
                         if quote_created_at >= client_connect_time:
+                            # --- ДОБАВЛЕНО ЛОГИРОВАНИЕ ---
+                            print(f"✅ Pushing new card to client. Created at: {quote_created_at_str}")
                             yield {
                                 "event": "new_quote",
                                 "data": card_html
@@ -85,7 +86,6 @@ async def stream_new_kanban_cards(request: Request):
             print("Unsubscribed from Redis channel.")
 
     return EventSourceResponse(event_generator())
-
 
 # Остальной код в этом файле остается без изменений
 @router.get("/quoterequest-modal/{pk}", response_class=HTMLResponse, name="admin_htmx_quoterequest_modal")
