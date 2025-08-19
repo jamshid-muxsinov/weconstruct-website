@@ -1,4 +1,5 @@
 import json
+import asyncio
 from urllib.parse import quote
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -10,7 +11,6 @@ from slugify import slugify
 import wtforms
 from wtforms.fields import StringField, SelectField
 import os
-import asyncio
 from sse_starlette.sse import EventSourceResponse
 
 from src.pages.jinja_config import templates
