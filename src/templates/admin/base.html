@@ -18,10 +18,7 @@
 
     <!-- Styles & Fonts -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-	
-    <!-- ИЗМЕНЕНИЕ: Сменили имя файла, чтобы обойти кэш -->
     <link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}">
-    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
 
     <!-- Scripts -->
@@ -31,6 +28,39 @@
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- ИСПРАВЛЕНИЕ "ДЕРГАНЬЯ": Этот скрипт выполняется мгновенно, до отрисовки body -->
+    <script>
+        (function() {
+            try {
+                if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 992) {
+                    // Мы добавляем класс к тегу <body> еще до того, как он будет отрисован.
+                    // Для этого мы используем специальный трюк с MutationObserver.
+                    const observer = new MutationObserver((mutations, obs) => {
+                        const body = document.querySelector('body');
+                        if (body) {
+                            body.classList.add('sidebar-collapsed-init');
+                            obs.disconnect(); // Отключаемся, как только задача выполнена
+                            return;
+                        }
+                    });
+                    observer.observe(document.documentElement, { childList: true, subtree: true });
+                }
+            } catch (e) {
+                console.error('Could not access localStorage for sidebar state.');
+            }
+        })();
+    </script>
+    <style>
+        /* Этот стиль скрывает "дерганье" на случай, если JS не успеет */
+        body.sidebar-collapsed-init #sidebar {
+            width: 80px;
+        }
+        body.sidebar-collapsed-init #sidebar .logo-text,
+        body.sidebar-collapsed-init #sidebar .nav-text {
+            display: none;
+        }
+    </style>
 </head>
 <body class="dark" hx-ext="class-tools">
     

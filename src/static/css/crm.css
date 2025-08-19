@@ -900,6 +900,21 @@ body.login-page {
     padding: 32px;
 }
 
+/* Desktop Collapsed State */
+body.sidebar-collapsed-init #sidebar {
+    width: 80px;
+    overflow-x: hidden;
+}
+
+body.sidebar-collapsed-init #sidebar .logo-text,
+body.sidebar-collapsed-init #sidebar .nav-text,
+body.sidebar-collapsed-init #sidebar #sidebar-collapse-btn {
+    display: none;
+}
+
+#sidebar.collapsed {
+    width: 80px;
+}
 /* ==========================================================================
    Responsive
    ========================================================================== */
