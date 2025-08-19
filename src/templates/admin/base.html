@@ -63,13 +63,17 @@
             </div>
         </aside>
         
-        <!-- ========= ИСПРАВЛЕННАЯ СТРУКТУРА ========= -->
+        <!-- --- НАЧАЛО ИСПРАВЛЕННОЙ СТРУКТУРЫ --- -->
         <div id="content-wrapper">
+            <!-- Хедер приложения (шапка). Он всегда сверху. -->
             <header class="main-header">
+                <!-- Кнопка для мобильного меню -->
                 <button id="sidebar-expand-btn" class="btn-icon"><i class='bx bx-menu'></i></button>
                 
-                <div style="flex-grow: 1;"></div> <!-- Spacer -->
+                <!-- Распорка, чтобы оттолкнуть профиль вправо -->
+                <div style="flex-grow: 1;"></div> 
 
+                <!-- Профиль пользователя -->
                 {% if user %}
                 <div class="user-profile" x-data="{ open: false }" @click.away="open = false">
                     <button @click="open = !open" id="profile-menu-button" class="user-profile-button">
@@ -102,11 +106,12 @@
                 {% endif %}
             </header>
             
+            <!-- Основной контент страницы. Он идет ПОСЛЕ хедера. -->
             <main> 
                 {% block content %}{% endblock %} 
             </main>
         </div>
-        <!-- ========= КОНЕЦ ИСПРАВЛЕННОЙ СТРУКТУРЫ ========= -->
+        <!-- --- КОНЕЦ ИСПРАВЛЕННОЙ СТРУКТУРЫ --- -->
 
     </div>
     
