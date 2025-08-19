@@ -156,18 +156,86 @@ body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; }
 /* ==========================================================================
    User Profile Dropdown Menu
    ========================================================================== */
-.user-profile { position: relative; }
-.user-profile-button { background: none; border: none; color: inherit; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px; border-radius: var(--border-radius-md); }
-.user-profile-button i { transition: var(--transition-fast); }
-#profile-menu { display: none; position: absolute; top: 110%; right: 0; background-color: var(--surface-1); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); width: 320px; box-shadow: var(--shadow-lg); z-index: 101; overflow: hidden; }
+/* ==========================================================================
+   User Profile Dropdown Menu
+   ========================================================================== */
+.user-profile { 
+    position: relative; 
+}
 
-.profile-menu-list { padding: 8px; border-top: 1px solid var(--border-color); list-style: none; margin: 0; }
-.profile-menu-link { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--border-radius-md); color: var(--text-primary); text-decoration: none; transition: background-color 0.2s; font-size: 0.9rem; }
-.profile-menu-link i { font-size: 1.2rem; color: var(--text-secondary); }
-.profile-menu-link:hover { background-color: var(--surface-2); }
-.profile-menu-link.logout { color: var(--status-red); }
-.profile-menu-link.logout i { color: var(--status-red); }
-.menu-divider { margin: 8px 0; border-color: var(--border-color); border-style: solid; border-width: 1px 0 0 0; }
+.user-profile-button { 
+    background: none; 
+    border: none; 
+    color: inherit; 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    cursor: pointer; 
+    padding: 4px; 
+    border-radius: var(--border-radius-md); 
+}
+.user-profile-button:hover {
+    background-color: var(--surface-2);
+}
+.user-profile-button i { 
+    transition: var(--transition-fast); 
+}
+
+/* --- ИСПРАВЛЕННЫЙ БЛОК СТИЛЕЙ --- */
+#profile-menu { 
+    display: none; /* Скрыто по умолчанию, Alpine.js будет управлять видимостью */
+    position: absolute; 
+    top: 110%; 
+    right: 0; 
+    width: 320px; 
+    z-index: 101; 
+    overflow: hidden;
+    
+    /* Этих стилей не хватало: */
+    background-color: var(--surface-1); 
+    border: 1px solid var(--border-color); 
+    border-radius: var(--border-radius-md); 
+    box-shadow: var(--shadow-lg); 
+}
+/* --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА --- */
+
+
+.profile-menu-list { 
+    padding: 8px; 
+    border-top: 1px solid var(--border-color); 
+    list-style: none; 
+    margin: 0; 
+}
+.profile-menu-link { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    padding: 10px 12px; 
+    border-radius: var(--border-radius-md); 
+    color: var(--text-primary); 
+    text-decoration: none; 
+    transition: background-color 0.2s; 
+    font-size: 0.9rem; 
+}
+.profile-menu-link i { 
+    font-size: 1.2rem; 
+    color: var(--text-secondary); 
+}
+.profile-menu-link:hover { 
+    background-color: var(--surface-2); 
+}
+.profile-menu-link.logout { 
+    color: var(--status-red); 
+}
+.profile-menu-link.logout i { 
+    color: var(--status-red); 
+}
+.menu-divider { 
+    margin: 8px 0; 
+    border-color: var(--border-color); 
+    border-style: solid; 
+    border-width: 1px 0 0 0; 
+}
 
 /* ==========================================================================
    Notification Dropdown Styles
