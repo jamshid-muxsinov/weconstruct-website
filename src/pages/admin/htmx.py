@@ -1,3 +1,4 @@
+import asyncio
 import json
 from urllib.parse import quote
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, Query
@@ -18,6 +19,7 @@ from src.services import crm_service
 from src.schemas.crm_schemas import TaskCreate
 from .dependencies import get_common_context
 from pathlib import Path
+from sse_starlette.sse import EventSourceResponse
 
 MEDIA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "media"
 router = APIRouter(prefix="/htmx", tags=["Admin HTMX"])
@@ -32,40 +34,60 @@ class TaskForm(wtforms.Form):
     title = StringField('Title')
     assigned_to_id = SelectField('Assigned To', coerce=int)
 
-@router.get("/kanban/poll-new", response_class=HTMLResponse, name="admin_htmx_kanban_poll_new")
-async def poll_new_kanban_cards(
+@router.get("/kanban/stream", name="admin_htmx_kanban_stream")
+async def stream_new_kanban_cards(
     request: Request,
-    latest_id: int = Query(0),
     db: AsyncSession = Depends(get_db_session)
 ):
     """
-    Возвращает HTML-фрагменты для всех новых заявок, у которых ID больше, чем latest_id.
+    Создает поток Server-Sent Events для отправки новых заявок на канбан-доску.
     """
-    stmt = (
-        select(QuoteRequest)
-        .where(QuoteRequest.id > latest_id, QuoteRequest.status == QuoteRequest.StatusEnum.NEW)
-        .options(
-            joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
-            joinedload(QuoteRequest.product),
-            joinedload(QuoteRequest.assigned_to)
-        )
-        .order_by(QuoteRequest.id.desc())
-    )
-    result = await db.execute(stmt)
-    new_quotes = result.scalars().all()
+    latest_id = 0
+    # Сначала найдем ID самой последней заявки в системе, чтобы не отправлять старые
+    initial_latest_req = await crm_service.get_latest_quote_request(db)
+    if initial_latest_req:
+        latest_id = initial_latest_req.id
 
-    if not new_quotes:
-        return Response(status_code=204)
+    async def event_generator():
+        nonlocal latest_id
+        while True:
+            # Проверяем, не отключился ли клиент
+            if await request.is_disconnected():
+                break
 
-    html_fragments = []
-    for quote in new_quotes:
-        fragment = templates.TemplateResponse(
-            "admin/partials/_kanban_card.html",
-            {"request": request, "req": quote}
-        ).body.decode("utf-8")
-        html_fragments.append(fragment)
-    
-    return HTMLResponse("".join(html_fragments))
+            # Ищем новые заявки, у которых ID больше, чем у последней известной
+            stmt = (
+                select(QuoteRequest)
+                .where(QuoteRequest.id > latest_id, QuoteRequest.status == QuoteRequest.StatusEnum.NEW)
+                .options(
+                    joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
+                    joinedload(QuoteRequest.product),
+                    joinedload(QuoteRequest.assigned_to)
+                )
+                .order_by(QuoteRequest.id.asc()) # Важно: по возрастанию, чтобы обработать по порядку
+            )
+            result = await db.execute(stmt)
+            new_quotes = result.scalars().all()
+
+            if new_quotes:
+                for quote in new_quotes:
+                    # Рендерим HTML-карточку для каждой новой заявки
+                    card_html = templates.TemplateResponse(
+                        "admin/partials/_kanban_card.html",
+                        {"request": request, "req": quote}
+                    ).body.decode("utf-8")
+                    
+                    # Отправляем событие клиенту
+                    yield {
+                        "event": "new_quote", # Название события, которое будет слушать HTMX
+                        "data": card_html
+                    }
+                    latest_id = quote.id # Обновляем ID последней отправленной заявки
+            
+            await asyncio.sleep(3) 
+
+    return EventSourceResponse(event_generator())
+
 
 @router.get("/quoterequest-modal/{pk}", response_class=HTMLResponse, name="admin_htmx_quoterequest_modal")
 async def get_quote_request_modal(

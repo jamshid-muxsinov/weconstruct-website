@@ -33,11 +33,9 @@
         <i class='bx bx-loader-alt bx-spin'></i><span>Загрузка канбан-доски...</span>
     </div>
 </div>
-
-<!-- Скрытый элемент-поллер, который будет добавлять новые карточки -->
-<div hx-get="{{ request.url_for('admin_htmx_kanban_poll_new') }}"
-     hx-trigger="every 5s"
-     hx-vals="js:{latest_id: document.querySelector('.kanban-column[data-status=\'new\'] .kanban-card')?.dataset.id || 0}"
+<div hx-ext="sse" 
+     sse-connect="{{ request.url_for('admin_htmx_kanban_stream') }}" 
+     sse-swap="new_quote"
      hx-swap="afterbegin"
      hx-target=".kanban-column[data-status='new'] > .kanban-column-body">
 </div>

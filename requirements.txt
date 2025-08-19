@@ -40,3 +40,5 @@ fastapi-pagination
 python-dotenv
 python-multipart
 python-slugify
+
+sse-starlette
