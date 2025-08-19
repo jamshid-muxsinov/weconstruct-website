@@ -7,20 +7,20 @@
 
 <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Воронка продаж (за все время)</h2>
 <div
-    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px;">
     {% for item in sales_funnel %}
     <div class="card" style="padding: 16px;">
         <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="font-size: 2rem; color: var(--status-{{item.status.value}});">
+            <div style="font-size: 2.5rem; color: var(--status-{{ item.status.value if item.status and item.status.value in ['new', 'in_progress', 'completed', 'cancelled'] else 'blue' }});">
                 {% if item.status.value == 'new' %}<i class='bx bx-log-in-circle'></i>
                 {% elif item.status.value == 'in_progress' %}<i class='bx bx-loader-circle'></i>
                 {% elif item.status.value == 'completed' %}<i class='bx bx-check-double'></i>
                 {% elif item.status.value == 'cancelled' %}<i class='bx bx-x-circle'></i>
-                {% else %}<i class='bx bxs-x-square'></i>
+                {% else %}<i class='bx bxs-help-circle'></i>
                 {% endif %}
             </div>
             <div>
-                <h3 style="font-size: 1.75rem; font-weight: 600;">{{ item.count }}</h3>
+                <h3 style="font-size: 2rem; font-weight: 600;">{{ item.count }}</h3>
                 <p style="color: var(--text-secondary);">{{ item.display_name }}</p>
             </div>
         </div>
@@ -44,7 +44,9 @@
                     {% for user, count in top_managers %}
                     <tr>
                         <td data-label="#"><span class="rank-badge rank-{{ loop.index }}">{{ loop.index }}</span></td>
-                        <td data-label="Менеджер"><a href="{{ request.url_for('admin_user_profile', pk=user.id) }}" class="link-to-change">{{ user.username }}</a></td>
+                        <td data-label="Менеджер">
+                            <a href="{{ request.url_for('admin_user_profile', pk=user.id) }}" class="link-to-change">{{ user.username }}</a>
+                        </td>
                         <td data-label="Закрыто заявок" style="text-align: right; font-weight: 600; font-size: 1.1rem;">{{ count }}</td>
                     </tr>
                     {% else %}
@@ -60,5 +62,32 @@
     <div class="card">
         {% include "admin/partials/_dashboard_new_requests.html" %}
     </div>
+</div>
+
+<div class="card" style="margin-top: 24px;">
+    <h3 style="margin-bottom: 16px; font-size: 1.1rem;">Мои актуальные задачи</h3>
+    {% if my_tasks %}
+    <ul style="display: flex; flex-direction: column; gap: 12px;">
+        {% for task in my_tasks %}
+        <a href="{{ request.url_for('admin_contact_detail', pk=task.contact.id) if task.contact else '#' }}"
+            style="display: block; color: inherit; text-decoration: none; background-color: var(--bg-main); border-radius: var(--border-radius-md); transition: var(--transition-fast); padding: 12px;"
+            class="task-link-item">
+            <li style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <p>{{ task.title }}</p>
+                    {% if task.contact %}
+                    <small style="color: var(--text-secondary);">Клиент: {{ task.contact.full_name }}</small>
+                    {% endif %}
+                </div>
+                {% if task.due_date %}
+                <span style="color: var(--text-secondary); font-size: 0.8rem;">{{ task.due_date.strftime('%d.%m.%Y') }}</span>
+                {% endif %}
+            </li>
+        </a>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-list-placeholder" style="padding: 20px 0;">У вас нет назначенных задач.</p>
+    {% endif %}
 </div>
 {% endblock %}
