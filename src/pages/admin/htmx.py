@@ -1,4 +1,3 @@
-import asyncio
 import json
 from urllib.parse import quote
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, Query
@@ -11,16 +10,18 @@ from slugify import slugify
 import wtforms
 from wtforms.fields import StringField, SelectField
 import os
+import asyncio
+from sse_starlette.sse import EventSourceResponse
+
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
 from src.core.security import get_current_active_user
+from src.core.cache import cache_manager
 from src.models.shop_models import User, QuoteRequest, Task, StatusChangeLog, Category, Contact, Notification, ProductImage
 from src.services import crm_service
 from src.schemas.crm_schemas import TaskCreate
 from .dependencies import get_common_context
 from pathlib import Path
-from sse_starlette.sse import EventSourceResponse
-from src.core.cache import cache_manager
 
 MEDIA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "media"
 router = APIRouter(prefix="/htmx", tags=["Admin HTMX"])
@@ -35,22 +36,19 @@ class TaskForm(wtforms.Form):
     title = StringField('Title')
     assigned_to_id = SelectField('Assigned To', coerce=int)
 
+
 @router.get("/kanban/stream", name="admin_htmx_kanban_stream")
-async def stream_new_kanban_cards(
-    request: Request,
-    db: AsyncSession = Depends(get_db_session)
-):
+async def stream_new_kanban_cards(request: Request):
     """
     Создает поток Server-Sent Events, который слушает Redis Pub/Sub 
-    для мгновенной отправки новых заявок на канбан-доску.
+    и ретранслирует готовый HTML клиенту.
     """
     if not cache_manager.is_redis_available:
         print("SSE stream stopped: Redis is not available.")
         return Response(status_code=204)
 
     async def event_generator():
-        redis_client = cache_manager.redis_client
-        pubsub = redis_client.pubsub()
+        pubsub = cache_manager.redis_client.pubsub()
         await pubsub.subscribe("kanban_updates")
         
         try:
@@ -58,35 +56,19 @@ async def stream_new_kanban_cards(
                 if await request.is_disconnected():
                     print("Client disconnected from SSE stream.")
                     break
-                message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=30)
+
+                # Ждем сообщения из канала Redis
+                message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=60)
                 
                 if message and message.get("type") == "message":
-                    try:
-                        quote_id = int(message["data"])
-                    except (ValueError, TypeError):
-                        continue
-
-                    stmt = (
-                        select(QuoteRequest).where(QuoteRequest.id == quote_id)
-                        .options(
-                            joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
-                            joinedload(QuoteRequest.product),
-                            joinedload(QuoteRequest.assigned_to)
-                        )
-                    )
-                    result = await db.execute(stmt)
-                    new_quote = result.scalars().first()
-
-                    if new_quote:
-                        card_html = templates.TemplateResponse(
-                            "admin/partials/_kanban_card.html",
-                            {"request": request, "req": new_quote}
-                        ).body.decode("utf-8")
-                        
-                        yield {
-                            "event": "new_quote",
-                            "data": card_html
-                        }
+                    # Просто берем готовый HTML из сообщения
+                    card_html = message["data"]
+                    
+                    # И отправляем его клиенту
+                    yield {
+                        "event": "new_quote",
+                        "data": card_html
+                    }
         except asyncio.CancelledError:
             print("SSE stream cancelled.")
         finally:
@@ -94,6 +76,7 @@ async def stream_new_kanban_cards(
             print("Unsubscribed from Redis channel.")
 
     return EventSourceResponse(event_generator())
+
 
 @router.get("/quoterequest-modal/{pk}", response_class=HTMLResponse, name="admin_htmx_quoterequest_modal")
 async def get_quote_request_modal(

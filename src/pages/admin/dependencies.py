@@ -1,12 +1,14 @@
 # /src/pages/admin/dependencies.py
 from fastapi import Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
+from sqlalchemy.orm import joinedload
 
 from src.core.db import get_db_session
 from src.core.security import get_current_active_user
-from src.models.shop_models import User, Notification
-from sqlalchemy.future import select
-from sqlalchemy import func
+from src.models.shop_models import User, Notification, QuoteRequest, Contact
+from src.core.cache import cache_manager
+from src.pages.jinja_config import templates
 
 async def get_unread_notifications_count(db: AsyncSession, user_id: int) -> int:
     """Подсчитывает непрочитанные уведомления для пользователя."""
@@ -31,3 +33,29 @@ async def get_common_context(
         "getattr": getattr,
         "url_for": request.url_for 
     }
+
+async def publish_kanban_update(db: AsyncSession, quote_id: int, request: Request):
+    """
+    Находит заявку, рендерит её HTML-карточку и публикует в Redis.
+    """
+    if not cache_manager.is_redis_available:
+        return
+
+    stmt = (
+        select(QuoteRequest).where(QuoteRequest.id == quote_id)
+        .options(
+            joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
+            joinedload(QuoteRequest.product),
+            joinedload(QuoteRequest.assigned_to)
+        )
+    )
+    result = await db.execute(stmt)
+    quote_to_render = result.scalars().first()
+    
+    if quote_to_render:
+        card_html = templates.TemplateResponse(
+            "admin/partials/_kanban_card.html",
+            {"request": request, "req": quote_to_render}
+        ).body.decode("utf-8")
+        
+        await cache_manager.redis_client.publish("kanban_updates", card_html)

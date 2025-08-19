@@ -22,7 +22,7 @@ from src.pages.jinja_config import templates
 from src.core.db import get_db_session
 from src.models.shop_models import User, Product, Category, QuoteRequest, Contact, RegistrationInvite, ProductImage, Task, Notification
 from src.core.security import get_current_active_user
-from .dependencies import get_common_context
+from .dependencies import get_common_context, publish_kanban_update
 from src.services import user_service, shop_service
 from sqlalchemy.exc import IntegrityError
 from fastapi_pagination import Params
@@ -415,6 +415,7 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
     if form.validate():
         contact_id = int(form.contact_id.data) if form.contact_id.data else None
         new_quote_request = None
+        contact = None
         if not contact_id:
             contact = await shop_service._get_or_create_contact(db, form.new_contact_name.data, form.new_contact_phone.data)
             await db.flush()
@@ -431,10 +432,12 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
             new_quote_request.additional_info = form.additional_info.data
             db.add(new_quote_request)
             await db.flush()
-            if not contact_id:
+            if not contact_id and contact:
                 await shop_service._notify_managers(db, new_quote_request, contact.full_name)
         
         await db.commit()
+        await publish_kanban_update(db, new_quote_request.id, request)
+        
         response = RedirectResponse(request.url_for(QUOTEREQUEST_META.list_url_name), status_code=303)
         return set_hx_trigger_header(response, "Заявка успешно создана!")
 
