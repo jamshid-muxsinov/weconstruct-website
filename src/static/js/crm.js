@@ -64,12 +64,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        body.classList.toggle('sidebar-collapsed', isCollapsed);
-        sidebar.classList.toggle('collapsed', isCollapsed);
         
-        if (body.classList.contains('sidebar-collapsed-init')) {
-            body.classList.remove('sidebar-collapsed-init');
-        }
+        // Добавляем небольшую задержку для плавного перехода
+        requestAnimationFrame(() => {
+            body.classList.toggle('sidebar-collapsed', isCollapsed);
+            sidebar.classList.toggle('collapsed', isCollapsed);
+            
+            if (body.classList.contains('sidebar-collapsed-init')) {
+                body.classList.remove('sidebar-collapsed-init');
+            }
+        });
     }
 
     // Функция, которая ТОЛЬКО вешает обработчики событий. Вызывается один раз.
@@ -231,8 +235,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Умная переинициализация компонентов
         if (targetId === 'sidebar' || targetId === 'main-content' || targetId.includes('kanban')) {
-            applySidebarState();
-            initializeSortable();
+            // Небольшая задержка для завершения DOM обновлений
+            setTimeout(() => {
+                applySidebarState();
+                initializeSortable();
+            }, 0);
         }
         
         if (targetId === 'list-content' || targetId.includes('table') || targetId.includes('export')) {
@@ -241,8 +248,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Общая переинициализация для критических компонентов
         if (targetId === 'main-content') {
-            initializeSortable();
-            setupExportLogic();
+            setTimeout(() => {
+                initializeSortable();
+                setupExportLogic();
+            }, 0);
         }
     });
 });

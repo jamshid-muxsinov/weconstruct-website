@@ -40,8 +40,27 @@ input, button, select, textarea { font-family: inherit; color: inherit; border: 
    Core Layout
    ========================================================================== */
 #crm-container { display: flex; height: 100vh; }
-#sidebar { width: 260px; height: 100vh; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); position: sticky; top: 0; display: flex; flex-direction: column; transition: width 0.3s ease, transform 0.3s ease; z-index: 1000; flex-shrink: 0; }
-#content-wrapper { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; }
+#sidebar { 
+    width: 260px; 
+    height: 100vh; 
+    background-color: var(--bg-sidebar); 
+    border-right: 1px solid var(--border-color); 
+    position: sticky; 
+    top: 0; 
+    display: flex; 
+    flex-direction: column; 
+    transition: width 0.3s ease, transform 0.3s ease; 
+    z-index: 1000; 
+    flex-shrink: 0; 
+}
+#content-wrapper { 
+    flex-grow: 1; 
+    min-width: 0; 
+    display: flex; 
+    flex-direction: column; 
+    height: 100vh; 
+    transition: margin-left 0.3s ease;
+}
 #content-wrapper main { padding: 24px; flex-grow: 1; overflow-y: auto; }
 .main-header { display: flex; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background-color: rgba(17, 19, 23, 0.8); backdrop-filter: blur(8px); z-index: 999; flex-shrink: 0; }
 .header-spacer { flex-grow: 1; }
@@ -54,15 +73,32 @@ input, button, select, textarea { font-family: inherit; color: inherit; border: 
 #sidebar .nav-link:hover { background-color: var(--surface-1); color: var(--text-primary); text-decoration: none; }
 #sidebar .nav-link.active { background-color: var(--accent-primary); color: #fff; }
 #sidebar .sidebar-footer { padding: 24px; border-top: 1px solid var(--border-color); white-space: nowrap; }
-body.sidebar-collapsed-init #sidebar { width: 80px; overflow-x: hidden; }
-body.sidebar-collapsed-init #sidebar .logo-text, body.sidebar-collapsed-init #sidebar .nav-text, body.sidebar-collapsed-init #sidebar #sidebar-collapse-btn { display: none; }
+
+/* ОСНОВНЫЕ ИЗМЕНЕНИЯ ЗДЕСЬ - УПРОЩЕННАЯ ЛОГИКА СОСТОЯНИЙ */
 #sidebar.collapsed { width: 80px; }
-#sidebar.collapsed .logo-text, #sidebar.collapsed .nav-text, #sidebar.collapsed #sidebar-collapse-btn { display: none; }
+#sidebar.collapsed .logo-text, 
+#sidebar.collapsed .nav-text, 
+#sidebar.collapsed #sidebar-collapse-btn { display: none; }
 #sidebar.collapsed .sidebar-header { padding: 24px 16px; justify-content: center; }
 #sidebar.collapsed .nav-link { justify-content: center; }
 #sidebar.collapsed .sidebar-footer { padding: 16px; }
+
+/* Инициализационные состояния */
+body.sidebar-collapsed-init #sidebar { width: 80px; }
+body.sidebar-collapsed-init #sidebar .logo-text, 
+body.sidebar-collapsed-init #sidebar .nav-text, 
+body.sidebar-collapsed-init #sidebar #sidebar-collapse-btn { display: none; }
+
+/* Класс для свернутого состояния */
+body.sidebar-collapsed #sidebar { width: 80px; }
+body.sidebar-collapsed #sidebar .logo-text, 
+body.sidebar-collapsed #sidebar .nav-text, 
+body.sidebar-collapsed #sidebar #sidebar-collapse-btn { display: none; }
+body.sidebar-collapsed #sidebar .sidebar-header { padding: 24px 16px; justify-content: center; }
+body.sidebar-collapsed #sidebar .nav-link { justify-content: center; }
+body.sidebar-collapsed #sidebar .sidebar-footer { padding: 16px; }
+
 #sidebar-expand-btn { display: none; }
-body.sidebar-collapsed #sidebar { overflow-x: hidden; }
 body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; }
 
 /* ==========================================================================
