@@ -47,67 +47,63 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.addEventListener('closeModal', () => closePopup(document.getElementById('modal-overlay')));
         document.body.addEventListener('closeSlideOver', () => closePopup(document.getElementById('slide-over-overlay')));
     }
+    
+    // --- НАЧАЛО ИЗМЕНЕНИЯ ---
 
-    // --- SIDEBAR LOGIC (SIMPLE & FINAL VERSION) ---
-    function initSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const collapseBtn = document.getElementById('sidebar-collapse-btn');
-        const expandBtn = document.getElementById('sidebar-expand-btn');
+    // Функция, которая ТОЛЬКО применяет визуальное состояние. Ее можно вызывать много раз.
+    function applySidebarState() {
         const body = document.body;
-        const contentWrapper = document.getElementById('content-wrapper');
+        const sidebar = document.getElementById('sidebar');
+        if (!body || !sidebar) return;
 
-        if (!sidebar || !collapseBtn || !expandBtn || !contentWrapper) return;
-        
         const isDesktop = () => window.innerWidth > 992;
 
-        const applySidebarState = () => {
-            // --- НАЧАЛО ИЗМЕНЕНИЯ ---
-            if (!isDesktop()) {
-                // На мобильных устройствах просто убираем все классы десктопа
-                body.classList.remove('sidebar-collapsed-init', 'sidebar-collapsed');
-                sidebar.classList.remove('collapsed');
-                return;
-            }
-            
-            // На десктопе сначала применяем финальное состояние
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            body.classList.toggle('sidebar-collapsed', isCollapsed);
-            sidebar.classList.toggle('collapsed', isCollapsed);
-            
-            // А затем, если временный класс еще существует, убираем его.
-            // Это гарантирует, что не будет "пробела" в стилях.
-            if (body.classList.contains('sidebar-collapsed-init')) {
-                body.classList.remove('sidebar-collapsed-init');
-            }
-            // --- КОНЕЦ ИЗМЕНЕНИЯ ---
-        };
+        if (!isDesktop()) {
+            body.classList.remove('sidebar-collapsed-init', 'sidebar-collapsed');
+            sidebar.classList.remove('collapsed');
+            return;
+        }
+
+        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        body.classList.toggle('sidebar-collapsed', isCollapsed);
+        sidebar.classList.toggle('collapsed', isCollapsed);
         
-        collapseBtn.addEventListener('click', () => {
-            if (isDesktop()) {
-                const isCollapsed = body.classList.contains('sidebar-collapsed');
+        if (body.classList.contains('sidebar-collapsed-init')) {
+            body.classList.remove('sidebar-collapsed-init');
+        }
+    }
+
+    // Функция, которая ТОЛЬКО вешает обработчики событий. Вызывается один раз.
+    function initSidebarBehavior() {
+        const isDesktop = () => window.innerWidth > 992;
+        
+        // Используем делегирование событий, чтобы не переназначать их после HTMX-свопа
+        document.body.addEventListener('click', function(event) {
+            const collapseBtn = event.target.closest('#sidebar-collapse-btn');
+            const expandBtn = event.target.closest('#sidebar-expand-btn');
+            const contentWrapper = event.target.closest('#content-wrapper');
+
+            if (collapseBtn && isDesktop()) {
+                const isCollapsed = document.body.classList.contains('sidebar-collapsed');
                 localStorage.setItem('sidebarCollapsed', !isCollapsed);
                 applySidebarState();
+            } else if (expandBtn) {
+                if (isDesktop()) {
+                    localStorage.setItem('sidebarCollapsed', false);
+                    applySidebarState();
+                } else {
+                    document.body.classList.add('sidebar-mobile-open');
+                }
+            } else if (contentWrapper && document.body.classList.contains('sidebar-mobile-open')) {
+                 document.body.classList.remove('sidebar-mobile-open');
             }
         });
-        
-        expandBtn.addEventListener('click', () => {
-            if (isDesktop()) {
-                localStorage.setItem('sidebarCollapsed', false);
-                applySidebarState();
-            } else {
-                body.classList.add('sidebar-mobile-open');
-            }
-        });
-        
-        contentWrapper.addEventListener('click', () => {
-            if (body.classList.contains('sidebar-mobile-open')) {
-                body.classList.remove('sidebar-mobile-open');
-            }
-        });
-        
+
         window.addEventListener('resize', applySidebarState);
     }
     
+    // --- КОНЕЦ ИЗМЕНЕНИЯ ---
+
     // --- KANBAN DRAG & DROP ---
     function initializeSortable() {
         document.querySelectorAll('.kanban-column-body').forEach(column => {
@@ -178,7 +174,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function init() {
         setupHtmx();
         initPopups();
-        initSidebar();
+        initSidebarBehavior(); // Устанавливаем обработчики событий ОДИН РАЗ
+        applySidebarState();   // Применяем состояние при первой загрузке
         initializeSortable();
         setupExportLogic();
     }
@@ -194,6 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('slide-over-overlay')?.classList.add('show');
         }
         
+        applySidebarState(); // <-- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Снова применяем состояние после свопа!
         initializeSortable();
         setupExportLogic();
     });
