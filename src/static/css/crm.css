@@ -49,10 +49,15 @@ input, button, select, textarea { font-family: inherit; color: inherit; border: 
     top: 0; 
     display: flex; 
     flex-direction: column; 
-    transition: width 0.3s ease, transform 0.3s ease; 
     z-index: 1000; 
+    will-change: width;
     flex-shrink: 0; 
 }
+
+body.sidebar-transitions-enabled #sidebar {
+    transition: width 0.3s ease, transform 0.3s ease;
+}
+
 #content-wrapper { 
     flex-grow: 1; 
     min-width: 0; 

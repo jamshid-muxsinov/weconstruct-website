@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
         dismissible: true
     });
 
-    // --- HTMX SETUP ---
     function setupHtmx() {
         document.body.addEventListener('htmx:configRequest', (event) => {
             if (event.detail.verb !== 'get') {
@@ -19,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- POPUP (MODAL/SLIDE-OVER) LOGIC ---
     function initPopups() {
         const closePopup = (overlay) => {
             if (overlay && overlay.classList.contains('show')) {
@@ -47,48 +45,31 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.addEventListener('closeSlideOver', () => closePopup(document.getElementById('slide-over-overlay')));
     }
     
-    // --- SIDEBAR LOGIC ---
-
-    // Функция, которая ТОЛЬКО применяет визуальное состояние. Ее можно вызывать много раз.
-    function applySidebarState(immediate = false) {
+    function applySidebarState() {
         const body = document.body;
-        const sidebar = document.getElementById('sidebar');
-        if (!body || !sidebar) return;
+        if (!body) return;
 
         const isDesktop = () => window.innerWidth > 992;
-
         if (!isDesktop()) {
-            body.classList.remove('sidebar-collapsed-init', 'sidebar-collapsed');
-            sidebar.classList.remove('collapsed');
+            body.classList.remove('sidebar-collapsed', 'sidebar-collapsed-init');
             return;
         }
 
         const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        
-        // Для плавного перехода используем requestAnimationFrame
-        if (immediate) {
-            body.classList.toggle('sidebar-collapsed', isCollapsed);
-            sidebar.classList.toggle('collapsed', isCollapsed);
-            if (body.classList.contains('sidebar-collapsed-init')) {
-                body.classList.remove('sidebar-collapsed-init');
-            }
-        } else {
-            requestAnimationFrame(() => {
-                body.classList.toggle('sidebar-collapsed', isCollapsed);
-                sidebar.classList.toggle('collapsed', isCollapsed);
-                if (body.classList.contains('sidebar-collapsed-init')) {
-                    body.classList.remove('sidebar-collapsed-init');
-                }
-            });
+        body.classList.toggle('sidebar-collapsed', isCollapsed);
+
+        if (body.classList.contains('sidebar-collapsed-init')) {
+            body.classList.remove('sidebar-collapsed-init');
         }
     }
 
-    // Функция, которая ТОЛЬКО вешает обработчики событий. Вызывается один раз.
+    function enableSidebarTransitions() {
+        document.body.classList.add('sidebar-transitions-enabled');
+    }
+
     function initSidebarBehavior() {
         const isDesktop = () => window.innerWidth > 992;
-        let resizeTimeout;
         
-        // Используем делегирование событий, чтобы не переназначать их после HTMX-свопа
         document.body.addEventListener('click', function(event) {
             const collapseBtn = event.target.closest('#sidebar-collapse-btn');
             const expandBtn = event.target.closest('#sidebar-expand-btn');
@@ -97,11 +78,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (collapseBtn && isDesktop()) {
                 const isCollapsed = document.body.classList.contains('sidebar-collapsed');
                 localStorage.setItem('sidebarCollapsed', String(!isCollapsed));
-                applySidebarState(); // Плавное применение
+                applySidebarState();
             } else if (expandBtn) {
                 if (isDesktop()) {
                     localStorage.setItem('sidebarCollapsed', 'false');
-                    applySidebarState(); // Плавное применение
+                    applySidebarState();
                 } else {
                     document.body.classList.add('sidebar-mobile-open');
                 }
@@ -110,17 +91,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Оптимизированный обработчик resize с throttling
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => applySidebarState(true), 150); // immediate = true для resize
-        });
-    }
-    
-    // --- KANBAN DRAG & DROP ---
+        window.addEventListener('resize', applySidebarState);
+    }-
     function initializeSortable() {
         document.querySelectorAll('.kanban-column-body').forEach(column => {
-            // Проверяем, существует ли уже Sortable инстанс
             const existingSortable = Sortable.get(column);
             if (existingSortable) { 
                 existingSortable.destroy(); 
@@ -159,7 +133,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         htmx.trigger('#kanban-board-container', 'updateKanban');
                     } catch (error) {
                         console.error('Kanban update error:', error);
-                        // Восстанавливаем карточку на исходную позицию
                         evt.from.insertBefore(card, evt.from.children[evt.oldIndex]);
                         notyf.error('Не удалось обновить статус.');
                     }
@@ -168,7 +141,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // --- EXPORT LOGIC ---
     function setupExportLogic() {
         const listContent = document.getElementById('list-content');
         if (!listContent || !document.getElementById('export-selected-btn')) return;
@@ -189,7 +161,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
         
-        // Используем делегирование событий для чекбоксов
         listContent.addEventListener('change', (e) => {
             if (e.target.matches('#select-all-checkbox')) {
                 const isChecked = e.target.checked;
@@ -216,49 +187,32 @@ document.addEventListener('DOMContentLoaded', function() {
         
         updateButtonState();
     }
-
-    // --- INITIALIZATION ---
     function init() {
         setupHtmx();
         initPopups();
-        initSidebarBehavior(); // Устанавливаем обработчики событий ОДИН РАЗ
-        applySidebarState(true); // Применяем состояние при первой загрузке сразу (без анимации)
+        initSidebarBehavior();
+        
+        applySidebarState();
+        setTimeout(enableSidebarTransitions, 50);
+        
         initializeSortable();
         setupExportLogic();
     }
 
     init();
 
-    // Re-initialize dynamic components after HTMX swaps
     document.body.addEventListener('htmx:afterSwap', (event) => {
-        const targetId = event.detail.target.id;
-        
-        if (targetId === 'modal-body-content') {
+        applySidebarState();
+        setTimeout(enableSidebarTransitions, 50);
+
+        if (event.detail.target.id === 'modal-body-content') {
             document.getElementById('modal-overlay')?.classList.add('show');
         }
-        if (targetId === 'slide-over-content') {
+        if (event.detail.target.id === 'slide-over-content') {
             document.getElementById('slide-over-overlay')?.classList.add('show');
         }
         
-        // Умная переинициализация компонентов
-        if (targetId === 'sidebar' || targetId === 'main-content' || targetId.includes('kanban')) {
-            // Небольшая задержка для завершения DOM обновлений
-            setTimeout(() => {
-                applySidebarState(true); // immediate = true для HTMX свопов
-                initializeSortable();
-            }, 0);
-        }
-        
-        if (targetId === 'list-content' || targetId.includes('table') || targetId.includes('export')) {
-            setupExportLogic();
-        }
-        
-        // Общая переинициализация для критических компонентов
-        if (targetId === 'main-content') {
-            setTimeout(() => {
-                initializeSortable();
-                setupExportLogic();
-            }, 0);
-        }
+        initializeSortable();
+        setupExportLogic();
     });
 });
