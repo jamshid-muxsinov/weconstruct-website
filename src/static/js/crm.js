@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- SIDEBAR LOGIC ---
 
     // Функция, которая ТОЛЬКО применяет визуальное состояние. Ее можно вызывать много раз.
-    function applySidebarState() {
+    function applySidebarState(immediate = false) {
         const body = document.body;
         const sidebar = document.getElementById('sidebar');
         if (!body || !sidebar) return;
@@ -65,15 +65,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
         
-        // Добавляем небольшую задержку для плавного перехода
-        requestAnimationFrame(() => {
+        // Для плавного перехода используем requestAnimationFrame
+        if (immediate) {
             body.classList.toggle('sidebar-collapsed', isCollapsed);
             sidebar.classList.toggle('collapsed', isCollapsed);
-            
             if (body.classList.contains('sidebar-collapsed-init')) {
                 body.classList.remove('sidebar-collapsed-init');
             }
-        });
+        } else {
+            requestAnimationFrame(() => {
+                body.classList.toggle('sidebar-collapsed', isCollapsed);
+                sidebar.classList.toggle('collapsed', isCollapsed);
+                if (body.classList.contains('sidebar-collapsed-init')) {
+                    body.classList.remove('sidebar-collapsed-init');
+                }
+            });
+        }
     }
 
     // Функция, которая ТОЛЬКО вешает обработчики событий. Вызывается один раз.
@@ -90,11 +97,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (collapseBtn && isDesktop()) {
                 const isCollapsed = document.body.classList.contains('sidebar-collapsed');
                 localStorage.setItem('sidebarCollapsed', String(!isCollapsed));
-                applySidebarState();
+                applySidebarState(); // Плавное применение
             } else if (expandBtn) {
                 if (isDesktop()) {
                     localStorage.setItem('sidebarCollapsed', 'false');
-                    applySidebarState();
+                    applySidebarState(); // Плавное применение
                 } else {
                     document.body.classList.add('sidebar-mobile-open');
                 }
@@ -106,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Оптимизированный обработчик resize с throttling
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(applySidebarState, 150);
+            resizeTimeout = setTimeout(() => applySidebarState(true), 150); // immediate = true для resize
         });
     }
     
@@ -215,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupHtmx();
         initPopups();
         initSidebarBehavior(); // Устанавливаем обработчики событий ОДИН РАЗ
-        applySidebarState();   // Применяем состояние при первой загрузке
+        applySidebarState(true); // Применяем состояние при первой загрузке сразу (без анимации)
         initializeSortable();
         setupExportLogic();
     }
@@ -237,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (targetId === 'sidebar' || targetId === 'main-content' || targetId.includes('kanban')) {
             // Небольшая задержка для завершения DOM обновлений
             setTimeout(() => {
-                applySidebarState();
+                applySidebarState(true); // immediate = true для HTMX свопов
                 initializeSortable();
             }, 0);
         }
