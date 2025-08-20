@@ -60,19 +60,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const isDesktop = () => window.innerWidth > 992;
 
         const applySidebarState = () => {
-            // Remove init class after first run
             body.classList.remove('sidebar-collapsed-init');
 
             if (!isDesktop()) {
-                // On mobile, ensure desktop classes are removed
                 body.classList.remove('sidebar-collapsed');
                 sidebar.classList.remove('collapsed');
                 return;
             }
-            // On desktop, apply saved state
+            // На десктопе применяем сохраненное состояние
             const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
             body.classList.toggle('sidebar-collapsed', isCollapsed);
             sidebar.classList.toggle('collapsed', isCollapsed);
+            // --- КОНЕЦ ИЗМЕНЕНИЯ ---
         };
         
         collapseBtn.addEventListener('click', () => {

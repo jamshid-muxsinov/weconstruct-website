@@ -1,5 +1,3 @@
-# main.py
-
 import traceback
 from starlette.responses import Response, FileResponse
 from src.pages.jinja_config import templates 
@@ -25,23 +23,18 @@ from src.core.cache_utils import schedule_cache_cleanup, warm_up_cache
 settings = get_settings()
 BASE_DIR = FilePath(__file__).resolve().parent
 
-# +++ ИЗМЕНЕНИЕ 1: Создаем словарь с параметрами для FastAPI +++
-# Это позволит нам динамически отключать документацию в продакшене.
 fastapi_kwargs = {
     "title": "WeConstruct CRM & Website",
     "description": "Backend for WeConstruct CRM and public website",
     "version": "1.0.0"
 }
 
-# Если DEBUG=False (т.е. в продакшене), отключаем документацию
 if not settings.DEBUG:
     fastapi_kwargs["docs_url"] = None
     fastapi_kwargs["redoc_url"] = None
     fastapi_kwargs["openapi_url"] = None
 
-# +++ ИЗМЕНЕНИЕ 2: Используем распаковку словаря для инициализации FastAPI +++
 app = FastAPI(**fastapi_kwargs)
-# +++ КОНЕЦ ИЗМЕНЕНИЙ +++
 
 async def set_locale(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
     if locale not in ["ru", "uz"]:

@@ -7,8 +7,5 @@ while ! nc -z db 5432; do
 done
 echo "--> Database is ready!"
 
-# echo "--> Applying database migrations..."  <-- ЗАКОММЕНТИРОВАТЬ
-# alembic upgrade head                     <-- ЗАКОММЕНТИРОВАТЬ
-
 echo "--> Starting application..."
 exec "$@"
