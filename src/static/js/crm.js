@@ -1,4 +1,3 @@
---- START OF FILE crm.js ---
 document.addEventListener('DOMContentLoaded', function() {
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -48,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.addEventListener('closeSlideOver', () => closePopup(document.getElementById('slide-over-overlay')));
     }
     
-    // --- НАЧАЛО ИЗМЕНЕНИЯ ---
+    // --- SIDEBAR LOGIC ---
 
     // Функция, которая ТОЛЬКО применяет визуальное состояние. Ее можно вызывать много раз.
     function applySidebarState() {
@@ -76,6 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Функция, которая ТОЛЬКО вешает обработчики событий. Вызывается один раз.
     function initSidebarBehavior() {
         const isDesktop = () => window.innerWidth > 992;
+        let resizeTimeout;
         
         // Используем делегирование событий, чтобы не переназначать их после HTMX-свопа
         document.body.addEventListener('click', function(event) {
@@ -85,11 +85,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (collapseBtn && isDesktop()) {
                 const isCollapsed = document.body.classList.contains('sidebar-collapsed');
-                localStorage.setItem('sidebarCollapsed', !isCollapsed);
+                localStorage.setItem('sidebarCollapsed', String(!isCollapsed));
                 applySidebarState();
             } else if (expandBtn) {
                 if (isDesktop()) {
-                    localStorage.setItem('sidebarCollapsed', false);
+                    localStorage.setItem('sidebarCollapsed', 'false');
                     applySidebarState();
                 } else {
                     document.body.classList.add('sidebar-mobile-open');
@@ -99,15 +99,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        window.addEventListener('resize', applySidebarState);
+        // Оптимизированный обработчик resize с throttling
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(applySidebarState, 150);
+        });
     }
     
-    // --- КОНЕЦ ИЗМЕНЕНИЯ ---
-
     // --- KANBAN DRAG & DROP ---
     function initializeSortable() {
         document.querySelectorAll('.kanban-column-body').forEach(column => {
-            if (Sortable.get(column)) { Sortable.get(column).destroy(); }
+            // Проверяем, существует ли уже Sortable инстанс
+            const existingSortable = Sortable.get(column);
+            if (existingSortable) { 
+                existingSortable.destroy(); 
+            }
+            
             new Sortable(column, {
                 group: 'kanban',
                 animation: 150,
@@ -122,13 +129,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     try {
                         const response = await fetch('/admin/api/quoterequests/update-status', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                            body: JSON.stringify({ id: parseInt(quoteId), status: newStatus })
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'X-CSRFToken': csrfToken 
+                            },
+                            body: JSON.stringify({ 
+                                id: parseInt(quoteId, 10), 
+                                status: newStatus 
+                            })
                         });
-                        if (!response.ok) throw new Error('Server response was not ok.');
+                        
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            throw new Error(errorData.message || 'Server response was not ok.');
+                        }
+                        
                         notyf.success('Статус обновлен!');
                         htmx.trigger('#kanban-board-container', 'updateKanban');
                     } catch (error) {
+                        console.error('Kanban update error:', error);
+                        // Восстанавливаем карточку на исходную позицию
                         evt.from.insertBefore(card, evt.from.children[evt.oldIndex]);
                         notyf.error('Не удалось обновить статус.');
                     }
@@ -147,28 +167,44 @@ document.addEventListener('DOMContentLoaded', function() {
             const count = selectedIds.length;
             const exportBtn = document.getElementById('export-selected-btn');
             const exportBtnText = document.getElementById('export-btn-text');
-            if(exportBtn) exportBtn.disabled = count === 0;
-            if(exportBtnText) exportBtnText.textContent = count > 0 ? `Экспорт выбранных (${count})` : 'Экспорт выбранных';
+            
+            if (exportBtn) {
+                exportBtn.disabled = count === 0;
+                exportBtn.setAttribute('aria-disabled', count === 0);
+            }
+            
+            if (exportBtnText) {
+                exportBtnText.textContent = count > 0 ? `Экспорт выбранных (${count})` : 'Экспорт выбранных';
+            }
         };
         
+        // Используем делегирование событий для чекбоксов
         listContent.addEventListener('change', (e) => {
-            if(e.target.id === 'select-all-checkbox') {
-                listContent.querySelectorAll('.row-checkbox').forEach(cb => { cb.checked = e.target.checked; });
+            if (e.target.matches('#select-all-checkbox')) {
+                const isChecked = e.target.checked;
+                listContent.querySelectorAll('.row-checkbox').forEach(cb => { 
+                    cb.checked = isChecked; 
+                });
+                updateButtonState();
+            } else if (e.target.matches('.row-checkbox')) {
+                updateButtonState();
             }
-            updateButtonState();
         });
 
         const exportBtn = document.getElementById('export-selected-btn');
         if (exportBtn) {
             exportBtn.addEventListener('click', () => {
-                const ids = Array.from(listContent.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value).join(',');
-                if (ids) window.location.href = `/admin/quoterequest/export/?ids=${ids}`;
+                const ids = Array.from(listContent.querySelectorAll('.row-checkbox:checked'))
+                    .map(cb => encodeURIComponent(cb.value))
+                    .join(',');
+                if (ids) {
+                    window.location.href = `/admin/quoterequest/export/?ids=${ids}`;
+                }
             });
         }
         
         updateButtonState();
     }
-
 
     // --- INITIALIZATION ---
     function init() {
@@ -184,15 +220,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Re-initialize dynamic components after HTMX swaps
     document.body.addEventListener('htmx:afterSwap', (event) => {
-        if (event.detail.target.id === 'modal-body-content') {
+        const targetId = event.detail.target.id;
+        
+        if (targetId === 'modal-body-content') {
             document.getElementById('modal-overlay')?.classList.add('show');
         }
-        if (event.detail.target.id === 'slide-over-content') {
+        if (targetId === 'slide-over-content') {
             document.getElementById('slide-over-overlay')?.classList.add('show');
         }
         
-        applySidebarState(); // <-- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Снова применяем состояние после свопа!
-        initializeSortable();
-        setupExportLogic();
+        // Умная переинициализация компонентов
+        if (targetId === 'sidebar' || targetId === 'main-content' || targetId.includes('kanban')) {
+            applySidebarState();
+            initializeSortable();
+        }
+        
+        if (targetId === 'list-content' || targetId.includes('table') || targetId.includes('export')) {
+            setupExportLogic();
+        }
+        
+        // Общая переинициализация для критических компонентов
+        if (targetId === 'main-content') {
+            initializeSortable();
+            setupExportLogic();
+        }
     });
 });
