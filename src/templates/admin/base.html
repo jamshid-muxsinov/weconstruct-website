@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,10 +16,16 @@
     <meta name="msapplication-TileColor" content="#07385a">
     <meta name="theme-color" content="#ffffff">
 
+    <!-- Styles & Fonts -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    
+    <!-- Flatpickr (календарь для выбора дат) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
+    <!-- Scripts -->
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
     <script src="https://unpkg.com/htmx.org/dist/ext/sse.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -37,6 +44,7 @@
         })();
     </script>
 </head>
+
 <body class="dark" hx-ext="class-tools">
     
     <div id="crm-container">

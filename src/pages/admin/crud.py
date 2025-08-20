@@ -182,18 +182,42 @@ def set_hx_trigger_header(response: Response, message: str, type: str = "success
     response.headers["HX-Trigger"] = quote(payload)
     return response
 
-async def handle_list_view(db: AsyncSession, meta: Meta, params: Params, search_query: Optional[str] = None):
-    query = select(meta.model).order_by(getattr(meta.model, 'id').desc())
+async def handle_list_view(
+    db: AsyncSession, 
+    meta: Meta, 
+    params: Params, 
+    search_query: Optional[str] = None,
+    sort: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None   
+):
+    query = select(meta.model)
 
     if meta.model == QuoteRequest:
-        # Явно подгружаем связанные модели для заявок
+        try:
+            if date_from:
+                start_date = datetime.strptime(date_from, "%Y-%m-%d")
+                query = query.where(QuoteRequest.created_at >= start_date)
+            if date_to:
+                end_date = datetime.strptime(date_to, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+                query = query.where(QuoteRequest.created_at <= end_date)
+        except ValueError:
+            pass
+
+        if sort == 'asc':
+            query = query.order_by(QuoteRequest.created_at.asc())
+        else:
+            query = query.order_by(QuoteRequest.created_at.desc())
+    else:
+        query = query.order_by(getattr(meta.model, 'id').desc())
+
+    if meta.model == QuoteRequest:
         query = query.options(
             joinedload(QuoteRequest.contact), 
             joinedload(QuoteRequest.product)
         )
         if search_query:
             search_like = f"%{search_query}%"
-            # Присоединяем Contact для поиска
             query = query.join(Contact).where(
                 or_(
                     func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like),
@@ -382,10 +406,27 @@ async def category_delete(request: Request, pk: int, context: dict = Depends(get
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
 
 @router.get("/quoterequest/", response_class=HTMLResponse, name="admin_quoterequest_list")
-async def quoterequest_list(request: Request, q: Optional[str] = None, params: Params = Depends(), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    page = await handle_list_view(db, QUOTEREQUEST_META, params, search_query=q)
-    context.update({"meta": QUOTEREQUEST_META, "page": page, "list_display": QUOTEREQUEST_META.list_display, "search_query": q})
-    if "hx-request" in request.headers:
+async def quoterequest_list(
+    request: Request, 
+    q: Optional[str] = None,
+    sort: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,   
+    params: Params = Depends(), 
+    context: dict = Depends(get_common_context), 
+    db: AsyncSession = Depends(get_db_session)
+):
+    page = await handle_list_view(db, QUOTEREQUEST_META, params, search_query=q, sort=sort, date_from=date_from, date_to=date_to)
+    context.update({
+        "meta": QUOTEREQUEST_META, 
+        "page": page, 
+        "list_display": QUOTEREQUEST_META.list_display, 
+        "search_query": q,
+        "current_sort": sort or 'desc',
+        "date_from": date_from, 
+        "date_to": date_to,     
+    })
+    if request.headers.get("hx-request"): 
         return templates.TemplateResponse("admin/partials/_generic_list_content.html", context)
     return templates.TemplateResponse("admin/generic_list.html", context)
 
