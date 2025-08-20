@@ -1,3 +1,4 @@
+--- START OF FILE crm.js ---
 document.addEventListener('DOMContentLoaded', function() {
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -60,17 +61,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const isDesktop = () => window.innerWidth > 992;
 
         const applySidebarState = () => {
-            body.classList.remove('sidebar-collapsed-init');
-
+            // --- НАЧАЛО ИЗМЕНЕНИЯ ---
             if (!isDesktop()) {
-                body.classList.remove('sidebar-collapsed');
+                // На мобильных устройствах просто убираем все классы десктопа
+                body.classList.remove('sidebar-collapsed-init', 'sidebar-collapsed');
                 sidebar.classList.remove('collapsed');
                 return;
             }
-            // На десктопе применяем сохраненное состояние
+            
+            // На десктопе сначала применяем финальное состояние
             const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
             body.classList.toggle('sidebar-collapsed', isCollapsed);
             sidebar.classList.toggle('collapsed', isCollapsed);
+            
+            // А затем, если временный класс еще существует, убираем его.
+            // Это гарантирует, что не будет "пробела" в стилях.
+            if (body.classList.contains('sidebar-collapsed-init')) {
+                body.classList.remove('sidebar-collapsed-init');
+            }
             // --- КОНЕЦ ИЗМЕНЕНИЯ ---
         };
         
