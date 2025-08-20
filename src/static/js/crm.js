@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', function() {
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -28,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
 
-        // Делегирование событий для закрытия
         document.body.addEventListener('click', event => {
             const overlay = event.target.closest('.modal-overlay, .slide-over-overlay');
             if (event.target.closest('.modal-close, .slide-over-close') || event.target === overlay) {
@@ -44,36 +42,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // --- SIDEBAR LOGIC (ФИНАЛЬНАЯ ВЕРСИЯ) ---
+    // --- SIDEBAR LOGIC (НОВАЯ, ПРОСТАЯ ВЕРСИЯ) ---
     function applySidebarState() {
         const body = document.body;
         if (!body) return;
-
-        const isDesktop = () => window.innerWidth > 992;
-        if (!isDesktop()) {
-            body.classList.remove('sidebar-collapsed', 'sidebar-collapsed-init', 'sidebar-transitions-enabled');
-            return;
-        }
-
         const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
         body.classList.toggle('sidebar-collapsed', isCollapsed);
 
         if (body.classList.contains('sidebar-collapsed-init')) {
-            body.classList.remove('sidebar-collapsed-init');
+           body.classList.remove('sidebar-collapsed-init');
         }
     }
-
-    function enableSidebarTransitions() {
-        document.body.classList.add('sidebar-transitions-enabled');
-    }
-
+    
     function initSidebarBehavior() {
-        const isDesktop = () => window.innerWidth > 992;
-        
         document.body.addEventListener('click', function(event) {
+            const isDesktop = () => window.innerWidth > 992;
             const collapseBtn = event.target.closest('#sidebar-collapse-btn');
             const expandBtn = event.target.closest('#sidebar-expand-btn');
-            const contentWrapper = event.target.closest('#content-wrapper');
 
             if (collapseBtn && isDesktop()) {
                 const isCollapsed = document.body.classList.contains('sidebar-collapsed');
@@ -86,53 +71,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     document.body.classList.add('sidebar-mobile-open');
                 }
-            } else if (contentWrapper && document.body.classList.contains('sidebar-mobile-open')) {
+            }
+            
+            // Закрытие мобильного меню по клику на контент
+            const contentWrapper = event.target.closest('#content-wrapper');
+            if (contentWrapper && document.body.classList.contains('sidebar-mobile-open')) {
                  document.body.classList.remove('sidebar-mobile-open');
             }
         });
         window.addEventListener('resize', applySidebarState);
     }
     
-    // --- KANBAN DRAG & DROP ---
+    // --- ДРУГИЕ КОМПОНЕНТЫ (KANBAN, EXPORT) ---
+    // Эти функции остались такими же, но с защитой от ошибок
     function initializeSortable() {
-        // ЗАЩИТА: Выполняем код, только если на странице есть канбан-доска
         const kanbanColumns = document.querySelectorAll('.kanban-column-body');
         if (kanbanColumns.length === 0) return;
 
         kanbanColumns.forEach(column => {
-            if (Sortable.get(column)) { Sortable.get(column).destroy(); }
-            new Sortable(column, {
-                group: 'kanban',
-                animation: 150,
-                ghostClass: 'kanban-card-ghost',
-                onEnd: async (evt) => {
-                    if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
-                    
-                    const card = evt.item;
-                    const quoteId = card.dataset.id;
-                    const newStatus = evt.to.closest('.kanban-column').dataset.status;
-
-                    try {
-                        const response = await fetch('/admin/api/quoterequests/update-status', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                            body: JSON.stringify({ id: parseInt(quoteId, 10), status: newStatus })
-                        });
-                        if (!response.ok) throw new Error('Server response was not ok.');
-                        notyf.success('Статус обновлен!');
-                        htmx.trigger('#kanban-board-container', 'updateKanban');
-                    } catch (error) {
-                        evt.from.insertBefore(card, evt.from.children[evt.oldIndex]);
-                        notyf.error('Не удалось обновить статус.');
-                    }
-                }
+            if (Sortable.get(column)) Sortable.get(column).destroy();
+            new Sortable(column, { group: 'kanban', animation: 150, ghostClass: 'kanban-card-ghost', onEnd: async (evt) => {
+                if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
+                const card = evt.item;
+                const quoteId = card.dataset.id;
+                const newStatus = evt.to.closest('.kanban-column').dataset.status;
+                try {
+                    const response = await fetch('/admin/api/quoterequests/update-status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                        body: JSON.stringify({ id: parseInt(quoteId, 10), status: newStatus })
+                    });
+                    if (!response.ok) throw new Error('Server error');
+                    notyf.success('Статус обновлен!');
+                    htmx.trigger('#kanban-board-container', 'updateKanban');
+                } catch (error) {
+                    evt.from.insertBefore(card, evt.from.children[evt.oldIndex]);
+                    notyf.error('Не удалось обновить статус.');
+                }}
             });
         });
     }
     
-    // --- EXPORT LOGIC ---
     function setupExportLogic() {
-        // ЗАЩИТА: Выполняем код, только если на странице есть нужные элементы
         const listContent = document.getElementById('list-content');
         if (!listContent || !document.getElementById('export-selected-btn')) return;
 
@@ -145,7 +125,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (exportBtnText) exportBtnText.textContent = count > 0 ? `Экспорт выбранных (${count})` : 'Экспорт выбранных';
         };
         
-        // Делегирование для чекбоксов
         listContent.addEventListener('change', (e) => {
             if (e.target.matches('.row-checkbox, #select-all-checkbox')) {
                 if (e.target.id === 'select-all-checkbox') {
@@ -155,13 +134,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Отдельный слушатель для кнопки, чтобы избежать повторного назначения
         const exportBtn = document.getElementById('export-selected-btn');
         if (exportBtn && !exportBtn.dataset.listenerAttached) {
              exportBtn.addEventListener('click', () => {
-                const ids = Array.from(listContent.querySelectorAll('.row-checkbox:checked'))
-                    .map(cb => encodeURIComponent(cb.value))
-                    .join(',');
+                const ids = Array.from(listContent.querySelectorAll('.row-checkbox:checked')).map(cb => encodeURIComponent(cb.value)).join(',');
                 if (ids) { window.location.href = `/admin/quoterequest/export/?ids=${ids}`; }
             });
             exportBtn.dataset.listenerAttached = 'true';
@@ -169,38 +145,21 @@ document.addEventListener('DOMContentLoaded', function() {
         updateButtonState();
     }
 
-    // --- ОБЩАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ КОМПОНЕНТОВ ---
-    function initComponents() {
+    // --- ЕДИНАЯ ТОЧКА ИНИЦИАЛИЗАЦИИ ---
+    function initializePage() {
         applySidebarState();
         initializeSortable();
         setupExportLogic();
     }
 
-    // --- ГЛАВНАЯ ИНИЦИАЛИЗАЦИЯ ---
-    function main() {
-        setupHtmx();
-        initPopups();
-        initSidebarBehavior();
-        initComponents();
-        setTimeout(enableSidebarTransitions, 50);
-    }
-
-    main();
-
-    // --- ПЕРЕИНИЦИАЛИЗАЦИЯ ПОСЛЕ HTMX ---
-    document.body.addEventListener('htmx:afterSwap', (event) => {
-        if (event.detail.target.id === 'modal-body-content') {
-            document.getElementById('modal-overlay')?.classList.add('show');
-        }
-        if (event.detail.target.id === 'slide-over-content') {
-            document.getElementById('slide-over-overlay')?.classList.add('show');
-        }
-        
-        // Заново запускаем инициализацию всех компонентов.
-        // Благодаря "защите" внутри функций, выполнятся только нужные.
-        initComponents();
-        
-        // Снова включаем анимацию, если она была потеряна при замене body
-        setTimeout(enableSidebarTransitions, 50);
+    // --- ЗАПУСК ---
+    setupHtmx();
+    initPopups();
+    initSidebarBehavior(); // Устанавливаем обработчики кликов один раз
+    initializePage(); // Первый запуск для текущей страницы
+    
+    // Пере-инициализация после каждого HTMX перехода
+    document.body.addEventListener('htmx:afterSwap', () => {
+        initializePage();
     });
 });

@@ -51,14 +51,16 @@ input, button, select, textarea { font-family: inherit; color: inherit; border: 
     flex-direction: column; 
     z-index: 1000; 
     flex-shrink: 0; 
-    will-change: width;
-    /* --- ИЗМЕНЕНИЕ: Убираем transition отсюда, чтобы избежать анимации при загрузке --- */
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Возвращаем анимацию сюда */
 }
 
-/* --- НОВОЕ ПРАВИЛО: Анимация будет работать только когда JS полностью готов --- */
-body.sidebar-transitions-enabled #sidebar {
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* --- НАЧАЛО ИЗМЕНЕНИЯ: Решение проблемы с "дерганием" --- */
+/* Когда HTMX загружает новую страницу, мы на мгновение скрываем сайдбар, чтобы не было видно скачка ширины. */
+body.htmx-request #sidebar {
+    transition: none; /* Отключаем анимацию на время скрытия */
+    opacity: 0;
 }
+/* --- КОНЕЦ ИЗМЕНЕНИЯ --- */
 
 #content-wrapper { 
     flex-grow: 1; 
@@ -80,7 +82,6 @@ body.sidebar-transitions-enabled #sidebar {
 #sidebar .nav-link.active { background-color: var(--accent-primary); color: #fff; }
 #sidebar .sidebar-footer { padding: 24px; border-top: 1px solid var(--border-color); white-space: nowrap; }
 
-/* Правила для свернутого состояния */
 body.sidebar-collapsed-init #sidebar,
 body.sidebar-collapsed #sidebar {
     width: 80px;
