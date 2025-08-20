@@ -1,3 +1,4 @@
+--- START OF FILE crm.css ---
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* ==========================================================================
@@ -50,12 +51,14 @@ input, button, select, textarea { font-family: inherit; color: inherit; border: 
     display: flex; 
     flex-direction: column; 
     z-index: 1000; 
-    will-change: width;
     flex-shrink: 0; 
+    will-change: width;
+    /* --- ИЗМЕНЕНИЕ: Убираем transition отсюда, чтобы избежать анимации при загрузке --- */
 }
 
+/* --- НОВОЕ ПРАВИЛО: Анимация будет работать только когда JS полностью готов --- */
 body.sidebar-transitions-enabled #sidebar {
-    transition: width 0.3s ease, transform 0.3s ease;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #content-wrapper { 
@@ -64,7 +67,6 @@ body.sidebar-transitions-enabled #sidebar {
     display: flex; 
     flex-direction: column; 
     height: 100vh; 
-    transition: margin-left 0.3s ease;
 }
 #content-wrapper main { padding: 24px; flex-grow: 1; overflow-y: auto; }
 .main-header { display: flex; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background-color: rgba(17, 19, 23, 0.8); backdrop-filter: blur(8px); z-index: 999; flex-shrink: 0; }
@@ -79,26 +81,19 @@ body.sidebar-transitions-enabled #sidebar {
 #sidebar .nav-link.active { background-color: var(--accent-primary); color: #fff; }
 #sidebar .sidebar-footer { padding: 24px; border-top: 1px solid var(--border-color); white-space: nowrap; }
 
-/* ОСНОВНЫЕ ИЗМЕНЕНИЯ ЗДЕСЬ - УПРОЩЕННАЯ ЛОГИКА СОСТОЯНИЙ */
-#sidebar.collapsed { width: 80px; }
-#sidebar.collapsed .logo-text, 
-#sidebar.collapsed .nav-text, 
-#sidebar.collapsed #sidebar-collapse-btn { display: none; }
-#sidebar.collapsed .sidebar-header { padding: 24px 16px; justify-content: center; }
-#sidebar.collapsed .nav-link { justify-content: center; }
-#sidebar.collapsed .sidebar-footer { padding: 16px; }
-
-/* Инициализационные состояния */
-body.sidebar-collapsed-init #sidebar { width: 80px; }
+/* Правила для свернутого состояния */
+body.sidebar-collapsed-init #sidebar,
+body.sidebar-collapsed #sidebar {
+    width: 80px;
+}
 body.sidebar-collapsed-init #sidebar .logo-text, 
 body.sidebar-collapsed-init #sidebar .nav-text, 
-body.sidebar-collapsed-init #sidebar #sidebar-collapse-btn { display: none; }
-
-/* Класс для свернутого состояния */
-body.sidebar-collapsed #sidebar { width: 80px; }
+body.sidebar-collapsed-init #sidebar #sidebar-collapse-btn,
 body.sidebar-collapsed #sidebar .logo-text, 
 body.sidebar-collapsed #sidebar .nav-text, 
-body.sidebar-collapsed #sidebar #sidebar-collapse-btn { display: none; }
+body.sidebar-collapsed #sidebar #sidebar-collapse-btn { 
+    display: none; 
+}
 body.sidebar-collapsed #sidebar .sidebar-header { padding: 24px 16px; justify-content: center; }
 body.sidebar-collapsed #sidebar .nav-link { justify-content: center; }
 body.sidebar-collapsed #sidebar .sidebar-footer { padding: 16px; }
@@ -107,7 +102,7 @@ body.sidebar-collapsed #sidebar .sidebar-footer { padding: 16px; }
 body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; }
 
 /* ==========================================================================
-   Generic Components
+   Generic Components ... (остальной CSS без изменений)
    ========================================================================== */
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
 .page-header h1 { font-size: 1.75rem; font-weight: 600; }
@@ -142,10 +137,6 @@ body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; }
 .status-cancelled, .status-is_used { background-color: rgba(239, 68, 68, 0.1); color: var(--status-red); }
 .status-cancelled::before, .status-is_used::before { background-color: var(--status-red); }
 .empty-list-placeholder { padding: 40px; text-align: center; color: var(--text-secondary); font-style: italic; }
-
-/* ==========================================================================
-   User Profile & Notifications
-   ========================================================================== */
 .user-profile { position: relative; }
 .user-profile-button { background: none; border: none; color: inherit; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 4px; border-radius: var(--border-radius-md); }
 .user-profile-button:hover { background-color: var(--surface-2); }
@@ -169,10 +160,6 @@ body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; }
 .empty-notification-placeholder { padding: 24px; text-align: center; color: var(--text-secondary); font-size: 0.9rem; }
 .btn-link { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; border-radius: 50%; }
 .btn-link:hover { color: var(--text-primary); background-color: var(--surface-2); }
-
-/* ==========================================================================
-   Kanban, Modals, Tables, Forms etc.
-   ========================================================================== */
 .kanban-board { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 16px; flex-grow: 1; }
 .kanban-column { width: 320px; flex-shrink: 0; background-color: var(--bg-sidebar); border-radius: var(--border-radius-lg); display: flex; flex-direction: column; }
 .kanban-column-header { padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
@@ -257,8 +244,6 @@ legend { font-size: 1.25rem; font-weight: 500; padding: 0 10px; margin-left: 10p
 .login-header .brand { font-size: 1.5rem; font-weight: 600; display: inline-flex; gap: 8px; align-items: center; color: var(--text-primary); }
 .login-header p { color: var(--text-secondary); margin-top: 8px; }
 .login-error-note { background-color: rgba(239, 68, 68, 0.1); color: var(--status-red); padding: 12px; border-radius: var(--border-radius-md); margin-bottom: 16px; font-size: 0.875rem; text-align: center; border: 1px solid var(--status-red); }
-
-/* --- ARCHIVE TOGGLE SWITCH STYLES --- */
 .filter-form { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--text-secondary); }
 .switch { position: relative; display: inline-block; width: 38px; height: 22px; }
 .switch input { opacity: 0; width: 0; height: 0; }
