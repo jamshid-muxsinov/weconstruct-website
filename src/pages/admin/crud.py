@@ -214,7 +214,8 @@ async def handle_list_view(
     if meta.model == QuoteRequest:
         query = query.options(
             joinedload(QuoteRequest.contact), 
-            joinedload(QuoteRequest.product)
+            joinedload(QuoteRequest.product),
+            joinedload(QuoteRequest.assigned_to) 
         )
         if search_query:
             search_like = f"%{search_query}%"

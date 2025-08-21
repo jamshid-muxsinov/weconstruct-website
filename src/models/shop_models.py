@@ -191,10 +191,10 @@ class QuoteRequest(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     contact_id: Mapped[int] = mapped_column(ForeignKey("shop_contact.id", ondelete="RESTRICT"))
-    contact: Mapped["Contact"] = relationship(back_populates="requests", lazy="joined")
+    contact: Mapped["Contact"] = relationship(back_populates="requests")
     
     product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("shop_product.id", ondelete="SET NULL"))
-    product: Mapped[Optional["Product"]] = relationship(back_populates="quote_requests", lazy="joined")
+    product: Mapped[Optional["Product"]] = relationship(back_populates="quote_requests")
 
     message: Mapped[Optional[str]] = mapped_column(Text)
     
@@ -217,7 +217,7 @@ class QuoteRequest(Base):
     )
 
     assigned_to_id: Mapped[Optional[int]] = mapped_column(ForeignKey("auth_user.id", ondelete="SET NULL"))
-    assigned_to: Mapped[Optional["User"]] = relationship(back_populates="assigned_requests", lazy="joined")
+    assigned_to: Mapped[Optional["User"]] = relationship(back_populates="assigned_requests")
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
