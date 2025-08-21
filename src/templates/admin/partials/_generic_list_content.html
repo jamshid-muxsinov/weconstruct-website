@@ -80,22 +80,26 @@
     </div>
     <div style="display: flex; gap: 8px;">
         {% if page.previous %}
-        <a href="{{ request.url.include_query_params(page=page.previous) }}" 
+        {# --- НАЧАЛО ИЗМЕНЕНИЯ --- #}
+        <a href="{{ request.url.remove_query_params('page').include_query_params(page=page.previous) }}" 
            class="btn btn-secondary"
-           hx-get="{{ request.url.include_query_params(page=page.previous) }}"
+           hx-get="{{ request.url.remove_query_params('page').include_query_params(page=page.previous) }}"
            hx-target="#list-content"
            hx-push-url="true">
             <i class='bx bx-chevron-left'></i> Назад
         </a>
+        {# --- КОНЕЦ ИЗМЕНЕНИЯ --- #}
         {% endif %}
         {% if page.next %}
-        <a href="{{ request.url.include_query_params(page=page.next) }}" 
+        {# --- НАЧАЛО ИЗМЕНЕНИЯ --- #}
+        <a href="{{ request.url.remove_query_params('page').include_query_params(page=page.next) }}" 
            class="btn btn-secondary"
-           hx-get="{{ request.url.include_query_params(page=page.next) }}"
+           hx-get="{{ request.url.remove_query_params('page').include_query_params(page=page.next) }}"
            hx-target="#list-content"
            hx-push-url="true">
             Вперед <i class='bx bx-chevron-right'></i>
         </a>
+        {# --- КОНЕЦ ИЗМЕНЕНИЯ --- #}
         {% endif %}
     </div>
 </div>
