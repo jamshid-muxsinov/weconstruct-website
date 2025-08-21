@@ -6,7 +6,7 @@ services:
     env_file: .env 
     restart: unless-stopped
     environment:
-      - TZ=Asia/Tashkent
+      - PGTZ=Asia/Tashkent
 
   redis:
     image: redis:7-alpine
