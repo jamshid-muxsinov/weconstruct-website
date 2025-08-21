@@ -4,6 +4,7 @@ from fastapi import Request
 from datetime import datetime
 from cachetools import TTLCache
 from starlette_wtf import csrf_token
+from urllib.parse import urlencode
 
 templates = Jinja2Templates(directory="src/templates")
 
@@ -37,5 +38,6 @@ templates.env.globals['hasattr'] = hasattr
 templates.env.globals['current_year'] = datetime.now().year
 templates.env.globals['t_get'] = t_get
 templates.env.globals['csrf_token'] = csrf_token
+templates.env.globals['urlencode'] = urlencode 
 templates.env.filters['capfirst'] = lambda x: x.capitalize() if x else ''
 templates.env.filters['format_number'] = format_number

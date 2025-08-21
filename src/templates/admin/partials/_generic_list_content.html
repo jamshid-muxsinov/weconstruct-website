@@ -79,24 +79,31 @@
         Страница {{ page.page }} из {{ page.pages }}. Всего: {{ page.total }}
     </div>
     <div style="display: flex; gap: 8px;">
+        {# --- НАЧАЛО ИСПРАВЛЕНИЯ --- #}
+        {% set query_params = dict(request.query_params) %}
+        
         {% if page.previous %}
-        <a href="{{ request.url.replace_query_params(page=page.previous) }}" 
-           class="btn btn-secondary"
-           hx-get="{{ request.url.replace_query_params(page=page.previous) }}"
-           hx-target="#list-content"
-           hx-push-url="true">
-            <i class='bx bx-chevron-left'></i> Назад
-        </a>
+            {% do query_params.update({'page': page.previous}) %}
+            <a href="{{ request.url.path }}?{{ urlencode(query_params) }}" 
+               class="btn btn-secondary"
+               hx-get="{{ request.url.path }}?{{ urlencode(query_params) }}"
+               hx-target="#list-content"
+               hx-push-url="true">
+                <i class='bx bx-chevron-left'></i> Назад
+            </a>
         {% endif %}
+        
         {% if page.next %}
-        <a href="{{ request.url.replace_query_params(page=page.next) }}" 
-           class="btn btn-secondary"
-           hx-get="{{ request.url.replace_query_params(page=page.next) }}"
-           hx-target="#list-content"
-           hx-push-url="true">
-            Вперед <i class='bx bx-chevron-right'></i>
-        </a>
+            {% do query_params.update({'page': page.next}) %}
+            <a href="{{ request.url.path }}?{{ urlencode(query_params) }}" 
+               class="btn btn-secondary"
+               hx-get="{{ request.url.path }}?{{ urlencode(query_params) }}"
+               hx-target="#list-content"
+               hx-push-url="true">
+                Вперед <i class='bx bx-chevron-right'></i>
+            </a>
         {% endif %}
+        {# --- КОНЕЦ ИСПРАВЛЕНИЯ --- #}
     </div>
 </div>
 {% endif %}
