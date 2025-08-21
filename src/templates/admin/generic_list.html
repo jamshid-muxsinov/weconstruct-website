@@ -60,10 +60,11 @@
 </div>
 
 <div id="list-content"
-     hx-get="{{ request.url.remove_query_params('page') }}"
-     hx-trigger="load, weconstruct:new-quote from:body"
+     hx-get="{{ request.url.path }}"
+     hx-trigger="weconstruct:new-quote from:body"
      hx-swap="innerHTML">
-    <div class="modal-loading-placeholder"><i class='bx bx-loader-alt bx-spin'></i><span>Загрузка списка...</span></div>
+    {# Теперь контент рендерится сразу, без "мерцания" #}
+    {% include "admin/partials/_generic_list_content.html" %}
 </div>
 
 <!-- СКРИПТ ДЛЯ ИНИЦИАЛИЗАЦИИ КАЛЕНДАРЕЙ -->
