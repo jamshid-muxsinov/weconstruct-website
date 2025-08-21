@@ -23,7 +23,8 @@
                 </div>
                 <div class="input-group">
                     <label>Телефон</label>
-                    <div class="input-field" style="background-color: var(--bg-sidebar);">{{ quote.contact.phone }}
+                    {# --- ИЗМЕНЕНИЕ ЗДЕСЬ --- #}
+                    <div class="input-field" style="background-color: var(--bg-sidebar);">{{ quote.contact.phone | format_phone }}
                     </div>
                 </div>
             </div>

@@ -12,7 +12,8 @@
         </div>
         <div class="detail-item">
             <strong>Телефон</strong>
-            <span>{{ req.contact.phone }}</span>
+            {# --- ИЗМЕНЕНИЕ ЗДЕСЬ --- #}
+            <span>{{ req.contact.phone | format_phone }}</span>
         </div>
 
         <h3 class="slide-over-section-title">Детали заявки</h3>

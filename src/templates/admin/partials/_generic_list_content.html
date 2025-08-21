@@ -40,6 +40,9 @@
                                 {% else %}
                                     <span style="color: var(--status-red);">Контакт удален</span>
                                 {% endif %}
+                            {# --- ИЗМЕНЕНИЕ ЗДЕСЬ --- #}
+                            {% elif field_name == 'phone' and meta.model_name == 'quoterequest' %}
+                                {{ item.phone | format_phone }}
                             {% elif loop.first %}
                                 <a href="{{ request.url_for(meta.change_url_name, pk=item.id) }}" class="link-to-change">
                                     {{ value }}
@@ -79,7 +82,6 @@
         Страница {{ page.page }} из {{ page.pages }}. Всего: {{ page.total }}
     </div>
     <div style="display: flex; gap: 8px;">
-        {# --- НАЧАЛО ИСПРАВЛЕНИЯ --- #}
         {% set query_params = dict(request.query_params) %}
         
         {% if page.previous %}
@@ -103,7 +105,6 @@
                 Вперед <i class='bx bx-chevron-right'></i>
             </a>
         {% endif %}
-        {# --- КОНЕЦ ИСПРАВЛЕНИЯ --- #}
     </div>
 </div>
 {% endif %}

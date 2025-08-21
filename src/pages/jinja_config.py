@@ -5,11 +5,27 @@ from datetime import datetime
 from cachetools import TTLCache
 from starlette_wtf import csrf_token
 from urllib.parse import urlencode
-
+import re
 templates = Jinja2Templates(directory="src/templates", extensions=['jinja2.ext.do'])
 
 
 translation_cache = TTLCache(maxsize=2000, ttl=3600)
+
+def format_phone(value: str) -> str:
+    """Форматирует номер телефона в вид +998 (XX) XXX-XX-XX."""
+    if not value:
+        return "—"
+    
+    digits = re.sub(r'\D', '', value)
+    
+    if len(digits) == 12 and digits.startswith('998'):
+        pass
+    elif len(digits) == 9:
+        digits = '998' + digits
+    else:
+        return value
+        
+    return f"+{digits[0:3]} ({digits[3:5]}) {digits[5:8]}-{digits[8:10]}-{digits[10:12]}"
 
 def format_number(value):
     if value is None:
@@ -42,3 +58,4 @@ templates.env.globals['csrf_token'] = csrf_token
 templates.env.globals['urlencode'] = urlencode
 templates.env.filters['capfirst'] = lambda x: x.capitalize() if x else ''
 templates.env.filters['format_number'] = format_number
+templates.env.filters['format_phone'] = format_phone
