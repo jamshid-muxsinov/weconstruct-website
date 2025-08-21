@@ -1,3 +1,5 @@
+import logging 
+import sys  
 import traceback
 from starlette.responses import Response, FileResponse
 from src.pages.jinja_config import templates 
@@ -20,6 +22,8 @@ from src.core.cache import init_cache, cleanup_cache
 from src.core.middleware import CacheMiddleware, RateLimitMiddleware
 from src.core.cache_utils import schedule_cache_cleanup, warm_up_cache
 
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+log = logging.getLogger(__name__)
 settings = get_settings()
 BASE_DIR = FilePath(__file__).resolve().parent
 
@@ -50,25 +54,25 @@ app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
 
 @app.on_event("startup")
 async def on_startup():
-    print("Application startup...")
+    log.info("Application startup...")
     await check_db_connection()
-    print("Creating first superuser if necessary...")
+    log.info("Creating first superuser if necessary...")        
     async with async_session_factory() as session:
         await create_first_superuser(session)
-    print("Superuser check complete.")
-    print("Initializing cache...")
+    log.info("Superuser check complete.")
+    log.info("Initializing cache...")
     await init_cache()
-    print("Cache initialization complete.")
+    log.info("Cache initialization complete.") 
     await warm_up_cache()
     import asyncio
     asyncio.create_task(schedule_cache_cleanup())
-    print("Cache cleanup scheduler started.")
+    log.info("Cache cleanup scheduler started.") 
 
 @app.on_event("shutdown")
 async def on_shutdown():
-    print("Application shutdown...")
+    log.info("Application shutdown...") 
     await cleanup_cache()
-    print("Cache cleanup complete.")
+    log.info("Cache cleanup complete.")
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
 app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")

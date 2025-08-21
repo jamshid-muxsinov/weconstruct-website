@@ -237,13 +237,12 @@ async def handle_list_view(
         search_like = f"%{search_query}%"
         query = query.where(Category.name_ru.ilike(search_like))
 
-    # --- 3. ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ ---
-    # Добавляем .distinct() чтобы убрать дубликаты, которые ломают пагинацию
     query = query.distinct()
-
-    log.info(f"Paginating query for model {meta.model_name} with params: {params}")
     
+    log.info(f"Paginating query for model {meta.model_name} with params: {params}")
+
     return await paginate(db, query, params)
+
 
 async def populate_request_form_choices(db: AsyncSession, form: QuoteRequestForm):
     products = (await db.execute(select(Product).order_by(Product.name_ru))).scalars().all()
