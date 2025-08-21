@@ -31,6 +31,7 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         response = requests.get(export_url, timeout=15)
         response.raise_for_status()
         
+        response.encoding = 'utf-8'
         csv_data = io.StringIO(response.text)
         reader = csv.reader(csv_data)
         
