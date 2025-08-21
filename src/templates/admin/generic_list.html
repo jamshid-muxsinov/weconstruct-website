@@ -24,6 +24,7 @@
 </div>
 
 <div class="card" style="margin-bottom: 24px;">
+    <!-- Форма фильтров теперь будет обновлять контент через HTMX -->
     <form id="filters-form"
           hx-get="{{ request.url.path }}" 
           hx-target="#list-content"
@@ -53,12 +54,10 @@
     </form>
 </div>
 
-<div id="list-content"
-     hx-trigger="weconstruct:new-quote from:body"
-     hx-get="{{ request.url.path }}"
-     hx-swap="innerHTML">
+<div id="list-content">
     {% include "admin/partials/_generic_list_content.html" %}
 </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         flatpickr(".datepicker", {
