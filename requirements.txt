@@ -42,3 +42,5 @@ python-multipart
 python-slugify
 
 sse-starlette
+
+requests
