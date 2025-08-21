@@ -242,7 +242,7 @@ async def populate_request_form_choices(db: AsyncSession, form: QuoteRequestForm
     form.assigned_to_id.choices = [(0, '--- Не назначен ---')] + [(u.id, u.username) for u in staff_users]
 
 @router.get("/product/", response_class=HTMLResponse, name="admin_product_list")
-async def product_list(request: Request, q: Optional[str] = None, params: Params = Depends(), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
+async def product_list(request: Request, params: Params = Depends(), q: Optional[str] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     page = await handle_list_view(db, PRODUCT_META, params, search_query=q)
     context.update({"meta": PRODUCT_META, "page": page, "list_display": PRODUCT_META.list_display, "search_query": q})
     if request.headers.get("hx-request"): return templates.TemplateResponse("admin/partials/_generic_list_content.html", context)
@@ -350,7 +350,7 @@ async def product_delete(request: Request, pk: int, context: dict = Depends(get_
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
 
 @router.get("/category/", response_class=HTMLResponse, name="admin_category_list")
-async def category_list(request: Request, q: Optional[str] = None, params: Params = Depends(), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
+async def category_list(request: Request, params: Params = Depends(), q: Optional[str] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     page = await handle_list_view(db, CATEGORY_META, params, search_query=q)
     context.update({"meta": CATEGORY_META, "page": page, "list_display": ['name_ru', 'description_ru'], "search_query": q})
     if request.headers.get("hx-request"): return templates.TemplateResponse("admin/partials/_generic_list_content.html", context)
@@ -408,11 +408,11 @@ async def category_delete(request: Request, pk: int, context: dict = Depends(get
 @router.get("/quoterequest/", response_class=HTMLResponse, name="admin_quoterequest_list")
 async def quoterequest_list(
     request: Request, 
+    params: Params = Depends(), 
     q: Optional[str] = None,
     sort: Optional[str] = None,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,   
-    params: Params = Depends(), 
     context: dict = Depends(get_common_context), 
     db: AsyncSession = Depends(get_db_session)
 ):
