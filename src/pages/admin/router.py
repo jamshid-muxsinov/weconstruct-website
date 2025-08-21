@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import RedirectResponse
 
-from . import auth, kanban, dashboard, crud, htmx, api, profile, contact 
+from . import auth, kanban, dashboard, crud, htmx, api, profile, contact, importer
 
 router = APIRouter(prefix="/admin", tags=["Admin Pages"])
 
@@ -19,3 +19,4 @@ router.include_router(htmx.router)
 router.include_router(api.router)
 router.include_router(profile.router)
 router.include_router(contact.router)
+router.include_router(importer.router)

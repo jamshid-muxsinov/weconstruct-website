@@ -61,6 +61,10 @@
                 <a href="{{ request.url_for('admin_product_list') }}" class="nav-link {% if 'product' in request.url.path %}active{% endif %}"> <i class='bx bxs-package nav-icon'></i><span class="nav-text">Товары</span> </a>
                 <a href="{{ request.url_for('admin_category_list') }}" class="nav-link {% if 'category' in request.url.path %}active{% endif %}"> <i class='bx bxs-component nav-icon'></i><span class="nav-text">Категории</span> </a>
                 <a href="{{ request.url_for('admin_dashboard') }}" class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}"> <i class='bx bxs-bar-chart-alt-2 nav-icon'></i><span class="nav-text">Статистика</span> </a>
+                <a href="{{ request.url_for('admin_import_page') }}" class="nav-link {% if request.url.path.startswith('/admin/import') %} active {% endif %}">
+                    <svg class="w-6 h-6 nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path></svg>
+                    <span class="nav-text">Импорт</span>
+                </a>
             </nav>
             <div class="sidebar-footer"> 
                 <a href="{{ request.url_for('admin_logout') }}" class="logout-trigger nav-link"> <i class='bx bx-log-out nav-icon'></i><span class="nav-text">Выйти</span> </a> 
