@@ -4,6 +4,7 @@ import json
 import csv
 import io
 import re
+import logging
 from fastapi.responses import StreamingResponse, HTMLResponse, RedirectResponse
 from urllib.parse import quote
 from pathlib import Path
@@ -26,7 +27,9 @@ from sqlalchemy.exc import IntegrityError
 from fastapi_pagination import Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.dialects import postgresql
+
 router = APIRouter()
+log = logging.getLogger(__name__)
 
 def sanitize_for_csv(value):
     if value is None:
@@ -212,7 +215,6 @@ async def handle_list_view(
         query = query.order_by(getattr(meta.model, 'id').desc())
 
     if meta.model == QuoteRequest:
-        # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: заменяем joinedload на selectinload ---
         query = query.options(
             selectinload(QuoteRequest.contact), 
             selectinload(QuoteRequest.product),
@@ -220,8 +222,6 @@ async def handle_list_view(
         )
         if search_query:
             search_like = f"%{search_query}%"
-            # Для selectinload join не нужен в основном запросе, 
-            # но для фильтрации он понадобится.
             query = query.join(Contact).where(
                 or_(
                     func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like),
@@ -229,7 +229,6 @@ async def handle_list_view(
                 )
             )
     elif meta.model == Product:
-        # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: тоже меняем на selectinload для консистентности ---
         query = query.options(selectinload(Product.category))
         if search_query:
             search_like = f"%{search_query}%"
@@ -238,15 +237,13 @@ async def handle_list_view(
         search_like = f"%{search_query}%"
         query = query.where(Category.name_ru.ilike(search_like))
 
-    # --- ПРОВЕРКА: выводим скомпилированный SQL в консоль ---
-    # Можешь убрать эти строки после того, как убедишься, что все работает
-    print("="*50)
-    print("Generated SQL Query (before pagination):")
-    print(query.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
-    print("="*50)
+    # --- 3. ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ ---
+    # Добавляем .distinct() чтобы убрать дубликаты, которые ломают пагинацию
+    query = query.distinct()
+
+    log.info(f"Paginating query for model {meta.model_name} with params: {params}")
     
     return await paginate(db, query, params)
-
 
 async def populate_request_form_choices(db: AsyncSession, form: QuoteRequestForm):
     products = (await db.execute(select(Product).order_by(Product.name_ru))).scalars().all()
