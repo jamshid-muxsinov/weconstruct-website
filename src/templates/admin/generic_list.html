@@ -57,7 +57,7 @@
 <div id="list-content"
      hx-trigger="weconstruct:new-quote from:body"
      hx-swap="innerHTML"
-     hx-get="{{ request.url.remove_query_params('page') }}"> {# Обновляем первую страницу при событии #}
+     hx-get="{{ request.url.remove_query_params('page') }}">
     {# Включаем контент напрямую, чтобы избежать лишнего запроса при загрузке #}
     {% include "admin/partials/_generic_list_content.html" %}
 </div>
