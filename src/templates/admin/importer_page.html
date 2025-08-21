@@ -16,7 +16,7 @@
     <!-- Форма для запуска импорта -->
     <div class="bg-white p-6 rounded-lg shadow-md mb-6">
         <form action="{{ url_for('admin_run_import') }}" method="post">
-            {{ csrf_token() }}
+            {{ csrf_token(request) }}
             <div class="space-y-4">
                 <div>
                     <label for="sheet_url" class="block text-sm font-medium text-gray-700">URL таблицы Google Sheets</label>
