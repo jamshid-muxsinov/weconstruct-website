@@ -416,12 +416,12 @@ async def category_delete(request: Request, pk: int, context: dict = Depends(get
 
 @router.get("/quoterequest/", response_class=HTMLResponse, name="admin_quoterequest_list")
 async def quoterequest_list(
-    request: Request, 
-    params: Params = Depends(), 
+    request: Request,
+    params: Params = Depends(),
     q: Optional[str] = None,
     sort: Optional[str] = None,
     date_from: Optional[str] = None,
-    date_to: Optional[str] = None,   
+    date_to: Optional[str] = None,
     context: dict = Depends(get_common_context), 
     db: AsyncSession = Depends(get_db_session)
 ):
