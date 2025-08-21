@@ -53,23 +53,26 @@
     </form>
 </div>
 
-{# --- НАЧАЛО ИЗМЕНЕНИЯ --- #}
 <div id="list-content"
      hx-trigger="weconstruct:new-quote from:body"
-     hx-swap="innerHTML"
-     hx-get="{{ request.url.remove_query_params('page') }}">
-    {# Включаем контент напрямую, чтобы избежать лишнего запроса при загрузке #}
+     hx-get="{{ request.url.remove_query_params('page') }}"
+     hx-swap="innerHTML">
     {% include "admin/partials/_generic_list_content.html" %}
 </div>
-{# --- КОНЕЦ ИЗМЕНЕНИЯ --- #}
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        flatpickr(".datepicker", { dateFormat: "Y-m-d", allowInput: true });
+        flatpickr(".datepicker", {
+            dateFormat: "Y-m-d",
+            allowInput: true,
+        });
     });
     document.body.addEventListener('htmx:afterSwap', function(event) {
         if (event.detail.target.id === 'list-content') {
-            flatpickr(".datepicker", { dateFormat: "Y-m-d", allowInput: true });
+            flatpickr(".datepicker", {
+                dateFormat: "Y-m-d",
+                allowInput: true
+            });
         }
     });
 </script>
