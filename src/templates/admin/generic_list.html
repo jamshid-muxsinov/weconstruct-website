@@ -55,11 +55,10 @@
 
 <div id="list-content"
      hx-trigger="weconstruct:new-quote from:body"
-     hx-get="{{ request.url.remove_query_params('page') }}"
+     hx-get="{{ request.url.path }}"
      hx-swap="innerHTML">
     {% include "admin/partials/_generic_list_content.html" %}
 </div>
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         flatpickr(".datepicker", {
