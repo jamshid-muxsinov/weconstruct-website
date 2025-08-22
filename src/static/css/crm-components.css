@@ -6,11 +6,11 @@
    Enhanced Tables
    ========================================================================== */
 .table-wrapper {
-    background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
+    background: var(--surface-1);
     border-radius: var(--radius-xl);
     overflow: hidden;
     box-shadow: var(--shadow-lg);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-color);
     position: relative;
 }
 
@@ -21,7 +21,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: var(--accent-primary);
+    background: var(--accent-primary-solid);
 }
 
 .styled-table {
@@ -31,7 +31,7 @@
 }
 
 .styled-table thead {
-    background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface-1) 100%);
+    background: var(--surface-2);
 }
 
 .styled-table th {
@@ -123,12 +123,12 @@
 .kanban-column {
     min-width: 340px;
     flex-shrink: 0;
-    background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
+    background: var(--bg-sidebar);
     border-radius: var(--radius-xl);
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-lg);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-color);
     position: relative;
     overflow: hidden;
 }
@@ -140,18 +140,16 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: var(--accent-primary);
+    background: var(--accent-primary-solid);
 }
 
 .kanban-column-header {
     padding: 20px;
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: linear-gradient(135deg, 
-        rgba(255, 255, 255, 0.05) 0%, 
-        rgba(255, 255, 255, 0.02) 100%);
+    background: var(--surface-1);
 }
 
 .kanban-column-header h3 {
@@ -166,10 +164,10 @@
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-secondary);
-    background: var(--surface-1);
+    background: var(--surface-2);
     padding: 4px 10px;
     border-radius: var(--radius-full);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-color);
     min-width: 24px;
     text-align: center;
 }
@@ -185,7 +183,7 @@
 }
 
 .kanban-card {
-    background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
+    background: var(--surface-1);
     border-radius: var(--radius-lg);
     padding: 20px;
     box-shadow: var(--shadow-md);
@@ -291,7 +289,7 @@
 }
 
 .modal-content {
-    background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
+    background: var(--surface-1);
     border-radius: var(--radius-xl);
     width: 90%;
     max-width: 800px;
@@ -302,7 +300,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-color);
     position: relative;
 }
 
@@ -317,7 +315,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: var(--accent-primary);
+    background: var(--accent-primary-solid);
 }
 
 .modal-header {
@@ -325,11 +323,9 @@
     justify-content: space-between;
     align-items: center;
     padding: 24px;
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
-    background: linear-gradient(135deg, 
-        rgba(255, 255, 255, 0.05) 0%, 
-        rgba(255, 255, 255, 0.02) 100%);
+    background: var(--surface-2);
 }
 
 .modal-header h2 {
@@ -340,8 +336,8 @@
 }
 
 .modal-close {
-    background: var(--surface-1);
-    border: 1px solid var(--border-subtle);
+    background: var(--surface-2);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-full);
     width: 36px;
     height: 36px;
@@ -371,11 +367,11 @@
    Enhanced Form Components
    ========================================================================== */
 .form-container {
-    background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
+    background: var(--surface-1);
     border-radius: var(--radius-xl);
     padding: 32px;
     box-shadow: var(--shadow-lg);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-color);
     position: relative;
 }
 
@@ -386,7 +382,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: var(--accent-primary);
+    background: var(--accent-primary-solid);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
@@ -416,19 +412,17 @@
     gap: 16px;
     justify-content: flex-end;
     padding-top: 24px;
-    border-top: 1px solid var(--border-subtle);
+    border-top: 1px solid var(--border-color);
     margin-top: 32px;
 }
 
 /* Enhanced Fieldsets */
 fieldset {
-    border: 2px solid var(--border-subtle);
+    border: 2px solid var(--border-color);
     border-radius: var(--radius-xl);
     padding: 24px;
     margin-bottom: 24px;
-    background: linear-gradient(135deg, 
-        rgba(255, 255, 255, 0.02) 0%, 
-        rgba(255, 255, 255, 0.01) 100%);
+    background: var(--surface-2);
     position: relative;
 }
 
@@ -451,8 +445,8 @@ fieldset legend {
 }
 
 .user-profile-button {
-    background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
-    border: 1px solid var(--border-subtle);
+    background: var(--surface-1);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     color: inherit;
     display: flex;
@@ -475,8 +469,8 @@ fieldset legend {
     right: 0;
     z-index: 1050;
     width: 320px;
-    background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
-    border: 1px solid var(--border-subtle);
+    background: var(--surface-1);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-xl);
     overflow: hidden;

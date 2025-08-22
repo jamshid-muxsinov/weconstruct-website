@@ -27,7 +27,7 @@
                 {% endif %}
             </div>
         </div>
-        <div class="card-id" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); background: var(--surface-glass); padding: 4px 8px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">#{{ req.id }}</div>
+        <div class="card-id" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); background: var(--surface-2); padding: 4px 8px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">#{{ req.id }}</div>
     </div>
 
     <!-- Информация о заявке -->
@@ -52,7 +52,7 @@
         {% endif %}
         
         {% if req.message %}
-        <div class="message-preview" style="display: flex; align-items: flex-start; gap: 8px; background: var(--surface-glass); padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-top: 12px;">
+        <div class="message-preview" style="display: flex; align-items: flex-start; gap: 8px; background: var(--surface-2); padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 12px;">
             <i class='bx bx-message-dots' style="color: var(--text-secondary); font-size: 1rem; margin-top: 2px; flex-shrink: 0;"></i>
             <span style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.4;">{{ req.message|truncate(60) }}</span>
         </div>
