@@ -3,8 +3,7 @@
      id="kanban-card-{{ req.id }}"
      hx-get="{{ request.url_for('admin_htmx_quote_slide_over', pk=req.id) }}"
      hx-target="#slide-over-content"
-     hx-trigger="click"
-     title="Нажмите, чтобы открыть детали">
+     hx-trigger="click">
 
     <!-- Клиент -->
     <div class="card-header">
