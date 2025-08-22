@@ -514,21 +514,24 @@ a:hover {
     }
 }
 
-/* Enhanced Page Animations */
+/* Enhanced Page Animations - Reduced for better performance */
 .card {
-    animation: fadeInUp 0.5s ease-out;
+    animation: fadeInUp 0.3s ease-out;
 }
 
-#sidebar .nav-link {
-    animation: slideInLeft 0.3s ease-out;
-    animation-fill-mode: both;
-}
+/* Only animate nav-links on desktop to prevent mobile twitching */
+@media (min-width: 993px) {
+    #sidebar .nav-link {
+        animation: slideInLeft 0.2s ease-out;
+        animation-fill-mode: both;
+    }
 
-#sidebar .nav-link:nth-child(1) { animation-delay: 0.1s; }
-#sidebar .nav-link:nth-child(2) { animation-delay: 0.2s; }
-#sidebar .nav-link:nth-child(3) { animation-delay: 0.3s; }
-#sidebar .nav-link:nth-child(4) { animation-delay: 0.4s; }
-#sidebar .nav-link:nth-child(5) { animation-delay: 0.5s; }
+    #sidebar .nav-link:nth-child(1) { animation-delay: 0.05s; }
+    #sidebar .nav-link:nth-child(2) { animation-delay: 0.1s; }
+    #sidebar .nav-link:nth-child(3) { animation-delay: 0.15s; }
+    #sidebar .nav-link:nth-child(4) { animation-delay: 0.2s; }
+    #sidebar .nav-link:nth-child(5) { animation-delay: 0.25s; }
+}
 
 /* ==========================================================================
    Enhanced Dashboard Components
@@ -1288,6 +1291,87 @@ input:checked + .slider:before {
 /* ==========================================================================
    Enhanced Responsive Design
    ========================================================================== */
+/* ==========================================================================
+   Enhanced Responsive Design - Prevent Sidebar Twitching
+   ========================================================================== */
+
+/* Disable transitions during viewport changes to prevent twitching */
+.no-transition * {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Mobile-specific overrides to prevent sidebar twitching */
+@media (max-width: 992px) {
+    /* Disable all sidebar animations on mobile */
+    #sidebar {
+        transition: transform 0.3s ease !important;
+        animation: none !important;
+        resize: none !important;
+        width: 260px !important;
+        min-width: unset !important;
+        max-width: unset !important;
+    }
+    
+    /* Disable nav-link animations on mobile */
+    #sidebar .nav-link {
+        animation: none !important;
+        transform: none !important;
+        transition: background-color 0.2s ease !important;
+    }
+    
+    /* Disable hover effects on mobile */
+    #sidebar .nav-link:hover {
+        transform: none !important;
+    }
+    
+    #sidebar .nav-link.active {
+        transform: none !important;
+    }
+    
+    /* Disable resize indicator on mobile */
+    #sidebar::after {
+        display: none !important;
+    }
+    
+    /* Disable button hover transforms on mobile */
+    #sidebar-collapse-btn:hover,
+    #sidebar-expand-btn:hover {
+        transform: none !important;
+    }
+    
+    /* Prevent width-related CSS variables from interfering */
+    #sidebar {
+        --sidebar-width: 260px !important;
+    }
+}
+
+/* Tablet breakpoint adjustments */
+@media (max-width: 1024px) and (min-width: 993px) {
+    #sidebar {
+        width: 260px !important;
+        resize: none;
+    }
+    
+    /* Reduce animation intensity on tablet */
+    #sidebar .nav-link {
+        animation-duration: 0.1s !important;
+    }
+}
+
+/* Disable transitions during window resize */
+@media (prefers-reduced-motion: reduce) {
+    #sidebar,
+    #sidebar *,
+    #sidebar .nav-link,
+    #sidebar-collapse-btn,
+    #sidebar-expand-btn {
+        transition: none !important;
+        animation: none !important;
+        transform: none !important;
+    }
+}
+
 @media (max-width: 1024px) {
     #sidebar {
         width: 260px;
@@ -1330,7 +1414,7 @@ input:checked + .slider:before {
     }
     
     .dashboard-stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
         gap: 16px;
     }
     

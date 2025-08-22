@@ -139,9 +139,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 body.classList.remove('sidebar-collapsed');
                 sidebar.classList.remove('collapsed');
                 
-                // Reset sidebar to default width for mobile
+                // Reset sidebar properties for mobile without triggering transitions
                 sidebar.style.width = '';
-                sidebar.style.setProperty('--sidebar-width', `${DEFAULT_WIDTH}px`);
+                sidebar.style.removeProperty('--sidebar-width');
+                
+                // Ensure mobile sidebar is not in open state unless intended
+                if (!body.classList.contains('sidebar-mobile-open')) {
+                    // Make sure sidebar is properly hidden on mobile
+                    sidebar.style.transform = '';
+                }
                 return;
             }
             
@@ -200,16 +206,58 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Handle window resize with debouncing
+        // Handle window resize with debouncing and transition disabling
         let resizeTimeout;
+        let isResizeActive = false;
+        
+        const disableTransitions = () => {
+            if (!isResizeActive) {
+                isResizeActive = true;
+                document.body.classList.add('no-transition');
+            }
+        };
+        
+        const enableTransitions = () => {
+            if (isResizeActive) {
+                isResizeActive = false;
+                // Small delay to ensure layout is stable before re-enabling transitions
+                setTimeout(() => {
+                    document.body.classList.remove('no-transition');
+                }, 50);
+            }
+        };
+        
         const handleResize = () => {
+            disableTransitions();
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
                 applySidebarState();
+                // Re-enable transitions after state is applied
+                setTimeout(enableTransitions, 100);
             }, 150);
         };
         
         window.addEventListener('resize', handleResize);
+        
+        // Handle orientation changes on mobile devices
+        if (window.screen && window.screen.orientation) {
+            window.screen.orientation.addEventListener('change', () => {
+                disableTransitions();
+                setTimeout(() => {
+                    applySidebarState();
+                    setTimeout(enableTransitions, 150);
+                }, 100);
+            });
+        }
+        
+        // Fallback for older browsers
+        window.addEventListener('orientationchange', () => {
+            disableTransitions();
+            setTimeout(() => {
+                applySidebarState();
+                setTimeout(enableTransitions, 150);
+            }, 100);
+        });
         
         // Initialize on load
         applySidebarState();
@@ -221,6 +269,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 resizeObserver.disconnect();
             }
             window.removeEventListener('resize', handleResize);
+            window.removeEventListener('orientationchange', handleResize);
+            if (window.screen && window.screen.orientation) {
+                window.screen.orientation.removeEventListener('change', handleResize);
+            }
         };
     }
     
