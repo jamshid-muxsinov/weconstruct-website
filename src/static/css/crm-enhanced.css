@@ -1123,6 +1123,117 @@ a:hover {
     perspective: 1000px;
 }
 
+/* Smooth transitions for all kanban card elements */
+.kanban-card .card-content,
+.kanban-card .message-preview,
+.kanban-card .business-type-tag,
+.kanban-card .assignee-avatar,
+.kanban-card .client-icon,
+.kanban-card .card-title,
+.kanban-card .card-footer,
+.kanban-card .pinned-note,
+.kanban-card .card-subtitle,
+.kanban-card .date-info,
+.kanban-card .assignee {
+    transition: var(--transition-medium);
+}
+
+/* Enhanced detail overlay on hover */
+.kanban-card:hover::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(59, 130, 246, 0.02) 0%, 
+        rgba(139, 92, 246, 0.02) 100%);
+    pointer-events: none;
+    border-radius: var(--radius-md);
+    z-index: -1;
+}
+
+/* ==========================================================================
+   Enhanced Kanban Card Hover Effects
+   ========================================================================== */
+.kanban-card {
+    transition: var(--transition-medium);
+}
+
+.kanban-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-primary-solid);
+    z-index: 10;
+    position: relative;
+    background: var(--surface-1);
+    border-left-width: 6px;
+}
+
+.kanban-card:hover .card-content {
+    background: rgba(59, 130, 246, 0.04);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin: 12px -8px;
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    backdrop-filter: blur(10px);
+}
+
+.kanban-card:hover .message-preview {
+    background: var(--surface-1) !important;
+    border-color: var(--accent-primary-solid) !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.kanban-card:hover .business-type-tag {
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(139, 190, 255, 0.3);
+}
+
+.kanban-card:hover .assignee-avatar {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.kanban-card:hover .client-icon {
+    transform: scale(1.1);
+    color: var(--accent-primary-hover) !important;
+}
+
+.kanban-card:hover .card-title {
+    color: var(--accent-primary-solid);
+}
+
+.kanban-card:hover .card-footer {
+    border-top-color: var(--accent-primary-solid);
+    background: rgba(59, 130, 246, 0.03);
+    border-radius: var(--radius-md);
+    margin: 16px -8px -8px -8px;
+    padding: 12px 16px;
+}
+
+/* Enhanced pinned note hover */
+.kanban-card:hover .pinned-note {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: var(--status-yellow);
+    transform: scale(1.02);
+}
+
+/* Better spacing and readability on hover */
+.kanban-card:hover .card-subtitle {
+    font-weight: 500;
+    color: var(--text-primary) !important;
+}
+
+.kanban-card:hover .date-info {
+    color: var(--text-secondary) !important;
+    font-weight: 600;
+}
+
+.kanban-card:hover .assignee {
+    color: var(--text-primary) !important;
+}
+
 /* ==========================================================================
    Enhanced Toggle Switch (Показать архивные)
    ========================================================================== */
