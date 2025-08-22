@@ -5,15 +5,13 @@
     <h1>Статистика и Обзор</h1>
 </div>
 
-<h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Воронка продаж (за все время)</h2>
-<div
-    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px;">
+<h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 24px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Воронка продаж (за все время)</h2>
+<div class="dashboard-stats">
     {% for item in sales_funnel %}
-    <div class="card" style="padding: 16px;">
-        <div style="display: flex; align-items: center; gap: 16px;">
-            
+    <div class="stats-card">
+        <div class="stats-card-content">
             {% set status_val = item.status.value if item.status else 'unknown' %}
-            <div style="font-size: 2.5rem; color: var(--status-{{ status_val if status_val in ['new', 'in_progress', 'completed', 'cancelled'] else 'blue' }});">
+            <div class="stats-icon status-{{ status_val if status_val in ['new', 'in_progress', 'completed', 'cancelled'] else 'blue' }}">
                 {% if status_val == 'new' %}<i class='bx bx-log-in-circle'></i>
                 {% elif status_val == 'in_progress' %}<i class='bx bx-loader-circle'></i>
                 {% elif status_val == 'completed' %}<i class='bx bx-check-double'></i>
@@ -21,24 +19,23 @@
                 {% else %}<i class='bx bxs-help-circle'></i>
                 {% endif %}
             </div>
-
-            <div>
-                <h3 style="font-size: 2rem; font-weight: 600;">{{ item.count }}</h3>
-                <p style="color: var(--text-secondary);">{{ item.display_name }}</p>
+            <div class="stats-details">
+                <h3>{{ item.count }}</h3>
+                <p>{{ item.display_name }}</p>
             </div>
         </div>
     </div>
     {% endfor %}
 </div>
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: flex-start;">
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px; align-items: flex-start;">
     <div class="card">
-        <h3 style="margin-bottom: 16px; font-size: 1.1rem;">Лучшие менеджеры (за 30 дней)</h3>
+        <h3 style="margin-bottom: 20px; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">Лучшие менеджеры (за 30 дней)</h3>
         <div class="table-wrapper">
             <table class="styled-table">
                 <thead>
                     <tr>
-                        <th style="width: 40px;">#</th>
+                        <th style="width: 50px;">#</th>
                         <th>Менеджер</th>
                         <th style="text-align: right;">Закрыто заявок</th>
                     </tr>
@@ -50,7 +47,7 @@
                         <td data-label="Менеджер">
                             <a href="{{ request.url_for('admin_user_profile', pk=user.id) }}" class="link-to-change">{{ user.username }}</a>
                         </td>
-                        <td data-label="Закрыто заявок" style="text-align: right; font-weight: 600; font-size: 1.1rem;">{{ count }}</td>
+                        <td data-label="Закрыто заявок" style="text-align: right; font-weight: 700; font-size: 1.2rem; color: var(--accent-primary-solid);">{{ count }}</td>
                     </tr>
                     {% else %}
                     <tr>
@@ -67,30 +64,29 @@
     </div>
 </div>
 
-<div class="card" style="margin-top: 24px;">
-    <h3 style="margin-bottom: 16px; font-size: 1.1rem;">Мои актуальные задачи</h3>
+<div class="card" style="margin-top: 32px;">
+    <h3 style="margin-bottom: 20px; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">Мои актуальные задачи</h3>
     {% if my_tasks %}
-    <ul style="display: flex; flex-direction: column; gap: 12px;">
+    <ul style="display: flex; flex-direction: column; gap: 16px; list-style: none; padding: 0; margin: 0;">
         {% for task in my_tasks %}
         <a href="{{ request.url_for('admin_contact_detail', pk=task.contact.id) if task.contact else '#' }}"
-            style="display: block; color: inherit; text-decoration: none; background-color: var(--bg-main); border-radius: var(--border-radius-md); transition: var(--transition-fast); padding: 12px;"
             class="task-link-item">
             <li style="display: flex; align-items: center; justify-content: space-between;">
                 <div>
-                    <p>{{ task.title }}</p>
+                    <p style="margin: 0; font-weight: 600; color: var(--text-primary);">{{ task.title }}</p>
                     {% if task.contact %}
-                    <small style="color: var(--text-secondary);">Клиент: {{ task.contact.full_name }}</small>
+                    <small style="color: var(--text-secondary); font-size: 0.85rem;">Клиент: {{ task.contact.full_name }}</small>
                     {% endif %}
                 </div>
                 {% if task.due_date %}
-                <span style="color: var(--text-secondary); font-size: 0.8rem;">{{ task.due_date.strftime('%d.%m.%Y') }}</span>
+                <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 500;">{{ task.due_date.strftime('%d.%m.%Y') }}</span>
                 {% endif %}
             </li>
         </a>
         {% endfor %}
     </ul>
     {% else %}
-    <p class="empty-list-placeholder" style="padding: 20px 0;">У вас нет назначенных задач.</p>
+    <p class="empty-list-placeholder" style="padding: 30px 0;">У вас нет назначенных задач.</p>
     {% endif %}
 </div>
 {% endblock %}

@@ -1,4 +1,4 @@
-<div class="kanban-card status-{{ req.status.value }}"
+<div class="kanban-card status-{{ req.status.value }} interactive hover-lift"
      data-id="{{ req.id }}"
      id="kanban-card-{{ req.id }}"
      hx-get="{{ request.url_for('admin_htmx_quote_slide_over', pk=req.id) }}"
@@ -6,16 +6,60 @@
      hx-trigger="click"
      title="Нажмите, чтобы открыть детали">
 
-    <h4 class="card-title">
-        <a href="{{ request.url_for('admin_contact_detail', pk=req.contact_id) }}" 
-           onclick="event.stopPropagation()" 
-           title="Перейти к профилю клиента"
-           class="link-to-change">
-            {{ req.contact.full_name }}
-        </a>
-    </h4>
-    <p class="card-subtitle">{{ req.product.name|truncate(35) if req.product else "Общая заявка" }}</p>
+    <!-- Клиент -->
+    <div class="card-header">
+        <div class="client-info">
+            <i class='bx bxs-user-circle client-icon' style="font-size: 2rem; color: var(--accent-primary-solid);"></i>
+            <div>
+                <h4 class="card-title" style="margin: 0; font-weight: 600; font-size: 1rem;">
+                    <a href="{{ request.url_for('admin_contact_detail', pk=req.contact_id) }}" 
+                       onclick="event.stopPropagation()" 
+                       title="Перейти к профилю клиента"
+                       class="link-to-change">
+                        {{ req.contact.full_name }}
+                    </a>
+                </h4>
+                {% if req.contact.phone %}
+                <div class="client-phone" style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+                    <i class='bx bxs-phone' style="font-size: 0.9rem; color: var(--text-secondary);"></i>
+                    <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">{{ req.contact.phone|format_phone }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-id" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); background: var(--surface-glass); padding: 4px 8px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">#{{ req.id }}</div>
+    </div>
 
+    <!-- Информация о заявке -->
+    <div class="card-content" style="margin-top: 16px;">
+        {% if req.business_type %}
+        <div class="business-type-tag" style="display: inline-flex; align-items: center; gap: 6px; background: var(--status-blue-bg); color: var(--status-blue); padding: 6px 12px; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; margin-bottom: 12px; border: 1px solid rgba(96, 165, 250, 0.2);">
+            <i class='bx bxs-briefcase' style="font-size: 0.9rem;"></i>
+            <span>{{ req.business_type }}</span>
+        </div>
+        {% endif %}
+        
+        {% if req.product %}
+        <p class="card-subtitle" style="display: flex; align-items: center; gap: 8px; margin: 8px 0; color: var(--text-secondary); font-size: 0.9rem;">
+            <i class='bx bxs-package' style="color: var(--accent-primary-solid); font-size: 1rem;"></i>
+            {{ req.product.name_ru|truncate(40) }}
+        </p>
+        {% else %}
+        <p class="card-subtitle general-request" style="display: flex; align-items: center; gap: 8px; margin: 8px 0; color: var(--text-muted); font-size: 0.9rem; font-style: italic;">
+            <i class='bx bxs-chat' style="color: var(--status-yellow); font-size: 1rem;"></i>
+            Общая заявка
+        </p>
+        {% endif %}
+        
+        {% if req.message %}
+        <div class="message-preview" style="display: flex; align-items: flex-start; gap: 8px; background: var(--surface-glass); padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-top: 12px;">
+            <i class='bx bx-message-dots' style="color: var(--text-secondary); font-size: 1rem; margin-top: 2px; flex-shrink: 0;"></i>
+            <span style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.4;">{{ req.message|truncate(60) }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Закрепленная заметка -->
     {% if req.contact.pinned_note %}
     <div class="pinned-note" title="Закрепленная заметка: {{ req.contact.pinned_note.note }}">
         <i class='bx bxs-pin'></i>
@@ -23,13 +67,26 @@
     </div>
     {% endif %}
 
-    <div class="card-footer">
-        <span class="id">#{{ req.id }} &middot; {{ req.created_at.strftime('%d %b') }}</span>
+    <!-- Нижняя часть -->
+    <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-subtle); font-size: 0.75rem;">
+        <div class="date-info" style="display: flex; align-items: center; gap: 6px; color: var(--text-muted);">
+            <i class='bx bx-time' style="font-size: 0.9rem;"></i>
+            <span style="font-weight: 500;">{{ req.created_at.strftime('%d %b, %H:%M') }}</span>
+        </div>
         {% if req.assigned_to %}
-        <span class="assignee" title="Ответственный: {{ req.assigned_to.username }}">
-            <i class='bx bxs-user'></i>
-            <span>{{ req.assigned_to.username|truncate(10) }}</span>
-        </span>
+        <div class="assignee" title="Ответственный: {{ req.assigned_to.username }}" style="display: flex; align-items: center; gap: 6px; color: var(--text-secondary);">
+            <div class="assignee-avatar" style="width: 24px; height: 24px; border-radius: var(--radius-full); background: var(--accent-primary-solid); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem;">
+                <i class='bx bxs-user'></i>
+            </div>
+            <span style="font-weight: 600;">{{ req.assigned_to.username|truncate(10) }}</span>
+        </div>
+        {% else %}
+        <div class="assignee unassigned" style="display: flex; align-items: center; gap: 6px; color: var(--text-muted); opacity: 0.7;">
+            <div class="assignee-avatar" style="width: 24px; height: 24px; border-radius: var(--radius-full); background: var(--surface-2); display: flex; align-items: center; justify-content: center; border: 2px dashed var(--border-color); font-size: 0.8rem;">
+                <i class='bx bx-user-plus'></i>
+            </div>
+            <span style="font-weight: 500; font-style: italic;">Не назначен</span>
+        </div>
         {% endif %}
     </div>
 </div>
