@@ -31,114 +31,90 @@ from sqlalchemy.dialects import postgresql
 router = APIRouter()
 log = logging.getLogger(__name__)
 
-async def handle_list_view(
-    db: AsyncSession,
-    meta: Meta,
-    page: int,
-    size: int,
-    search_query: Optional[str] = None,
-    sort: Optional[str] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None
-) -> Page:
-    """
-    Надежная функция для пагинации с ручным подсчетом.
-    """
-    items_query = select(meta.model)
-    count_query = select(func.count(distinct(meta.model.id)))
 
-    # Применяем фильтры и JOIN'ы к обоим запросам
-    if meta.model == QuoteRequest:
-        if search_query:
-            search_like = f"%{search_query}%"
-            filter_condition = or_(
-                func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like),
-                Contact.phone.ilike(search_like)
-            )
-            items_query = items_query.join(Contact).where(filter_condition)
-            count_query = count_query.join(Contact).where(filter_condition)
-        try:
-            if date_from:
-                start_date = datetime.strptime(date_from, "%Y-%m-%d")
-                items_query = items_query.where(QuoteRequest.created_at >= start_date)
-                count_query = count_query.where(QuoteRequest.created_at >= start_date)
-            if date_to:
-                end_date = datetime.strptime(date_to, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
-                items_query = items_query.where(QuoteRequest.created_at <= end_date)
-                count_query = count_query.where(QuoteRequest.created_at <= end_date)
-        except ValueError:
-            pass
-    elif meta.model == Product:
-        if search_query:
-            search_like = f"%{search_query}%"
-            items_query = items_query.where(Product.name_ru.ilike(search_like))
-            count_query = count_query.where(Product.name_ru.ilike(search_like))
-    elif meta.model == Category:
-        if search_query:
-            search_like = f"%{search_query}%"
-            items_query = items_query.where(Category.name_ru.ilike(search_like))
-            count_query = count_query.where(Category.name_ru.ilike(search_like))
+# --- ИСПРАВЛЕНИЕ: Переносим классы и константы НАВЕРХ, до их использования ---
 
-    total_result = await db.execute(count_query)
-    total = total_result.scalar_one_or_none() or 0
-    log.info(f"Manual count for {meta.model_name} found {total} items.")
+class Meta:
+    def __init__(self, model, list_display, form_class=None, verbose_name=None, verbose_name_plural=None):
+        self.model = model
+        self.verbose_name = verbose_name or model.__name__
+        self.verbose_name_plural = verbose_name_plural or f"{model.__name__}s"
+        self.list_display = list_display
+        self.form_class = form_class
+        model_name_lower = model.__name__.lower()
+        self.model_name = model_name_lower
+        self.list_url_name = f"admin_{model_name_lower}_list"
+        self.add_url_name = f"admin_{model_name_lower}_add" if form_class else None
+        self.change_url_name = f"admin_{model_name_lower}_change"
+        self.delete_url_name = f"admin_{model_name_lower}_delete" if form_class else None
+    def __str__(self): return self.verbose_name_plural
 
-    if meta.model == QuoteRequest:
-        items_query = items_query.options(
-            selectinload(QuoteRequest.contact), 
-            selectinload(QuoteRequest.product),
-            selectinload(QuoteRequest.assigned_to)
-        )
-        if sort == 'asc':
-            items_query = items_query.order_by(QuoteRequest.created_at.asc())
-        else:
-            items_query = items_query.order_by(QuoteRequest.created_at.desc())
-    else:
-        items_query = items_query.order_by(getattr(meta.model, 'id').desc())
+class ProductForm(wtforms.Form):
+    name_ru = wtforms.StringField('Название (RU)', validators=[wtforms.validators.DataRequired()])
+    short_description_ru = wtforms.TextAreaField('Краткое описание (RU)', render_kw={"rows": 3})
+    full_description_ru = wtforms.TextAreaField('Полное описание (RU)', render_kw={"rows": 10})
+    dimensions_ru = wtforms.StringField('Размеры (RU)')
+    materials_ru = wtforms.TextAreaField('Материалы (RU)', render_kw={"rows": 6}, description="Каждый материал с новой строки")
+    name_uz = wtforms.StringField('Название (UZ)')
+    short_description_uz = wtforms.TextAreaField('Краткое описание (UZ)', render_kw={"rows": 3})
+    full_description_uz = wtforms.TextAreaField('Полное описание (UZ)', render_kw={"rows": 10})
+    dimensions_uz = wtforms.StringField("O'lchamlari (UZ)")
+    materials_uz = wtforms.TextAreaField("Materiallar (UZ)", render_kw={"rows": 6}, description="Har bir material yangi qatordan")
+    price_min = wtforms.DecimalField('Цена за м² от (сум)', places=0, validators=[wtforms.validators.Optional()])
+    price_max = wtforms.DecimalField('Цена за м² до (сум)', places=0, validators=[wtforms.validators.Optional()])
+    category_id = wtforms.SelectField('Категория', coerce=int, validators=[wtforms.validators.DataRequired()])
+    is_active = wtforms.BooleanField('Активен', default=True, description="Виден на сайте")
+    main_image = wtforms.FileField('Основное изображение')
+    images = wtforms.MultipleFileField('Дополнительные изображения')
 
-    paginated_items_query = items_query.offset((page - 1) * size).limit(size)
+class CategoryForm(wtforms.Form):
+    name_ru = wtforms.StringField('Название (RU)', validators=[wtforms.validators.DataRequired()])
+    description_ru = wtforms.TextAreaField('Описание (RU)', render_kw={"rows": 4})
+    name_uz = wtforms.StringField('Название (UZ)')
+    description_uz = wtforms.TextAreaField('Описание (UZ)', render_kw={"rows": 4})
+
+class QuoteRequestForm(wtforms.Form):
+    contact_id = wtforms.HiddenField('Контакт', validators=[wtforms.validators.Optional()])
+    new_contact_name = wtforms.StringField('Имя и Фамилия нового клиента', validators=[wtforms.validators.Optional()])
+    new_contact_phone = wtforms.StringField('Телефон нового клиента', validators=[wtforms.validators.Optional()])
+    product_id = wtforms.SelectField('Товар (необязательно)', coerce=int, validators=[wtforms.validators.Optional()])
+    message = wtforms.TextAreaField('Сообщение клиента', render_kw={"rows": 4})
+    status = wtforms.SelectField('Статус', choices=[(s.value, s.name.replace('_', ' ').capitalize()) for s in QuoteRequest.StatusEnum], default=QuoteRequest.StatusEnum.NEW.value)
+    assigned_to_id = wtforms.SelectField('Ответственный', coerce=int, validators=[wtforms.validators.Optional()])
+    business_type = wtforms.StringField('Тип бизнеса клиента', validators=[wtforms.validators.Optional()])
+    dimensions = wtforms.StringField('Предполагаемые размеры объекта', validators=[wtforms.validators.Optional()])
+    investment_details = wtforms.TextAreaField('Бюджет и детали (Sarmoysi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
+    conclusion = wtforms.TextAreaField('Выводы менеджера (Xulosasi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
+    additional_info = wtforms.TextAreaField('Дополнительные сведения', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
     
-    items_result = await db.execute(paginated_items_query)
-    items = items_result.scalars().unique().all()
-    
-    params = Params(page=page, size=size)
-    return create_page(items, total, params)
+    def validate(self, extra_validators=None):
+        rv = super().validate(extra_validators)
+        if not rv: return False
+        contact_id_data = int(self.contact_id.data) if self.contact_id.data else None
+        
+        if not contact_id_data and not (self.new_contact_name.data and self.new_contact_phone.data):
+            self.contact_id.errors.append('Необходимо выбрать существующего клиента или создать нового.')
+            return False
+        if contact_id_data and (self.new_contact_name.data or self.new_contact_phone.data):
+            self.contact_id.errors.append('Нельзя одновременно выбирать существующего клиента и создавать нового.')
+            return False
+        return True
+
+Product.__str__ = lambda self: self.name_ru
+Category.__str__ = lambda self: self.name_ru
+QuoteRequest.__str__ = lambda self: f"Заявка #{self.id}"
+
+PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], ProductForm, "Товар", "Товары")
+CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "Категория", "Категории")
+QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'product', 'status', 'source'], QuoteRequestForm, "Заявка", "Заявки")
 
 
-@router.get("/quoterequest/", response_class=HTMLResponse, name="admin_quoterequest_list")
-async def quoterequest_list(
-    request: Request,
-    page: int = Query(1, ge=1),
-    size: int = Query(20, ge=1, le=100),
-    q: Optional[str] = Query(None),
-    sort: Optional[str] = Query(None),
-    date_from: Optional[str] = Query(None),
-    date_to: Optional[str] = Query(None),
-    context: dict = Depends(get_common_context), 
-    db: AsyncSession = Depends(get_db_session)
-):
-    page_obj = await handle_list_view(
-        db, QUOTEREQUEST_META, page=page, size=size, search_query=q, 
-        sort=sort, date_from=date_from, date_to=date_to
-    )
-    
-    context.update({
-        "meta": QUOTEREQUEST_META, 
-        "page": page_obj, 
-        "list_display": QUOTEREQUEST_META.list_display,
-    })
-    
-    if request.headers.get("hx-request"): 
-        return templates.TemplateResponse("admin/partials/_generic_list_content.html", context)
-    
-    return templates.TemplateResponse("admin/generic_list.html", context)
-
-
-# --- Остальной код файла без изменений ---
 def sanitize_for_csv(value):
-    if value is None: return ""
+    if value is None:
+        return ""
     text = str(value).replace('\n', ' ').replace('\r', ' ').strip()
-    if re.match(r'^\d{1,2}[./-]\d{1,2}$', text): return f'="{text}"'
+    if re.match(r'^\d{1,2}[./-]\d{1,2}$', text):
+        return f'="{text}"'
     return text
 
 @router.get("/quoterequest/export/", name="admin_quoterequest_export")
@@ -162,37 +138,84 @@ async def quoterequest_export(request: Request, ids: Optional[str] = None, db: A
     content_bytes = BOM + output.getvalue().encode('utf-8')
     return StreamingResponse(iter([content_bytes]), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=weconstruct_requests_{datetime.now().strftime('%Y-%m-%d')}.csv"})
 
-class Meta:
-    def __init__(self, model, list_display, form_class=None, verbose_name=None, verbose_name_plural=None):
-        self.model = model; self.verbose_name = verbose_name or model.__name__; self.verbose_name_plural = verbose_name_plural or f"{model.__name__}s"; self.list_display = list_display; self.form_class = form_class; model_name_lower = model.__name__.lower(); self.model_name = model_name_lower; self.list_url_name = f"admin_{model_name_lower}_list"; self.add_url_name = f"admin_{model_name_lower}_add" if form_class else None; self.change_url_name = f"admin_{model_name_lower}_change"; self.delete_url_name = f"admin_{model_name_lower}_delete" if form_class else None
-    def __str__(self): return self.verbose_name_plural
-class ProductForm(wtforms.Form):
-    name_ru = wtforms.StringField('Название (RU)', validators=[wtforms.validators.DataRequired()]); short_description_ru = wtforms.TextAreaField('Краткое описание (RU)', render_kw={"rows": 3}); full_description_ru = wtforms.TextAreaField('Полное описание (RU)', render_kw={"rows": 10}); dimensions_ru = wtforms.StringField('Размеры (RU)'); materials_ru = wtforms.TextAreaField('Материалы (RU)', render_kw={"rows": 6}, description="Каждый материал с новой строки"); name_uz = wtforms.StringField('Название (UZ)'); short_description_uz = wtforms.TextAreaField('Краткое описание (UZ)', render_kw={"rows": 3}); full_description_uz = wtforms.TextAreaField('Полное описание (UZ)', render_kw={"rows": 10}); dimensions_uz = wtforms.StringField("O'lchamlari (UZ)"); materials_uz = wtforms.TextAreaField("Materiallar (UZ)", render_kw={"rows": 6}, description="Har bir material yangi qatordan"); price_min = wtforms.DecimalField('Цена за м² от (сум)', places=0, validators=[wtforms.validators.Optional()]); price_max = wtforms.DecimalField('Цена за м² до (сум)', places=0, validators=[wtforms.validators.Optional()]); category_id = wtforms.SelectField('Категория', coerce=int, validators=[wtforms.validators.DataRequired()]); is_active = wtforms.BooleanField('Активен', default=True, description="Виден на сайте"); main_image = wtforms.FileField('Основное изображение'); images = wtforms.MultipleFileField('Дополнительные изображения')
-class CategoryForm(wtforms.Form):
-    name_ru = wtforms.StringField('Название (RU)', validators=[wtforms.validators.DataRequired()]); description_ru = wtforms.TextAreaField('Описание (RU)', render_kw={"rows": 4}); name_uz = wtforms.StringField('Название (UZ)'); description_uz = wtforms.TextAreaField('Описание (UZ)', render_kw={"rows": 4})
-class QuoteRequestForm(wtforms.Form):
-    contact_id = wtforms.HiddenField('Контакт', validators=[wtforms.validators.Optional()]); new_contact_name = wtforms.StringField('Имя и Фамилия нового клиента', validators=[wtforms.validators.Optional()]); new_contact_phone = wtforms.StringField('Телефон нового клиента', validators=[wtforms.validators.Optional()]); product_id = wtforms.SelectField('Товар (необязательно)', coerce=int, validators=[wtforms.validators.Optional()]); message = wtforms.TextAreaField('Сообщение клиента', render_kw={"rows": 4}); status = wtforms.SelectField('Статус', choices=[(s.value, s.name.replace('_', ' ').capitalize()) for s in QuoteRequest.StatusEnum], default=QuoteRequest.StatusEnum.NEW.value); assigned_to_id = wtforms.SelectField('Ответственный', coerce=int, validators=[wtforms.validators.Optional()]); business_type = wtforms.StringField('Тип бизнеса клиента', validators=[wtforms.validators.Optional()]); dimensions = wtforms.StringField('Предполагаемые размеры объекта', validators=[wtforms.validators.Optional()]); investment_details = wtforms.TextAreaField('Бюджет и детали (Sarmoysi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()]); conclusion = wtforms.TextAreaField('Выводы менеджера (Xulosasi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()]); additional_info = wtforms.TextAreaField('Дополнительные сведения', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
-    def validate(self, extra_validators=None):
-        rv = super().validate(extra_validators);
-        if not rv: return False
-        contact_id_data = int(self.contact_id.data) if self.contact_id.data else None
-        if not contact_id_data and not (self.new_contact_name.data and self.new_contact_phone.data):
-            self.contact_id.errors.append('Необходимо выбрать существующего клиента или создать нового.'); return False
-        if contact_id_data and (self.new_contact_name.data or self.new_contact_phone.data):
-            self.contact_id.errors.append('Нельзя одновременно выбирать существующего клиента и создавать нового.'); return False
-        return True
-Product.__str__ = lambda self: self.name_ru; Category.__str__ = lambda self: self.name_ru; QuoteRequest.__str__ = lambda self: f"Заявка #{self.id}"
-PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], ProductForm, "Товар", "Товары"); CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "Категория", "Категории"); QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'product', 'status', 'source'], QuoteRequestForm, "Заявка", "Заявки")
 def set_hx_trigger_header(response: Response, message: str, type: str = "success"):
-    payload = json.dumps({"show-toast": {"message": message, "type": type}}); response.headers["HX-Trigger"] = quote(payload); return response
+    payload = json.dumps({"show-toast": {"message": message, "type": type}})
+    response.headers["HX-Trigger"] = quote(payload)
+    return response
+
+async def handle_list_view(
+    db: AsyncSession,
+    meta: Meta,
+    page: int,
+    size: int,
+    search_query: Optional[str] = None,
+    sort: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None
+) -> Page:
+    items_query = select(meta.model)
+    count_query = select(func.count(distinct(meta.model.id)))
+    if meta.model == QuoteRequest:
+        if search_query:
+            search_like = f"%{search_query}%"
+            filter_condition = or_(func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), Contact.phone.ilike(search_like))
+            items_query = items_query.join(Contact).where(filter_condition)
+            count_query = count_query.join(Contact).where(filter_condition)
+        try:
+            if date_from:
+                start_date = datetime.strptime(date_from, "%Y-%m-%d")
+                items_query = items_query.where(QuoteRequest.created_at >= start_date)
+                count_query = count_query.where(QuoteRequest.created_at >= start_date)
+            if date_to:
+                end_date = datetime.strptime(date_to, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+                items_query = items_query.where(QuoteRequest.created_at <= end_date)
+                count_query = count_query.where(QuoteRequest.created_at <= end_date)
+        except ValueError: pass
+    elif meta.model == Product:
+        if search_query:
+            search_like = f"%{search_query}%"
+            items_query = items_query.where(Product.name_ru.ilike(search_like))
+            count_query = count_query.where(Product.name_ru.ilike(search_like))
+    elif meta.model == Category:
+        if search_query:
+            search_like = f"%{search_query}%"
+            items_query = items_query.where(Category.name_ru.ilike(search_like))
+            count_query = count_query.where(Category.name_ru.ilike(search_like))
+    total_result = await db.execute(count_query)
+    total = total_result.scalar_one_or_none() or 0
+    log.info(f"Manual count for {meta.model_name} found {total} items.")
+    if meta.model == QuoteRequest:
+        items_query = items_query.options(selectinload(QuoteRequest.contact), selectinload(QuoteRequest.product), selectinload(QuoteRequest.assigned_to))
+        if sort == 'asc': items_query = items_query.order_by(QuoteRequest.created_at.asc())
+        else: items_query = items_query.order_by(QuoteRequest.created_at.desc())
+    else: items_query = items_query.order_by(getattr(meta.model, 'id').desc())
+    paginated_items_query = items_query.offset((page - 1) * size).limit(size)
+    items_result = await db.execute(paginated_items_query)
+    items = items_result.scalars().unique().all()
+    params = Params(page=page, size=size)
+    return create_page(items, total, params)
+
+@router.get("/quoterequest/", response_class=HTMLResponse, name="admin_quoterequest_list")
+async def quoterequest_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), sort: Optional[str] = Query(None), date_from: Optional[str] = Query(None), date_to: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
+    page_obj = await handle_list_view(db, QUOTEREQUEST_META, page=page, size=size, search_query=q, sort=sort, date_from=date_from, date_to=date_to)
+    context.update({"meta": QUOTEREQUEST_META, "page": page_obj, "list_display": QUOTEREQUEST_META.list_display})
+    if request.headers.get("hx-request"): return templates.TemplateResponse("admin/partials/_generic_list_content.html", context)
+    return templates.TemplateResponse("admin/generic_list.html", context)
+
+# ... остальной код ...
 async def populate_request_form_choices(db: AsyncSession, form: QuoteRequestForm):
-    products = (await db.execute(select(Product).order_by(Product.name_ru))).scalars().all(); form.product_id.choices = [(0, '--- Общая заявка ---')] + [(p.id, p.name_ru) for p in products]; staff_users = (await db.execute(select(User).where(User.is_staff == True).order_by(User.username))).scalars().all(); form.assigned_to_id.choices = [(0, '--- Не назначен ---')] + [(u.id, u.username) for u in staff_users]
+    products = (await db.execute(select(Product).order_by(Product.name_ru))).scalars().all()
+    form.product_id.choices = [(0, '--- Общая заявка ---')] + [(p.id, p.name_ru) for p in products]
+    staff_users = (await db.execute(select(User).where(User.is_staff == True).order_by(User.username))).scalars().all()
+    form.assigned_to_id.choices = [(0, '--- Не назначен ---')] + [(u.id, u.username) for u in staff_users]
 
 @router.get("/product/", response_class=HTMLResponse, name="admin_product_list")
 async def product_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    page_obj = await handle_list_view(db, PRODUCT_META, page=page, size=size, search_query=q); context.update({"meta": PRODUCT_META, "page": page_obj, "list_display": PRODUCT_META.list_display, "search_query": q});
+    page_obj = await handle_list_view(db, PRODUCT_META, page=page, size=size, search_query=q)
+    context.update({"meta": PRODUCT_META, "page": page_obj, "list_display": PRODUCT_META.list_display})
     if request.headers.get("hx-request"): return templates.TemplateResponse("admin/partials/_generic_list_content.html", context)
     return templates.TemplateResponse("admin/generic_list.html", context)
+# ... и так далее, весь остальной код файла
 @router.get("/product/add/", response_class=HTMLResponse, name="admin_product_add")
 @router.get("/product/{pk}/change/", response_class=HTMLResponse, name="admin_product_change")
 async def product_form_get(pk: Optional[int] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
