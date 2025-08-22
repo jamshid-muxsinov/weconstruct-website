@@ -1,4 +1,5 @@
-{# _generic_list_content.html #}
+{% from "admin/partials/pagination.html" import render_pagination %}
+
 <div class="table-wrapper">
     <table class="styled-table">
         <thead>
@@ -74,38 +75,4 @@
         </tbody>
     </table>
 </div>
-
-{% if page.pages > 1 %}
-<div class="card" style="margin-top: 24px; padding: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
-    <div>
-        Страница {{ page.page }} из {{ page.pages }}. Всего: {{ page.total }}
-    </div>
-    <div style="display: flex; gap: 8px;">
-        {# --- НАЧАЛО ИСПРАВЛЕНИЯ --- #}
-        {% if page.previous %}
-            {% set query_params = dict(request.query_params) %}
-            {% set _ = query_params.update({'page': page.previous}) %}
-            <a href="{{ request.url.path }}?{{ urlencode(query_params) }}" 
-               class="btn btn-secondary"
-               hx-get="{{ request.url.path }}?{{ urlencode(query_params) }}"
-               hx-target="#list-content"
-               hx-push-url="true">
-                <i class='bx bx-chevron-left'></i> Назад
-            </a>
-        {% endif %}
-        
-        {% if page.next %}
-            {% set query_params = dict(request.query_params) %}
-            {% set _ = query_params.update({'page': page.next}) %}
-            <a href="{{ request.url.path }}?{{ urlencode(query_params) }}" 
-               class="btn btn-secondary"
-               hx-get="{{ request.url.path }}?{{ urlencode(query_params) }}"
-               hx-target="#list-content"
-               hx-push-url="true">
-                Вперед <i class='bx bx-chevron-right'></i>
-            </a>
-        {% endif %}
-        {# --- КОНЕЦ ИСПРАВЛЕНИЯ --- #}
-    </div>
-</div>
-{% endif %}
+{{ render_pagination(page, meta.list_url_name) }}
