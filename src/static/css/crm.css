@@ -278,3 +278,12 @@ input:checked + .slider:before { transform: translateX(16px); }
 @media (max-width: 480px) {
     .profile-name { display: none; }
 }
+.htmx-indicator {
+    display: none;
+}
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+.htmx-request.htmx-indicator {
+    display: inline-block;
+}

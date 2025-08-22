@@ -3,81 +3,75 @@
 {% extends "admin/base.html" %}
 
 {% block content %}
-<div class="p-6">
-    <h1 class="text-2xl font-semibold text-gray-700 mb-4">{{ title }}</h1>
+<div class="page-header">
+    <h1>{{ title }}</h1>
+</div>
 
-    <!-- Блок для вывода ошибки, если URL неверный -->
-    {% if error %}
-    <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50" role="alert">
-        <span class="font-medium">Ошибка!</span> {{ error }}
-    </div>
-    {% endif %}
+{% if error %}
+<div class="card" style="border-left: 4px solid var(--status-red); background-color: color-mix(in srgb, var(--status-red) 10%, transparent); margin-bottom: 24px;">
+    <p style="font-weight: 500; color: var(--status-red);">Ошибка!</p>
+    <p style="color: var(--text-primary); margin-top: 4px;">{{ error }}</p>
+</div>
+{% endif %}
 
-    <!-- Форма для запуска импорта -->
-    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+<div style="display: grid; grid-template-columns: 2fr 3fr; gap: 24px; align-items: flex-start;">
+    
+    <!-- Колонка с формой -->
+    <div class="card">
+        <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Запуск импорта</h2>
         <form action="{{ url_for('admin_run_import') }}" method="post">
             {{ csrf_token(request) }}
-            <div class="space-y-4">
-                <div>
-                    <label for="sheet_url" class="block text-sm font-medium text-gray-700">URL таблицы Google Sheets</label>
-                    <input type="url" name="sheet_url" id="sheet_url" required
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                           placeholder="https://docs.google.com/spreadsheets/d/..."
-                           value="{{ current_sheet_url if current_sheet_url else '' }}">
-                    <p class="mt-1 text-xs text-gray-500">
-                        Скопируйте URL вашей таблицы целиком из браузера. Например: `https://docs.google.com/spreadsheets/d/123xyz.../edit#gid=0`.
-                    </p>
-                </div>
-                <div>
-                    <button type="submit" class="btn-primary w-full sm:w-auto"
-                            hx-indicator="#import-spinner" hx-disabled-elt="this">
-                        <span>Запустить импорт</span>
-                        <span id="import-spinner" class="htmx-indicator spinner-sm ml-2"></span>
-                    </button>
-                </div>
+            <div class="input-group">
+                <label for="sheet_url">URL таблицы Google Sheets</label>
+                <input type="url" name="sheet_url" id="sheet_url" required
+                       class="input-field"
+                       placeholder="https://docs.google.com/spreadsheets/d/..."
+                       value="{{ current_sheet_url if current_sheet_url else '' }}">
+                <small class="form-field-description" style="margin-top: 8px;">
+                    Скопируйте URL вашей таблицы целиком из браузера.
+                </small>
             </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%;"
+                    hx-indicator="#import-spinner" hx-disabled-elt="this">
+                <span>Запустить импорт</span>
+                <i id="import-spinner" class='bx bx-loader-alt bx-spin htmx-indicator' style="font-size: 1.25rem; margin-left: 8px;"></i>
+            </button>
         </form>
     </div>
 
-    <!-- Вывод результата -->
-    {% if result %}
-    <div class="p-4 rounded-md {% if result.status == 'success' %}bg-green-50 border-green-400{% else %}bg-red-50 border-red-400{% endif %} border">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                {% if result.status == 'success' %}
-                <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-                {% else %}
-                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                </svg>
-                {% endif %}
-            </div>
-            <div class="ml-3">
-                <h3 class="text-sm font-medium {% if result.status == 'success' %}text-green-800{% else %}text-red-800{% endif %}">
-                    {{ "Успешно" if result.status == 'success' else "Ошибка" }}
-                </h3>
-                <div class="mt-2 text-sm {% if result.status == 'success' %}text-green-700{% else %}text-red-700{% endif %}">
-                    <p>{{ result.message }}</p>
+    <!-- Колонка с результатом или инструкцией -->
+    <div>
+        {% if result %}
+        <div class="card" style="border-left: 4px solid {{ 'var(--status-green)' if result.status == 'success' else 'var(--status-red)' }};">
+            <div style="display: flex; align-items: flex-start; gap: 16px;">
+                <div style="font-size: 1.8rem; color: {{ 'var(--status-green)' if result.status == 'success' else 'var(--status-red)' }}; line-height: 1;">
+                    {% if result.status == 'success' %}
+                        <i class='bx bxs-check-circle'></i>
+                    {% else %}
+                        <i class='bx bxs-x-circle'></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 style="font-size: 1.1rem; font-weight: 600;">
+                        {{ "Успешно" if result.status == 'success' else "Ошибка" }}
+                    </h3>
+                    <p style="margin-top: 8px; color: var(--text-secondary);">{{ result.message }}</p>
                 </div>
             </div>
         </div>
+        {% else %}
+        <div class="card" style="background-color: color-mix(in srgb, var(--status-blue) 10%, transparent); border-left: 4px solid var(--status-blue);">
+            <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Как это работает?</h2>
+            <ol style="list-style: decimal; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; color: var(--text-secondary);">
+                <li>Убедитесь, что ваша Google-таблица <strong>общедоступна для просмотра по ссылке</strong>. Без этого импорт не сработает.</li>
+                <li>Вставьте полную ссылку на вашу таблицу. Система автоматически извлечет ID таблицы и ID листа (gid).</li>
+                <li>Данные будут читаться из колонок согласно последней настройке (имя, телефон, тип бизнеса).</li>
+                <li><strong>Защита от дублей:</strong> Если заявка с таким же номером телефона и сообщением уже есть, она будет пропущена.</li>
+                <li>Если контакта нет, он будет создан автоматически, и для него будет создана заявка.</li>
+            </ol>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
-
-    <!-- Инструкция -->
-    {% if not result %}
-    <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg mt-6 text-sm text-blue-800">
-        <h4 class="font-semibold mb-2">Как это работает?</h4>
-        <ol class="list-decimal list-inside space-y-1">
-            <li>Убедитесь, что ваша Google-таблица **общедоступна для просмотра по ссылке**. Без этого импорт не сработает.</li>
-            <li>Вставьте полную ссылку на вашу таблицу. Система автоматически извлечет ID таблицы и ID листа (gid).</li>
-            <li>Данные будут читаться из колонок согласно последней настройке (для лидов из рекламного кабинета).</li>
-            <li>Если контакт с таким номером телефона уже есть в CRM, для него будет создана <strong>новая заявка</strong>.</li>
-            <li>Если контакта нет, он будет создан автоматически, и для него будет создана заявка.</li>
-        </ol>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}
