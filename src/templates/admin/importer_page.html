@@ -20,7 +20,6 @@
     <div class="card">
         <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Запуск импорта</h2>
         <form action="{{ url_for('admin_run_import') }}" method="post">
-            {{ csrf_token(request) }}
             <div class="input-group">
                 <label for="sheet_url">URL таблицы Google Sheets</label>
                 <input type="url" name="sheet_url" id="sheet_url" required
