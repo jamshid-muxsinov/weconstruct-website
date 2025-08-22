@@ -198,7 +198,6 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => { isResizing = false; }, 100);
         };
         
-        // Enhanced collapse button handler
         collapseBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -210,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Enhanced expand button handler
         expandBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -220,12 +218,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     setStoredValue('sidebarCollapsed', 'false');
                     applySidebarState();
                 } else {
-                    // Mobile sidebar toggle
                     body.classList.add('sidebar-mobile-open');
                 }
             } catch (error) {
                 console.warn('Error in expand button handler:', error);
-                // Fallback behavior
                 if (isDesktop()) {
                     body.classList.remove('sidebar-collapsed');
                     sidebar.classList.remove('collapsed');
@@ -233,14 +229,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Close mobile sidebar when clicking content
         contentWrapper.addEventListener('click', () => {
             if (body.classList.contains('sidebar-mobile-open')) {
                 body.classList.remove('sidebar-mobile-open');
             }
         });
         
-        // Handle window resize with debouncing and transition disabling
         let resizeTimeout;
         let isResizeActive = false;
         

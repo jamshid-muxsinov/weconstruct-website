@@ -8,6 +8,10 @@ import wtforms
 from src.models.shop_models import QuoteRequest, Task, StatusChangeLog, Contact, ContactNote, User
 from src.schemas.crm_schemas import QuoteRequestStatusUpdate, TaskCreate
 
+def to_naive_datetime(dt: datetime) -> datetime:
+    """Convert timezone-aware datetime to naive datetime for database compatibility."""
+    return dt.replace(tzinfo=None) if dt.tzinfo else dt
+
 # --- НОВАЯ ФУНКЦИЯ ---
 async def get_latest_quote_request(db: AsyncSession) -> QuoteRequest | None:
     """Возвращает самую последнюю созданную заявку со всеми необходимыми связями для рендеринга карточки."""
@@ -224,17 +228,20 @@ async def create_task_for_quote(db: AsyncSession, task_data: TaskCreate):
 
 async def get_user_performance_stats(db: AsyncSession, user_id: int):
     thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+    # Convert to naive datetime for database compatibility
+    thirty_days_ago_naive = to_naive_datetime(thirty_days_ago)
+    
     completed_stmt = select(func.count(func.distinct(StatusChangeLog.quote_request_id))).where(
         StatusChangeLog.user_id == user_id,
         StatusChangeLog.new_status == QuoteRequest.StatusEnum.COMPLETED,
-        StatusChangeLog.timestamp >= thirty_days_ago
+        StatusChangeLog.timestamp >= thirty_days_ago_naive
     )
     completed_count = (await db.execute(completed_stmt)).scalar_one_or_none() or 0
     
     in_progress_stmt = select(func.count(func.distinct(StatusChangeLog.quote_request_id))).where(
         StatusChangeLog.user_id == user_id,
         StatusChangeLog.new_status == QuoteRequest.StatusEnum.IN_PROGRESS,
-        StatusChangeLog.timestamp >= thirty_days_ago
+        StatusChangeLog.timestamp >= thirty_days_ago_naive
     )
     in_progress_count = (await db.execute(in_progress_stmt)).scalar_one_or_none() or 0
 
@@ -360,6 +367,9 @@ async def toggle_pin_contact_note(db: AsyncSession, note_id: int, contact_id: in
 
 async def get_top_managers(db: AsyncSession, days: int = 30):
     start_date = datetime.now(timezone.utc) - timedelta(days=days)
+    # Convert to naive datetime for database compatibility
+    start_date_naive = to_naive_datetime(start_date)
+    
     completed_subq = (
         select(
             StatusChangeLog.user_id,
@@ -368,7 +378,7 @@ async def get_top_managers(db: AsyncSession, days: int = 30):
         .where(
             and_(
                 StatusChangeLog.new_status == QuoteRequest.StatusEnum.COMPLETED,
-                StatusChangeLog.timestamp >= start_date,
+                StatusChangeLog.timestamp >= start_date_naive,
                 StatusChangeLog.user_id.isnot(None)
             )
         )
