@@ -6,12 +6,18 @@
     </div>
     <div style="display: flex; gap: 8px;">
         
-        {# Собираем все текущие GET-параметры, кроме 'page' #}
-        {% set query_params = dict(request.query_params) %}
-        {% set _ = query_params.pop('page', None) %}
+        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
+        {# Собираем все текущие GET-параметры, кроме 'page', в новый словарь #}
+        {% set base_params = {} %}
+        {% for key, value in request.query_params.items() %}
+            {% if key != 'page' %}
+                {% set _ = base_params.update({key: value}) %}
+            {% endif %}
+        {% endfor %}
 
         {% if page_obj.previous %}
-            {% set prev_params = query_params.copy() %}
+            {# Создаем копию базовых параметров и добавляем в нее номер предыдущей страницы #}
+            {% set prev_params = base_params.copy() %}
             {% set _ = prev_params.update({'page': page_obj.previous}) %}
             <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(prev_params) }}"
                class="btn btn-secondary"
@@ -23,7 +29,8 @@
         {% endif %}
 
         {% if page_obj.next %}
-            {% set next_params = query_params.copy() %}
+            {# Создаем копию базовых параметров и добавляем в нее номер следующей страницы #}
+            {% set next_params = base_params.copy() %}
             {% set _ = next_params.update({'page': page_obj.next}) %}
             <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(next_params) }}"
                class="btn btn-secondary"

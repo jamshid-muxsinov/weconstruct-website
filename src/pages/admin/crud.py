@@ -257,7 +257,7 @@ async def product_list(
     request: Request,
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
-    q: Optional[str] = None,
+    q: Optional[str] = Query(None),
     context: dict = Depends(get_common_context),
     db: AsyncSession = Depends(get_db_session)
 ):
@@ -372,7 +372,7 @@ async def category_list(
     request: Request,
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
-    q: Optional[str] = None,
+    q: Optional[str] = Query(None),
     context: dict = Depends(get_common_context),
     db: AsyncSession = Depends(get_db_session)
 ):
@@ -435,11 +435,11 @@ async def quoterequest_list(
     request: Request,
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
-    q: Optional[str] = None,
-    sort: Optional[str] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None,
-    context: dict = Depends(get_common_context),
+    q: Optional[str] = Query(None),
+    sort: Optional[str] = Query(None),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
+    context: dict = Depends(get_common_context), 
     db: AsyncSession = Depends(get_db_session)
 ):
     page_obj = await handle_list_view(db, QUOTEREQUEST_META, page=page, size=size, search_query=q, sort=sort, date_from=date_from, date_to=date_to)
