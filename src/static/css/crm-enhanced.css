@@ -756,6 +756,9 @@ a:hover {
 .slide-over-body {
     padding: 24px;
     overflow-y: auto;
+    flex-grow: 1;
+    height: 0; /* Force flexbox to constrain height */
+    min-height: 0; /* Allow shrinking */
 }
 
 .slide-over-section-title {
@@ -778,7 +781,7 @@ a:hover {
     justify-content: space-between;
     align-items: flex-start;
     padding: 12px 0;
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-color);
     gap: 16px;
 }
 
@@ -1069,6 +1072,7 @@ a:hover {
     
     .slide-over-body {
         grid-template-columns: 1fr !important;
+        padding: 16px;
     }
     
     .detail-item {
@@ -1079,6 +1083,22 @@ a:hover {
     
     .detail-item strong {
         min-width: auto;
+    }
+    
+    .detail-item-message {
+        max-width: 100%;
+    }
+}
+
+/* Enhanced tablet responsive design */
+@media (max-width: 768px) {
+    .slide-over-body {
+        grid-template-columns: 1fr !important;
+        gap: 20px;
+    }
+    
+    .task-list-container {
+        max-height: 200px;
     }
 }
 
@@ -1138,21 +1158,7 @@ a:hover {
     transition: var(--transition-medium);
 }
 
-/* Enhanced detail overlay on hover */
-.kanban-card:hover::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, 
-        rgba(59, 130, 246, 0.02) 0%, 
-        rgba(139, 92, 246, 0.02) 100%);
-    pointer-events: none;
-    border-radius: var(--radius-md);
-    z-index: -1;
-}
+
 
 /* ==========================================================================
    Enhanced Kanban Card Hover Effects
@@ -1171,32 +1177,26 @@ a:hover {
 }
 
 .kanban-card:hover .card-content {
-    background: rgba(59, 130, 246, 0.04);
-    border-radius: var(--radius-md);
-    padding: 16px;
-    margin: 12px -8px;
-    border: 1px solid rgba(59, 130, 246, 0.15);
-    backdrop-filter: blur(10px);
+    /* Remove problematic background styling */
 }
 
 .kanban-card:hover .message-preview {
-    background: var(--surface-1) !important;
     border-color: var(--accent-primary-solid) !important;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
 
 .kanban-card:hover .business-type-tag {
-    transform: scale(1.02);
-    box-shadow: 0 2px 8px rgba(139, 190, 255, 0.3);
+    transform: scale(1.01);
+    box-shadow: 0 1px 4px rgba(139, 190, 255, 0.2);
 }
 
 .kanban-card:hover .assignee-avatar {
-    transform: scale(1.1);
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+    transform: scale(1.05);
+    box-shadow: 0 1px 4px rgba(59, 130, 246, 0.3);
 }
 
 .kanban-card:hover .client-icon {
-    transform: scale(1.1);
+    transform: scale(1.05);
     color: var(--accent-primary-hover) !important;
 }
 
@@ -1206,17 +1206,13 @@ a:hover {
 
 .kanban-card:hover .card-footer {
     border-top-color: var(--accent-primary-solid);
-    background: rgba(59, 130, 246, 0.03);
-    border-radius: var(--radius-md);
-    margin: 16px -8px -8px -8px;
-    padding: 12px 16px;
 }
 
 /* Enhanced pinned note hover */
 .kanban-card:hover .pinned-note {
-    background: rgba(245, 158, 11, 0.15);
+    background: rgba(245, 158, 11, 0.12);
     border-color: var(--status-yellow);
-    transform: scale(1.02);
+    transform: scale(1.01);
 }
 
 /* Better spacing and readability on hover */
