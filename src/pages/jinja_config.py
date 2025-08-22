@@ -1,6 +1,6 @@
 import os
 from fastapi.templating import Jinja2Templates
-from fastapi import Request
+from starlette.requests import Request
 from datetime import datetime
 from cachetools import TTLCache
 from starlette_wtf import csrf_token

@@ -1,28 +1,31 @@
 {% macro render_pagination(page_obj, endpoint_name, request) %}
-{% if page_obj and page_obj.pages > 1 %}
+{% set total_pages = (page_obj.total + page_obj.size - 1) // page_obj.size %}
+{% if page_obj and total_pages > 1 %}
 <div class="card" style="margin-top: 24px; padding: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
     <div>
-        Страница {{ page_obj.page }} из {{ page_obj.pages }}. Всего: {{ page_obj.total }}
+        Страница {{ page_obj.page }} из {{ total_pages }}. Всего: {{ page_obj.total }}
     </div>
     <div style="display: flex; gap: 8px;">
-        {% set query_params = dict(request.query_params) %}
 
-        {% if page_obj.previous %}
-            {% set _ = query_params.update({'page': page_obj.previous}) %}
-            <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(query_params) }}"
+
+        {% if page_obj.page > 1 %}
+            {% set prev_params = dict(request.query_params) %}
+            {% set _ = prev_params.update({'page': page_obj.page - 1}) %}
+            <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(prev_params) }}"
                class="btn btn-secondary"
-               hx-get="{{ request.url_for(endpoint_name) }}?{{ urlencode(query_params) }}"
+               hx-get="{{ request.url_for(endpoint_name) }}?{{ urlencode(prev_params) }}"
                hx-target="#list-content"
                hx-push-url="true">
                 <i class='bx bx-chevron-left'></i> Назад
             </a>
         {% endif %}
 
-        {% if page_obj.next %}
-            {% set _ = query_params.update({'page': page_obj.next}) %}
-            <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(query_params) }}"
+        {% if page_obj.page < total_pages %}
+            {% set next_params = dict(request.query_params) %}
+            {% set _ = next_params.update({'page': page_obj.page + 1}) %}
+            <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(next_params) }}"
                class="btn btn-secondary"
-               hx-get="{{ request.url_for(endpoint_name) }}?{{ urlencode(query_params) }}"
+               hx-get="{{ request.url_for(endpoint_name) }}?{{ urlencode(next_params) }}"
                hx-target="#list-content"
                hx-push-url="true">
                 Вперед <i class='bx bx-chevron-right'></i>
