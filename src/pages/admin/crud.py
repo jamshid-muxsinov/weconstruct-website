@@ -8,7 +8,7 @@ import logging
 from fastapi.responses import StreamingResponse, HTMLResponse, RedirectResponse
 from urllib.parse import quote
 from pathlib import Path
-from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File, Response 
+from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File, Response, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import or_, func
@@ -186,13 +186,14 @@ def set_hx_trigger_header(response: Response, message: str, type: str = "success
     return response
 
 async def handle_list_view(
-    db: AsyncSession, 
-    meta: Meta, 
-    params: Params, 
+    db: AsyncSession,
+    meta: Meta,
+    page: int,
+    size: int,
     search_query: Optional[str] = None,
     sort: Optional[str] = None,
     date_from: Optional[str] = None,
-    date_to: Optional[str] = None   
+    date_to: Optional[str] = None
 ):
     query = select(meta.model)
 
@@ -239,6 +240,7 @@ async def handle_list_view(
 
     query = query.distinct()
     
+    params = Params(page=page, size=size)
     log.info(f"Paginating query for model {meta.model_name} with params: {params}")
 
     return await paginate(db, query, params)
@@ -251,9 +253,16 @@ async def populate_request_form_choices(db: AsyncSession, form: QuoteRequestForm
     form.assigned_to_id.choices = [(0, '--- Не назначен ---')] + [(u.id, u.username) for u in staff_users]
 
 @router.get("/product/", response_class=HTMLResponse, name="admin_product_list")
-async def product_list(request: Request, params: Params = Depends(), q: Optional[str] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    page = await handle_list_view(db, PRODUCT_META, params, search_query=q)
-    context.update({"meta": PRODUCT_META, "page": page, "list_display": PRODUCT_META.list_display, "search_query": q})
+async def product_list(
+    request: Request,
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    q: Optional[str] = None,
+    context: dict = Depends(get_common_context),
+    db: AsyncSession = Depends(get_db_session)
+):
+    page_obj = await handle_list_view(db, PRODUCT_META, page=page, size=size, search_query=q)
+    context.update({"meta": PRODUCT_META, "page": page_obj, "list_display": PRODUCT_META.list_display, "search_query": q})
     if request.headers.get("hx-request"): return templates.TemplateResponse("admin/partials/_generic_list_content.html", context)
     return templates.TemplateResponse("admin/generic_list.html", context)
 
@@ -359,9 +368,16 @@ async def product_delete(request: Request, pk: int, context: dict = Depends(get_
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
 
 @router.get("/category/", response_class=HTMLResponse, name="admin_category_list")
-async def category_list(request: Request, params: Params = Depends(), q: Optional[str] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    page = await handle_list_view(db, CATEGORY_META, params, search_query=q)
-    context.update({"meta": CATEGORY_META, "page": page, "list_display": ['name_ru', 'description_ru'], "search_query": q})
+async def category_list(
+    request: Request,
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    q: Optional[str] = None,
+    context: dict = Depends(get_common_context),
+    db: AsyncSession = Depends(get_db_session)
+):
+    page_obj = await handle_list_view(db, CATEGORY_META, page=page, size=size, search_query=q)
+    context.update({"meta": CATEGORY_META, "page": page_obj, "list_display": ['name_ru', 'description_ru'], "search_query": q})
     if request.headers.get("hx-request"): return templates.TemplateResponse("admin/partials/_generic_list_content.html", context)
     return templates.TemplateResponse("admin/generic_list.html", context)
     
@@ -417,18 +433,19 @@ async def category_delete(request: Request, pk: int, context: dict = Depends(get
 @router.get("/quoterequest/", response_class=HTMLResponse, name="admin_quoterequest_list")
 async def quoterequest_list(
     request: Request,
-    params: Params = Depends(),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
     q: Optional[str] = None,
     sort: Optional[str] = None,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
-    context: dict = Depends(get_common_context), 
+    context: dict = Depends(get_common_context),
     db: AsyncSession = Depends(get_db_session)
 ):
-    page = await handle_list_view(db, QUOTEREQUEST_META, params, search_query=q, sort=sort, date_from=date_from, date_to=date_to)
+    page_obj = await handle_list_view(db, QUOTEREQUEST_META, page=page, size=size, search_query=q, sort=sort, date_from=date_from, date_to=date_to)
     context.update({
         "meta": QUOTEREQUEST_META, 
-        "page": page, 
+        "page": page_obj, 
         "list_display": QUOTEREQUEST_META.list_display, 
         "search_query": q,
         "current_sort": sort or 'desc',
