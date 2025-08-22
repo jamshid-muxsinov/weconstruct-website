@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.addEventListener('closeSlideOver', () => closePopup(document.getElementById('slide-over-overlay')));
     }
 
-    // --- SIDEBAR LOGIC (SIMPLE & FINAL VERSION) ---
+    // --- ENHANCED SIDEBAR LOGIC ---
     function initSidebar() {
         const sidebar = document.getElementById('sidebar');
         const collapseBtn = document.getElementById('sidebar-collapse-btn');
@@ -55,85 +55,173 @@ document.addEventListener('DOMContentLoaded', function() {
         const body = document.body;
         const contentWrapper = document.getElementById('content-wrapper');
 
-        if (!sidebar || !collapseBtn || !expandBtn || !contentWrapper) return;
+        if (!sidebar || !collapseBtn || !expandBtn || !contentWrapper) {
+            console.warn('Sidebar elements not found');
+            return;
+        }
         
         const isDesktop = () => window.innerWidth > 992;
+        const MIN_WIDTH = 200;
+        const MAX_WIDTH = 400;
+        const DEFAULT_WIDTH = 260;
+        
+        let resizeObserver = null;
+        let isResizing = false;
 
-        // Initialize sidebar width persistence
-        const initSidebarWidth = () => {
-            const savedWidth = localStorage.getItem('sidebarWidth');
-            if (savedWidth && !body.classList.contains('sidebar-collapsed') && sidebar) {
-                sidebar.style.setProperty('--sidebar-width', `${savedWidth}px`);
-                sidebar.style.width = `${savedWidth}px`;
-            }
-            
-            // Add resize observer to save new width when user resizes
-            if (window.ResizeObserver && sidebar) {
-                const resizeObserver = new ResizeObserver(entries => {
-                    for (let entry of entries) {
-                        const newWidth = Math.round(entry.contentRect.width);
-                        if (newWidth >= 200 && newWidth <= 400 && !body.classList.contains('sidebar-collapsed') && sidebar) {
-                            localStorage.setItem('sidebarWidth', newWidth.toString());
-                            sidebar.style.setProperty('--sidebar-width', `${newWidth}px`);
-                        }
-                    }
-                });
-                resizeObserver.observe(sidebar);
+        // Safe localStorage operations
+        const getStoredValue = (key, defaultValue) => {
+            try {
+                return localStorage.getItem(key) || defaultValue;
+            } catch (e) {
+                console.warn('localStorage access failed:', e);
+                return defaultValue;
             }
         };
 
+        const setStoredValue = (key, value) => {
+            try {
+                localStorage.setItem(key, value);
+            } catch (e) {
+                console.warn('localStorage write failed:', e);
+            }
+        };
+
+        // Initialize sidebar width persistence with proper error handling
+        const initSidebarWidth = () => {
+            if (!sidebar) return;
+            
+            const savedWidth = getStoredValue('sidebarWidth', DEFAULT_WIDTH.toString());
+            const width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, parseInt(savedWidth) || DEFAULT_WIDTH));
+            
+            // Only apply width if not collapsed
+            if (!body.classList.contains('sidebar-collapsed')) {
+                sidebar.style.setProperty('--sidebar-width', `${width}px`);
+                sidebar.style.width = `${width}px`;
+            }
+            
+            // Setup resize observer with proper error handling
+            if (window.ResizeObserver) {
+                try {
+                    resizeObserver = new ResizeObserver(entries => {
+                        if (isResizing || !entries || entries.length === 0) return;
+                        
+                        const entry = entries[0];
+                        if (!entry || !entry.contentRect) return;
+                        
+                        const newWidth = Math.round(entry.contentRect.width);
+                        
+                        // Only save width if it's within valid range and sidebar is not collapsed
+                        if (newWidth >= MIN_WIDTH && 
+                            newWidth <= MAX_WIDTH && 
+                            !body.classList.contains('sidebar-collapsed') &&
+                            isDesktop()) {
+                            setStoredValue('sidebarWidth', newWidth.toString());
+                            sidebar.style.setProperty('--sidebar-width', `${newWidth}px`);
+                        }
+                    });
+                    
+                    resizeObserver.observe(sidebar);
+                } catch (e) {
+                    console.warn('ResizeObserver initialization failed:', e);
+                }
+            }
+        };
+
+        // Apply sidebar state with improved logic
         const applySidebarState = () => {
+            if (!sidebar) return;
+            
             // Remove init class after first run
             body.classList.remove('sidebar-collapsed-init');
 
             if (!isDesktop()) {
                 // On mobile, ensure desktop classes are removed
                 body.classList.remove('sidebar-collapsed');
-                if (sidebar) sidebar.classList.remove('collapsed');
+                sidebar.classList.remove('collapsed');
+                
+                // Reset sidebar to default width for mobile
+                sidebar.style.width = '';
+                sidebar.style.setProperty('--sidebar-width', `${DEFAULT_WIDTH}px`);
                 return;
             }
-            // On desktop, apply saved state
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            body.classList.toggle('sidebar-collapsed', isCollapsed);
-            if (sidebar) sidebar.classList.toggle('collapsed', isCollapsed);
             
-            // Apply saved width if not collapsed
-            if (!isCollapsed && sidebar) {
-                const savedWidth = localStorage.getItem('sidebarWidth');
-                if (savedWidth) {
-                    sidebar.style.setProperty('--sidebar-width', `${savedWidth}px`);
-                    sidebar.style.width = `${savedWidth}px`;
-                }
+            // On desktop, apply saved state
+            const isCollapsed = getStoredValue('sidebarCollapsed', 'false') === 'true';
+            
+            isResizing = true;
+            body.classList.toggle('sidebar-collapsed', isCollapsed);
+            sidebar.classList.toggle('collapsed', isCollapsed);
+            
+            if (!isCollapsed) {
+                // Apply saved width when expanded
+                const savedWidth = getStoredValue('sidebarWidth', DEFAULT_WIDTH.toString());
+                const width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, parseInt(savedWidth) || DEFAULT_WIDTH));
+                sidebar.style.setProperty('--sidebar-width', `${width}px`);
+                sidebar.style.width = `${width}px`;
+            } else {
+                // Reset inline styles when collapsed to let CSS take over
+                sidebar.style.width = '';
             }
+            
+            // Allow resize observer to work again after a brief delay
+            setTimeout(() => { isResizing = false; }, 100);
         };
         
-        collapseBtn.addEventListener('click', () => {
+        // Enhanced collapse button handler
+        collapseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
             if (isDesktop()) {
                 const isCollapsed = body.classList.contains('sidebar-collapsed');
-                localStorage.setItem('sidebarCollapsed', !isCollapsed);
+                setStoredValue('sidebarCollapsed', (!isCollapsed).toString());
                 applySidebarState();
             }
         });
         
-        expandBtn.addEventListener('click', () => {
+        // Enhanced expand button handler
+        expandBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
             if (isDesktop()) {
-                localStorage.setItem('sidebarCollapsed', false);
+                setStoredValue('sidebarCollapsed', 'false');
                 applySidebarState();
             } else {
+                // Mobile sidebar toggle
                 body.classList.add('sidebar-mobile-open');
             }
         });
         
+        // Close mobile sidebar when clicking content
         contentWrapper.addEventListener('click', () => {
             if (body.classList.contains('sidebar-mobile-open')) {
                 body.classList.remove('sidebar-mobile-open');
             }
         });
         
-        window.addEventListener('resize', applySidebarState);
+        // Handle window resize with debouncing
+        let resizeTimeout;
+        const handleResize = () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                applySidebarState();
+            }, 150);
+        };
         
-        // Initialize width management on load
+        window.addEventListener('resize', handleResize);
+        
+        // Initialize on load
+        applySidebarState();
         initSidebarWidth();
+        
+        // Cleanup function for potential future use
+        return () => {
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+            }
+            window.removeEventListener('resize', handleResize);
+        };
     }
     
     // --- KANBAN DRAG & DROP ---

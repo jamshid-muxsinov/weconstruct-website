@@ -107,7 +107,7 @@ a:hover {
 }
 
 /* ==========================================================================
-   Enhanced Layout
+   Enhanced Layout - Extends Base CRM Layout
    ========================================================================== */
 #crm-container {
     display: flex;
@@ -115,19 +115,21 @@ a:hover {
     background: var(--bg-main);
 }
 
-/* Enhanced Sidebar - removed width override to work with base CSS */
+/* Enhanced Sidebar - Extends base CSS without overriding core properties */
+/* Width customization - extends base width functionality */
+#sidebar {
+    /* Only add enhanced properties, don't override base width/positioning */
+    resize: horizontal;
+    min-width: 200px;
+    max-width: 400px;
+    width: var(--sidebar-width, 260px); /* CSS variable for dynamic width */
+}
 
-
-
-/* Enhanced Sidebar Header */
+/* Enhanced Sidebar Header - extends base styling */
 #sidebar .sidebar-header {
-    padding: 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 1.25rem;
-    font-weight: 700;
+    /* Enhanced styling without breaking base functionality */
     position: relative;
+    font-weight: 700;
     border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -142,30 +144,16 @@ a:hover {
     border-radius: var(--radius-full);
 }
 
-#sidebar .logo-text {
-    flex-grow: 1;
-    white-space: nowrap;
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-/* Enhanced Navigation */
+/* Enhanced Navigation - extends base nav styling */
 #sidebar nav {
-    flex-grow: 1;
+    /* Extend base nav with enhanced padding */
     padding: 16px 12px;
-    overflow: hidden;
 }
 
 #sidebar .nav-link {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    /* Enhance base nav-link without breaking core functionality */
     padding: 14px 16px;
     border-radius: var(--radius-lg);
-    color: var(--text-secondary);
-    font-weight: 500;
-    margin-bottom: 4px;
-    white-space: nowrap;
     transition: var(--transition-medium);
     position: relative;
     overflow: hidden;
@@ -190,24 +178,19 @@ a:hover {
 }
 
 #sidebar .nav-link:hover {
-    background: var(--surface-1);
-    color: var(--text-primary);
+    /* Enhance hover state */
     transform: translateX(4px);
     box-shadow: var(--shadow-md);
 }
 
 #sidebar .nav-link.active {
-    background: var(--accent-primary-solid);
-    color: white;
+    /* Enhance active state */
     box-shadow: var(--shadow-glow);
     transform: translateX(4px);
 }
 
 #sidebar .nav-link .nav-icon {
-    font-size: 1.25rem;
-    width: 24px;
-    text-align: center;
-    flex-shrink: 0;
+    /* Enhance icon transitions */
     transition: var(--transition-medium);
 }
 
@@ -216,29 +199,17 @@ a:hover {
     transform: scale(1.1);
 }
 
-/* Enhanced Content Wrapper */
+/* Enhanced Content Wrapper - minimal enhancements */
 #content-wrapper {
-    flex-grow: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
+    /* Only enhance, don't override base properties */
     background: var(--bg-main);
 }
 
-/* Enhanced Header */
+/* Enhanced Header - extends base header */
 .main-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--border-subtle);
-    position: sticky;
-    top: 0;
-    background: var(--bg-header);
+    /* Enhanced backdrop filter */
     backdrop-filter: blur(20px);
-    z-index: 999;
-    flex-shrink: 0;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .main-header::before {
@@ -251,40 +222,23 @@ a:hover {
     background: var(--border-color);
 }
 
-/* Enhanced Content Area */
-#content-wrapper main {
-    padding: 24px;
-    flex-grow: 1;
-    overflow-y: auto;
-    background: var(--bg-main);
-}
-
 /* ==========================================================================
-   Enhanced Sidebar Width Customization
+   Enhanced Sidebar Customization Features
    ========================================================================== */
 
-/* Enhanced sidebar - extends base CSS with width persistence */
-#sidebar {
-    width: var(--sidebar-width, 260px); /* Use base width as default */
-    resize: horizontal;
-    min-width: 200px;
-    max-width: 400px;
-}
-
-/* Enhanced sidebar toggle buttons */
+/* Enhanced sidebar toggle buttons - extends base button styling */
+/* Note: Base CSS controls visibility - this only enhances styling */
 #sidebar-collapse-btn,
 #sidebar-expand-btn {
+    /* Enhanced styling that works with base CSS visibility rules */
     background: var(--surface-1);
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    cursor: pointer;
     transition: var(--transition-fast);
+    /* Visibility controlled by base CSS: */
+    /* #sidebar-expand-btn { display: none; } */
+    /* body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; } */
+    /* body.sidebar-collapsed #sidebar #sidebar-collapse-btn { display: none; } */
 }
 
 #sidebar-collapse-btn:hover,
@@ -314,7 +268,6 @@ a:hover {
 #sidebar:hover::after {
     opacity: 0.5;
 }
-
 /* ==========================================================================
    Enhanced Components
    ========================================================================== */
