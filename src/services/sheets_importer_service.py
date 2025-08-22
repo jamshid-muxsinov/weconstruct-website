@@ -5,6 +5,7 @@ import re
 import requests
 import csv
 import io
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select # <-- Добавь импорт
 
@@ -12,6 +13,45 @@ from src.services.shop_service import _get_or_create_contact, _create_quote_requ
 from src.models.shop_models import QuoteRequest
 
 log = logging.getLogger(__name__)
+
+def _parse_date(date_str: str) -> datetime | None:
+    """Парсит дату из различных форматов (MM.DD.YY, DD.MM.YY, etc.) и возвращает datetime объект."""
+    if not date_str or not date_str.strip():
+        return None
+    
+    date_str = date_str.strip()
+    
+    # Попробуем разные форматы
+    formats_to_try = [
+        "%m.%d.%y",  # 8.13.25
+        "%d.%m.%y",  # 13.8.25
+        "%m/%d/%y",  # 8/13/25
+        "%d/%m/%y",  # 13/8/25
+        "%m-%d-%y",  # 8-13-25
+        "%d-%m-%y",  # 13-8-25
+        "%m.%d.%Y",  # 8.13.2025
+        "%d.%m.%Y",  # 13.8.2025
+        "%m/%d/%Y",  # 8/13/2025
+        "%d/%m/%Y",  # 13/8/2025
+        "%Y-%m-%d",  # 2025-08-13
+    ]
+    
+    for fmt in formats_to_try:
+        try:
+            parsed_date = datetime.strptime(date_str, fmt)
+            # Если год меньше 50, считаем что это 20XX, иначе 19XX
+            if parsed_date.year < 50:
+                parsed_date = parsed_date.replace(year=parsed_date.year + 2000)
+            elif parsed_date.year < 100:
+                parsed_date = parsed_date.replace(year=parsed_date.year + 1900)
+            
+            log.info(f"Успешно распарсена дата '{date_str}' как {parsed_date.strftime('%Y-%m-%d %H:%M:%S')}")
+            return parsed_date
+        except ValueError:
+            continue
+    
+    log.warning(f"Не удалось распарсить дату: '{date_str}'")
+    return None
 
 def _normalize_phone(phone: str) -> str:
     """Приводит номер телефона к единому формату E.164 (+998...)."""
@@ -30,10 +70,26 @@ def _normalize_phone(phone: str) -> str:
     # Возвращаем как есть, если формат неизвестен
     return phone
 
-async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: int = 0):
+async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: int = 0, date_column: int = 0):
     """
     Основная функция для импорта лидов из Google Sheets.
     Проверяет наличие дубликатов перед созданием новой заявки.
+    Поддерживает парсинг дат в различных форматах.
+    
+    Args:
+        db: Асинхронная сессия базы данных
+        spreadsheet_id: ID Google Sheets таблицы
+        gid: ID листа (default: 0)
+        date_column: Номер колонки с датой (default: 0)
+    
+    Поддерживаемые форматы дат:
+        - 8.13.25 (MM.DD.YY)
+        - 13.8.25 (DD.MM.YY) 
+        - 8/13/25 (MM/DD/YY)
+        - 13/8/25 (DD/MM/YY)
+        - 8-13-25 (MM-DD-YY)
+        - 8.13.2025 (MM.DD.YYYY)
+        - 2025-08-13 (YYYY-MM-DD)
     """
     log.info(f"Starting import from Google Sheet ID: {spreadsheet_id}, GID: {gid}")
 
@@ -73,7 +129,13 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
             phone_number = _normalize_phone(row[16]) if len(row) > 16 and row[16] else ""
             business_type = row[13].strip() if len(row) > 13 and row[13] else None
             
+            # Получаем дату из указанной колонки
+            date_str = row[date_column].strip() if len(row) > date_column and row[date_column] else None
+            parsed_date = _parse_date(date_str) if date_str else None
+            
             message = f"Лид из рекламной кампании. Бизнес: {business_type or 'не указан'}"
+            if parsed_date:
+                message += f". Дата из таблицы: {parsed_date.strftime('%d.%m.%Y')}"
 
             if not phone_number:
                 log.warning(f"Пропуск строки {original_row_number}: не указан номер телефона.")
@@ -104,6 +166,12 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
             if business_type:
                 quote.business_type = business_type
                 db.add(quote)
+            
+            # Если дата была спарсена, устанавливаем ее как created_at
+            if parsed_date:
+                quote.created_at = parsed_date
+                db.add(quote)
+                log.info(f"Установлена дата создания заявки #{quote.id}: {parsed_date.strftime('%d.%m.%Y %H:%M:%S')}")
             
             await db.flush()
             await _notify_managers(db, quote, contact.full_name)
