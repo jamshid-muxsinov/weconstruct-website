@@ -40,7 +40,6 @@
                                 {% else %}
                                     <span style="color: var(--status-red);">Контакт удален</span>
                                 {% endif %}
-                            {# --- ИЗМЕНЕНИЕ ЗДЕСЬ --- #}
                             {% elif field_name == 'phone' and meta.model_name == 'quoterequest' %}
                                 {{ item.phone | format_phone }}
                             {% elif loop.first %}
@@ -82,10 +81,10 @@
         Страница {{ page.page }} из {{ page.pages }}. Всего: {{ page.total }}
     </div>
     <div style="display: flex; gap: 8px;">
-        {% set query_params = dict(request.query_params) %}
-        
+        {# --- НАЧАЛО ИСПРАВЛЕНИЯ --- #}
         {% if page.previous %}
-            {% do query_params.update({'page': page.previous}) %}
+            {% set query_params = dict(request.query_params) %}
+            {% set _ = query_params.update({'page': page.previous}) %}
             <a href="{{ request.url.path }}?{{ urlencode(query_params) }}" 
                class="btn btn-secondary"
                hx-get="{{ request.url.path }}?{{ urlencode(query_params) }}"
@@ -96,7 +95,8 @@
         {% endif %}
         
         {% if page.next %}
-            {% do query_params.update({'page': page.next}) %}
+            {% set query_params = dict(request.query_params) %}
+            {% set _ = query_params.update({'page': page.next}) %}
             <a href="{{ request.url.path }}?{{ urlencode(query_params) }}" 
                class="btn btn-secondary"
                hx-get="{{ request.url.path }}?{{ urlencode(query_params) }}"
@@ -105,6 +105,7 @@
                 Вперед <i class='bx bx-chevron-right'></i>
             </a>
         {% endif %}
+        {# --- КОНЕЦ ИСПРАВЛЕНИЯ --- #}
     </div>
 </div>
 {% endif %}
