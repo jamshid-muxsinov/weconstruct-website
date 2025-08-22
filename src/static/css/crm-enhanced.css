@@ -757,8 +757,7 @@ a:hover {
     padding: 24px;
     overflow-y: auto;
     flex-grow: 1;
-    height: 0; /* Force flexbox to constrain height */
-    min-height: 0; /* Allow shrinking */
+    max-height: calc(100vh - 200px); /* Reasonable height constraint */
 }
 
 .slide-over-section-title {
