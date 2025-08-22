@@ -263,22 +263,10 @@ a:hover {
    Enhanced Sidebar Width Customization
    ========================================================================== */
 
-/* Enhanced sidebar with persistent width control */
+/* Enhanced sidebar - extends base CSS with width persistence */
 #sidebar {
-    width: var(--sidebar-width, 280px);
-    height: 100vh;
-    background: var(--bg-sidebar);
-    border-right: 1px solid var(--border-color);
-    position: sticky;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    z-index: 1000;
-    flex-shrink: 0;
-    transition: var(--transition-medium);
-    box-shadow: var(--shadow-lg);
+    width: var(--sidebar-width, 260px); /* Use base width as default */
     resize: horizontal;
-    overflow: hidden;
     min-width: 200px;
     max-width: 400px;
 }

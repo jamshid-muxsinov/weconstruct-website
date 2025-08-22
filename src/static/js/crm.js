@@ -62,17 +62,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialize sidebar width persistence
         const initSidebarWidth = () => {
             const savedWidth = localStorage.getItem('sidebarWidth');
-            if (savedWidth && !body.classList.contains('sidebar-collapsed')) {
+            if (savedWidth && !body.classList.contains('sidebar-collapsed') && sidebar) {
                 sidebar.style.setProperty('--sidebar-width', `${savedWidth}px`);
                 sidebar.style.width = `${savedWidth}px`;
             }
             
             // Add resize observer to save new width when user resizes
-            if (window.ResizeObserver) {
+            if (window.ResizeObserver && sidebar) {
                 const resizeObserver = new ResizeObserver(entries => {
                     for (let entry of entries) {
                         const newWidth = Math.round(entry.contentRect.width);
-                        if (newWidth >= 200 && newWidth <= 400 && !body.classList.contains('sidebar-collapsed')) {
+                        if (newWidth >= 200 && newWidth <= 400 && !body.classList.contains('sidebar-collapsed') && sidebar) {
                             localStorage.setItem('sidebarWidth', newWidth.toString());
                             sidebar.style.setProperty('--sidebar-width', `${newWidth}px`);
                         }
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sidebar.classList.toggle('collapsed', isCollapsed);
             
             // Apply saved width if not collapsed
-            if (!isCollapsed) {
+            if (!isCollapsed && sidebar) {
                 const savedWidth = localStorage.getItem('sidebarWidth');
                 if (savedWidth) {
                     sidebar.style.setProperty('--sidebar-width', `${savedWidth}px`);
