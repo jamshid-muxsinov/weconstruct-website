@@ -274,6 +274,70 @@ a:hover {
 }
 
 /* ==========================================================================
+   Enhanced Sidebar Toggle Button Customization
+   ========================================================================== */
+
+/* Enhanced sidebar toggle buttons with persistent sizing */
+#sidebar-collapse-btn,
+#sidebar-expand-btn {
+    background: var(--surface-1);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    width: var(--toggle-btn-size, 32px);
+    height: var(--toggle-btn-size, 32px);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--toggle-btn-size, 32px) * 0.4);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    position: relative;
+    resize: both;
+    overflow: hidden;
+    min-width: 24px;
+    min-height: 24px;
+    max-width: 60px;
+    max-height: 60px;
+}
+
+#sidebar-collapse-btn:hover,
+#sidebar-expand-btn:hover {
+    background: var(--surface-2);
+    color: var(--text-primary);
+    border-color: var(--accent-primary-solid);
+    transform: scale(1.05);
+}
+
+/* Enhanced active state for toggle buttons */
+#sidebar-collapse-btn:active,
+#sidebar-expand-btn:active {
+    transform: scale(0.95);
+    background: var(--accent-primary-solid);
+    color: white;
+}
+
+/* Size indicator tooltip */
+#sidebar-collapse-btn::after,
+#sidebar-expand-btn::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: var(--accent-primary-solid);
+    border-radius: 50%;
+    opacity: 0;
+    transition: var(--transition-fast);
+}
+
+#sidebar-collapse-btn:hover::after,
+#sidebar-expand-btn:hover::after {
+    opacity: 1;
+}
+
+/* ==========================================================================
    Enhanced Components
    ========================================================================== */
 
