@@ -59,43 +59,27 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const isDesktop = () => window.innerWidth > 992;
 
-        // Initialize toggle button sizing
-        const initToggleButtonSizing = () => {
-            const savedSize = localStorage.getItem('toggleButtonSize') || '32';
-            const sizeValue = `${savedSize}px`;
+        // Initialize sidebar width persistence
+        const initSidebarWidth = () => {
+            const savedWidth = localStorage.getItem('sidebarWidth');
+            if (savedWidth && !body.classList.contains('sidebar-collapsed')) {
+                sidebar.style.setProperty('--sidebar-width', `${savedWidth}px`);
+                sidebar.style.width = `${savedWidth}px`;
+            }
             
-            // Apply saved size to both buttons
-            [collapseBtn, expandBtn].forEach(btn => {
-                btn.style.setProperty('--toggle-btn-size', sizeValue);
-                btn.style.width = sizeValue;
-                btn.style.height = sizeValue;
-                btn.style.fontSize = `${parseInt(savedSize) * 0.4}px`;
-            });
-            
-            // Add resize observer to save new size when user resizes
-            const setupResizeObserver = (btn) => {
-                if (window.ResizeObserver) {
-                    const resizeObserver = new ResizeObserver(entries => {
-                        for (let entry of entries) {
-                            const newSize = Math.round(entry.contentRect.width);
-                            if (newSize >= 24 && newSize <= 60) {
-                                localStorage.setItem('toggleButtonSize', newSize.toString());
-                                const newSizeValue = `${newSize}px`;
-                                [collapseBtn, expandBtn].forEach(button => {
-                                    button.style.setProperty('--toggle-btn-size', newSizeValue);
-                                    button.style.width = newSizeValue;
-                                    button.style.height = newSizeValue;
-                                    button.style.fontSize = `${newSize * 0.4}px`;
-                                });
-                            }
+            // Add resize observer to save new width when user resizes
+            if (window.ResizeObserver) {
+                const resizeObserver = new ResizeObserver(entries => {
+                    for (let entry of entries) {
+                        const newWidth = Math.round(entry.contentRect.width);
+                        if (newWidth >= 200 && newWidth <= 400 && !body.classList.contains('sidebar-collapsed')) {
+                            localStorage.setItem('sidebarWidth', newWidth.toString());
+                            sidebar.style.setProperty('--sidebar-width', `${newWidth}px`);
                         }
-                    });
-                    resizeObserver.observe(btn);
-                }
-            };
-            
-            setupResizeObserver(collapseBtn);
-            setupResizeObserver(expandBtn);
+                    }
+                });
+                resizeObserver.observe(sidebar);
+            }
         };
 
         const applySidebarState = () => {
@@ -112,6 +96,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
             body.classList.toggle('sidebar-collapsed', isCollapsed);
             sidebar.classList.toggle('collapsed', isCollapsed);
+            
+            // Apply saved width if not collapsed
+            if (!isCollapsed) {
+                const savedWidth = localStorage.getItem('sidebarWidth');
+                if (savedWidth) {
+                    sidebar.style.setProperty('--sidebar-width', `${savedWidth}px`);
+                    sidebar.style.width = `${savedWidth}px`;
+                }
+            }
         };
         
         collapseBtn.addEventListener('click', () => {
@@ -139,8 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         window.addEventListener('resize', applySidebarState);
         
-        // Initialize button sizing on load
-        initToggleButtonSizing();
+        // Initialize width management on load
+        initSidebarWidth();
     }
     
     // --- KANBAN DRAG & DROP ---
