@@ -28,6 +28,7 @@ from fastapi_pagination import Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy.dialects import postgresql
 
+
 router = APIRouter()
 log = logging.getLogger(__name__)
 
@@ -194,57 +195,67 @@ async def handle_list_view(
     sort: Optional[str] = None,
     date_from: Optional[str] = None,
     date_to: Optional[str] = None
-):
-    query = select(meta.model)
+) -> Page:
+    """
+    Полностью переписанная функция для надежной пагинации.
+    """
+    # 1. Создаем базовые запросы для данных и для подсчета
+    items_query = select(meta.model)
+    # Считаем уникальные ID основной модели, это самый надежный способ для JOIN
+    count_query = select(func.count(distinct(meta.model.id)))
 
+    # 2. Применяем фильтры и JOIN'ы к обоим запросам
     if meta.model == QuoteRequest:
+        if search_query:
+            search_like = f"%{search_query}%"
+            filter_condition = or_(
+                func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like),
+                Contact.phone.ilike(search_like)
+            )
+            items_query = items_query.join(Contact).where(filter_condition)
+            count_query = count_query.join(Contact).where(filter_condition)
         try:
             if date_from:
                 start_date = datetime.strptime(date_from, "%Y-%m-%d")
-                query = query.where(QuoteRequest.created_at >= start_date)
+                items_query = items_query.where(QuoteRequest.created_at >= start_date)
+                count_query = count_query.where(QuoteRequest.created_at >= start_date)
             if date_to:
                 end_date = datetime.strptime(date_to, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
-                query = query.where(QuoteRequest.created_at <= end_date)
+                items_query = items_query.where(QuoteRequest.created_at <= end_date)
+                count_query = count_query.where(QuoteRequest.created_at <= end_date)
         except ValueError:
             pass
 
-        if sort == 'asc':
-            query = query.order_by(QuoteRequest.created_at.asc())
-        else:
-            query = query.order_by(QuoteRequest.created_at.desc())
-    else:
-        query = query.order_by(getattr(meta.model, 'id').desc())
+    # 3. Выполняем запрос для подсчета общего количества
+    total_result = await db.execute(count_query)
+    total = total_result.scalar_one_or_none() or 0
+    log.info(f"Manual count for {meta.model_name} found {total} items.")
 
+    # 4. Применяем сортировку, лимиты и опции загрузки только к запросу данных
     if meta.model == QuoteRequest:
-        query = query.options(
+        items_query = items_query.options(
             selectinload(QuoteRequest.contact), 
             selectinload(QuoteRequest.product),
             selectinload(QuoteRequest.assigned_to)
         )
-        if search_query:
-            search_like = f"%{search_query}%"
-            query = query.join(Contact).where(
-                or_(
-                    func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like),
-                    Contact.phone.ilike(search_like)
-                )
-            )
-    elif meta.model == Product:
-        query = query.options(selectinload(Product.category))
-        if search_query:
-            search_like = f"%{search_query}%"
-            query = query.where(Product.name_ru.ilike(search_like))
-    elif meta.model == Category and search_query:
-        search_like = f"%{search_query}%"
-        query = query.where(Category.name_ru.ilike(search_like))
+        if sort == 'asc':
+            items_query = items_query.order_by(QuoteRequest.created_at.asc())
+        else:
+            items_query = items_query.order_by(QuoteRequest.created_at.desc())
+    else:
+        items_query = items_query.order_by(getattr(meta.model, 'id').desc())
 
-    query = query.distinct()
+    # Применяем пагинацию вручную
+    paginated_items_query = items_query.offset((page - 1) * size).limit(size)
     
+    # 5. Выполняем запрос для получения данных страницы
+    items_result = await db.execute(paginated_items_query)
+    # Используем unique(), чтобы избежать дублей из-за JOIN'ов
+    items = items_result.scalars().unique().all()
+    
+    # 6. Создаем объект Page вручную, используя наш надежный подсчет
     params = Params(page=page, size=size)
-    log.info(f"Paginating query for model {meta.model_name} with params: {params}")
-
-    return await paginate(db, query, params)
-
+    return create_page(items, total, params)
 
 async def populate_request_form_choices(db: AsyncSession, form: QuoteRequestForm):
     products = (await db.execute(select(Product).order_by(Product.name_ru))).scalars().all()

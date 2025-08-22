@@ -5,12 +5,9 @@
         Страница {{ page_obj.page }} из {{ page_obj.pages }}. Всего: {{ page_obj.total }}
     </div>
     <div style="display: flex; gap: 8px;">
-        
-        {# 1. Создаем словарь из текущих query-параметров #}
         {% set query_params = dict(request.query_params) %}
 
         {% if page_obj.previous %}
-            {# 2. Обновляем номер страницы для кнопки "Назад" #}
             {% set _ = query_params.update({'page': page_obj.previous}) %}
             <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(query_params) }}"
                class="btn btn-secondary"
@@ -22,7 +19,6 @@
         {% endif %}
 
         {% if page_obj.next %}
-            {# 3. Обновляем номер страницы для кнопки "Вперед" #}
             {% set _ = query_params.update({'page': page_obj.next}) %}
             <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(query_params) }}"
                class="btn btn-secondary"
