@@ -24,26 +24,26 @@
 </div>
 
 <div class="card" style="margin-bottom: 24px;">
-    <!-- Форма фильтров теперь будет обновлять контент через HTMX -->
+    {# Форма фильтров теперь отправляет запрос, который обновляет #list-content и URL в браузере #}
     <form id="filters-form"
           hx-get="{{ request.url.path }}" 
           hx-target="#list-content"
-          hx-trigger="change, search"
+          hx-trigger="submit, change from:.datepicker"
           hx-push-url="true">
 
         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 16px; align-items: flex-end;">
             <div class="input-group" style="margin: 0;">
                 <label>Поиск по клиенту</label>
-                <input type="search" name="q" class="input-field" placeholder="Имя или телефон..." value="{{ search_query or '' }}" autocomplete="off">
+                <input type="search" name="q" class="input-field" placeholder="Имя или телефон..." value="{{ request.query_params.get('q', '') }}" autocomplete="off">
             </div>
             {% if meta.model_name == 'quoterequest' %}
             <div class="input-group" style="margin: 0;">
                 <label for="date_from">Дата от</label>
-                <input type="text" id="date_from" name="date_from" class="input-field datepicker" placeholder="Начало периода" value="{{ date_from or '' }}">
+                <input type="text" id="date_from" name="date_from" class="input-field datepicker" placeholder="Начало периода" value="{{ request.query_params.get('date_from', '') }}">
             </div>
             <div class="input-group" style="margin: 0;">
                 <label for="date_to">Дата до</label>
-                <input type="text" id="date_to" name="date_to" class="input-field datepicker" placeholder="Конец периода" value="{{ date_to or '' }}">
+                <input type="text" id="date_to" name="date_to" class="input-field datepicker" placeholder="Конец периода" value="{{ request.query_params.get('date_to', '') }}">
             </div>
             {% endif %}
             <div style="display: flex; gap: 8px;">
@@ -54,23 +54,27 @@
     </form>
 </div>
 
-<div id="list-content">
-    {% include "admin/partials/_generic_list_content.html" %}
+{# Этот контейнер при загрузке страницы сам запросит свое содержимое #}
+<div id="list-content" 
+    hx-get="{{ request.url_for(meta.list_url_name) }}?{{ request.query_params }}"
+    hx-trigger="load"
+    hx-swap="innerHTML">
+    <div class="modal-loading-placeholder" style="padding: 100px 0;">
+        <i class='bx bx-loader-alt bx-spin'></i><span>Загрузка данных...</span>
+    </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    function initializeDatepickers() {
         flatpickr(".datepicker", {
             dateFormat: "Y-m-d",
             allowInput: true,
         });
-    });
+    }
+    document.addEventListener('DOMContentLoaded', initializeDatepickers);
     document.body.addEventListener('htmx:afterSwap', function(event) {
         if (event.detail.target.id === 'list-content') {
-            flatpickr(".datepicker", {
-                dateFormat: "Y-m-d",
-                allowInput: true
-            });
+            initializeDatepickers();
         }
     });
 </script>

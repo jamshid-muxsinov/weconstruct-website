@@ -4,22 +4,15 @@
     <div>
         Страница {{ page_obj.page }} из {{ page_obj.pages }}. Всего: {{ page_obj.total }}
     </div>
-
-    <div style="display: flex; gap: 8px;" hx-include="#filters-form">
+    <div style="display: flex; gap: 8px;">
         
-        {% set base_params = {} %}
-        {% for key, value in request.query_params.items() %}
-            {% if key != 'page' %}
-                {% set _ = base_params.update({key: value}) %}
-            {% endif %}
-        {% endfor %}
+        {% set query_params = dict(request.query_params) %}
 
         {% if page_obj.previous %}
-            {% set prev_params = base_params.copy() %}
-            {% set _ = prev_params.update({'page': page_obj.previous}) %}
-            <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(prev_params) }}"
+            {% set _ = query_params.update({'page': page_obj.previous}) %}
+            <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(query_params) }}"
                class="btn btn-secondary"
-               hx-get="{{ request.url_for(endpoint_name) }}?{{ urlencode(prev_params) }}"
+               hx-get="{{ request.url_for(endpoint_name) }}?{{ urlencode(query_params) }}"
                hx-target="#list-content"
                hx-push-url="true">
                 <i class='bx bx-chevron-left'></i> Назад
@@ -27,11 +20,10 @@
         {% endif %}
 
         {% if page_obj.next %}
-            {% set next_params = base_params.copy() %}
-            {% set _ = next_params.update({'page': page_obj.next}) %}
-            <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(next_params) }}"
+            {% set _ = query_params.update({'page': page_obj.next}) %}
+            <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(query_params) }}"
                class="btn btn-secondary"
-               hx-get="{{ request.url_for(endpoint_name) }}?{{ urlencode(next_params) }}"
+               hx-get="{{ request.url_for(endpoint_name) }}?{{ urlencode(query_params) }}"
                hx-target="#list-content"
                hx-push-url="true">
                 Вперед <i class='bx bx-chevron-right'></i>
