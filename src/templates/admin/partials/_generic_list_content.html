@@ -11,7 +11,13 @@
                 {% endif %}
 
                 {% for header in list_display %}
-                    <th>{{ header.replace('_', ' ')|capfirst }}</th>
+                    <th>
+                        {% if header == 'product' and meta.model_name == 'quoterequest' %}
+                            Тип бизнеса
+                        {% else %}
+                            {{ header.replace('_', ' ')|capfirst }}
+                        {% endif %}
+                    </th>
                 {% endfor %}
             </tr>
         </thead>
@@ -54,7 +60,11 @@
                             {% elif field_name == 'category' and value %}
                                 {{ value.name }}
                             {% elif field_name == 'product' and meta.model_name == 'quoterequest' %}
-                                {{ item.product.name if item.product else 'Товар удален' }}
+                                {% if item.business_type %}
+                                    <span style="font-weight: 500; color: var(--accent-primary);">{{ item.business_type }}</span>
+                                {% else %}
+                                    <span style="color: var(--text-secondary); font-style: italic;">Не указан</span>
+                                {% endif %}
                             {% elif field_name == 'price_min' and value is not none %}
                                 {{ value|format_number }} сум
                             {% elif value is none %}
