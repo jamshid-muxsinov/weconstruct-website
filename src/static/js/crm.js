@@ -89,13 +89,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!isDesktop()) {
                 // On mobile, ensure desktop classes are removed
                 body.classList.remove('sidebar-collapsed');
-                sidebar.classList.remove('collapsed');
+                if (sidebar) sidebar.classList.remove('collapsed');
                 return;
             }
             // On desktop, apply saved state
             const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
             body.classList.toggle('sidebar-collapsed', isCollapsed);
-            sidebar.classList.toggle('collapsed', isCollapsed);
+            if (sidebar) sidebar.classList.toggle('collapsed', isCollapsed);
             
             // Apply saved width if not collapsed
             if (!isCollapsed && sidebar) {
