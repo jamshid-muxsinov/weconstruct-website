@@ -1,4 +1,5 @@
-{% macro render_pagination(page_obj, endpoint_name) %}
+{# --- ИЗМЕНЕНИЕ ЗДЕСЬ: добавляем request в аргументы макроса --- #}
+{% macro render_pagination(page_obj, endpoint_name, request) %}
 {% if page_obj.pages > 1 %}
 <div class="card" style="margin-top: 24px; padding: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
     <div>
