@@ -3,7 +3,6 @@
 {% block content %}
 <div class="page-header">
     <h1>{{ meta.verbose_name_plural|capfirst }}</h1>
-    
     <div class="page-header-actions">
         {% if meta.model_name == 'quoterequest' %}
             <a href="{{ request.url_for('admin_quoterequest_export') }}" class="btn btn-secondary">
@@ -16,19 +15,17 @@
         {% endif %}
         {% if meta.add_url_name %}
         <a href="{{ request.url_for(meta.add_url_name) }}" class="btn btn-primary">
-            <i class='bx bx-plus'></i>
-            <span>Добавить {{ meta.verbose_name }}</span>
+            <i class='bx bx-plus'></i> <span>Добавить {{ meta.verbose_name }}</span>
         </a>
         {% endif %}
     </div>
 </div>
 
 <div class="card" style="margin-bottom: 24px;">
-    {# Форма фильтров теперь отправляет запрос, который обновляет #list-content и URL в браузере #}
     <form id="filters-form"
           hx-get="{{ request.url.path }}" 
           hx-target="#list-content"
-          hx-trigger="submit, change from:.datepicker"
+          hx-trigger="submit, change from:.datepicker, keyup changed delay:300ms from:input[type='search']"
           hx-push-url="true">
 
         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 16px; align-items: flex-end;">
@@ -54,28 +51,15 @@
     </form>
 </div>
 
-{# Этот контейнер при загрузке страницы сам запросит свое содержимое #}
-<div id="list-content" 
-    hx-get="{{ request.url_for(meta.list_url_name) }}?{{ request.query_params }}"
-    hx-trigger="load"
-    hx-swap="innerHTML">
-    <div class="modal-loading-placeholder" style="padding: 100px 0;">
-        <i class='bx bx-loader-alt bx-spin'></i><span>Загрузка данных...</span>
-    </div>
+<div id="list-content">
+    {% include "admin/partials/_generic_list_content.html" %}
 </div>
 
 <script>
     function initializeDatepickers() {
-        flatpickr(".datepicker", {
-            dateFormat: "Y-m-d",
-            allowInput: true,
-        });
+        flatpickr(".datepicker", { dateFormat: "Y-m-d", allowInput: true });
     }
     document.addEventListener('DOMContentLoaded', initializeDatepickers);
-    document.body.addEventListener('htmx:afterSwap', function(event) {
-        if (event.detail.target.id === 'list-content') {
-            initializeDatepickers();
-        }
-    });
+    document.body.addEventListener('htmx:afterSwap', () => { initializeDatepickers(); });
 </script>
 {% endblock %}

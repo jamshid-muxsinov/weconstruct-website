@@ -442,18 +442,20 @@ async def quoterequest_list(
     context: dict = Depends(get_common_context), 
     db: AsyncSession = Depends(get_db_session)
 ):
-    page_obj = await handle_list_view(db, QUOTEREQUEST_META, page=page, size=size, search_query=q, sort=sort, date_from=date_from, date_to=date_to)
+    page_obj = await handle_list_view(
+        db, QUOTEREQUEST_META, page=page, size=size, search_query=q, 
+        sort=sort, date_from=date_from, date_to=date_to
+    )
+    
     context.update({
         "meta": QUOTEREQUEST_META, 
         "page": page_obj, 
-        "list_display": QUOTEREQUEST_META.list_display, 
-        "search_query": q,
-        "current_sort": sort or 'desc',
-        "date_from": date_from, 
-        "date_to": date_to,     
+        "list_display": QUOTEREQUEST_META.list_display,
     })
+    
     if request.headers.get("hx-request"): 
         return templates.TemplateResponse("admin/partials/_generic_list_content.html", context)
+    
     return templates.TemplateResponse("admin/generic_list.html", context)
 
 @router.get("/quoterequest/add/", response_class=HTMLResponse, name="admin_quoterequest_add")
