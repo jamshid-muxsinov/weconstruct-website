@@ -14,8 +14,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.detail.headers['X-CSRFToken'] = csrfToken;
             }
         });
-        document.body.addEventListener('htmx:responseError', () => {
-            notyf.error('Произошла ошибка сети. Попробуйте обновить страницу.');
+        
+        document.body.addEventListener('htmx:responseError', (event) => {
+            console.error('HTMX Response Error:', event.detail);
+            const status = event.detail.xhr?.status;
+            let message = 'Произошла ошибка сети. Попробуйте обновить страницу.';
+            
+            if (status === 401) {
+                message = 'Сессия истекла. Перезагрузите страницу для входа.';
+                // Redirect to login after a delay
+                setTimeout(() => {
+                    window.location.href = '/admin/login';
+                }, 3000);
+            } else if (status === 403) {
+                message = 'Недостаточно прав для выполнения этого действия.';
+            } else if (status >= 500) {
+                message = 'Ошибка сервера. Попробуйте позже.';
+            }
+            
+            notyf.error(message);
+        });
+        
+        document.body.addEventListener('htmx:timeout', () => {
+            notyf.error('Запрос занял слишком много времени. Попробуйте еще раз.');
+        });
+        
+        document.body.addEventListener('htmx:sendError', () => {
+            notyf.error('Не удалось отправить запрос. Проверьте подключение к интернету.');
         });
     }
 
@@ -190,12 +215,21 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             e.stopPropagation();
             
-            if (isDesktop()) {
-                setStoredValue('sidebarCollapsed', 'false');
-                applySidebarState();
-            } else {
-                // Mobile sidebar toggle
-                body.classList.add('sidebar-mobile-open');
+            try {
+                if (isDesktop()) {
+                    setStoredValue('sidebarCollapsed', 'false');
+                    applySidebarState();
+                } else {
+                    // Mobile sidebar toggle
+                    body.classList.add('sidebar-mobile-open');
+                }
+            } catch (error) {
+                console.warn('Error in expand button handler:', error);
+                // Fallback behavior
+                if (isDesktop()) {
+                    body.classList.remove('sidebar-collapsed');
+                    sidebar.classList.remove('collapsed');
+                }
             }
         });
         
@@ -220,7 +254,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const enableTransitions = () => {
             if (isResizeActive) {
                 isResizeActive = false;
-                // Small delay to ensure layout is stable before re-enabling transitions
                 setTimeout(() => {
                     document.body.classList.remove('no-transition');
                 }, 50);
@@ -290,19 +323,56 @@ document.addEventListener('DOMContentLoaded', function() {
                     const card = evt.item;
                     const quoteId = card.dataset.id;
                     const newStatus = evt.to.closest('.kanban-column').dataset.status;
+                    const oldColumn = evt.from;
+                    const oldIndex = evt.oldIndex;
+
+                    // Show loading state
+                    card.style.opacity = '0.5';
+                    card.style.pointerEvents = 'none';
 
                     try {
                         const response = await fetch('/admin/api/quoterequests/update-status', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                            body: JSON.stringify({ id: parseInt(quoteId), status: newStatus })
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'X-CSRFToken': csrfToken 
+                            },
+                            body: JSON.stringify({ 
+                                id: parseInt(quoteId), 
+                                status: newStatus 
+                            })
                         });
-                        if (!response.ok) throw new Error('Server response was not ok.');
+                        
+                        if (!response.ok) {
+                            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                        }
+                        
+                        const result = await response.json();
+                        if (result.status !== 'ok') {
+                            throw new Error('Server returned error status');
+                        }
+                        
                         notyf.success('Статус обновлен!');
                         htmx.trigger('#kanban-board-container', 'updateKanban');
+                        
                     } catch (error) {
-                        evt.from.insertBefore(card, evt.from.children[evt.oldIndex]);
-                        notyf.error('Не удалось обновить статус.');
+                        console.error('Kanban update error:', error);
+                        
+                        // Revert the move
+                        oldColumn.insertBefore(card, oldColumn.children[oldIndex] || null);
+                        
+                        let errorMessage = 'Не удалось обновить статус.';
+                        if (error.message.includes('401')) {
+                            errorMessage = 'Сессия истекла. Обновите страницу.';
+                        } else if (error.message.includes('403')) {
+                            errorMessage = 'Недостаточно прав.';
+                        }
+                        
+                        notyf.error(errorMessage);
+                    } finally {
+                        // Restore card appearance
+                        card.style.opacity = '';
+                        card.style.pointerEvents = '';
                     }
                 }
             });

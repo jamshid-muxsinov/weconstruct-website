@@ -15,10 +15,19 @@ async def update_request_status(
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):
-    req = await crm_service.update_quote_request_status(db, update_data, current_user.id)
-    if not req:
-        raise HTTPException(status_code=404, detail="QuoteRequest not found")
-    return {"status": "ok"}
+    try:
+        req = await crm_service.update_quote_request_status(db, update_data, current_user.id)
+        if not req:
+            raise HTTPException(status_code=404, detail="QuoteRequest not found")
+        return {"status": "ok"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating quote request status: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Internal server error while updating status"
+        )
 
 @router.post("/quoterequests/{req_id}/assign", name="api_assign_request")
 async def assign_request(

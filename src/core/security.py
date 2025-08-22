@@ -54,8 +54,16 @@ async def get_current_user(
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
+        
+        # Check token expiration explicitly
+        exp = payload.get("exp")
+        if exp is None or datetime.now(timezone.utc).timestamp() > exp:
+            raise credentials_exception
+            
         token_data = TokenData(username=username)
-    except JWTError:
+    except JWTError as e:
+        # Log security events (in production, use proper logging)
+        print(f"JWT validation failed: {e}")
         raise credentials_exception
         
     user = await get_user_by_username(db, username=token_data.username)
@@ -66,4 +74,13 @@ async def get_current_user(
 async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+async def get_current_staff_user(current_user: User = Depends(get_current_active_user)) -> User:
+    """Additional security layer to ensure only staff users can access admin resources."""
+    if not current_user.is_staff:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Insufficient permissions. Staff access required."
+        )
     return current_user

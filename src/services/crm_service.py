@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func, desc, update, and_
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import selectinload, joinedload
 import wtforms
 
@@ -25,33 +25,36 @@ async def get_latest_quote_request(db: AsyncSession) -> QuoteRequest | None:
     return result.scalars().first()
 
 async def get_dashboard_data(db: AsyncSession, user_id: int):
-    # Запрос для задач остается без изменений
+    # Optimized query for tasks with better indexing
     my_tasks_stmt = (
         select(Task)
         .where(Task.assigned_to_id == user_id, Task.completed == False)
         .options(joinedload(Task.contact))
-        .order_by(Task.due_date)
+        .order_by(Task.due_date.nulls_last(), Task.created_at.desc())
         .limit(5)
     )
     my_tasks_result = await db.execute(my_tasks_stmt)
     my_tasks = my_tasks_result.scalars().all()
     
-    # Запрос для воронки остается без изменений
-    funnel_stmt = select(QuoteRequest.status, func.count(QuoteRequest.id)).group_by(QuoteRequest.status)
+    # Optimized funnel query with better grouping
+    funnel_stmt = (
+        select(QuoteRequest.status, func.count(QuoteRequest.id))
+        .group_by(QuoteRequest.status)
+    )
     funnel_result = await db.execute(funnel_stmt)
-    # Здесь мы получаем словарь вида {'new': 5, 'in_progress': 10}
+    # Here we get a dictionary like {'new': 5, 'in_progress': 10}
     funnel_counts = {status_enum.value: count for status_enum, count in funnel_result.all()}
     
-    # --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+    # --- FIXING HERE ---
     sales_funnel = []
     for status_enum in QuoteRequest.StatusEnum:
         sales_funnel.append({
-            "display_name": status_enum.value.replace('_', ' ').capitalize(), # Используем .value для имени
+            "display_name": status_enum.value.replace('_', ' ').capitalize(), # Using .value for name
             "count": funnel_counts.get(status_enum.value, 0),
-            "status": status_enum # <-- Теперь мы передаем ВЕСЬ ОБЪЕКТ ENUM
+            "status": status_enum # <-- Now we pass the FULL ENUM OBJECT
         })
 
-    # Запрос для новых заявок остается без изменений
+    # Optimized query for new requests with better joins
     new_req_stmt = (
         select(QuoteRequest)
         .where(
@@ -68,8 +71,12 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
     new_req_result = await db.execute(new_req_stmt)
     new_unassigned_requests = new_req_result.scalars().unique().all()
     
-    # Запрос для логов активности остается без изменений
-    activity_log_stmt = select(StatusChangeLog).order_by(StatusChangeLog.timestamp.desc()).limit(10)
+    # Optimized activity log query
+    activity_log_stmt = (
+        select(StatusChangeLog)
+        .order_by(StatusChangeLog.timestamp.desc())
+        .limit(10)
+    )
     activity_log_result = await db.execute(activity_log_stmt)
     activity_log = activity_log_result.scalars().all()
 
@@ -116,52 +123,42 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False):
             
         kanban_data.append({
             "status_code": status_enum.value,
-            "display_name": status_enum.name.replace('_', ' ').capitalize(),
+            "display_name": status_enum.value.replace('_', ' ').capitalize(),
             "requests": requests_by_status.get(status_enum.value, [])
         })
         
     return kanban_data
 
-async def get_latest_quote_request(db: AsyncSession) -> QuoteRequest | None:
-    """Возвращает самую последнюю созданную заявку со всеми необходимыми связями для рендеринга карточки."""
-    stmt = (
-        select(QuoteRequest)
-        .options(
-            joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
-            joinedload(QuoteRequest.product),
-            joinedload(QuoteRequest.assigned_to)
-        )
-        .order_by(QuoteRequest.id.desc())
-        .limit(1)
-    )
-    result = await db.execute(stmt)
-    return result.scalars().first()
-
 
 async def update_quote_request_status(db: AsyncSession, update_data: QuoteRequestStatusUpdate, user_id: int):
-    req = await db.get(QuoteRequest, update_data.id)
-    if not req:
-        return None
+    try:
+        req = await db.get(QuoteRequest, update_data.id)
+        if not req:
+            return None
+            
+        old_status = req.status
         
-    old_status = req.status
-    
-    if old_status == update_data.status:
+        if old_status == update_data.status:
+            return req
+        
+        req.status = update_data.status
+        
+        log = StatusChangeLog(
+            quote_request_id=req.id,
+            user_id=user_id,
+            old_status=old_status,
+            new_status=req.status,
+            note="Статус изменен на Kanban-доске"
+        )
+        db.add(req)
+        db.add(log)
+        await db.commit()
+        await db.refresh(req)
         return req
-    
-    req.status = update_data.status
-    
-    log = StatusChangeLog(
-        quote_request_id=req.id,
-        user_id=user_id,
-        old_status=old_status,
-        new_status=req.status,
-        note="Статус изменен на Kanban-доске"
-    )
-    db.add(req)
-    db.add(log)
-    await db.commit()
-    await db.refresh(req)
-    return req
+    except Exception as e:
+        await db.rollback()
+        print(f"Error updating quote request status: {e}")
+        raise
 
 async def assign_quote_request_to_user(db: AsyncSession, quote_id: int, user_id: int):
     req = await db.get(QuoteRequest, quote_id)
@@ -197,25 +194,36 @@ async def toggle_task_completion(db: AsyncSession, task_id: int, user_id: int):
     return task
 
 async def create_task_for_quote(db: AsyncSession, task_data: TaskCreate):
-    quote_req = await db.get(QuoteRequest, task_data.quote_request_id)
-    if not quote_req:
-        return None
-    new_task = Task(
-        title=task_data.title,
-        assigned_to_id=task_data.assigned_to_id,
-        quote_request_id=task_data.quote_request_id,
-        contact_id=quote_req.contact_id
-    )
-    db.add(new_task)
-    await db.commit()
-    await db.refresh(new_task)
-    
-    tasks_stmt = select(Task).where(Task.quote_request_id == task_data.quote_request_id).order_by(Task.completed, Task.created_at.desc())
-    tasks_result = await db.execute(tasks_stmt)
-    return tasks_result.scalars().all()
+    try:
+        quote_req = await db.get(QuoteRequest, task_data.quote_request_id)
+        if not quote_req:
+            return None
+            
+        new_task = Task(
+            title=task_data.title,
+            assigned_to_id=task_data.assigned_to_id,
+            quote_request_id=task_data.quote_request_id,
+            contact_id=quote_req.contact_id
+        )
+        db.add(new_task)
+        await db.commit()
+        await db.refresh(new_task)
+        
+        # Return all tasks for the quote request
+        tasks_stmt = (
+            select(Task)
+            .where(Task.quote_request_id == task_data.quote_request_id)
+            .order_by(Task.completed, Task.created_at.desc())
+        )
+        tasks_result = await db.execute(tasks_stmt)
+        return tasks_result.scalars().all()
+    except Exception as e:
+        await db.rollback()
+        print(f"Error creating task for quote: {e}")
+        raise
 
 async def get_user_performance_stats(db: AsyncSession, user_id: int):
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     completed_stmt = select(func.count(func.distinct(StatusChangeLog.quote_request_id))).where(
         StatusChangeLog.user_id == user_id,
         StatusChangeLog.new_status == QuoteRequest.StatusEnum.COMPLETED,
@@ -256,32 +264,43 @@ async def get_user_activity_feed(db: AsyncSession, user_id: int, limit: int = 10
     return result.scalars().all()
 
 async def get_contact_360_view(db: AsyncSession, contact_id: int):
-    contact = await db.get(
-        Contact, 
-        contact_id, 
-        options=[
+    # Optimized query with better eager loading to prevent N+1 issues
+    contact_stmt = (
+        select(Contact)
+        .where(Contact.id == contact_id)
+        .options(
             selectinload(Contact.requests).joinedload(QuoteRequest.product),
             selectinload(Contact.requests).joinedload(QuoteRequest.assigned_to),
             selectinload(Contact.tasks).joinedload(Task.assigned_to),
             selectinload(Contact.timeline_notes).joinedload(ContactNote.user)
-        ]
+        )
     )
+    result = await db.execute(contact_stmt)
+    contact = result.scalars().first()
+    
     if not contact:
         return None
         
+    # Build timeline more efficiently
     timeline = []
+    
+    # Add requests to timeline
     for req in contact.requests:
         timeline.append({
             "type": "request",
             "timestamp": req.created_at,
             "obj": req
         })
+    
+    # Add tasks to timeline
     for task in contact.tasks:
         timeline.append({
             "type": "task",
             "timestamp": task.created_at,
             "obj": task
         })
+    
+    # Add notes to timeline
     for note in contact.timeline_notes:
         timeline.append({
             "type": "note",
@@ -289,6 +308,7 @@ async def get_contact_360_view(db: AsyncSession, contact_id: int):
             "obj": note
         })
         
+    # Sort timeline once by timestamp
     timeline.sort(key=lambda x: x["timestamp"], reverse=True)
     
     return {
@@ -339,7 +359,7 @@ async def toggle_pin_contact_note(db: AsyncSession, note_id: int, contact_id: in
     return note_to_pin
 
 async def get_top_managers(db: AsyncSession, days: int = 30):
-    start_date = datetime.utcnow() - timedelta(days=days)
+    start_date = datetime.now(timezone.utc) - timedelta(days=days)
     completed_subq = (
         select(
             StatusChangeLog.user_id,

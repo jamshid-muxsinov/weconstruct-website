@@ -45,31 +45,39 @@ async def get_quote_request_modal(
     request: Request,
     db: AsyncSession = Depends(get_db_session)
 ):
-    stmt = (
-        select(QuoteRequest)
-        .where(QuoteRequest.id == pk)
-        .options(
-            selectinload(QuoteRequest.tasks).joinedload(Task.assigned_to),
-            selectinload(QuoteRequest.contact),
-            selectinload(QuoteRequest.product),
-            selectinload(QuoteRequest.assigned_to)
+    try:
+        stmt = (
+            select(QuoteRequest)
+            .where(QuoteRequest.id == pk)
+            .options(
+                selectinload(QuoteRequest.tasks).joinedload(Task.assigned_to),
+                selectinload(QuoteRequest.contact),
+                selectinload(QuoteRequest.product),
+                selectinload(QuoteRequest.assigned_to)
+            )
         )
-    )
-    quote_request = (await db.execute(stmt)).scalars().first()
-    if not quote_request:
-        return HTMLResponse("Заявка не найдена", status_code=404)
+        quote_request = (await db.execute(stmt)).scalars().first()
+        if not quote_request:
+            return HTMLResponse("Заявка не найдена", status_code=404)
 
-    staff_users = (await db.execute(select(User).where(User.is_staff == True))).scalars().all()
-    form = TaskForm()
-    form.assigned_to_id.choices = [(user.id, user.username) for user in staff_users]
+        staff_users = (await db.execute(select(User).where(User.is_staff == True))).scalars().all()
+        form = TaskForm()
+        form.assigned_to_id.choices = [(user.id, user.username) for user in staff_users]
 
-    context = {
-        "request": request,
-        "req": quote_request,
-        "tasks": sorted(quote_request.tasks, key=lambda t: (t.completed, -t.id)),
-        "task_form": form,
-    }
-    return templates.TemplateResponse("admin/partials/quoterequest_modal_content.html", context, headers=NO_CACHE_HEADERS)
+        context = {
+            "request": request,
+            "req": quote_request,
+            "tasks": sorted(quote_request.tasks, key=lambda t: (t.completed, -t.id)),
+            "task_form": form,
+        }
+        return templates.TemplateResponse(
+            "admin/partials/quoterequest_modal_content.html", 
+            context, 
+            headers=NO_CACHE_HEADERS
+        )
+    except Exception as e:
+        print(f"Error in get_quote_request_modal: {e}")
+        return HTMLResponse("Ошибка загрузки данных", status_code=500)
 
 @router.post("/quoterequest/{pk}/add-task", response_class=HTMLResponse, name="admin_htmx_add_task_to_quote")
 async def add_task_to_quote(

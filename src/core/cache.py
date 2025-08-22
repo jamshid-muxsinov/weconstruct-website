@@ -27,15 +27,34 @@ class CacheManager:
         try:
             self.redis_client = aioredis.from_url(
                 settings.REDIS_URL,
-                decode_responses=True 
+                decode_responses=True,
+                retry_on_timeout=True,
+                health_check_interval=30,
+                socket_connect_timeout=5,
+                socket_timeout=5
             )
             await self.redis_client.ping()
             print("✅ Redis connection successful.")
             self.is_redis_available = True
+        except aioredis.ConnectionError as e:
+            print(f"❌ Redis connection failed: {e}. Using in-memory cache only.")
+            self.is_redis_available = False
+            self.redis_client = None
         except Exception as e:
             print(f"❌ Could not connect to Redis: {e}. Using in-memory cache only.")
             self.is_redis_available = False
             self.redis_client = None
+    
+    async def _check_redis_health(self) -> bool:
+        """Проверка состояния Redis соединения."""
+        if not self.is_redis_available or not self.redis_client:
+            return False
+        try:
+            await self.redis_client.ping()
+            return True
+        except Exception:
+            self.is_redis_available = False
+            return False
     
     async def close_redis(self):
         """Закрытие Redis соединения."""
@@ -59,21 +78,27 @@ class CacheManager:
     
     async def get(self, key: str, default: Any = None) -> Any:
         """Получение значения из кэша (сначала in-memory, потом Redis)."""
+        # Проверяем in-memory кэш
         if key in memory_cache:
             return memory_cache[key]
         
         if key in lru_cache:
             return lru_cache[key]
         
-        if self.is_redis_available and self.redis_client:
+        # Проверяем Redis с проверкой состояния
+        if await self._check_redis_health():
             try:
                 value_str = await self.redis_client.get(key)
                 if value_str:
                     parsed_value = json.loads(value_str)
+                    # Кэшируем в памяти для быстрого доступа
                     memory_cache[key] = parsed_value
                     return parsed_value
-            except Exception as e:
+            except (aioredis.ConnectionError, json.JSONDecodeError) as e:
                 print(f"Error getting value from Redis for key '{key}': {e}")
+                self.is_redis_available = False
+            except Exception as e:
+                print(f"Unexpected error getting value from Redis for key '{key}': {e}")
         
         return default
     

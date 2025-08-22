@@ -68,7 +68,8 @@ async def login_for_access_token(
         value=token, 
         httponly=True,
         samesite="lax",
-        secure=False
+        secure=not settings.DEBUG,  # Use secure cookies in production
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60  # Set explicit expiration
     )
     
     return response
