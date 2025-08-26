@@ -7,7 +7,7 @@ import csv
 import io
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select # <-- Добавь импорт
+from sqlalchemy import select
 
 from src.services.shop_service import _get_or_create_contact, _create_quote_request, _notify_managers
 from src.models.shop_models import QuoteRequest
@@ -21,7 +21,6 @@ def _parse_date(date_str: str) -> datetime | None:
     
     date_str = date_str.strip()
     
-    # Попробуем разные форматы
     formats_to_try = [
         "%m.%d.%y",  # 8.13.25
         "%d.%m.%y",  # 13.8.25
@@ -39,11 +38,9 @@ def _parse_date(date_str: str) -> datetime | None:
     for fmt in formats_to_try:
         try:
             parsed_date = datetime.strptime(date_str, fmt)
-            # Если год меньше 50, считаем что это 20XX, иначе 19XX
-            if parsed_date.year < 50:
-                parsed_date = parsed_date.replace(year=parsed_date.year + 2000)
-            elif parsed_date.year < 100:
-                parsed_date = parsed_date.replace(year=parsed_date.year + 1900)
+            # Если год < 100, считаем что это 20XX
+            if parsed_date.year < 100:
+                 parsed_date = parsed_date.replace(year=parsed_date.year + 2000)
             
             log.info(f"Успешно распарсена дата '{date_str}' как {parsed_date.strftime('%Y-%m-%d %H:%M:%S')}")
             return parsed_date
@@ -57,39 +54,19 @@ def _normalize_phone(phone: str) -> str:
     """Приводит номер телефона к единому формату E.164 (+998...)."""
     if not phone:
         return ""
-    # Оставляем только цифры
     digits = re.sub(r'\D', '', phone)
     
-    # Если номер начинается с 998 и имеет 12 цифр, просто добавляем +
     if len(digits) == 12 and digits.startswith('998'):
         return f"+{digits}"
-    # Если номер имеет 9 цифр (код оператора + номер), добавляем +998
     if len(digits) == 9:
         return f"+998{digits}"
         
-    # Возвращаем как есть, если формат неизвестен
     return phone
 
 async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: int = 0, date_column: int = 0):
     """
     Основная функция для импорта лидов из Google Sheets.
-    Проверяет наличие дубликатов перед созданием новой заявки.
-    Поддерживает парсинг дат в различных форматах.
-    
-    Args:
-        db: Асинхронная сессия базы данных
-        spreadsheet_id: ID Google Sheets таблицы
-        gid: ID листа (default: 0)
-        date_column: Номер колонки с датой (default: 0)
-    
-    Поддерживаемые форматы дат:
-        - 8.13.25 (MM.DD.YY)
-        - 13.8.25 (DD.MM.YY) 
-        - 8/13/25 (MM/DD/YY)
-        - 13/8/25 (DD/MM/YY)
-        - 8-13-25 (MM-DD-YY)
-        - 8.13.2025 (MM.DD.YYYY)
-        - 2025-08-13 (YYYY-MM-DD)
+    Проверяет наличие дубликатов и строк-заголовков перед созданием новой заявки.
     """
     log.info(f"Starting import from Google Sheet ID: {spreadsheet_id}, GID: {gid}")
 
@@ -102,7 +79,7 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         csv_data = io.StringIO(response.text)
         reader = csv.reader(csv_data)
         
-        header = next(reader) # Читаем заголовок
+        header = next(reader)
         rows = list(reader)
 
         if not rows:
@@ -121,15 +98,23 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
     processed_count = 0
     new_quotes_count = 0
     skipped_count = 0
+    skipped_headers_count = 0 # <-- Добавил счетчик для заголовков
     
     for i, row in enumerate(rows):
         original_row_number = i + 2 
         try:
+            # --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
+            # Пропускаем пустые строки или строки, которые являются заголовками
+            if not row or (len(row) > 0 and row[0].strip().lower() == 'id'):
+                log.info(f"Пропуск строки {original_row_number}: это строка заголовка или пустая строка.")
+                skipped_headers_count += 1
+                continue
+            # --- КОНЕЦ ИЗМЕНЕНИЯ ---
+
             client_name = row[15].strip() if len(row) > 15 and row[15] else "Без имени"
             phone_number = _normalize_phone(row[16]) if len(row) > 16 and row[16] else ""
             business_type = row[13].strip() if len(row) > 13 and row[13] else None
             
-            # Получаем дату из указанной колонки
             date_str = row[date_column].strip() if len(row) > date_column and row[date_column] else None
             parsed_date = _parse_date(date_str) if date_str else None
             
@@ -144,7 +129,6 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
             contact = await _get_or_create_contact(db, name=client_name, phone=phone_number)
             await db.flush()
 
-            # --- ПРОВЕРКА НА ДУБЛИКАТЫ ---
             stmt = select(QuoteRequest).where(
                 QuoteRequest.contact_id == contact.id,
                 QuoteRequest.message == message
@@ -154,7 +138,6 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
                 log.info(f"Пропуск дубликата для '{contact.full_name}'. Заявка с таким сообщением уже существует.")
                 skipped_count += 1
                 continue
-            # --- КОНЕЦ ПРОВЕРКИ ---
 
             quote = await _create_quote_request(
                 db=db,
@@ -165,13 +148,11 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
             
             if business_type:
                 quote.business_type = business_type
-                db.add(quote)
             
-            # Если дата была спарсена, устанавливаем ее как created_at
             if parsed_date:
                 quote.created_at = parsed_date
-                db.add(quote)
-                log.info(f"Установлена дата создания заявки #{quote.id}: {parsed_date.strftime('%d.%m.%Y %H:%M:%S')}")
+            
+            db.add(quote)
             
             await db.flush()
             await _notify_managers(db, quote, contact.full_name)
@@ -188,6 +169,6 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
 
     await db.commit()
     
-    message = f"Импорт завершен! Обработано строк: {processed_count}. Создано новых заявок: {new_quotes_count}. Пропущено дубликатов: {skipped_count}."
+    message = f"Импорт завершен! Обработано строк: {processed_count}. Создано новых заявок: {new_quotes_count}. Пропущено дубликатов: {skipped_count}. Пропущено заголовков: {skipped_headers_count}."
     log.info(message)
     return {"status": "success", "message": message, "processed": processed_count, "created": new_quotes_count}
