@@ -24,6 +24,90 @@
     </div>
 </div>
 
+<!-- Advanced Search and Filters -->
+<div class="advanced-filters" x-data="kanbanFilters()">
+    <div class="search-box" style="flex: 1; min-width: 250px;">
+        <input type="text" 
+               x-model="searchQuery"
+               @input.debounce.300ms="filterCards()"
+               placeholder="Поиск по имени клиента, телефону или ID..."
+               class="input-field"
+               style="margin: 0;">
+    </div>
+    
+    <div class="filter-chips" style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" 
+                @click="toggleFilter('assignee', 'me')"
+                :class="{'filter-chip': true, 'active': filters.assignee === 'me'}"
+                class="filter-chip">
+            <i class='bx bx-user'></i>
+            Мои задачи
+        </button>
+        
+        <button type="button"
+                @click="toggleFilter('status', 'new')"
+                :class="{'filter-chip': true, 'active': filters.status === 'new'}"
+                class="filter-chip">
+            <i class='bx bx-time'></i>
+            Новые
+        </button>
+        
+        <button type="button"
+                @click="toggleFilter('status', 'in_progress')"
+                :class="{'filter-chip': true, 'active': filters.status === 'in_progress'}"
+                class="filter-chip">
+            <i class='bx bx-loader-alt'></i>
+            В работе
+        </button>
+        
+        <button type="button"
+                @click="toggleFilter('priority', 'high')"
+                :class="{'filter-chip': true, 'active': filters.priority === 'high'}"
+                class="filter-chip">
+            <i class='bx bx-up-arrow-alt'></i>
+            Приоритет
+        </button>
+        
+        <button type="button"
+                @click="clearFilters()"
+                x-show="hasActiveFilters()"
+                class="btn btn-sm btn-secondary">
+            <i class='bx bx-x'></i>
+            Очистить
+        </button>
+    </div>
+</div>
+
+<!-- Bulk Actions Bar -->
+<div class="bulk-actions-bar" x-data="bulkActions()" x-show="selectedCards.length > 0" x-transition>
+    <span x-text="`Выбрано: ${selectedCards.length}`" class="text-secondary"></span>
+    
+    <select @change="bulkAssign($event.target.value)" class="select-field" style="min-width: 150px;">
+        <option value="">Назначить...</option>
+        <option value="1">Иван Иванов</option>
+        <option value="2">Петр Петров</option>
+        <!-- Add more users dynamically -->
+    </select>
+    
+    <select @change="bulkChangeStatus($event.target.value)" class="select-field" style="min-width: 120px;">
+        <option value="">Статус...</option>
+        <option value="new">Новая</option>
+        <option value="in_progress">В работе</option>
+        <option value="completed">Завершена</option>
+        <option value="cancelled">Отменена</option>
+    </select>
+    
+    <button @click="exportSelected()" class="btn btn-sm btn-secondary">
+        <i class='bx bx-download'></i>
+        Экспорт
+    </button>
+    
+    <button @click="clearSelection()" class="btn btn-sm btn-danger">
+        <i class='bx bx-x'></i>
+        Отменить
+    </button>
+</div>
+
 <div id="kanban-board-container" 
      hx-get="{{ request.url_for('admin_htmx_kanban_content') }}?show_archived={{ show_archived }}"
      hx-trigger="load, updateKanban from:body"

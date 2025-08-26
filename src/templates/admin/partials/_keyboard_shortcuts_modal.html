@@ -1,0 +1,154 @@
+{# Keyboard Shortcuts Help Modal #}
+<div class=\"modal-content\" style=\"max-width: 600px;\">
+    <div class=\"modal-header\">
+        <h2>\u041a\u043b\u0430\u0432\u0438\u0430\u0442\u0443\u0440\u043d\u044b\u0435 \u0441\u043e\u0447\u0435\u0442\u0430\u043d\u0438\u044f</h2>
+        <button class=\"modal-close\" onclick=\"closeModal()\">&times;</button>
+    </div>
+    <div class=\"modal-body\">
+        <div class=\"shortcuts-grid\" style=\"display: grid; gap: 20px;\">
+            <div class=\"shortcut-section\">
+                <h3 style=\"margin-bottom: 12px; color: var(--accent-primary);\">\u041e\u0431\u0449\u0438\u0435</h3>
+                <div class=\"shortcut-list\">
+                    <div class=\"shortcut-item\">
+                        <kbd>?</kbd>
+                        <span>\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u044d\u0442\u0443 \u0441\u043f\u0440\u0430\u0432\u043a\u0443</span>
+                    </div>
+                    <div class=\"shortcut-item\">
+                        <kbd>Esc</kbd>
+                        <span>\u0417\u0430\u043a\u0440\u044b\u0442\u044c \u043c\u043e\u0434\u0430\u043b\u044c\u043d\u043e\u0435 \u043e\u043a\u043d\u043e / \u043e\u0442\u043c\u0435\u043d\u0438\u0442\u044c \u0432\u044b\u0431\u043e\u0440</span>
+                    </div>
+                    <div class=\"shortcut-item\">
+                        <kbd>/</kbd>
+                        <span>\u0424\u043e\u043a\u0443\u0441 \u043d\u0430 \u043f\u043e\u0438\u0441\u043a\u0435</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class=\"shortcut-section\">
+                <h3 style=\"margin-bottom: 12px; color: var(--accent-primary);\">\u0412\u044b\u0431\u043e\u0440 \u043a\u0430\u0440\u0442\u043e\u0447\u0435\u043a</h3>
+                <div class=\"shortcut-list\">
+                    <div class=\"shortcut-item\">
+                        <kbd>Ctrl</kbd> + <kbd>A</kbd>
+                        <span>\u0412\u044b\u0431\u0440\u0430\u0442\u044c \u0432\u0441\u0435 \u043a\u0430\u0440\u0442\u043e\u0447\u043a\u0438</span>
+                    </div>
+                    <div class=\"shortcut-item\">
+                        <kbd>Ctrl</kbd> + <kbd>D</kbd>
+                        <span>\u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c \u0432\u044b\u0431\u043e\u0440</span>
+                    </div>
+                    <div class=\"shortcut-item\">
+                        <kbd>Ctrl</kbd> + <kbd>\u041a\u043b\u0438\u043a</kbd>
+                        <span>\u041c\u043d\u043e\u0436\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0439 \u0432\u044b\u0431\u043e\u0440 \u043a\u0430\u0440\u0442\u043e\u0447\u0435\u043a</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class=\"shortcut-section\">
+                <h3 style=\"margin-bottom: 12px; color: var(--accent-primary);\">\u041d\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u044f</h3>
+                <div class=\"shortcut-list\">
+                    <div class=\"shortcut-item\">
+                        <kbd>G</kbd> + <kbd>K</kbd>
+                        <span>\u041f\u0435\u0440\u0435\u0439\u0442\u0438 \u043a Kanban</span>
+                    </div>
+                    <div class=\"shortcut-item\">
+                        <kbd>G</kbd> + <kbd>D</kbd>
+                        <span>\u041f\u0435\u0440\u0435\u0439\u0442\u0438 \u043a Dashboard</span>
+                    </div>
+                    <div class=\"shortcut-item\">
+                        <kbd>G</kbd> + <kbd>L</kbd>
+                        <span>\u041f\u0435\u0440\u0435\u0439\u0442\u0438 \u043a \u0441\u043f\u0438\u0441\u043a\u0443 \u0437\u0430\u044f\u0432\u043e\u043a</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class=\"shortcut-section\">
+                <h3 style=\"margin-bottom: 12px; color: var(--accent-primary);\">\u041c\u043e\u0431\u0438\u043b\u044c\u043d\u044b\u0435 \u0436\u0435\u0441\u0442\u044b</h3>
+                <div class=\"shortcut-list\">
+                    <div class=\"shortcut-item\">
+                        <span class=\"gesture-icon\">\u2192</span>
+                        <span>\u0421\u0432\u0430\u0439\u043f \u0432\u043f\u0440\u0430\u0432\u043e - \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044c \u0437\u0430\u044f\u0432\u043a\u0443</span>
+                    </div>
+                    <div class=\"shortcut-item\">
+                        <span class=\"gesture-icon\">\u2190</span>
+                        <span>\u0421\u0432\u0430\u0439\u043f \u0432\u043b\u0435\u0432\u043e - \u0430\u0440\u0445\u0438\u0432\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0437\u0430\u044f\u0432\u043a\u0443</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class=\"shortcuts-tip\" style=\"margin-top: 24px; padding: 16px; background: var(--surface-2); border-radius: 8px; border-left: 3px solid var(--accent-primary);\">
+            <strong>\u0421\u043e\u0432\u0435\u0442:</strong> \u0418\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 \u043a\u043b\u0430\u0432\u0438\u0430\u0442\u0443\u0440\u043d\u044b\u0435 \u0441\u043e\u0447\u0435\u0442\u0430\u043d\u0438\u044f \u0434\u043b\u044f \u0431\u044b\u0441\u0442\u0440\u043e\u0439 \u0440\u0430\u0431\u043e\u0442\u044b \u0441 \u0441\u0438\u0441\u0442\u0435\u043c\u043e\u0439. \u041d\u0430 \u043c\u043e\u0431\u0438\u043b\u044c\u043d\u044b\u0445 \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0430\u0445 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0439\u0442\u0435 \u0441\u0432\u0430\u0439\u043f-\u0436\u0435\u0441\u0442\u044b \u0434\u043b\u044f \u0431\u044b\u0441\u0442\u0440\u044b\u0445 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0439.
+        </div>
+    </div>
+</div>
+
+<style>
+.shortcuts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.shortcut-section h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+}
+
+.shortcut-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.shortcut-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.shortcut-item kbd {
+    background: var(--surface-2);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    min-width: 28px;
+    text-align: center;
+}
+
+.gesture-icon {
+    font-size: 1.2rem;
+    width: 28px;
+    text-align: center;
+    background: var(--surface-2);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px;
+}
+
+.shortcut-item span:last-child {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+    .shortcuts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .shortcut-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+}
+</style>

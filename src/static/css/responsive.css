@@ -1,4 +1,279 @@
-/* ===== WECONSTRUCT - RESPONSIVE & ACCESSIBILITY STYLES (Final) ===== */
+/* ===== WECONSTRUCT - RESPONSIVE & ACCESSIBILITY STYLES (Enhanced) ===== */
+
+/* ===== MOBILE-FIRST RESPONSIVE DESIGN ===== */
+/* Base styles are mobile-first, then enhanced for larger screens */
+
+/* ===== MOBILE-FIRST KANBAN BOARD ENHANCEMENTS ===== */
+/* Mobile-first approach - base styles for mobile, then enhanced for desktop */
+
+/* Touch-friendly interface - larger touch targets */
+.btn, .kanban-card, .nav-link, .input-field, .select-field {
+  min-height: 44px; /* iOS recommended touch target size */
+  padding: 12px 16px;
+}
+
+/* Mobile Kanban Board Layout */
+.kanban-board {
+  display: flex;
+  flex-direction: column; /* Stack columns vertically on mobile */
+  gap: 12px;
+  overflow-x: visible;
+  padding: 8px;
+}
+
+.kanban-column {
+  width: 100%;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.kanban-column-header {
+  padding: 12px 16px;
+  position: sticky;
+  top: 60px; /* Account for mobile header */
+  background: var(--bg-sidebar);
+  z-index: 10;
+  border-radius: 12px 12px 0 0;
+}
+
+.kanban-column-body {
+  padding: 8px;
+  max-height: 70vh; /* Limit height on mobile */
+  overflow-y: auto;
+}
+
+.kanban-card {
+  margin: 0 0 12px 0;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: none !important; /* Disable hover effects on mobile */
+  transition: none; /* Remove transitions on mobile for better performance */
+}
+
+/* Mobile Card Layout Optimizations */
+.kanban-card .card-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.kanban-card .card-footer {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.kanban-card .card-footer .date-info {
+  order: 2;
+}
+
+.kanban-card .assignee {
+  order: 1;
+  align-self: flex-end;
+}
+
+/* Hide non-essential elements on small screens */
+@media (max-width: 480px) {
+  .kanban-card .business-type-tag {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+  
+  .kanban-card .message-preview {
+    display: none; /* Hide message preview on very small screens */
+  }
+  
+  .card-id {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+}
+
+/* Desktop Enhancement - horizontal layout for larger screens */
+@media (min-width: 768px) {
+  .kanban-board {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .kanban-column {
+    width: 320px;
+    flex-shrink: 0;
+    margin-bottom: 0;
+  }
+  
+  .kanban-column-header {
+    position: relative;
+    top: auto;
+  }
+  
+  .kanban-column-body {
+    max-height: calc(100vh - 200px);
+    padding: 16px 8px;
+  }
+  
+  .kanban-card {
+    transition: var(--transition-fast);
+  }
+  
+  .kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .kanban-card .card-header {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .kanban-card .card-footer {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+/* ===== MOBILE SIDEBAR DRAWER ENHANCEMENT ===== */
+/* Mobile sidebar as overlay drawer */
+@media (max-width: 992px) {
+  #crm-container {
+    position: relative;
+  }
+  
+  #sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    z-index: 1050;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+  }
+  
+  #sidebar.open {
+    transform: translateX(0);
+  }
+  
+  /* Mobile sidebar overlay */
+  .mobile-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1049;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .mobile-sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  #content-wrapper {
+    width: 100%;
+    margin-left: 0;
+  }
+  
+  #sidebar-expand-btn {
+    display: inline-flex;
+  }
+  
+  #sidebar-collapse-btn {
+    display: none;
+  }
+}
+
+/* ===== ENHANCED TOUCH INTERACTIONS ===== */
+/* Swipe gestures for cards */
+.kanban-card.swipeable {
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.kanban-card.swipe-left {
+  transform: translateX(-100px);
+  opacity: 0.7;
+}
+
+.kanban-card.swipe-right {
+  transform: translateX(100px);
+  opacity: 0.7;
+}
+
+/* Touch feedback */
+.kanban-card:active,
+.btn:active,
+.nav-link:active {
+  background-color: var(--surface-2);
+  transform: scale(0.98);
+}
+
+/* ===== IMPROVED FORM ELEMENTS FOR MOBILE ===== */
+.input-field, .textarea-field, .select-field {
+  font-size: 16px; /* Prevent zoom on iOS */
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.btn {
+  font-size: 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+/* ===== MODAL ENHANCEMENTS FOR MOBILE ===== */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-width: none;
+    margin: 10px;
+    border-radius: 16px;
+    max-height: 90vh;
+  }
+  
+  .modal-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .slide-over-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* ===== ACCESSIBILITY IMPROVEMENTS ===== */
+/* Focus indicators */
+.btn:focus,
+.input-field:focus,
+.kanban-card:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .kanban-card,
+  .btn,
+  .modal-content,
+  #sidebar {
+    transition: none;
+  }
+  
+  .kanban-card:hover {
+    transform: none;
+  }
+}
 
 /* ===== ANIMATIONS ===== */
 @keyframes shake-modal {

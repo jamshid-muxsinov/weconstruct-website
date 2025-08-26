@@ -399,3 +399,189 @@ async def get_top_managers(db: AsyncSession, days: int = 30):
     result = await db.execute(stmt)
     top_managers = result.all() 
     return top_managers
+
+# Bulk Operations for Enhanced Kanban
+async def bulk_assign_requests(db: AsyncSession, card_ids: list[int], user_id: int, current_user_id: int) -> int:
+    """Bulk assign multiple quote requests to a user"""
+    try:
+        stmt = (
+            update(QuoteRequest)
+            .where(QuoteRequest.id.in_(card_ids))
+            .values(assigned_to_id=user_id)
+        )
+        result = await db.execute(stmt)
+        
+        # Create status change logs for assigned requests
+        if user_id and result.rowcount > 0:
+            # Update status to IN_PROGRESS for NEW requests
+            update_status_stmt = (
+                update(QuoteRequest)
+                .where(
+                    QuoteRequest.id.in_(card_ids),
+                    QuoteRequest.status == QuoteRequest.StatusEnum.NEW
+                )
+                .values(status=QuoteRequest.StatusEnum.IN_PROGRESS)
+            )
+            await db.execute(update_status_stmt)
+            
+            # Create logs for the assignments
+            for card_id in card_ids:
+                log = StatusChangeLog(
+                    quote_request_id=card_id,
+                    user_id=current_user_id,
+                    old_status=QuoteRequest.StatusEnum.NEW,
+                    new_status=QuoteRequest.StatusEnum.IN_PROGRESS,
+                    note=f"Bulk assigned to user {user_id}"
+                )
+                db.add(log)
+        
+        await db.commit()
+        return result.rowcount
+    except Exception as e:
+        await db.rollback()
+        print(f"Error in bulk assign: {e}")
+        raise
+
+async def bulk_update_status(db: AsyncSession, card_ids: list[int], status: str, current_user_id: int) -> int:
+    """Bulk update status of multiple quote requests"""
+    try:
+        # Convert string status to enum
+        status_enum = None
+        for enum_status in QuoteRequest.StatusEnum:
+            if enum_status.value == status:
+                status_enum = enum_status
+                break
+        
+        if not status_enum:
+            raise ValueError(f"Invalid status: {status}")
+        
+        # Get current statuses for logging
+        current_requests_stmt = select(QuoteRequest.id, QuoteRequest.status).where(
+            QuoteRequest.id.in_(card_ids)
+        )
+        current_requests_result = await db.execute(current_requests_stmt)
+        current_requests = {req_id: old_status for req_id, old_status in current_requests_result.all()}
+        
+        # Update statuses
+        stmt = (
+            update(QuoteRequest)
+            .where(QuoteRequest.id.in_(card_ids))
+            .values(status=status_enum)
+        )
+        result = await db.execute(stmt)
+        
+        # Create status change logs
+        for card_id in card_ids:
+            if card_id in current_requests:
+                old_status = current_requests[card_id]
+                if old_status != status_enum:
+                    log = StatusChangeLog(
+                        quote_request_id=card_id,
+                        user_id=current_user_id,
+                        old_status=old_status,
+                        new_status=status_enum,
+                        note=f"Bulk status update to {status}"
+                    )
+                    db.add(log)
+        
+        await db.commit()
+        return result.rowcount
+    except Exception as e:
+        await db.rollback()
+        print(f"Error in bulk status update: {e}")
+        raise
+
+async def update_single_card_status(db: AsyncSession, card_id: int, status: str, current_user_id: int):
+    """Update status of a single card (for drag & drop and swipe gestures)"""
+    try:
+        # Convert string status to enum
+        status_enum = None
+        for enum_status in QuoteRequest.StatusEnum:
+            if enum_status.value == status:
+                status_enum = enum_status
+                break
+        
+        if not status_enum:
+            raise ValueError(f"Invalid status: {status}")
+        
+        req = await db.get(QuoteRequest, card_id)
+        if not req:
+            return None
+            
+        old_status = req.status
+        
+        if old_status == status_enum:
+            return req
+        
+        req.status = status_enum
+        
+        log = StatusChangeLog(
+            quote_request_id=req.id,
+            user_id=current_user_id,
+            old_status=old_status,
+            new_status=req.status,
+            note="Status updated via drag & drop or swipe"
+        )
+        db.add(req)
+        db.add(log)
+        await db.commit()
+        await db.refresh(req)
+        return req
+    except Exception as e:
+        await db.rollback()
+        print(f"Error updating single card status: {e}")
+        raise
+
+async def export_requests_csv(db: AsyncSession, card_ids: list[int] = None) -> str:
+    """Export quote requests to CSV format"""
+    try:
+        import csv
+        import io
+        
+        # Base query
+        stmt = (
+            select(QuoteRequest)
+            .options(
+                joinedload(QuoteRequest.contact),
+                joinedload(QuoteRequest.product),
+                joinedload(QuoteRequest.assigned_to)
+            )
+            .order_by(QuoteRequest.created_at.desc())
+        )
+        
+        # Filter by specific IDs if provided
+        if card_ids:
+            stmt = stmt.where(QuoteRequest.id.in_(card_ids))
+        
+        result = await db.execute(stmt)
+        requests = result.scalars().unique().all()
+        
+        # Create CSV content
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow([
+            'ID', 'Client Name', 'Phone', 'Email', 'Product', 'Status', 
+            'Assigned To', 'Business Type', 'Message', 'Created At'
+        ])
+        
+        # Write data
+        for req in requests:
+            writer.writerow([
+                req.id,
+                req.contact.full_name if req.contact else '',
+                req.contact.phone if req.contact else '',
+                req.contact.email if req.contact else '',
+                req.product.name_ru if req.product else 'General Request',
+                req.status.value,
+                req.assigned_to.username if req.assigned_to else 'Unassigned',
+                req.business_type or '',
+                req.message or '',
+                req.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            ])
+        
+        return output.getvalue()
+    except Exception as e:
+        print(f"Error exporting requests to CSV: {e}")
+        raise

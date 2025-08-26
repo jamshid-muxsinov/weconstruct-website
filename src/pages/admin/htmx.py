@@ -156,6 +156,11 @@ async def get_kanban_content(
     }
     return templates.TemplateResponse("admin/partials/_kanban_content.html", context, headers=NO_CACHE_HEADERS)
 
+@router.get("/keyboard-shortcuts", response_class=HTMLResponse, name="admin_htmx_keyboard_shortcuts")
+async def get_keyboard_shortcuts_modal(request: Request):
+    """Display keyboard shortcuts help modal"""
+    return templates.TemplateResponse("admin/partials/_keyboard_shortcuts_modal.html", {"request": request})
+
 @router.get("/quote-slide-over/{pk}", response_class=HTMLResponse, name="admin_htmx_quote_slide_over")
 async def get_quote_slide_over(
     pk: int,

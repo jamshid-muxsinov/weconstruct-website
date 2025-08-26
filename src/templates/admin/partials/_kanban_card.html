@@ -1,9 +1,23 @@
 <div class="kanban-card status-{{ req.status.value }} interactive hover-lift"
      data-id="{{ req.id }}"
+     data-client-name="{{ req.contact.full_name|lower }}"
+     data-phone="{{ req.contact.phone or '' }}"
+     data-status="{{ req.status.value }}"
+     data-assignee="{{ req.assigned_to.id if req.assigned_to else '' }}"
      id="kanban-card-{{ req.id }}"
      hx-get="{{ request.url_for('admin_htmx_quote_slide_over', pk=req.id) }}"
      hx-target="#slide-over-content"
-     hx-trigger="click">
+     hx-trigger="click"
+     x-data="kanbanCard({{ req.id }})"
+     @click="handleCardClick($event)"
+     :class="{'selected': isSelected}">
+
+    <!-- Selection Checkbox -->
+    <input type="checkbox" 
+           class="kanban-card-checkbox"
+           @click.stop
+           @change="toggleSelection()"
+           x-model="isSelected">
 
     <!-- Клиент -->
     <div class="card-header">
