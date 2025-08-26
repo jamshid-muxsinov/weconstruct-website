@@ -31,7 +31,6 @@ from sqlalchemy.dialects import postgresql
 router = APIRouter()
 log = logging.getLogger(__name__)
 
-# --- Классы и константы Meta/Form остаются без изменений ---
 class Meta:
     def __init__(self, model, list_display, form_class=None, verbose_name=None, verbose_name_plural=None):
         self.model = model
@@ -106,7 +105,6 @@ PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], 
 CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "Категория", "Категории")
 QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'product', 'status', 'source'], QuoteRequestForm, "Заявка", "Заявки")
 
-# --- Остальной код до обработчиков ---
 def sanitize_for_csv(value):
     if value is None:
         return ""
