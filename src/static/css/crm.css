@@ -37,9 +37,13 @@ input, button, select, textarea { font-family: inherit; color: inherit; border: 
 .btn-full { width: 100%; }
 
 /* ==========================================================================
-   Core Layout
+   Core Layout (КЛЮЧЕВОЕ ПРАВИЛО ЗДЕСЬ)
    ========================================================================== */
-#crm-container { display: flex; height: 100vh; }
+#crm-container { 
+    display: flex; 
+    height: 100vh; 
+}
+
 #sidebar { 
     width: var(--sidebar-width, 260px); 
     min-width: 200px;
