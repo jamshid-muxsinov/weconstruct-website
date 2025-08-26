@@ -31,9 +31,7 @@ from sqlalchemy.dialects import postgresql
 router = APIRouter()
 log = logging.getLogger(__name__)
 
-
-# --- ИСПРАВЛЕНИЕ: Переносим классы и константы НАВЕРХ, до их использования ---
-
+# --- Классы и константы остаются без изменений ---
 class Meta:
     def __init__(self, model, list_display, form_class=None, verbose_name=None, verbose_name_plural=None):
         self.model = model
@@ -183,7 +181,6 @@ async def handle_list_view(
             count_query = count_query.where(Category.name_ru.ilike(search_like))
     total_result = await db.execute(count_query)
     total = total_result.scalar_one_or_none() or 0
-    log.info(f"Manual count for {meta.model_name} found {total} items.")
     if meta.model == QuoteRequest:
         items_query = items_query.options(selectinload(QuoteRequest.contact), selectinload(QuoteRequest.product), selectinload(QuoteRequest.assigned_to))
         if sort == 'asc': items_query = items_query.order_by(QuoteRequest.created_at.asc())
@@ -195,27 +192,63 @@ async def handle_list_view(
     params = Params(page=page, size=size)
     return create_page(items, total, params)
 
+# *** НАЧАЛО ИЗМЕНЕНИЙ ***
 @router.get("/quoterequest/", response_class=HTMLResponse, name="admin_quoterequest_list")
-async def quoterequest_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), sort: Optional[str] = Query(None), date_from: Optional[str] = Query(None), date_to: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
+async def quoterequest_list(
+    request: Request, 
+    page: int = Query(1, ge=1), 
+    size: int = Query(20, ge=1, le=100), 
+    q: Optional[str] = Query(None), 
+    sort: Optional[str] = Query(None), 
+    date_from: Optional[str] = Query(None), 
+    date_to: Optional[str] = Query(None), 
+    context: dict = Depends(get_common_context), 
+    db: AsyncSession = Depends(get_db_session)
+):
     page_obj = await handle_list_view(db, QUOTEREQUEST_META, page=page, size=size, search_query=q, sort=sort, date_from=date_from, date_to=date_to)
     context.update({"meta": QUOTEREQUEST_META, "page": page_obj, "list_display": QUOTEREQUEST_META.list_display})
-    if request.headers.get("hx-request"): return templates.TemplateResponse("admin/partials/_generic_list_content.html", context)
+    
+    # Теперь мы не возвращаем маленький кусочек. HTMX сам возьмет блок #main-content.
+    # Это решает проблему пропажи поиска и дублирования.
     return templates.TemplateResponse("admin/generic_list.html", context)
 
-# ... остальной код ...
+# То же самое для списка товаров
+@router.get("/product/", response_class=HTMLResponse, name="admin_product_list")
+async def product_list(
+    request: Request, 
+    page: int = Query(1, ge=1), 
+    size: int = Query(20, ge=1, le=100), 
+    q: Optional[str] = Query(None), 
+    context: dict = Depends(get_common_context), 
+    db: AsyncSession = Depends(get_db_session)
+):
+    page_obj = await handle_list_view(db, PRODUCT_META, page=page, size=size, search_query=q)
+    context.update({"meta": PRODUCT_META, "page": page_obj, "list_display": PRODUCT_META.list_display})
+    return templates.TemplateResponse("admin/generic_list.html", context)
+
+# И для списка категорий
+@router.get("/category/", response_class=HTMLResponse, name="admin_category_list")
+async def category_list(
+    request: Request, 
+    page: int = Query(1, ge=1), 
+    size: int = Query(20, ge=1, le=100), 
+    q: Optional[str] = Query(None), 
+    context: dict = Depends(get_common_context), 
+    db: AsyncSession = Depends(get_db_session)
+):
+    page_obj = await handle_list_view(db, CATEGORY_META, page=page, size=size, search_query=q)
+    context.update({"meta": CATEGORY_META, "page": page_obj, "list_display": ['name_ru', 'description_ru'], "search_query": q})
+    return templates.TemplateResponse("admin/generic_list.html", context)
+# *** КОНЕЦ ИЗМЕНЕНИЙ ***
+
+
 async def populate_request_form_choices(db: AsyncSession, form: QuoteRequestForm):
     products = (await db.execute(select(Product).order_by(Product.name_ru))).scalars().all()
     form.product_id.choices = [(0, '--- Общая заявка ---')] + [(p.id, p.name_ru) for p in products]
     staff_users = (await db.execute(select(User).where(User.is_staff == True).order_by(User.username))).scalars().all()
     form.assigned_to_id.choices = [(0, '--- Не назначен ---')] + [(u.id, u.username) for u in staff_users]
 
-@router.get("/product/", response_class=HTMLResponse, name="admin_product_list")
-async def product_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    page_obj = await handle_list_view(db, PRODUCT_META, page=page, size=size, search_query=q)
-    context.update({"meta": PRODUCT_META, "page": page_obj, "list_display": PRODUCT_META.list_display})
-    if request.headers.get("hx-request"): return templates.TemplateResponse("admin/partials/_generic_list_content.html", context)
-    return templates.TemplateResponse("admin/generic_list.html", context)
-# ... и так далее, весь остальной код файла
+# ... Остальной код файла crud.py остается без изменений ...
 @router.get("/product/add/", response_class=HTMLResponse, name="admin_product_add")
 @router.get("/product/{pk}/change/", response_class=HTMLResponse, name="admin_product_change")
 async def product_form_get(pk: Optional[int] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
@@ -259,11 +292,7 @@ async def product_delete(request: Request, pk: int, context: dict = Depends(get_
     if request.method == "POST":
         await db.delete(product); await db.commit(); response = RedirectResponse(url=request.url_for(PRODUCT_META.list_url_name), status_code=303); return set_hx_trigger_header(response, "Товар удален", "error")
     context.update({"meta": PRODUCT_META, "original": product, "back_url": request.url_for(PRODUCT_META.change_url_name, pk=pk)}); return templates.TemplateResponse("admin/delete_confirmation.html", context)
-@router.get("/category/", response_class=HTMLResponse, name="admin_category_list")
-async def category_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    page_obj = await handle_list_view(db, CATEGORY_META, page=page, size=size, search_query=q); context.update({"meta": CATEGORY_META, "page": page_obj, "list_display": ['name_ru', 'description_ru'], "search_query": q});
-    if request.headers.get("hx-request"): return templates.TemplateResponse("admin/partials/_generic_list_content.html", context)
-    return templates.TemplateResponse("admin/generic_list.html", context)
+
 @router.get("/category/add/", response_class=HTMLResponse, name="admin_category_add")
 @router.get("/category/{pk}/change/", response_class=HTMLResponse, name="admin_category_change")
 async def category_form_get(pk: Optional[int] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):

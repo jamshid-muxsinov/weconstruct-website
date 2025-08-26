@@ -14,7 +14,7 @@
             </button>
         {% endif %}
         {% if meta.add_url_name %}
-        <a href="{{ request.url_for(meta.add_url_name) }}" class="btn btn-primary">
+        <a href="{{ request.url_for(meta.add_url_name) }}" class="btn btn-primary" hx-get="{{ request.url_for(meta.add_url_name) }}" hx-target="#main-content" hx-push-url="true">
             <i class='bx bx-plus'></i> <span>Добавить {{ meta.verbose_name }}</span>
         </a>
         {% endif %}
@@ -22,11 +22,13 @@
 </div>
 
 <div class="card" style="margin-bottom: 24px;">
+    <!-- *** НАЧАЛО ИЗМЕНЕНИЙ *** -->
     <form id="filters-form"
           hx-get="{{ request.url.path }}" 
-          hx-target="#list-content"
+          hx-target="#main-content" <!-- Меняем цель на #main-content -->
           hx-trigger="submit, change from:.datepicker, keyup changed delay:300ms from:input[type='search']"
           hx-push-url="true">
+    <!-- *** КОНЕЦ ИЗМЕНЕНИЙ *** -->
 
         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 16px; align-items: flex-end;">
             <div class="input-group" style="margin: 0;">
@@ -45,15 +47,15 @@
             {% endif %}
             <div style="display: flex; gap: 8px;">
                 <button type="submit" class="btn btn-primary"><i class='bx bx-filter-alt'></i> Применить</button>
-                <a href="{{ request.url.path }}" class="btn btn-secondary" title="Сбросить все фильтры"><i class='bx bx-x'></i></a>
+                <a href="{{ request.url.path }}" class="btn btn-secondary" title="Сбросить все фильтры" hx-get="{{ request.url.path }}" hx-target="#main-content" hx-push-url="true"><i class='bx bx-x'></i></a>
             </div>
         </div>
     </form>
 </div>
 
-<div id="list-content">
-    {% include "admin/partials/_generic_list_content.html" %}
-</div>
+<!-- Контент (таблица и пагинация) теперь находится внутри #main-content в base.html, 
+     поэтому здесь мы просто включаем его. -->
+{% include "admin/partials/_generic_list_content.html" %}
 
 <script>
     function initializeDatepickers() {
