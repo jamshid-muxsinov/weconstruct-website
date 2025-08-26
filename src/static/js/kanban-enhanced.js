@@ -63,19 +63,6 @@ document.addEventListener('keydown', (e) => {
     if (e.key === '/') { e.preventDefault(); document.querySelector('.search-box input')?.focus(); }
 });
 
-function initializeThemeToggle() {
-    const themeToggle = document.getElementById('theme-toggle');
-    const themeIcon = document.getElementById('theme-icon');
-    const body = document.body;
-    const setTheme = (theme) => {
-        body.classList.toggle('light', theme === 'light');
-        themeIcon.className = theme === 'light' ? 'bx bx-sun' : 'bx bx-moon';
-        localStorage.setItem('theme', theme);
-    };
-    setTheme(localStorage.getItem('theme') || 'dark');
-    themeToggle.addEventListener('click', () => setTheme(body.classList.contains('light') ? 'dark' : 'light'));
-}
-
 function initializePWA() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/static/sw.js').catch(err => console.error('Service Worker registration failed:', err));
@@ -83,6 +70,5 @@ function initializePWA() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    initializeThemeToggle();
     initializePWA();
 });

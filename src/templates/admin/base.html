@@ -40,16 +40,6 @@
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
-    <!-- Anti-flicker script -->
-    <script>
-        (function() {
-            try {
-                if (localStorage.getItem('sidebarCollapsed') === 'true' && window.innerWidth > 992) {
-                    document.body.classList.add('sidebar-collapsed-init');
-                }
-            } catch (e) { console.error(e); }
-        })();
-    </script>
 </head>
 
 <body class="dark" hx-ext="class-tools">
@@ -60,7 +50,7 @@
             <div class="sidebar-header"> 
                 <i class='bx bxs-color-fill logo-icon'></i> 
                 <span class="logo-text">WeConstruct</span>
-                <button id="sidebar-collapse-btn" class="btn-icon"><i class='bx bx-menu'></i></button>
+                <!-- Кнопка сворачивания сайдбара удалена -->
             </div>
             <nav>
                 <a href="{{ request.url_for('admin_kanban_board') }}" class="nav-link {% if 'kanban' in request.url.path or request.url.path == '/admin/' %}active{% endif %}"> <i class='bx bxs-grid-alt nav-icon'></i><span class="nav-text">Канбан-доска</span> </a>
@@ -84,10 +74,7 @@
                 
                 <div class="header-spacer"></div> 
 
-                <!-- Theme Toggle -->
-                <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
-                    <i class='bx bx-moon' id="theme-icon"></i>
-                </button> 
+                <!-- Кнопка переключения темы удалена -->
 
                 {% if user %}
                 <div class="user-profile" x-data="{ open: false }" @click.away="open = false">
