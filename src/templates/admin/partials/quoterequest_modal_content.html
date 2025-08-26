@@ -1,3 +1,4 @@
+{% block content %}
 <div class="modal-header">
     <h2>Заявка #{{ req.id }}: {{ req.contact.name }}</h2>
     <button class="modal-close">&times;</button>
@@ -39,3 +40,4 @@
         </form>
     </div>
 </div>
+{% endblock %}

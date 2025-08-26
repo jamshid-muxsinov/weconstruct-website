@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +11,7 @@ router = APIRouter()
 
 @router.get("/dashboard", response_class=HTMLResponse, name="admin_dashboard")
 async def get_dashboard(
+    request: Request,
     context: dict = Depends(get_common_context),
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -23,5 +24,6 @@ async def get_dashboard(
         "my_tasks": dashboard_data.get("my_tasks", []),
         "new_unassigned_requests": dashboard_data.get("new_unassigned_requests", []),
         "top_managers": top_managers_data,
+        "htmx_request": "HX-Request" in request.headers
     })
     return templates.TemplateResponse("admin/dashboard.html", context)

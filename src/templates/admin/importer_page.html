@@ -1,6 +1,6 @@
-<!-- src/templates/admin/importer_page.html -->
-
-{% extends "admin/base.html" %}
+{% if not htmx_request %}
+    {% extends "admin/base.html" %}
+{% endif %}
 
 {% block content %}
 <div class="page-header">

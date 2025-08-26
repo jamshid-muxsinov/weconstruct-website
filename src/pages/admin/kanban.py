@@ -1,4 +1,3 @@
-# /src/pages/admin/kanban.py
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,6 +22,7 @@ async def get_kanban_board(
         "title": "Воронка заявок (Kanban)",
         "requests_by_status": kanban_data,
         "show_archived": show_archived,
+        "htmx_request": "HX-Request" in request.headers
     })
     
     return templates.TemplateResponse("admin/kanban_board.html", context)
