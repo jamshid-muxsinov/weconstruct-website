@@ -54,20 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- ENHANCED SIDEBAR LOGIC ---
-    // *** НАЧАЛО ИЗМЕНЕНИЙ ***
-    
-    // Функция для применения сохраненной ширины сайдбара
-    function applySidebarWidth() {
-        const sidebar = document.getElementById('sidebar');
-        // Применяем только на десктопе
-        if (!sidebar || window.innerWidth <= 992) return;
-
-        const savedWidth = localStorage.getItem('sidebarWidth');
-        if (savedWidth) {
-            sidebar.style.width = `${savedWidth}px`;
-        }
-    }
-    
     function initSidebar() {
         const sidebar = document.getElementById('sidebar');
         const expandBtn = document.getElementById('sidebar-expand-btn');
@@ -76,8 +62,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!sidebar || !expandBtn) return;
         
         // Применяем ширину при первой загрузке страницы
-        applySidebarWidth();
+        const savedWidth = localStorage.getItem('sidebarWidth');
+        if (window.innerWidth > 992 && savedWidth) {
+            sidebar.style.width = `${savedWidth}px`;
+        }
 
+        // Логика для мобильного меню
         expandBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (window.innerWidth <= 992) body.classList.toggle('sidebar-mobile-open');
@@ -88,6 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        // Логика изменения размера и сохранения ширины
         let isResizing = false;
         sidebar.addEventListener('mousedown', e => {
             if (Math.abs(sidebar.offsetWidth - e.offsetX) < 10) isResizing = true;
@@ -95,9 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('mousemove', e => {
             if (!isResizing || window.innerWidth <= 992) return;
             const newWidth = e.clientX;
-            if (newWidth > 200 && newWidth < 500) {
-                 sidebar.style.width = `${newWidth}px`;
-            }
+            if (newWidth > 200 && newWidth < 500) sidebar.style.width = `${newWidth}px`;
         });
         document.addEventListener('mouseup', () => {
             if(isResizing) {
@@ -107,6 +96,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // *** НАЧАЛО ИЗМЕНЕНИЙ: Функция для обновления активной ссылки ***
+    function updateActiveNavLink(path) {
+        const navContainer = document.getElementById('sidebar-nav');
+        if (!navContainer) return;
+        
+        const links = navContainer.querySelectorAll('.nav-link');
+        let bestMatch = null;
+
+        links.forEach(link => {
+            link.classList.remove('active');
+            const linkPath = new URL(link.href).pathname;
+            
+            // Находим наиболее точное совпадение
+            if (path.startsWith(linkPath)) {
+                if (!bestMatch || linkPath.length > new URL(bestMatch.href).pathname.length) {
+                    bestMatch = link;
+                }
+            }
+        });
+        
+        // Особый случай для главной страницы
+        if (path === '/admin/' || path === '/admin/kanban') {
+            const kanbanLink = navContainer.querySelector('a[href*="/admin/kanban"]');
+            kanbanLink?.classList.add('active');
+        } else if (bestMatch) {
+            bestMatch.classList.add('active');
+        }
+    }
+    // *** КОНЕЦ ИЗМЕНЕНИЙ ***
+    
+    // --- INITIALIZATION ---
     function init() {
         setupHtmx();
         initPopups();
@@ -115,10 +135,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     init();
 
+    // Re-initialize dynamic components after HTMX swaps
     document.body.addEventListener('htmx:afterSwap', (event) => {
         if (event.detail.target.id === 'modal-body-content') document.getElementById('modal-overlay')?.classList.add('show');
         if (event.detail.target.id === 'slide-over-content') document.getElementById('slide-over-overlay')?.classList.add('show');
-        
-        applySidebarWidth();
     });
+
+    // *** ИЗМЕНЕНИЕ: Обновляем активную ссылку после навигации ***
+    document.body.addEventListener('htmx:pushedIntoHistory', (event) => {
+        const path = event.detail.path;
+        updateActiveNavLink(path);
+    });
+
 });
