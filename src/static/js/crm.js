@@ -1,46 +1,49 @@
 document.addEventListener('DOMContentLoaded', function() {
-
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const notyf = new Notyf({
         duration: 3000,
         position: { x: 'right', y: 'top' },
         dismissible: true
     });
 
+    // --- TRANSITION CONTROL FOR SMOOTH NAVIGATION ---
+    const stabilizeNavigation = () => {
+        if (!document.body.classList.contains('navigating')) {
+            document.body.classList.add('navigating');
+            // Remove the class after animations should have completed
+            setTimeout(() => {
+                document.body.classList.remove('navigating');
+            }, 500);
+        }
+    };
+    document.body.addEventListener('htmx:beforeRequest', stabilizeNavigation);
+    
     // --- HTMX SETUP ---
     function setupHtmx() {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         document.body.addEventListener('htmx:configRequest', (event) => {
             if (event.detail.verb !== 'get') {
                 event.detail.headers['X-CSRFToken'] = csrfToken;
             }
         });
-        
+
         document.body.addEventListener('htmx:responseError', (event) => {
-            console.error('HTMX Response Error:', event.detail);
-            const status = event.detail.xhr?.status;
-            let message = 'Произошла ошибка сети. Попробуйте обновить страницу.';
-            
-            if (status === 401) {
-                message = 'Сессия истекла. Перезагрузите страницу для входа.';
-                // Redirect to login after a delay
-                setTimeout(() => {
-                    window.location.href = '/admin/login';
-                }, 3000);
-            } else if (status === 403) {
-                message = 'Недостаточно прав для выполнения этого действия.';
-            } else if (status >= 500) {
-                message = 'Ошибка сервера. Попробуйте позже.';
+            notyf.error('Ошибка сети или сервера.');
+        });
+        
+        document.body.addEventListener('htmx:afterSwap', (event) => {
+            const triggerHeader = event.detail.xhr.getResponseHeader("HX-Trigger");
+            if (triggerHeader) {
+                try {
+                    const triggers = JSON.parse(triggerHeader);
+                    if (triggers['show-toast']) {
+                        const toast = triggers['show-toast'];
+                        notyf.open({
+                            type: toast.type || 'success',
+                            message: toast.message
+                        });
+                    }
+                } catch (e) { console.error("Could not parse HX-Trigger", e); }
             }
-            
-            notyf.error(message);
-        });
-        
-        document.body.addEventListener('htmx:timeout', () => {
-            notyf.error('Запрос занял слишком много времени. Попробуйте еще раз.');
-        });
-        
-        document.body.addEventListener('htmx:sendError', () => {
-            notyf.error('Не удалось отправить запрос. Проверьте подключение к интернету.');
         });
     }
 
@@ -75,346 +78,61 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- ENHANCED SIDEBAR LOGIC ---
     function initSidebar() {
         const sidebar = document.getElementById('sidebar');
-        const collapseBtn = document.getElementById('sidebar-collapse-btn');
         const expandBtn = document.getElementById('sidebar-expand-btn');
         const body = document.body;
-        const contentWrapper = document.getElementById('content-wrapper');
 
-        if (!sidebar || !collapseBtn || !expandBtn || !contentWrapper) {
-            console.warn('Sidebar elements not found');
-            return;
-        }
+        if (!sidebar || !expandBtn) return;
         
         const isDesktop = () => window.innerWidth > 992;
-        const MIN_WIDTH = 200;
-        const MAX_WIDTH = 400;
-        const DEFAULT_WIDTH = 260;
-        
-        let resizeObserver = null;
-        let isResizing = false;
 
-        // Safe localStorage operations
-        const getStoredValue = (key, defaultValue) => {
-            try {
-                return localStorage.getItem(key) || defaultValue;
-            } catch (e) {
-                console.warn('localStorage access failed:', e);
-                return defaultValue;
-            }
-        };
+        // Restore sidebar width from localStorage on desktop
+        const savedWidth = localStorage.getItem('sidebarWidth');
+        if (isDesktop() && savedWidth) {
+            sidebar.style.width = `${savedWidth}px`;
+        }
 
-        const setStoredValue = (key, value) => {
-            try {
-                localStorage.setItem(key, value);
-            } catch (e) {
-                console.warn('localStorage write failed:', e);
-            }
-        };
-
-        // Initialize sidebar width persistence with proper error handling
-        const initSidebarWidth = () => {
-            if (!sidebar) return;
-            
-            const savedWidth = getStoredValue('sidebarWidth', DEFAULT_WIDTH.toString());
-            const width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, parseInt(savedWidth) || DEFAULT_WIDTH));
-            
-            // Only apply width if not collapsed
-            if (!body.classList.contains('sidebar-collapsed')) {
-                sidebar.style.setProperty('--sidebar-width', `${width}px`);
-                sidebar.style.width = `${width}px`;
-            }
-            
-            // Setup resize observer with proper error handling
-            if (window.ResizeObserver) {
-                try {
-                    resizeObserver = new ResizeObserver(entries => {
-                        if (isResizing || !entries || entries.length === 0) return;
-                        
-                        const entry = entries[0];
-                        if (!entry || !entry.contentRect) return;
-                        
-                        const newWidth = Math.round(entry.contentRect.width);
-                        
-                        // Only save width if it's within valid range and sidebar is not collapsed
-                        if (newWidth >= MIN_WIDTH && 
-                            newWidth <= MAX_WIDTH && 
-                            !body.classList.contains('sidebar-collapsed') &&
-                            isDesktop()) {
-                            setStoredValue('sidebarWidth', newWidth.toString());
-                            sidebar.style.setProperty('--sidebar-width', `${newWidth}px`);
-                        }
-                    });
-                    
-                    resizeObserver.observe(sidebar);
-                } catch (e) {
-                    console.warn('ResizeObserver initialization failed:', e);
-                }
-            }
-        };
-
-        // Apply sidebar state with improved logic
-        const applySidebarState = () => {
-            if (!sidebar) return;
-            
-            // Remove init class after first run
-            body.classList.remove('sidebar-collapsed-init');
-
-            if (!isDesktop()) {
-                // On mobile, ensure desktop classes are removed
-                body.classList.remove('sidebar-collapsed');
-                sidebar.classList.remove('collapsed');
-                
-                // Reset sidebar properties for mobile without triggering transitions
-                sidebar.style.width = '';
-                sidebar.style.removeProperty('--sidebar-width');
-                
-                // Ensure mobile sidebar is not in open state unless intended
-                if (!body.classList.contains('sidebar-mobile-open')) {
-                    // Make sure sidebar is properly hidden on mobile
-                    sidebar.style.transform = '';
-                }
-                return;
-            }
-            
-            // On desktop, apply saved state
-            const isCollapsed = getStoredValue('sidebarCollapsed', 'false') === 'true';
-            
-            isResizing = true;
-            body.classList.toggle('sidebar-collapsed', isCollapsed);
-            sidebar.classList.toggle('collapsed', isCollapsed);
-            
-            if (!isCollapsed) {
-                // Apply saved width when expanded
-                const savedWidth = getStoredValue('sidebarWidth', DEFAULT_WIDTH.toString());
-                const width = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, parseInt(savedWidth) || DEFAULT_WIDTH));
-                sidebar.style.setProperty('--sidebar-width', `${width}px`);
-                sidebar.style.width = `${width}px`;
-            } else {
-                // Reset inline styles when collapsed to let CSS take over
-                sidebar.style.width = '';
-            }
-            
-            // Allow resize observer to work again after a brief delay
-            setTimeout(() => { isResizing = false; }, 100);
-        };
-        
-        collapseBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (isDesktop()) {
-                const isCollapsed = body.classList.contains('sidebar-collapsed');
-                setStoredValue('sidebarCollapsed', (!isCollapsed).toString());
-                applySidebarState();
-            }
-        });
-        
+        // Handle expand button click for mobile
         expandBtn.addEventListener('click', (e) => {
-            e.preventDefault();
             e.stopPropagation();
-            
-            try {
-                if (isDesktop()) {
-                    setStoredValue('sidebarCollapsed', 'false');
-                    applySidebarState();
-                } else {
-                    body.classList.add('sidebar-mobile-open');
-                }
-            } catch (error) {
-                console.warn('Error in expand button handler:', error);
-                if (isDesktop()) {
-                    body.classList.remove('sidebar-collapsed');
-                    sidebar.classList.remove('collapsed');
-                }
+            if (!isDesktop()) {
+                body.classList.toggle('sidebar-mobile-open');
             }
         });
-        
-        contentWrapper.addEventListener('click', () => {
-            if (body.classList.contains('sidebar-mobile-open')) {
+
+        // Close mobile sidebar when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!isDesktop() && body.classList.contains('sidebar-mobile-open') && !e.target.closest('#sidebar')) {
                 body.classList.remove('sidebar-mobile-open');
             }
         });
-        
-        let resizeTimeout;
-        let isResizeActive = false;
-        
-        const disableTransitions = () => {
-            if (!isResizeActive) {
-                isResizeActive = true;
-                document.body.classList.add('no-transition');
+
+        // Save sidebar width on resize (desktop only)
+        let isResizing = false;
+        sidebar.addEventListener('mousedown', e => {
+            if (Math.abs(sidebar.offsetWidth - e.offsetX) < 10) {
+                 isResizing = true;
             }
-        };
-        
-        const enableTransitions = () => {
-            if (isResizeActive) {
-                isResizeActive = false;
-                setTimeout(() => {
-                    document.body.classList.remove('no-transition');
-                }, 50);
-            }
-        };
-        
-        const handleResize = () => {
-            disableTransitions();
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                applySidebarState();
-                // Re-enable transitions after state is applied
-                setTimeout(enableTransitions, 100);
-            }, 150);
-        };
-        
-        window.addEventListener('resize', handleResize);
-        
-        // Handle orientation changes on mobile devices
-        if (window.screen && window.screen.orientation) {
-            window.screen.orientation.addEventListener('change', () => {
-                disableTransitions();
-                setTimeout(() => {
-                    applySidebarState();
-                    setTimeout(enableTransitions, 150);
-                }, 100);
-            });
-        }
-        
-        // Fallback for older browsers
-        window.addEventListener('orientationchange', () => {
-            disableTransitions();
-            setTimeout(() => {
-                applySidebarState();
-                setTimeout(enableTransitions, 150);
-            }, 100);
         });
-        
-        // Initialize on load
-        applySidebarState();
-        initSidebarWidth();
-        
-        // Cleanup function for potential future use
-        return () => {
-            if (resizeObserver) {
-                resizeObserver.disconnect();
+        document.addEventListener('mousemove', e => {
+            if (!isResizing || !isDesktop()) return;
+            const newWidth = e.clientX;
+            sidebar.style.width = `${newWidth}px`;
+        });
+        document.addEventListener('mouseup', () => {
+            if(isResizing) {
+                localStorage.setItem('sidebarWidth', sidebar.offsetWidth);
+                isResizing = false;
             }
-            window.removeEventListener('resize', handleResize);
-            window.removeEventListener('orientationchange', handleResize);
-            if (window.screen && window.screen.orientation) {
-                window.screen.orientation.removeEventListener('change', handleResize);
-            }
-        };
-    }
-    
-    // --- KANBAN DRAG & DROP ---
-    function initializeSortable() {
-        document.querySelectorAll('.kanban-column-body').forEach(column => {
-            if (Sortable.get(column)) { Sortable.get(column).destroy(); }
-            new Sortable(column, {
-                group: 'kanban',
-                animation: 150,
-                ghostClass: 'kanban-card-ghost',
-                onEnd: async (evt) => {
-                    if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
-                    
-                    const card = evt.item;
-                    const quoteId = card.dataset.id;
-                    const newStatus = evt.to.closest('.kanban-column').dataset.status;
-                    const oldColumn = evt.from;
-                    const oldIndex = evt.oldIndex;
-
-                    // Show loading state
-                    card.style.opacity = '0.5';
-                    card.style.pointerEvents = 'none';
-
-                    try {
-                        const response = await fetch('/admin/api/quoterequests/update-status', {
-                            method: 'POST',
-                            headers: { 
-                                'Content-Type': 'application/json', 
-                                'X-CSRFToken': csrfToken 
-                            },
-                            body: JSON.stringify({ 
-                                id: parseInt(quoteId), 
-                                status: newStatus 
-                            })
-                        });
-                        
-                        if (!response.ok) {
-                            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-                        }
-                        
-                        const result = await response.json();
-                        if (result.status !== 'ok') {
-                            throw new Error('Server returned error status');
-                        }
-                        
-                        notyf.success('Статус обновлен!');
-                        htmx.trigger('#kanban-board-container', 'updateKanban');
-                        
-                    } catch (error) {
-                        console.error('Kanban update error:', error);
-                        
-                        // Revert the move
-                        oldColumn.insertBefore(card, oldColumn.children[oldIndex] || null);
-                        
-                        let errorMessage = 'Не удалось обновить статус.';
-                        if (error.message.includes('401')) {
-                            errorMessage = 'Сессия истекла. Обновите страницу.';
-                        } else if (error.message.includes('403')) {
-                            errorMessage = 'Недостаточно прав.';
-                        }
-                        
-                        notyf.error(errorMessage);
-                    } finally {
-                        // Restore card appearance
-                        card.style.opacity = '';
-                        card.style.pointerEvents = '';
-                    }
-                }
-            });
         });
     }
     
-    // --- EXPORT LOGIC ---
-    function setupExportLogic() {
-        const listContent = document.getElementById('list-content');
-        if (!listContent || !document.getElementById('export-selected-btn')) return;
-
-        const updateButtonState = () => {
-            const selectedIds = Array.from(listContent.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
-            const count = selectedIds.length;
-            const exportBtn = document.getElementById('export-selected-btn');
-            const exportBtnText = document.getElementById('export-btn-text');
-            if(exportBtn) exportBtn.disabled = count === 0;
-            if(exportBtnText) exportBtnText.textContent = count > 0 ? `Экспорт выбранных (${count})` : 'Экспорт выбранных';
-        };
-        
-        listContent.addEventListener('change', (e) => {
-            if(e.target.id === 'select-all-checkbox') {
-                listContent.querySelectorAll('.row-checkbox').forEach(cb => { cb.checked = e.target.checked; });
-            }
-            updateButtonState();
-        });
-
-        const exportBtn = document.getElementById('export-selected-btn');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => {
-                const ids = Array.from(listContent.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value).join(',');
-                if (ids) window.location.href = `/admin/quoterequest/export/?ids=${ids}`;
-            });
-        }
-        
-        updateButtonState();
-    }
-
-
     // --- INITIALIZATION ---
     function init() {
         setupHtmx();
         initPopups();
         initSidebar();
-        initializeSortable();
-        setupExportLogic();
     }
-
+    
     init();
 
     // Re-initialize dynamic components after HTMX swaps
@@ -425,8 +143,5 @@ document.addEventListener('DOMContentLoaded', function() {
         if (event.detail.target.id === 'slide-over-content') {
             document.getElementById('slide-over-overlay')?.classList.add('show');
         }
-        
-        initializeSortable();
-        setupExportLogic();
     });
 });

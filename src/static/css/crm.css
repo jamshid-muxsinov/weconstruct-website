@@ -29,8 +29,8 @@
 
 /* Light theme variables */
 body.light {
-    --bg-main: #ffffff;
-    --bg-sidebar: #f8fafc;
+    --bg-main: #f8fafc;
+    --bg-sidebar: #ffffff;
     --surface-1: #ffffff;
     --surface-2: #f1f5f9;
     --border-color: #e2e8f0;
@@ -43,8 +43,8 @@ body.light {
     --status-yellow: #eab308;
     --status-red: #ef4444;
     --status-blue: #3b82f6;
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.07);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.07);
 }
 
 /* Theme toggle button */
@@ -69,15 +69,9 @@ body.light {
     border-color: var(--accent-primary);
 }
 
-.theme-toggle.active {
-    background: var(--accent-primary);
-    color: white;
-    border-color: var(--accent-primary);
-}
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { overflow-y: hidden; }
-body { font-family: var(--font-primary); background-color: var(--bg-main); color: var(--text-primary); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { font-family: var(--font-primary); background-color: var(--bg-main); color: var(--text-primary); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; transition: background-color 0.3s, color 0.3s; }
 a { color: var(--text-hyperlink); text-decoration: none; transition: var(--transition-fast); }
 a:hover { text-decoration: underline; }
 ul { list-style: none; }
@@ -89,7 +83,9 @@ input, button, select, textarea { font-family: inherit; color: inherit; border: 
    ========================================================================== */
 #crm-container { display: flex; height: 100vh; }
 #sidebar { 
-    width: 260px; 
+    width: var(--sidebar-width, 260px); 
+    min-width: 200px;
+    max-width: 450px;
     height: 100vh; 
     background-color: var(--bg-sidebar); 
     border-right: 1px solid var(--border-color); 
@@ -99,16 +95,10 @@ input, button, select, textarea { font-family: inherit; color: inherit; border: 
     flex-direction: column; 
     z-index: 1000; 
     flex-shrink: 0; 
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Возвращаем анимацию сюда */
+    resize: horizontal;
+    overflow: hidden;
+    transition: width 0.2s ease-out, transform 0.3s ease-out;
 }
-
-/* --- НАЧАЛО ИЗМЕНЕНИЯ: Решение проблемы с "дерганием" --- */
-/* Когда HTMX загружает новую страницу, мы на мгновение скрываем сайдбар, чтобы не было видно скачка ширины. */
-body.htmx-request #sidebar {
-    transition: none; /* Отключаем анимацию на время скрытия */
-    opacity: 0;
-}
-/* --- КОНЕЦ ИЗМЕНЕНИЯ --- */
 
 #content-wrapper { 
     flex-grow: 1; 
@@ -117,40 +107,25 @@ body.htmx-request #sidebar {
     flex-direction: column; 
     height: 100vh; 
 }
-#content-wrapper main { padding: 24px; flex-grow: 1; overflow-y: auto; }
-.main-header { display: flex; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background-color: rgba(17, 19, 23, 0.8); backdrop-filter: blur(8px); z-index: 999; flex-shrink: 0; }
+#content-wrapper main { padding: 24px; flex-grow: 1; overflow-y: auto; animation: fadeInUp 0.5s ease-out; }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+.main-header { display: flex; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background-color: color-mix(in srgb, var(--bg-main) 80%, transparent); backdrop-filter: blur(8px); z-index: 999; flex-shrink: 0; }
 .header-spacer { flex-grow: 1; }
-#sidebar .sidebar-header { padding: 24px; display: flex; align-items: center; gap: 12px; font-size: 1.25rem; font-weight: 600; }
+#sidebar .sidebar-header { padding: 24px; display: flex; align-items: center; gap: 12px; font-size: 1.25rem; font-weight: 600; flex-shrink: 0; }
 #sidebar .sidebar-header .logo-text { flex-grow: 1; white-space: nowrap; }
 #sidebar-collapse-btn { margin-left: auto; }
-#sidebar nav { flex-grow: 1; padding: 16px; overflow: hidden; }
+#sidebar nav { flex-grow: 1; padding: 16px; overflow-y: auto; overflow-x: hidden; }
 #sidebar .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--border-radius-md); color: var(--text-secondary); font-weight: 500; margin-bottom: 4px; white-space: nowrap; }
 #sidebar .nav-link .nav-icon { font-size: 1.5rem; width: 24px; text-align: center; flex-shrink: 0; }
 #sidebar .nav-link:hover { background-color: var(--surface-1); color: var(--text-primary); text-decoration: none; }
 #sidebar .nav-link.active { background-color: var(--accent-primary); color: #fff; }
-#sidebar .sidebar-footer { padding: 24px; border-top: 1px solid var(--border-color); white-space: nowrap; }
-
-body.sidebar-collapsed-init #sidebar,
-body.sidebar-collapsed #sidebar {
-    width: 80px;
-}
-body.sidebar-collapsed-init #sidebar .logo-text, 
-body.sidebar-collapsed-init #sidebar .nav-text, 
-body.sidebar-collapsed-init #sidebar #sidebar-collapse-btn,
-body.sidebar-collapsed #sidebar .logo-text, 
-body.sidebar-collapsed #sidebar .nav-text, 
-body.sidebar-collapsed #sidebar #sidebar-collapse-btn { 
-    display: none; 
-}
-body.sidebar-collapsed #sidebar .sidebar-header { padding: 24px 16px; justify-content: center; }
-body.sidebar-collapsed #sidebar .nav-link { justify-content: center; }
-body.sidebar-collapsed #sidebar .sidebar-footer { padding: 16px; }
+#sidebar .sidebar-footer { padding: 24px; border-top: 1px solid var(--border-color); white-space: nowrap; flex-shrink: 0; }
 
 #sidebar-expand-btn { display: none; }
-body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; }
 
 /* ==========================================================================
-   Generic Components ... (остальной CSS без изменений)
+   Generic Components
    ========================================================================== */
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
 .page-header h1 { font-size: 1.75rem; font-weight: 600; }
@@ -162,11 +137,11 @@ body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; }
 .btn-secondary { background-color: var(--surface-1); color: var(--text-primary); border: 1px solid var(--border-color); }
 .btn-secondary:hover { background-color: var(--surface-2); text-decoration: none; }
 .btn-danger { background-color: var(--status-red); color: #fff; }
-.btn-danger:hover { background-color: #ef4444; color: #fff; text-decoration: none; }
+.btn-danger:hover { background-color: color-mix(in srgb, var(--status-red) 90%, black); color: #fff; text-decoration: none; }
 .btn .bx { font-size: 1.25rem; }
 .btn-icon { background: none; border: none; color: var(--text-secondary); width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem; cursor: pointer; transition: var(--transition-fast); }
 .btn-icon:hover { background-color: var(--surface-2); color: var(--text-primary); }
-.btn-icon-danger:hover { background-color: rgba(248, 113, 113, 0.2); color: var(--status-red); }
+.btn-icon-danger:hover { background-color: color-mix(in srgb, var(--status-red) 20%, transparent); color: var(--status-red); }
 .card { background-color: var(--surface-1); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); padding: 24px; box-shadow: var(--shadow-md); }
 .input-group { margin-bottom: 20px; }
 .input-group label { display: block; margin-bottom: 8px; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); }
@@ -176,13 +151,13 @@ body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; }
 .error-text { color: var(--status-red); font-size: 0.8rem; margin-top: 4px; }
 .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 500; }
 .status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
-.status-new, .status-active { background-color: rgba(96, 165, 250, 0.1); color: var(--status-blue); }
+.status-new, .status-active { background-color: color-mix(in srgb, var(--status-blue) 15%, transparent); color: var(--status-blue); }
 .status-new::before, .status-active::before { background-color: var(--status-blue); }
-.status-in_progress { background-color: rgba(234, 179, 8, 0.1); color: var(--status-yellow); }
+.status-in_progress { background-color: color-mix(in srgb, var(--status-yellow) 15%, transparent); color: var(--status-yellow); }
 .status-in_progress::before { background-color: var(--status-yellow); }
-.status-completed { background-color: rgba(34, 197, 94, 0.1); color: var(--status-green); }
+.status-completed { background-color: color-mix(in srgb, var(--status-green) 15%, transparent); color: var(--status-green); }
 .status-completed::before { background-color: var(--status-green); }
-.status-cancelled, .status-is_used { background-color: rgba(239, 68, 68, 0.1); color: var(--status-red); }
+.status-cancelled, .status-is_used { background-color: color-mix(in srgb, var(--status-red) 15%, transparent); color: var(--status-red); }
 .status-cancelled::before, .status-is_used::before { background-color: var(--status-red); }
 .empty-list-placeholder { padding: 40px; text-align: center; color: var(--text-secondary); font-style: italic; }
 .user-profile { position: relative; }
@@ -208,44 +183,15 @@ body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; }
 .empty-notification-placeholder { padding: 24px; text-align: center; color: var(--text-secondary); font-size: 0.9rem; }
 .btn-link { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; border-radius: 50%; }
 .btn-link:hover { color: var(--text-primary); background-color: var(--surface-2); }
-.kanban-board { 
-  display: flex; 
-  gap: 16px; 
-  overflow-x: auto; 
-  padding-bottom: 16px; 
-  flex-grow: 1;
-  /* Mobile-first: stack vertically */
-  flex-direction: column;
-}
-
-/* Enhanced for larger screens */
-@media (min-width: 768px) {
-  .kanban-board {
-    flex-direction: row;
-  }
-}
-.kanban-column { 
-  width: 100%; /* Full width on mobile */
-  flex-shrink: 0; 
-  background-color: var(--bg-sidebar); 
-  border-radius: var(--border-radius-lg); 
-  display: flex; 
-  flex-direction: column;
-  margin-bottom: 16px;
-}
-
-/* Desktop styles */
-@media (min-width: 768px) {
-  .kanban-column {
-    width: 320px;
-    margin-bottom: 0;
-  }
-}
+.kanban-board { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 16px; flex-grow: 1; flex-direction: column; }
+@media (min-width: 768px) { .kanban-board { flex-direction: row; } }
+.kanban-column { width: 100%; flex-shrink: 0; background-color: var(--bg-sidebar); border-radius: var(--border-radius-lg); display: flex; flex-direction: column; margin-bottom: 16px; }
+@media (min-width: 768px) { .kanban-column { width: 320px; margin-bottom: 0; } }
 .kanban-column-header { padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
 .kanban-column-header h3 { font-weight: 600; font-size: 1rem; }
 .kanban-count { font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); background-color: var(--surface-1); padding: 2px 8px; border-radius: 999px; }
 .kanban-column-body { padding: 16px 8px; flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-.kanban-card { background-color: var(--surface-1); border-radius: var(--border-radius-md); padding: 16px; box-shadow: var(--shadow-md); cursor: pointer; transition: var(--transition-fast); border-left: 3px solid var(--border-color); display: flex; flex-direction: column; gap: 4px; }
+.kanban-card { position: relative; background-color: var(--surface-1); border-radius: var(--border-radius-md); padding: 16px; box-shadow: var(--shadow-md); cursor: pointer; transition: var(--transition-fast); border-left: 3px solid var(--border-color); display: flex; flex-direction: column; gap: 4px; }
 .kanban-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); background-color: var(--surface-2); }
 .kanban-card.status-new { border-left-color: var(--status-blue); }
 .kanban-card.status-in_progress { border-left-color: var(--status-yellow); }
@@ -254,124 +200,17 @@ body.sidebar-collapsed #sidebar-expand-btn { display: inline-flex; }
 .kanban-card-ghost { opacity: 0.4; background: var(--surface-2); }
 .kanban-card-chosen { opacity: 0.8; transform: scale(1.02); }
 .kanban-card-drag { opacity: 0.9; transform: rotate(3deg); z-index: 1000; }
-
-/* Mobile sidebar overlay */
-.mobile-sidebar-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1049;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-}
-
-.mobile-sidebar-overlay.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Bulk selection styles */
-.kanban-card.selected {
-  border: 2px solid var(--accent-primary);
-  background-color: color-mix(in srgb, var(--accent-primary) 10%, var(--surface-1));
-}
-
-.bulk-actions-bar {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--surface-1);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 12px 20px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  box-shadow: var(--shadow-lg);
-  z-index: 1040;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-}
-
-.bulk-actions-bar.visible {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Advanced filters */
-.advanced-filters {
-  background: var(--surface-1);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  padding: 16px;
-  margin-bottom: 20px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 768px) {
-  .advanced-filters {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .advanced-filters > * {
-    width: 100%;
-  }
-}
-
-.filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: var(--transition-fast);
-}
-
-.filter-chip.active {
-  background: var(--accent-primary);
-  color: white;
-  border-color: var(--accent-primary);
-}
-
-.filter-chip:hover {
-  background: var(--surface-2);
-  border-color: var(--accent-primary);
-}
-
-/* Kanban card selection checkbox */
-.kanban-card-checkbox {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 20px;
-  height: 20px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.kanban-card:hover .kanban-card-checkbox,
-.kanban-card.selected .kanban-card-checkbox {
-  opacity: 1;
-}
+.bulk-actions-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--surface-1); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 20px; display: flex; gap: 12px; align-items: center; box-shadow: var(--shadow-lg); z-index: 1040; transition: all 0.3s ease; }
+.advanced-filters { background: var(--surface-1); border: 1px solid var(--border-color); border-radius: var(--border-radius-lg); padding: 16px; margin-bottom: 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 768px) { .advanced-filters { flex-direction: column; align-items: stretch; } .advanced-filters > * { width: 100%; } }
+.filter-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--surface-2); border: 1px solid var(--border-color); border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: var(--transition-fast); }
+.filter-chip.active { background: var(--accent-primary); color: white; border-color: var(--accent-primary); }
+.filter-chip:hover { background: var(--surface-2); border-color: var(--accent-primary); }
 .kanban-card .card-title { font-weight: 600; }
 .kanban-card .card-subtitle { font-size: 0.875rem; color: var(--text-secondary); }
 .kanban-card .card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-secondary); margin-top: 12px; }
 .kanban-card .assignee { display: flex; align-items: center; gap: 6px; }
-.kanban-card .pinned-note { background-color: rgba(234, 179, 8, 0.1); color: var(--status-yellow); padding: 8px 10px; border-radius: var(--border-radius-md); font-size: 0.8rem; display: flex; align-items: center; gap: 8px; margin-top: 10px; border: 1px solid rgba(234, 179, 8, 0.2); }
+.kanban-card .pinned-note { background-color: color-mix(in srgb, var(--status-yellow) 10%, transparent); color: var(--status-yellow); padding: 8px 10px; border-radius: var(--border-radius-md); font-size: 0.8rem; display: flex; align-items: center; gap: 8px; margin-top: 10px; border: 1px solid color-mix(in srgb, var(--status-yellow) 20%, transparent); }
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 1001; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; backdrop-filter: blur(5px); }
 .modal-overlay.show { opacity: 1; visibility: visible; }
 .modal-content { background: var(--surface-1); border-radius: var(--border-radius-lg); width: 90%; max-width: 800px; max-height: 90vh; box-shadow: var(--shadow-lg); transform: scale(0.95); transition: transform 0.3s ease; display: flex; flex-direction: column; overflow: hidden; }
@@ -437,7 +276,7 @@ legend { font-size: 1.25rem; font-weight: 500; padding: 0 10px; margin-left: 10p
 .login-header { text-align: center; margin-bottom: 24px; }
 .login-header .brand { font-size: 1.5rem; font-weight: 600; display: inline-flex; gap: 8px; align-items: center; color: var(--text-primary); }
 .login-header p { color: var(--text-secondary); margin-top: 8px; }
-.login-error-note { background-color: rgba(239, 68, 68, 0.1); color: var(--status-red); padding: 12px; border-radius: var(--border-radius-md); margin-bottom: 16px; font-size: 0.875rem; text-align: center; border: 1px solid var(--status-red); }
+.login-error-note { background-color: color-mix(in srgb, var(--status-red) 10%, transparent); color: var(--status-red); padding: 12px; border-radius: var(--border-radius-md); margin-bottom: 16px; font-size: 0.875rem; text-align: center; border: 1px solid var(--status-red); }
 .filter-form { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--text-secondary); }
 .switch { position: relative; display: inline-block; width: 38px; height: 22px; }
 .switch input { opacity: 0; width: 0; height: 0; }
@@ -450,12 +289,10 @@ input:checked + .slider:before { transform: translateX(16px); }
    Responsive
    ========================================================================== */
 @media (max-width: 992px) {
-    #sidebar { position: fixed; transform: translateX(-100%); z-index: 1010; }
-    body.sidebar-mobile-open #sidebar { transform: translateX(0); }
-    #content-wrapper::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; }
-    body.sidebar-mobile-open #content-wrapper::before { opacity: 1; visibility: visible; }
-    #sidebar-collapse-btn { display: none; }
-    #sidebar-expand-btn { display: inline-flex; z-index: 1011; }
+    #sidebar { position: fixed; transform: translateX(-100%); z-index: 1050; resize: none; width: 260px; }
+    body.sidebar-mobile-open #sidebar { transform: translateX(0); box-shadow: var(--shadow-xl); }
+    #sidebar-expand-btn { display: inline-flex; }
+    #sidebar-collapse-btn, #sidebar .sidebar-footer { display: none; }
     .main-header { padding: 16px; }
     #content-wrapper main { padding: 16px; }
     .page-header { flex-direction: column; align-items: flex-start; }
@@ -469,15 +306,15 @@ input:checked + .slider:before { transform: translateX(16px); }
     .styled-table td::before { content: attr(data-label); font-weight: 600; color: var(--text-secondary); text-align: left; margin-right: 16px; }
     [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
 }
-@media (max-width: 480px) {
-    .profile-name { display: none; }
-}
-.htmx-indicator {
-    display: none;
-}
-.htmx-request .htmx-indicator {
-    display: inline-block;
-}
-.htmx-request.htmx-indicator {
-    display: inline-block;
+@media (max-width: 480px) { .profile-name { display: none; } }
+
+/* HTMX Indicators */
+.htmx-indicator { display: none; }
+.htmx-request .htmx-indicator { display: inline-block; }
+.htmx-request.htmx-indicator { display: inline-block; }
+
+/* Transition control for smoother nav */
+body.navigating #content-wrapper main {
+    opacity: 0.7;
+    transition: opacity 0.1s ease-in;
 }

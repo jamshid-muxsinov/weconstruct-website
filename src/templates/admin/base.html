@@ -2,8 +2,7 @@
 <html lang="ru">
 
 <head>
-    <meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta charset="UTF-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token(request) }}">
     <meta name="current-user-id" content="{{ user.id if user else '' }}">
     
@@ -39,7 +38,6 @@
     <script src="https://unpkg.com/htmx.org/dist/ext/sse.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <!-- Anti-flicker script -->
@@ -104,7 +102,14 @@
                         <i class='bx bx-chevron-down' :class="{'bx-rotate-180': open}"></i>
                     </button>
 
-                    <div x-show="open" x-transition id="profile-menu">
+                    <div x-show="open" x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 transform scale-95"
+                         x-transition:enter-end="opacity-100 transform scale-100"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 transform scale-100"
+                         x-transition:leave-end="opacity-0 transform scale-95"
+                         id="profile-menu" 
+                         style="display: none;">
                         <div id="notifications-container"
                              hx-get="{{ request.url_for('admin_htmx_notifications') }}"
                              hx-trigger="load, click from:#profile-menu-button"
