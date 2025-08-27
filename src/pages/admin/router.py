@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 
 from . import auth, kanban, dashboard, crud, htmx, api, profile, contact, importer
 
-router = APIRouter(prefix="/admin", tags=["Admin Pages"])
+router = APIRouter(tags=["Admin Pages"])
 
 unprotected_router = APIRouter(prefix="/admin", tags=["Admin Auth"])
 
