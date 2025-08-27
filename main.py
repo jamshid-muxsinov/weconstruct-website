@@ -13,8 +13,6 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette_wtf import CSRFProtectMiddleware
 from src.core.config import get_settings
 from src.core.db import check_db_connection
-from src.core.security import get_current_active_user
-from src.pages.admin.router import router as admin_router, unprotected_router
 from src.pages.shop_pages import router as shop_router, root_router as shop_root_router
 from src.core.db import check_db_connection, async_session_factory 
 from src.services.user_service import create_first_superuser
@@ -79,8 +77,7 @@ app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
 add_pagination(app)
 
-app.include_router(unprotected_router)
-app.include_router(admin_router, dependencies=[Depends(get_current_active_user)]) 
+# Include only shop routers - admin functionality moved to admin_app.py 
 
 site_router = APIRouter(prefix="/{locale}", dependencies=[Depends(set_locale)])
 site_router.include_router(shop_root_router) 
@@ -102,9 +99,9 @@ async def get_sitemap():
 
 @app.exception_handler(401)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
+    # For main site, redirect to admin subdomain for login
     if "text/html" in request.headers.get("accept", ""):
-        login_url = request.url_for('admin_login')
-        return RedirectResponse(url=f"{login_url}?next={request.url.path}", status_code=302)
+        return RedirectResponse(url="https://admin.weconstruct.uz/login", status_code=302)
     return JSONResponse(
         status_code=401,
         content={"detail": "Not authenticated"},
