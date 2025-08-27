@@ -38,8 +38,7 @@ if not settings.DEBUG:
     fastapi_kwargs["redoc_url"] = None
     fastapi_kwargs["openapi_url"] = None
 
-router = APIRouter(prefix="/admin", tags=["Admin Pages"])
-unprotected_router = APIRouter(prefix="/admin", tags=["Admin Auth"])
+app = FastAPI(**fastapi_kwargs, root_path=settings.ROOT_PATH)
 
 async def set_locale(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
     if locale not in ["ru", "uz"]:
