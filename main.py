@@ -1,14 +1,16 @@
-import logging 
-import sys  
+# src/main.py
+
+import logging
+import sys
 import traceback
 from starlette.responses import Response, FileResponse
-from src.pages.jinja_config import templates 
+from src.pages.jinja_config import templates
 import uvicorn
-from fastapi import FastAPI, Request, Depends, APIRouter, Path 
+from fastapi import FastAPI, Request, Depends, APIRouter, Path
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_pagination import add_pagination
-from pathlib import Path as FilePath 
+from pathlib import Path as FilePath
 from starlette.middleware.sessions import SessionMiddleware
 from starlette_wtf import CSRFProtectMiddleware
 from src.core.config import get_settings
@@ -16,7 +18,7 @@ from src.core.db import check_db_connection
 from src.core.security import get_current_active_user
 from src.pages.admin.router import router as admin_router, unprotected_router
 from src.pages.shop_pages import router as shop_router, root_router as shop_root_router
-from src.core.db import check_db_connection, async_session_factory 
+from src.core.db import check_db_connection, async_session_factory
 from src.services.user_service import create_first_superuser
 from src.core.cache import init_cache, cleanup_cache
 from src.core.middleware import CacheMiddleware, RateLimitMiddleware
@@ -42,7 +44,7 @@ app = FastAPI(**fastapi_kwargs, root_path=settings.ROOT_PATH)
 
 async def set_locale(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
     if locale not in ["ru", "uz"]:
-        locale = "ru" 
+        locale = "ru"
     request.state.locale = locale
 
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
@@ -56,21 +58,21 @@ app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
 async def on_startup():
     log.info("Application startup...")
     await check_db_connection()
-    log.info("Creating first superuser if necessary...")        
+    log.info("Creating first superuser if necessary...")
     async with async_session_factory() as session:
         await create_first_superuser(session)
     log.info("Superuser check complete.")
     log.info("Initializing cache...")
     await init_cache()
-    log.info("Cache initialization complete.") 
+    log.info("Cache initialization complete.")
     await warm_up_cache()
     import asyncio
     asyncio.create_task(schedule_cache_cleanup())
-    log.info("Cache cleanup scheduler started.") 
+    log.info("Cache cleanup scheduler started.")
 
 @app.on_event("shutdown")
 async def on_shutdown():
-    log.info("Application shutdown...") 
+    log.info("Application shutdown...")
     await cleanup_cache()
     log.info("Cache cleanup complete.")
 
@@ -79,17 +81,29 @@ app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
 add_pagination(app)
 
-app.include_router(unprotected_router)
-app.include_router(admin_router, dependencies=[Depends(get_current_active_user)]) 
+# --- ИЗМЕНЕННЫЙ БЛОК ---
 
+# Подключаем роутеры админки (они уже имеют префикс /admin из router.py)
+app.include_router(unprotected_router)
+app.include_router(admin_router, dependencies=[Depends(get_current_active_user)])
+
+# Создаем отдельный роутер для корневого редиректа, чтобы он не мешал админке
+root_redirect_router = APIRouter()
+@root_redirect_router.get("/", include_in_schema=False)
+async def root_redirect_to_ru(request: Request):
+    return RedirectResponse(url="/ru")
+
+# Подключаем роутеры публичного сайта
 site_router = APIRouter(prefix="/{locale}", dependencies=[Depends(set_locale)])
-site_router.include_router(shop_root_router) 
-site_router.include_router(shop_router, prefix="/shop") 
+site_router.include_router(shop_root_router)
+site_router.include_router(shop_router, prefix="/shop")
 app.include_router(site_router)
 
-@app.get("/", include_in_schema=False)
-async def root_redirect(request: Request):
-    return RedirectResponse(url="/ru")
+# Подключаем корневой редирект в самом конце, чтобы он имел самый низкий приоритет
+app.include_router(root_redirect_router)
+
+# --- КОНЕЦ ИЗМЕНЕННОГО БЛОКА ---
+
 
 @app.get("/robots.txt", include_in_schema=False, name="robots_txt")
 @app.get("/robots.txt/", include_in_schema=False)
@@ -102,9 +116,13 @@ async def get_sitemap():
 
 @app.exception_handler(401)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
-    if "text/html" in request.headers.get("accept", ""):
+    # Проверяем, пришел ли запрос на URL, начинающийся с /admin
+    if request.url.path.startswith("/admin") and "text/html" in request.headers.get("accept", ""):
+        # Для админки делаем редирект на страницу логина
         login_url = request.url_for('admin_login')
         return RedirectResponse(url=f"{login_url}?next={request.url.path}", status_code=302)
+    
+    # Для всех остальных случаев (например, API запросы) возвращаем JSON
     return JSONResponse(
         status_code=401,
         content={"detail": "Not authenticated"},
@@ -133,8 +151,7 @@ async def not_found_exception_handler(request: Request, exc: Exception) -> Respo
         }
         return templates.TemplateResponse("shop/error.html", context, status_code=404)
     else:
-        if hasattr(request.scope.get('route'), 'name') and request.scope['route'].name in ['robots_txt', 'get_sitemap']:
-            return Response(status_code=404, content="Not found")
+        # Для админки и API возвращаем JSON
         return JSONResponse(status_code=404, content={"detail": "Not found"})
 
 @app.exception_handler(Exception)
