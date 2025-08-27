@@ -104,9 +104,7 @@ async def get_sitemap():
 @app.exception_handler(401)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
     if "text/html" in request.headers.get("accept", ""):
-        # --- ИСПРАВЛЕНИЕ: Генерируем URL правильно, даже с префиксом ---
         login_url = request.app.url_path_for('admin_login')
-        # Если приложение работает за прокси, next должен быть полным путем
         next_path = request.url.path
         if request.scope.get('root_path'):
             next_path = request.scope['root_path'] + next_path
