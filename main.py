@@ -38,7 +38,8 @@ if not settings.DEBUG:
     fastapi_kwargs["redoc_url"] = None
     fastapi_kwargs["openapi_url"] = None
 
-app = FastAPI(**fastapi_kwargs, root_path=settings.ROOT_PATH)
+# --- ИСПРАВЛЕНИЕ: Создаем 'app' до его использования ---
+app = FastAPI(**fastapi_kwargs)
 
 async def set_locale(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
     if locale not in ["ru", "uz"]:
@@ -103,8 +104,14 @@ async def get_sitemap():
 @app.exception_handler(401)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
     if "text/html" in request.headers.get("accept", ""):
-        login_url = request.url_for('admin_login')
-        return RedirectResponse(url=f"{login_url}?next={request.url.path}", status_code=302)
+        # --- ИСПРАВЛЕНИЕ: Генерируем URL правильно, даже с префиксом ---
+        login_url = request.app.url_path_for('admin_login')
+        # Если приложение работает за прокси, next должен быть полным путем
+        next_path = request.url.path
+        if request.scope.get('root_path'):
+            next_path = request.scope['root_path'] + next_path
+        return RedirectResponse(url=f"{login_url}?next={next_path}", status_code=302)
+
     return JSONResponse(
         status_code=401,
         content={"detail": "Not authenticated"},
@@ -121,7 +128,7 @@ def _ensure_locale(request: Request):
 
 @app.exception_handler(404)
 async def not_found_exception_handler(request: Request, exc: Exception) -> Response:
-    is_main_site = request.url.path.startswith(("/ru", "/uz")) or request.url.path == "/"
+    is_main_site = not request.url.path.startswith("/admin")
     
     if is_main_site and "text/html" in request.headers.get("accept", ""):
         _ensure_locale(request)
@@ -133,8 +140,6 @@ async def not_found_exception_handler(request: Request, exc: Exception) -> Respo
         }
         return templates.TemplateResponse("shop/error.html", context, status_code=404)
     else:
-        if hasattr(request.scope.get('route'), 'name') and request.scope['route'].name in ['robots_txt', 'get_sitemap']:
-            return Response(status_code=404, content="Not found")
         return JSONResponse(status_code=404, content={"detail": "Not found"})
 
 @app.exception_handler(Exception)
@@ -144,7 +149,7 @@ async def generic_exception_handler(request: Request, exc: Exception) -> Respons
     traceback.print_exc()
     print("="*100)
     
-    is_main_site = request.url.path.startswith(("/ru", "/uz")) or request.url.path == "/"
+    is_main_site = not request.url.path.startswith("/admin")
     
     if is_main_site and "text/html" in request.headers.get("accept", ""):
         _ensure_locale(request)
