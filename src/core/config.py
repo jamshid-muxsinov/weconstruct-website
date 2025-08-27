@@ -1,7 +1,6 @@
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional, List
-
 class Settings(BaseSettings):
     PROJECT_NAME: str = "WeConstruct CRM"
     DEBUG: bool = True
@@ -20,9 +19,9 @@ class Settings(BaseSettings):
     REDIS_URL: Optional[str] = "redis://redis:6379/0"
     REDIS_TTL: int = 300
     CACHE_ENABLED: bool = True
-
+     
     ROOT_PATH: str = ""
-
+    
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 @lru_cache

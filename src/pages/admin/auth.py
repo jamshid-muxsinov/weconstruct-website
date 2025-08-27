@@ -6,7 +6,6 @@ from fastapi import APIRouter, Request, Depends, HTTPException, status, Form, Qu
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 import wtforms
-from urllib.parse import urlparse, urlunparse
 
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
@@ -55,48 +54,29 @@ async def login_for_access_token(
             "error": "Неверное имя пользователя или пароль."
         }, status_code=401)
 
-    # --- ИСПРАВЛЕНИЕ ЛОГИКИ ПЕРЕНАПРАВЛЕНИЯ ---
-    
-    # 1. Создаем токен
+    # Создаем токен
     expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     token = create_access_token(data={"sub": user.username}, expires_delta=expires)
     
-    # 2. Определяем URL для перенаправления
-    # Пытаемся получить параметр 'next' из URL (?next=/admin/some/page)
-    next_url = request.query_params.get("next")
+    # Создаем редирект на главную страницу админки
+    redirect_url = request.url_for('admin_index')
+    response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
     
-    # Проверка безопасности: убеждаемся, что 'next_url' ведет на тот же сайт
-    if next_url:
-        parsed_next = urlparse(next_url)
-        if parsed_next.netloc and parsed_next.netloc != request.url.hostname:
-            # Если кто-то пытается подставить внешний URL, отправляем на дашборд
-            next_url = None 
-    
-    # Если 'next_url' не был предоставлен или был небезопасным,
-    # используем URL дашборда по умолчанию
-    if not next_url:
-        # Используем правильное имя маршрута для дашборда
-        next_url = request.url_for('admin_dashboard')
-
-    response = RedirectResponse(url=next_url, status_code=status.HTTP_303_SEE_OTHER)
-    
-    # 3. Устанавливаем токен в безопасную HttpOnly cookie
+    # Устанавливаем токен в безопасную HttpOnly cookie
     response.set_cookie(
         key="access_token", 
         value=token, 
         httponly=True,
         samesite="lax",
-        secure=not settings.DEBUG,  # Использовать secure cookies в продакшене
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        secure=not settings.DEBUG,  # Use secure cookies in production
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60  # Set explicit expiration
     )
     
     return response
 
 @router.get("/logout", name="admin_logout")
 async def logout_page(request: Request):
-    # Убедимся, что logout ведет на страницу входа в админку
-    login_url = request.url_for('admin_login')
-    response = RedirectResponse(url=login_url)
+    response = RedirectResponse(url="/admin/login")
     response.delete_cookie("access_token")
     return response
 
