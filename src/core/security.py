@@ -12,7 +12,7 @@ from src.models.shop_models import User
 from src.services.user_service import get_user_by_username
 from src.schemas.user_schemas import TokenData
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/admin/login/token")
 settings = get_settings()
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):

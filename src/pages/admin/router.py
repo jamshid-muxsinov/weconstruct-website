@@ -1,3 +1,5 @@
+# src/pages/admin/router.py
+
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 from . import auth
@@ -10,18 +12,22 @@ from . import htmx
 from . import api
 from . import importer
 
-router = APIRouter()
+# Главный роутер админки с префиксом. Все вложенные роутеры получат этот префикс.
+router = APIRouter(prefix="/admin")
 
-@router.get("/", include_in_schema=False)
+# Роутер для страниц без защиты (логин/регистрация), также с префиксом.
+unprotected_router = APIRouter(prefix="/admin")
+
+
+@router.get("/", include_in_schema=False, name="admin_root")
 async def admin_root_redirect(request: Request):
     """
-    Главная функция этого файла.
-    Перенаправляет с корневого адреса админки (/admin/) на дашборд (/admin/dashboard).
-    Это "домашняя страница" по умолчанию для CRM.
+    Перенаправляет с /admin/ на /admin/dashboard.
     """
     dashboard_url = request.url_for('admin_dashboard')
     return RedirectResponse(url=dashboard_url)
 
+# Подключаем все модули админки к главному роутеру
 router.include_router(dashboard.router)
 router.include_router(kanban.router)
 router.include_router(crud.router)
@@ -31,5 +37,5 @@ router.include_router(importer.router)
 router.include_router(htmx.router)
 router.include_router(api.router)
 
-unprotected_router = APIRouter()
+# Роутер аутентификации подключаем к unprotected_router
 unprotected_router.include_router(auth.router)
