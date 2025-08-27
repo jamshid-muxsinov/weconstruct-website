@@ -1,22 +1,24 @@
-import logging 
-import sys  
+import logging
+import sys
 import traceback
 from starlette.responses import Response, FileResponse
-from src.pages.jinja_config import templates 
+from src.pages.jinja_config import templates
 import uvicorn
-from fastapi import FastAPI, Request, Depends, APIRouter, Path 
+from fastapi import FastAPI, Request, Depends, APIRouter, Path
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi_pagination import add_pagination
-from pathlib import Path as FilePath 
+from pathlib import Path as FilePath
 from starlette.middleware.sessions import SessionMiddleware
 from starlette_wtf import CSRFProtectMiddleware
 from src.core.config import get_settings
 from src.core.db import check_db_connection
 from src.core.security import get_current_active_user
+# Импортируем роутеры из файлов админки
 from src.pages.admin.router import router as admin_router, unprotected_router
+# Импортируем роутеры для публичного сайта
 from src.pages.shop_pages import router as shop_router, root_router as shop_root_router
-from src.core.db import check_db_connection, async_session_factory 
+from src.core.db import check_db_connection, async_session_factory
 from src.services.user_service import create_first_superuser
 from src.core.cache import init_cache, cleanup_cache
 from src.core.middleware import CacheMiddleware, RateLimitMiddleware
@@ -42,7 +44,7 @@ app = FastAPI(**fastapi_kwargs)
 
 async def set_locale(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
     if locale not in ["ru", "uz"]:
-        locale = "ru" 
+        locale = "ru"
     request.state.locale = locale
 
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
@@ -56,21 +58,21 @@ app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
 async def on_startup():
     log.info("Application startup...")
     await check_db_connection()
-    log.info("Creating first superuser if necessary...")        
+    log.info("Creating first superuser if necessary...")
     async with async_session_factory() as session:
         await create_first_superuser(session)
     log.info("Superuser check complete.")
     log.info("Initializing cache...")
     await init_cache()
-    log.info("Cache initialization complete.") 
+    log.info("Cache initialization complete.")
     await warm_up_cache()
     import asyncio
     asyncio.create_task(schedule_cache_cleanup())
-    log.info("Cache cleanup scheduler started.") 
+    log.info("Cache cleanup scheduler started.")
 
 @app.on_event("shutdown")
 async def on_shutdown():
-    log.info("Application shutdown...") 
+    log.info("Application shutdown...")
     await cleanup_cache()
     log.info("Cache cleanup complete.")
 
@@ -79,13 +81,27 @@ app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
 add_pagination(app)
 
-app.include_router(unprotected_router)
-app.include_router(admin_router, dependencies=[Depends(get_current_active_user)]) 
 
+# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Объединение роутеров админки ---
+# Создаем один главный роутер для всей админ-панели с префиксом /admin
+admin_panel_router = APIRouter(prefix="/admin")
+
+# Подключаем роутеры БЕЗ защиты (логин, регистрация)
+admin_panel_router.include_router(unprotected_router)
+# Подключаем роутеры С защитой (основная часть админки)
+admin_panel_router.include_router(admin_router, dependencies=[Depends(get_current_active_user)])
+
+# Подключаем главный роутер админки к приложению
+app.include_router(admin_panel_router)
+# --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+
+
+# --- Роутеры публичного сайта (остаются без изменений) ---
 site_router = APIRouter(prefix="/{locale}", dependencies=[Depends(set_locale)])
-site_router.include_router(shop_root_router) 
-site_router.include_router(shop_router, prefix="/shop") 
+site_router.include_router(shop_root_router)
+site_router.include_router(shop_router, prefix="/shop")
 app.include_router(site_router)
+
 
 @app.get("/", include_in_schema=False)
 async def root_redirect(request: Request):
@@ -102,13 +118,16 @@ async def get_sitemap():
 
 @app.exception_handler(401)
 async def unauthorized_exception_handler(request: Request, exc: Exception):
+    # Обработка неавторизованного доступа к HTML-страницам
     if "text/html" in request.headers.get("accept", ""):
+        # Важно: используем имя роута из auth.py
         login_url = request.app.url_path_for('admin_login')
         next_path = request.url.path
         if request.scope.get('root_path'):
             next_path = request.scope['root_path'] + next_path
         return RedirectResponse(url=f"{login_url}?next={next_path}", status_code=302)
 
+    # Стандартный ответ для API-запросов
     return JSONResponse(
         status_code=401,
         content={"detail": "Not authenticated"},
@@ -126,7 +145,7 @@ def _ensure_locale(request: Request):
 @app.exception_handler(404)
 async def not_found_exception_handler(request: Request, exc: Exception) -> Response:
     is_main_site = not request.url.path.startswith("/admin")
-    
+
     if is_main_site and "text/html" in request.headers.get("accept", ""):
         _ensure_locale(request)
         context = {
@@ -137,6 +156,7 @@ async def not_found_exception_handler(request: Request, exc: Exception) -> Respo
         }
         return templates.TemplateResponse("shop/error.html", context, status_code=404)
     else:
+        # Для админки и API-запросов возвращаем JSON
         return JSONResponse(status_code=404, content={"detail": "Not found"})
 
 @app.exception_handler(Exception)
@@ -145,9 +165,9 @@ async def generic_exception_handler(request: Request, exc: Exception) -> Respons
     print(f"Unhandled exception for path: {request.url.path}")
     traceback.print_exc()
     print("="*100)
-    
+
     is_main_site = not request.url.path.startswith("/admin")
-    
+
     if is_main_site and "text/html" in request.headers.get("accept", ""):
         _ensure_locale(request)
         context = {
@@ -163,7 +183,7 @@ async def generic_exception_handler(request: Request, exc: Exception) -> Respons
             status_code=500,
             content={"detail": "Internal server error", "error": str(exc) if settings.DEBUG else None}
         )
-    else:
+    else: # Для HTML-страниц админки
         context = {"request": request, "error_message": "Произошла внутренняя ошибка сервера."}
         return templates.TemplateResponse("admin/500.html", context, status_code=500)
 
