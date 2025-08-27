@@ -32,27 +32,6 @@ services:
       timeout: 10s     
       retries: 5        
       start_period: 30s 
-
-  admin:
-    build: .
-    command: gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8001 admin_app:admin_app
-    environment:
-      - FORWARDED_ALLOW_IPS=*
-      - TZ=Asia/Tashkent
-    volumes:
-      - ./src:/app/src
-      - media_volume:/app/media
-    depends_on:
-      - db
-      - redis
-    env_file: .env
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/login"]
-      interval: 30s    
-      timeout: 10s     
-      retries: 5        
-      start_period: 30s 
       
   nginx:
     image: nginx:latest
@@ -66,8 +45,6 @@ services:
       - media_volume:/app/media:ro
     depends_on:
       web:
-        condition: service_healthy
-      admin:
         condition: service_healthy
     restart: unless-stopped
     command: nginx -g 'daemon off;'

@@ -12,13 +12,11 @@ from . import htmx
 from . import api
 from . import importer
 
-# Original routers with /admin prefix (for legacy main app)
+# Главный роутер админки с префиксом. Все вложенные роутеры получат этот префикс.
 router = APIRouter(prefix="/admin")
-unprotected_router = APIRouter(prefix="/admin")
 
-# New routers without prefix (for admin subdomain app)
-admin_router_no_prefix = APIRouter()
-unprotected_admin_router_no_prefix = APIRouter()
+# Роутер для страниц без защиты (логин/регистрация), также с префиксом.
+unprotected_router = APIRouter(prefix="/admin")
 
 
 @router.get("/", include_in_schema=False, name="admin_root")
@@ -29,7 +27,7 @@ async def admin_root_redirect(request: Request):
     dashboard_url = request.url_for('admin_dashboard')
     return RedirectResponse(url=dashboard_url)
 
-# Подключаем все модули админки к главному роутеру (с префиксом /admin)
+# Подключаем все модули админки к главному роутеру
 router.include_router(dashboard.router)
 router.include_router(kanban.router)
 router.include_router(crud.router)
@@ -41,16 +39,3 @@ router.include_router(api.router)
 
 # Роутер аутентификации подключаем к unprotected_router
 unprotected_router.include_router(auth.router)
-
-# Подключаем все модули админки к роутеру без префикса (для admin.weconstruct.uz)
-admin_router_no_prefix.include_router(dashboard.router)
-admin_router_no_prefix.include_router(kanban.router)
-admin_router_no_prefix.include_router(crud.router)
-admin_router_no_prefix.include_router(contact.router)
-admin_router_no_prefix.include_router(profile.router)
-admin_router_no_prefix.include_router(importer.router)
-admin_router_no_prefix.include_router(htmx.router)
-admin_router_no_prefix.include_router(api.router)
-
-# Роутер аутентификации для subdomain app
-unprotected_admin_router_no_prefix.include_router(auth.router)
