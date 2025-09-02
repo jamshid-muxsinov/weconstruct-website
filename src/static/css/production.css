@@ -1973,3 +1973,40 @@ select {
   * { background: white !important; color: black !important; box-shadow: none !important; }
   .page-title, .section-title, .text-primary { color: black !important; }
 }
+/* ===== NEW: Customization Note in Modal ===== */
+.customization-note {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: var(--primary-50);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--primary-light);
+}
+
+.customization-note__icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    background-color: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.customization-note__text h5 {
+    margin: 0 0 0.25rem 0;
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.customization-note__text p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+}
