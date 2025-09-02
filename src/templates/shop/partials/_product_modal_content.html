@@ -155,6 +155,18 @@
                     </div>
                 {% endif %}
 
+                 <!-- БЛОК С НАПОМИНАНИЕМ О ВЫБОРЕ МАТЕРИАЛОВ -->
+                <div class="customization-note">
+                    <div class="customization-note__icon">
+                        <i class="fas fa-drafting-compass"></i>
+                    </div>
+                    <div class="customization-note__text">
+                        <h5>{% if request.state.locale == 'uz' %}Sizning loyihangiz, sizning tanlovingiz!{% else %}Ваш проект — ваш выбор!{% endif %}</h5>
+                        <p>{% if request.state.locale == 'uz' %}Har qanday loyihaning tashqi va ichki pardoz materiallarini byudjetingiz va didingizga mos ravishda o'zgartirishimiz mumkin.{% else %}Мы можем изменить материалы внешней и внутренней отделки в любом проекте под ваш бюджет и вкус.{% endif %}</p>
+                    </div>
+                </div>
+
+                
                 <div id="modal-form-wrapper">
                     {% include 'shop/partials/_quote_form.html' %}
                 </div>
