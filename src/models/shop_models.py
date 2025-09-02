@@ -130,16 +130,16 @@ class Product(Base):
     name_uz: Mapped[Optional[str]] = mapped_column(String(200))
     slug: Mapped[str] = mapped_column(String(200), unique=True, index=True)
     
-    short_description_ru: Mapped[Optional[str]] = mapped_column(String(255))
-    short_description_uz: Mapped[Optional[str]] = mapped_column(String(255))
+    short_description_ru: Mapped[Optional[str]] = mapped_column(Text)
+    short_description_uz: Mapped[Optional[str]] = mapped_column(Text)
     
     full_description_ru: Mapped[Optional[str]] = mapped_column(Text)
     full_description_uz: Mapped[Optional[str]] = mapped_column(Text)
     
     main_image: Mapped[Optional[str]] = mapped_column(String(100))
     
-    dimensions_ru: Mapped[Optional[str]] = mapped_column(String(255), comment="Размеры (RU)")
-    dimensions_uz: Mapped[Optional[str]] = mapped_column(String(255), comment="O'lchamlari (UZ)")
+    dimensions_ru: Mapped[Optional[str]] = mapped_column(Text, comment="Размеры (RU)")
+    dimensions_uz: Mapped[Optional[str]] = mapped_column(Text, comment="O'lchamlari (UZ)")
 
     materials_ru: Mapped[Optional[str]] = mapped_column(Text, comment="Материалы (RU), через новую строку")
     materials_uz: Mapped[Optional[str]] = mapped_column(Text, comment="Materiallar (UZ), через новую строку")
