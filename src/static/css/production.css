@@ -2010,64 +2010,60 @@ select {
     font-size: var(--font-size-sm);
     line-height: 1.5;
 }
-/* ===== NEW: Steps Section Styles ===== */
+/* ===== NEW: Animated Timeline Steps Section (Refined) ===== */
 .steps-section {
-    padding: var(--space-16) 0;
-    background-color: var(--bg-secondary);
-    border-top: 1px solid var(--gray-200);
+    /* 1. Убрали лишний фон и сделали секцию компактнее */
+    padding: var(--space-12) 0; /* Было 128px, стало 96px */
+    background-color: transparent;
 }
 
 .steps-timeline {
     position: relative;
-    max-width: 800px;
+    max-width: 900px; /* Немного увеличим ширину для лучшего вида */
     margin: 0 auto;
 }
 
-/* The vertical timeline bar */
+/* Вертикальная линия */
 .steps-timeline::after {
     content: '';
     position: absolute;
-    width: 3px;
+    width: 2px; /* Сделали линию тоньше */
     background-color: var(--gray-200);
-    top: 0;
-    bottom: 0;
+    top: 10px;
+    bottom: 10px;
     left: 50%;
-    margin-left: -1.5px;
+    margin-left: -1px;
 }
 
-/* Container for each step */
+/* Контейнер для каждого шага */
 .step {
-    padding: 10px 40px;
+    padding: 20px 40px; /* Увеличили вертикальный отступ для баланса */
     position: relative;
     width: 50%;
 }
 
-/* The circle on the timeline */
+/* Точка на линии */
 .step__point {
     content: '';
     position: absolute;
-    width: 18px;
-    height: 18px;
-    right: -9px;
+    width: 16px;
+    height: 16px;
+    right: -8px;
     background-color: white;
-    border: 4px solid var(--primary);
-    top: 32px;
+    border: 3px solid var(--primary);
+    top: 38px;
     border-radius: 50%;
     z-index: 1;
     transition: transform 0.3s ease;
 }
 
-/* Positioning the steps */
-.step:nth-child(odd) {
-    left: 0;
-}
-.step:nth-child(even) {
-    left: 50%;
-}
+.step:nth-child(odd) { left: 0; }
+.step:nth-child(even) { left: 50%; }
 
-/* The actual card with content */
+/* Карточка с контентом */
 .step__card {
-    padding: var(--space-5);
+    /* 2. Сделали карточки компактнее */
+    padding: var(--space-4); /* Было 40px, стало 32px */
     background: var(--bg-card);
     position: relative;
     border-radius: var(--radius-lg);
@@ -2084,15 +2080,15 @@ select {
     transform: scale(1.2);
 }
 
-
-/* Styling the content inside the card */
+/* Контент внутри карточки */
 .step__number {
-    font-size: 3rem;
+    /* 3. Изменили цвет цифр на полупрозрачный синий */
+    font-size: 3.5rem;
     font-weight: 700;
-    color: var(--primary-50);
+    color: rgba(7, 56, 90, 0.1); /* Полупрозрачный основной цвет */
     position: absolute;
-    top: 10px;
-    right: 20px;
+    top: 15px;
+    right: 25px;
     line-height: 1;
     z-index: 0;
     user-select: none;
@@ -2113,28 +2109,28 @@ select {
     position: relative;
 }
 
-/* The staggered animation */
+/* Анимация появления */
 .step__card {
     opacity: 0;
     transform: translateY(20px);
-    /* Link to the animation timeline based on view */
     animation: fadeInUp linear forwards;
     animation-timeline: view();
-    /* Define the range where the animation occurs */
     animation-range-start: entry 10%;
     animation-range-end: entry 50%;
 }
 
-/* Responsive adjustments for mobile */
+/* Адаптивность для мобильных */
 @media screen and (max-width: 768px) {
     .steps-timeline::after {
-        left: 31px; /* Move the line to the left */
+        left: 31px;
     }
 
     .step {
         width: 100%;
         padding-left: 70px;
-        padding-right: 25px;
+        padding-right: 15px; /* Уменьшили отступ справа */
+        padding-top: 10px;
+        padding-bottom: 10px;
     }
 
     .step:nth-child(even) {
@@ -2142,6 +2138,6 @@ select {
     }
 
     .step__point {
-        left: 22px;
+        left: 23px; /* Скорректировали положение точки */
     }
 }
