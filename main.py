@@ -94,6 +94,9 @@ def create_site_app() -> FastAPI:
 
     app = FastAPI(**fastapi_kwargs, root_path=settings.ROOT_PATH)
 
+    app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+    app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.SECRET_KEY)
+
     if settings.CACHE_ENABLED:
         app.add_middleware(CacheMiddleware, cache_ttl=settings.REDIS_TTL)
     app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
