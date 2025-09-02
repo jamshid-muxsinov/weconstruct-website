@@ -20,7 +20,7 @@ services:
       - TZ=Asia/Tashkent
       - ROOT_PATH=/admin
     volumes:
-      - ./src:/app/src
+      - .:/app
       - media_volume:/app/media
     depends_on:
       - db
