@@ -2010,3 +2010,118 @@ select {
     font-size: var(--font-size-sm);
     line-height: 1.5;
 }
+/* ===== NEW: Steps Section Styles ===== */
+.steps-section {
+    padding: var(--space-16) 0;
+    background-color: transparent; /* Оставляем фон с сеткой */
+    border-top: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* На мобильных устройствах одна колонка */
+    gap: var(--space-4);
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+}
+
+/* Линия-таймлайн для десктопа */
+@media (min-width: 768px) {
+    .steps-grid {
+        grid-template-columns: 1fr 1fr; /* Две колонки на планшетах */
+        gap: var(--space-8);
+    }
+
+    .steps-grid::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        bottom: 20px;
+        width: 2px;
+        background-color: var(--gray-200);
+        transform: translateX(-1px);
+        display: none; /* Скрываем на гриде, покажем для списка */
+    }
+}
+
+@media (min-width: 1024px) {
+    .steps-grid {
+       display: flex;
+       flex-wrap: nowrap;
+       gap: var(--space-6);
+    }
+}
+
+
+.step-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200);
+    padding: var(--space-6);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+    border-top: 4px solid var(--primary);
+}
+
+.step-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--elevation-8);
+}
+
+.step-card__number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-right: var(--space-4);
+    line-height: 1;
+}
+
+.step-card__content {
+    flex-grow: 1;
+}
+
+.step-card__title {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.step-card__text {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: var(--font-size-sm);
+}
+
+/* Переделываем старый код для нового вида */
+.steps-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.step-card {
+    display: flex;
+    align-items: flex-start; /* Выравниваем по верху */
+    gap: var(--space-4);
+    padding: var(--space-4);
+}
+
+.step-card__number {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary);
+    background-color: var(--primary-50);
+    min-width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
