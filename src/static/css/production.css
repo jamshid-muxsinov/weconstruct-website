@@ -2013,115 +2013,135 @@ select {
 /* ===== NEW: Steps Section Styles ===== */
 .steps-section {
     padding: var(--space-16) 0;
-    background-color: transparent; /* Оставляем фон с сеткой */
+    background-color: var(--bg-secondary);
     border-top: 1px solid var(--gray-200);
-    border-bottom: 1px solid var(--gray-200);
 }
 
-.steps-grid {
-    display: grid;
-    grid-template-columns: 1fr; /* На мобильных устройствах одна колонка */
-    gap: var(--space-4);
-    max-width: 900px;
+.steps-timeline {
+    position: relative;
+    max-width: 800px;
     margin: 0 auto;
+}
+
+/* The vertical timeline bar */
+.steps-timeline::after {
+    content: '';
+    position: absolute;
+    width: 3px;
+    background-color: var(--gray-200);
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    margin-left: -1.5px;
+}
+
+/* Container for each step */
+.step {
+    padding: 10px 40px;
     position: relative;
+    width: 50%;
 }
 
-/* Линия-таймлайн для десктопа */
-@media (min-width: 768px) {
-    .steps-grid {
-        grid-template-columns: 1fr 1fr; /* Две колонки на планшетах */
-        gap: var(--space-8);
-    }
-
-    .steps-grid::before {
-        content: '';
-        position: absolute;
-        top: 20px;
-        left: 50%;
-        bottom: 20px;
-        width: 2px;
-        background-color: var(--gray-200);
-        transform: translateX(-1px);
-        display: none; /* Скрываем на гриде, покажем для списка */
-    }
+/* The circle on the timeline */
+.step__point {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    right: -9px;
+    background-color: white;
+    border: 4px solid var(--primary);
+    top: 32px;
+    border-radius: 50%;
+    z-index: 1;
+    transition: transform 0.3s ease;
 }
 
-@media (min-width: 1024px) {
-    .steps-grid {
-       display: flex;
-       flex-wrap: nowrap;
-       gap: var(--space-6);
-    }
+/* Positioning the steps */
+.step:nth-child(odd) {
+    left: 0;
+}
+.step:nth-child(even) {
+    left: 50%;
 }
 
-
-.step-card {
+/* The actual card with content */
+.step__card {
+    padding: var(--space-5);
     background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--gray-200);
-    padding: var(--space-6);
     position: relative;
-    overflow: hidden;
-    display: flex;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elevation-2);
+    border: 1px solid var(--gray-200);
     transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
-    border-top: 4px solid var(--primary);
 }
 
-.step-card:hover {
+.step:hover .step__card {
     transform: translateY(-5px);
     box-shadow: var(--elevation-8);
 }
+.step:hover .step__point {
+    transform: scale(1.2);
+}
 
-.step-card__number {
-    font-size: 2rem;
+
+/* Styling the content inside the card */
+.step__number {
+    font-size: 3rem;
     font-weight: 700;
-    color: var(--primary);
-    margin-right: var(--space-4);
+    color: var(--primary-50);
+    position: absolute;
+    top: 10px;
+    right: 20px;
     line-height: 1;
+    z-index: 0;
+    user-select: none;
 }
 
-.step-card__content {
-    flex-grow: 1;
-}
-
-.step-card__title {
+.step__title {
     font-size: var(--font-size-xl);
     font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: var(--space-2);
-}
-
-.step-card__text {
-    color: var(--text-secondary);
-    line-height: 1.7;
-    font-size: var(--font-size-sm);
-}
-
-/* Переделываем старый код для нового вида */
-.steps-grid {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-}
-
-.step-card {
-    display: flex;
-    align-items: flex-start; /* Выравниваем по верху */
-    gap: var(--space-4);
-    padding: var(--space-4);
-}
-
-.step-card__number {
-    font-size: 1.5rem;
-    font-weight: 600;
     color: var(--primary);
-    background-color: var(--primary-50);
-    min-width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    margin-bottom: var(--space-2);
+    position: relative;
+}
+
+.step__text {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: var(--font-size-sm);
+    position: relative;
+}
+
+/* The staggered animation */
+.step__card {
+    opacity: 0;
+    transform: translateY(20px);
+    /* Link to the animation timeline based on view */
+    animation: fadeInUp linear forwards;
+    animation-timeline: view();
+    /* Define the range where the animation occurs */
+    animation-range-start: entry 10%;
+    animation-range-end: entry 50%;
+}
+
+/* Responsive adjustments for mobile */
+@media screen and (max-width: 768px) {
+    .steps-timeline::after {
+        left: 31px; /* Move the line to the left */
+    }
+
+    .step {
+        width: 100%;
+        padding-left: 70px;
+        padding-right: 25px;
+    }
+
+    .step:nth-child(even) {
+        left: 0%;
+    }
+
+    .step__point {
+        left: 22px;
+    }
 }

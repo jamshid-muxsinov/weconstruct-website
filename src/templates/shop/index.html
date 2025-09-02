@@ -78,33 +78,48 @@ Zamonaviy modulli va karkasli uylar, ofislar va pavilyonlarni loyihalash, ishlab
     </div>
 </section>
 
-<!-- NEW SECTION: HOW WE WORK -->
 <section class="steps-section">
     <div class="container">
         <div class="section-header">
             <h2 class="section-title">{% if request.state.locale == 'uz' %}Biz qanday ishlaymiz{% else %}Как мы работаем{% endif %}</h2>
             <p class="section-subtitle">{% if request.state.locale == 'uz' %}G'oyadan tayyor ob'ektgacha — 4 oddiy qadamda.{% else %}От идеи до готового объекта за 4 простых шага.{% endif %}</p>
         </div>
-        <div class="steps-grid">
-            <div class="step-card">
-                <div class="step-card__number">01</div>
-                <h3 class="step-card__title">{% if request.state.locale == 'uz' %}Maslahat{% else %}Консультация{% endif %}</h3>
-                <p class="step-card__text">{% if request.state.locale == 'uz' %}Siz ariza qoldirasiz, biz sizning maqsadlaringizni muhokama qilamiz va eng yaxshi yechimni tanlaymiz.{% else %}Вы оставляете заявку, мы обсуждаем ваши цели и подбираем лучшее решение.{% endif %}</p>
+        <div class="steps-timeline">
+            <!-- Step 1 -->
+            <div class="step">
+                <div class="step__point"></div>
+                <div class="step__card">
+                    <div class="step__number">01</div>
+                    <h3 class="step__title">{% if request.state.locale == 'uz' %}Maslahat{% else %}Консультация{% endif %}</h3>
+                    <p class="step__text">{% if request.state.locale == 'uz' %}Siz ariza qoldirasiz, biz sizning maqsadlaringizni muhokama qilamiz va eng yaxshi yechimni tanlaymiz.{% else %}Вы оставляете заявку, мы обсуждаем ваши цели и подбираем лучшее решение.{% endif %}</p>
+                </div>
             </div>
-            <div class="step-card">
-                <div class="step-card__number">02</div>
-                <h3 class="step-card__title">{% if request.state.locale == 'uz' %}Loyihalash{% else %}Проектирование{% endif %}</h3>
-                <p class="step-card__text">{% if request.state.locale == 'uz' %}Reja, materiallarni kelishib olamiz va 3D-vizualizatsiyani tayyorlaymiz.{% else %}Согласовываем планировку, материалы и готовим 3D-визуализацию.{% endif %}</p>
+            <!-- Step 2 -->
+            <div class="step">
+                <div class="step__point"></div>
+                <div class="step__card">
+                    <div class="step__number">02</div>
+                    <h3 class="step__title">{% if request.state.locale == 'uz' %}Loyihalash{% else %}Проектирование{% endif %}</h3>
+                    <p class="step__text">{% if request.state.locale == 'uz' %}Reja, materiallarni kelishib olamiz va 3D-vizualizatsiyani tayyorlaymiz.{% else %}Согласовываем планировку, материалы и готовим 3D-визуализацию.{% endif %}</p>
+                </div>
             </div>
-            <div class="step-card">
-                <div class="step-card__number">03</div>
-                <h3 class="step-card__title">{% if request.state.locale == 'uz' %}Ishlab chiqarish{% else %}Производство{% endif %}</h3>
-                <p class="step-card__text">{% if request.state.locale == 'uz' %}Hamkorlarimiz modullarni zavodda sifat nazorati ostida ishlab chiqaradilar.{% else %}Наши партнеры изготавливают модули на заводе с контролем качества.{% endif %}</p>
+            <!-- Step 3 -->
+            <div class="step">
+                <div class="step__point"></div>
+                <div class="step__card">
+                    <div class="step__number">03</div>
+                    <h3 class="step__title">{% if request.state.locale == 'uz' %}Ishlab chiqarish{% else %}Производство{% endif %}</h3>
+                    <p class="step__text">{% if request.state.locale == 'uz' %}Hamkorlarimiz modullarni zavodda sifat nazorati ostida ishlab chiqaradilar.{% else %}Наши партнеры изготавливают модули на заводе с контролем качества.{% endif %}</p>
+                </div>
             </div>
-            <div class="step-card">
-                <div class="step-card__number">04</div>
-                <h3 class="step-card__title">{% if request.state.locale == 'uz' %}O'rnatish{% else %}Монтаж{% endif %}</h3>
-                <p class="step-card__text">{% if request.state.locale == 'uz' %}Tayyor binoni bir necha kun ichida sizning hududingizga yetkazib beramiz va o'rnatamiz.{% else %}Доставляем и собираем готовое здание на вашем участке за несколько дней.{% endif %}</p>
+            <!-- Step 4 -->
+            <div class="step">
+                <div class="step__point"></div>
+                <div class="step__card">
+                    <div class="step__number">04</div>
+                    <h3 class="step__title">{% if request.state.locale == 'uz' %}O'rnatish{% else %}Монтаж{% endif %}</h3>
+                    <p class="step__text">{% if request.state.locale == 'uz' %}Tayyor binoni bir necha kun ichida sizning hududingizga yetkazib beramiz va o'rnatamiz.{% else %}Доставляем и собираем готовое здание на вашем участке за несколько дней.{% endif %}</p>
+                </div>
             </div>
         </div>
     </div>
