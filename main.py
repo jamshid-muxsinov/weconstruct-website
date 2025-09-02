@@ -85,7 +85,7 @@ app.include_router(admin_router, dependencies=[Depends(get_current_active_user)]
 site_router = APIRouter(prefix="/{locale}", dependencies=[Depends(set_locale)])
 site_router.include_router(shop_root_router) 
 site_router.include_router(shop_router, prefix="/shop") 
-app.include_router(site_router)
+app.include_router(site_router)в
 
 @app.get("/", include_in_schema=False)
 async def root_redirect(request: Request):
