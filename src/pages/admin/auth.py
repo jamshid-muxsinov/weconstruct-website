@@ -59,7 +59,7 @@ async def login_for_access_token(
     token = create_access_token(data={"sub": user.username}, expires_delta=expires)
     
     # Создаем редирект на главную страницу админки
-    redirect_url = request.url_for('admin_index')
+    redirect_url = request.url_for('admin_dashboard')
     response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
     
     # Устанавливаем токен в безопасную HttpOnly cookie
