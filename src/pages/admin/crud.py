@@ -151,6 +151,10 @@ async def handle_list_view(
 ) -> Page:
     items_query = select(meta.model)
     count_query = select(func.count(distinct(meta.model.id)))
+
+    if meta.model == Product:
+        items_query = items_query.options(selectinload(Product.category))
+
     if meta.model == QuoteRequest:
         if search_query:
             search_like = f"%{search_query}%"
@@ -179,17 +183,29 @@ async def handle_list_view(
             count_query = count_query.where(Category.name_ru.ilike(search_like))
     total_result = await db.execute(count_query)
     total = total_result.scalar_one_or_none() or 0
+    
+    log.info(f"Manual count for {meta.model_name} found {total} items.")
+    
     if meta.model == QuoteRequest:
-        items_query = items_query.options(selectinload(QuoteRequest.contact), selectinload(QuoteRequest.product), selectinload(QuoteRequest.assigned_to))
-        if sort == 'asc': items_query = items_query.order_by(QuoteRequest.created_at.asc())
-        else: items_query = items_query.order_by(QuoteRequest.created_at.desc())
-    else: items_query = items_query.order_by(getattr(meta.model, 'id').desc())
+        items_query = items_query.options(
+            selectinload(QuoteRequest.contact), 
+            selectinload(QuoteRequest.product),
+            selectinload(QuoteRequest.assigned_to)
+        )
+        if sort == 'asc':
+            items_query = items_query.order_by(QuoteRequest.created_at.asc())
+        else:
+            items_query = items_query.order_by(QuoteRequest.created_at.desc())
+    else:
+        items_query = items_query.order_by(getattr(meta.model, 'id').desc())
+
     paginated_items_query = items_query.offset((page - 1) * size).limit(size)
+    
     items_result = await db.execute(paginated_items_query)
     items = items_result.scalars().unique().all()
+    
     params = Params(page=page, size=size)
     return create_page(items, total, params)
-# --- Обработчики ---
 
 @router.get("/quoterequest/", response_class=HTMLResponse, name="admin_quoterequest_list")
 async def quoterequest_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), sort: Optional[str] = Query(None), date_from: Optional[str] = Query(None), date_to: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
