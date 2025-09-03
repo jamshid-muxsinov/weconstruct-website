@@ -2229,3 +2229,51 @@ select {
     font-size: var(--font-size-sm);
     line-height: 1.5;
 }
+
+
+@keyframes shake-modal {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.shake-it {
+  animation: shake-modal 0.5s ease-in-out;
+}
+
+/* ===== NEW: PRELOADER ===== */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.preloader {
+  position: fixed;
+  inset: 0;
+  background-color: var(--bg-primary);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.preloader__spinner {
+  border: 4px solid var(--primary-50);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+.preloader__text {
+    margin-top: var(--space-3);
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    color: var(--primary);
+}
