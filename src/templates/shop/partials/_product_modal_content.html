@@ -51,42 +51,49 @@
                     
                     init() {
                         this.mainImage = this.images[0];
-                        this.$watch('lightboxOpen', (isOpen) => {
-                            if (!isOpen && this.panzoomInstance) {
-                                this.panzoomInstance.destroy();
-                                this.panzoomInstance = null;
-                            }
-                        });
                     },
 
+                    // Функция для инициализации Panzoom
+                    initPanzoom() {
+                        if (this.panzoomInstance) {
+                            this.panzoomInstance.destroy();
+                        }
+                        const elem = this.$refs.panzoomContainer;
+                        if (elem) {
+                            this.panzoomInstance = Panzoom(elem, {
+                                maxScale: 5,
+                                contain: 'inside', // Изменено на 'inside' для лучшего поведения
+                                canvas: true,
+                                panOnlyWhenZoomed: true,
+                            });
+                            elem.parentElement.addEventListener('wheel', (event) => {
+                                if(this.panzoomInstance) this.panzoomInstance.zoomWithWheel(event);
+                            });
+                        }
+                    },
+
+                    // Открытие лайтбокса
                     openLightbox(clickedImage) {
                         this.currentIndex = this.images.indexOf(clickedImage);
                         if (this.currentIndex === -1) this.currentIndex = 0;
                         this.lightboxOpen = true;
-
-                        this.$nextTick(() => {
-                            const elem = this.$refs.lightboxImage;
-                            if (elem) {
-                                this.panzoomInstance = Panzoom(elem, {
-                                    maxScale: 4,
-                                    contain: 'outside',
-                                    canvas: true
-                                });
-                                // Добавляем слушатель для зума колесиком мыши
-                                elem.parentElement.addEventListener('wheel', (event) => {
-                                    if(this.panzoomInstance) this.panzoomInstance.zoomWithWheel(event);
-                                });
-                            }
-                        });
+                        this.$nextTick(() => this.initPanzoom());
                     },
 
+                    // Закрытие лайтбокса с очисткой
+                    closeLightbox() {
+                        this.lightboxOpen = false;
+                        if (this.panzoomInstance) {
+                            this.panzoomInstance.destroy();
+                            this.panzoomInstance = null;
+                        }
+                    },
+                    
+                    // Смена изображения с переинициализацией Panzoom
                     changeImage(newIndex) {
+                        if (this.currentIndex === newIndex) return;
                         this.currentIndex = newIndex;
-                        this.$nextTick(() => {
-                            if (this.panzoomInstance) {
-                                this.panzoomInstance.reset();
-                            }
-                        });
+                        this.$nextTick(() => this.initPanzoom());
                     },
 
                     nextImage() {
@@ -98,7 +105,7 @@
                     }
                 }"
                 x-init="init()"
-                @keydown.escape.window="lightboxOpen = false"
+                @keydown.escape.window="closeLightbox()"
                 @keydown.arrow-right.window="if(lightboxOpen) { nextImage() }"
                 @keydown.arrow-left.window="if(lightboxOpen) { prevImage() }">
 
@@ -118,32 +125,29 @@
                 </div>
                 {% endif %}
 
-                <!-- Lightbox with Panzoom -->
                 <div x-show="lightboxOpen" class="lightbox-overlay" x-transition x-cloak>
-                    <div class="lightbox-content" @click.away="lightboxOpen = false">
-                        
-                        <img :src="images[currentIndex]" alt="Fullscreen image" class="lightbox-image" x-ref="lightboxImage">
-                        
-                        <div class="lightbox-controls">
-                            <button @click="panzoomInstance?.zoomIn()" class="lightbox-control-btn" aria-label="Приблизить">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                            <button @click="panzoomInstance?.zoomOut()" class="lightbox-control-btn" aria-label="Отдалить">
-                                <i class="fas fa-minus"></i>
-                            </button>
-                            <button @click="panzoomInstance?.reset()" class="lightbox-control-btn" aria-label="Сбросить масштаб">
-                                <i class="fas fa-expand"></i>
-                            </button>
-                        </div>
-
+                    <div class="lightbox-wrapper">
                         <button @click="prevImage()" class="lightbox-nav lightbox-prev" aria-label="Предыдущее изображение" x-show="images.length > 1">&lt;</button>
+                    
+                        <div class="lightbox-panzoom-container" x-ref="panzoomContainer">
+                           <img :key="currentIndex" :src="images[currentIndex]" alt="Fullscreen image" class="lightbox-image">
+                        </div>
+                        
                         <button @click="nextImage()" class="lightbox-nav lightbox-next" aria-label="Следующее изображение" x-show="images.length > 1">&gt;</button>
                         
-                        <div class="lightbox-counter" x-show="images.length > 1">
-                            <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
-                        </div>
+                        <div class="lightbox-ui">
+                            <div class="lightbox-counter" x-show="images.length > 1">
+                                <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
+                            </div>
 
-                        <button @click="lightboxOpen = false" class="lightbox-close" aria-label="Закрыть">&times;</button>
+                            <div class="lightbox-controls">
+                                <button @click="panzoomInstance?.zoomIn()" class="lightbox-control-btn" aria-label="Приблизить"><i class="fas fa-plus"></i></button>
+                                <button @click="panzoomInstance?.zoomOut()" class="lightbox-control-btn" aria-label="Отдалить"><i class="fas fa-minus"></i></button>
+                                <button @click="panzoomInstance?.reset()" class="lightbox-control-btn" aria-label="Сбросить масштаб"><i class="fas fa-expand"></i></button>
+                            </div>
+                            
+                            <button @click="closeLightbox()" class="lightbox-close" aria-label="Закрыть">&times;</button>
+                        </div>
                     </div>
                 </div>
             </div>
