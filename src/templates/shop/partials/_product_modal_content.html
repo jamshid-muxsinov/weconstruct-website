@@ -53,58 +53,44 @@
                         this.mainImage = this.images[0];
                     },
 
-                    // Функция для инициализации Panzoom
                     initPanzoom() {
-                        if (this.panzoomInstance) {
-                            this.panzoomInstance.destroy();
-                        }
-                        const elem = this.$refs.panzoomImage; // Теперь цепляемся прямо к картинке
+                        if (this.panzoomInstance) { this.panzoomInstance.destroy(); }
+                        const elem = this.$refs.panzoomImage;
                         if (elem) {
                             this.panzoomInstance = Panzoom(elem, {
-                                maxScale: 5,
-                                contain: 'inside',
-                                canvas: true,
-                                panOnlyWhenZoomed: true,
+                                maxScale: 5, contain: 'inside', canvas: true, panOnlyWhenZoomed: true,
                             });
-                            // Родитель теперь .lightbox-wrapper
-                            elem.parentElement.parentElement.addEventListener('wheel', (event) => {
+                            elem.parentElement.addEventListener('wheel', (event) => {
                                 if(this.panzoomInstance) this.panzoomInstance.zoomWithWheel(event);
                             });
                         }
                     },
 
-                    // Открытие лайтбокса
                     openLightbox(clickedImage) {
                         this.currentIndex = this.images.indexOf(clickedImage);
                         if (this.currentIndex === -1) this.currentIndex = 0;
+                        document.body.classList.add('body-no-scroll'); // <<-- ВАЖНОЕ ИЗМЕНЕНИЕ
                         this.lightboxOpen = true;
                         this.$nextTick(() => this.initPanzoom());
                     },
 
-                    // Закрытие лайтбокса с очисткой
                     closeLightbox() {
                         this.lightboxOpen = false;
+                        document.body.classList.remove('body-no-scroll'); // <<-- ВАЖНОЕ ИЗМЕНЕНИЕ
                         if (this.panzoomInstance) {
                             this.panzoomInstance.destroy();
                             this.panzoomInstance = null;
                         }
                     },
                     
-                    // Смена изображения с переинициализацией Panzoom
                     changeImage(newIndex) {
                         if (this.currentIndex === newIndex) return;
                         this.currentIndex = newIndex;
-                        // Ждем пока Vue/Alpine обновит :src и перерисует img
                         this.$nextTick(() => this.initPanzoom());
                     },
 
-                    nextImage() {
-                        this.changeImage((this.currentIndex + 1) % this.images.length);
-                    },
-
-                    prevImage() {
-                        this.changeImage((this.currentIndex - 1 + this.images.length) % this.images.length);
-                    }
+                    nextImage() { this.changeImage((this.currentIndex + 1) % this.images.length); },
+                    prevImage() { this.changeImage((this.currentIndex - 1 + this.images.length) % this.images.length); }
                 }"
                 x-init="init()"
                 @keydown.escape.window="closeLightbox()"
@@ -127,13 +113,26 @@
                 </div>
                 {% endif %}
 
-                <!-- Lightbox with Panzoom (ИСПРАВЛЕННАЯ СТРУКТУРА) -->
-                <div x-show="lightboxOpen" class="lightbox-overlay" x-transition x-cloak>
+                <!-- Lightbox (ФИНАЛЬНАЯ СТРУКТУРА) -->
+                <div x-show="lightboxOpen" class="lightbox-overlay" x-cloak>
                     <div class="lightbox-wrapper" @click.self="closeLightbox()">
                         
-                        <img :key="currentIndex" :src="images[currentIndex]" alt="Fullscreen image" class="lightbox-image" x-ref="panzoomImage">
+                        <template x-teleport="body">
+                           <div class="lightbox-image-container">
+                                <img :key="currentIndex" 
+                                     :src="images[currentIndex]" 
+                                     alt="Fullscreen image" 
+                                     class="lightbox-image" 
+                                     x-ref="panzoomImage"
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0"
+                                     x-transition:enter-end="opacity-100"
+                                     x-transition:leave="transition ease-in duration-200"
+                                     x-transition:leave-start="opacity-100"
+                                     x-transition:leave-end="opacity-0">
+                           </div>
+                        </template>
                         
-                        <!-- UI Элементы как соседи -->
                         <button @click="prevImage()" class="lightbox-nav lightbox-prev" aria-label="Предыдущее изображение" x-show="images.length > 1">&lt;</button>
                         <button @click="nextImage()" class="lightbox-nav lightbox-next" aria-label="Следующее изображение" x-show="images.length > 1">&gt;</button>
                         
