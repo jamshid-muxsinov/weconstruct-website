@@ -2246,8 +2246,8 @@ select {
 }
 
 .lightbox-image {
-  max-width: calc(100vw - 120px); /* Отступы для стрелок */
-  max-height: calc(100vh - 120px); /* Отступы для UI сверху/снизу */
+  max-width: calc(100vw - 120px);
+  max-height: calc(100vh - 120px);
   display: block;
   cursor: grab;
   transition: opacity 0.2s ease-in-out;
@@ -2269,18 +2269,8 @@ select {
 .lightbox-controls {
     position: absolute;
     z-index: 15;
-    opacity: 1;
-    transition: opacity 0.2s ease-in-out;
+    transition: opacity 0.3s ease-in-out;
 }
-
-/* Прячем UI пока фото грузится */
-.lightbox-overlay:has(.lightbox-image.loading) > .lightbox-nav,
-.lightbox-overlay:has(.lightbox-image.loading) > .lightbox-counter,
-.lightbox-overlay:has(.lightbox-image.loading) > .lightbox-controls,
-.lightbox-overlay:has(.lightbox-image.loading) > .lightbox-close {
-    opacity: 0;
-}
-
 
 .lightbox-nav {
   top: 50%; transform: translateY(-50%);

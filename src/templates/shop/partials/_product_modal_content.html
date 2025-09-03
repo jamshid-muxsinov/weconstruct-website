@@ -48,7 +48,7 @@
                     lightboxOpen: false,
                     currentIndex: 0,
                     panzoomInstance: null,
-                    loading: true, // НОВОЕ СОСТОЯНИЕ ДЛЯ СПИННЕРА
+                    loading: true,
                     
                     init() { this.mainImage = this.images[0]; },
 
@@ -59,7 +59,6 @@
                             this.panzoomInstance = Panzoom(elem, {
                                 maxScale: 5, contain: 'inside', canvas: true, panOnlyWhenZoomed: true,
                             });
-                            // Вешаем слушатель на весь оверлей
                             this.$refs.lightboxOverlay.addEventListener('wheel', (event) => {
                                 if (this.panzoomInstance) this.panzoomInstance.zoomWithWheel(event);
                             });
@@ -70,9 +69,8 @@
                         this.currentIndex = this.images.indexOf(clickedImage);
                         if (this.currentIndex === -1) this.currentIndex = 0;
                         document.body.classList.add('body-no-scroll');
-                        this.loading = true; // Включаем спиннер
+                        this.loading = true;
                         this.lightboxOpen = true;
-                        // Panzoom инициализируется после загрузки картинки
                     },
 
                     closeLightbox() {
@@ -86,13 +84,13 @@
                     
                     changeImage(newIndex) {
                         if (this.currentIndex === newIndex || this.loading) return;
-                        this.loading = true; // Включаем спиннер перед сменой
+                        this.loading = true;
                         this.currentIndex = newIndex;
                     },
 
                     onImageLoad() {
-                        this.loading = false; // Выключаем спиннер
-                        this.$nextTick(() => this.initPanzoom()); // Инициализируем Panzoom
+                        this.loading = false;
+                        this.$nextTick(() => this.initPanzoom());
                     },
 
                     nextImage() { this.changeImage((this.currentIndex + 1) % this.images.length); },
@@ -132,20 +130,24 @@
                          x-ref="panzoomImage"
                          :class="{ 'loading': loading }">
                     
-                    <button @click="prevImage()" class="lightbox-nav lightbox-prev" aria-label="Предыдущее изображение" x-show="!loading && images.length > 1">&lt;</button>
-                    <button @click="nextImage()" class="lightbox-nav lightbox-next" aria-label="Следующее изображение" x-show="!loading && images.length > 1">&gt;</button>
-                    
-                    <div class="lightbox-counter" x-show="!loading && images.length > 1">
-                        <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
-                    </div>
+                    <template x-if="!loading">
+                        <div>
+                            <button @click="prevImage()" class="lightbox-nav lightbox-prev" aria-label="Предыдущее изображение" x-show="images.length > 1">&lt;</button>
+                            <button @click="nextImage()" class="lightbox-nav lightbox-next" aria-label="Следующее изображение" x-show="images.length > 1">&gt;</button>
+                            
+                            <div class="lightbox-counter" x-show="images.length > 1">
+                                <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
+                            </div>
 
-                    <div class="lightbox-controls" x-show="!loading">
-                        <button @click="panzoomInstance?.zoomIn()" class="lightbox-control-btn" aria-label="Приблизить"><i class="fas fa-plus"></i></button>
-                        <button @click="panzoomInstance?.zoomOut()" class="lightbox-control-btn" aria-label="Отдалить"><i class="fas fa-minus"></i></button>
-                        <button @click="panzoomInstance?.reset()" class="lightbox-control-btn" aria-label="Сбросить масштаб"><i class="fas fa-expand"></i></button>
-                    </div>
-                    
-                    <button @click="closeLightbox()" class="lightbox-close" aria-label="Закрыть">&times;</button>
+                            <div class="lightbox-controls">
+                                <button @click="panzoomInstance?.zoomIn()" class="lightbox-control-btn" aria-label="Приблизить"><i class="fas fa-plus"></i></button>
+                                <button @click="panzoomInstance?.zoomOut()" class="lightbox-control-btn" aria-label="Отдалить"><i class="fas fa-minus"></i></button>
+                                <button @click="panzoomInstance?.reset()" class="lightbox-control-btn" aria-label="Сбросить масштаб"><i class="fas fa-expand"></i></button>
+                            </div>
+                            
+                            <button @click="closeLightbox()" class="lightbox-close" aria-label="Закрыть">&times;</button>
+                        </div>
+                    </template>
                 </div>
             </div>
             <div class="modal-info-scrollable">
@@ -206,7 +208,7 @@
                     <div class="customization-note__icon"><i class="fas fa-drafting-compass"></i></div>
                     <div class="customization-note__text">
                         <h5>{% if request.state.locale == 'uz' %}Sizning loyihangiz, sizning tanlovingiz!{% else %}Ваш проект — ваш выбор!{% endif %}</h5>
-                        <p>{% if request.state.locale == 'uz' %}Har qanday loyihaning tashqi va ichki pardoz materiallarini byudjetingiz va didingizga mos ravishda o'zgartirishimiz mumkin.{% else %}Мы можем изменить материалы внешней и внутренней отделки в любом проекте под ваш бюджет и вкус.{% endif %}</p>
+                        <p>{% if request.state.locale == 'uz' %}Har qanday loyihaning tashqi va ichki pardoz materiallarini byudjetingiz va didingizga mos ravda o'zgartirishimiz mumkin.{% else %}Мы можем изменить материалы внешней и внутренней отделки в любом проекте под ваш бюджет и вкус.{% endif %}</p>
                     </div>
                 </div>
                 <div id="modal-form-wrapper">
