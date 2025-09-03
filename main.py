@@ -146,23 +146,6 @@ def create_site_app() -> FastAPI:
 admin_app = create_admin_app()
 site_app = create_site_app()
 
-async def app(scope, receive, send):
-    """
-    Главный ASGI-диспетчер. Проверяет заголовок Host и направляет запрос
-    в соответствующее FastAPI-приложение.
-    """
-    if scope["type"] != "http":
-        await site_app(scope, receive, send)
-        return
-
-    headers = dict(scope.get("headers", []))
-    host = headers.get(b"host", b"").decode("utf-8").split(":")[0]
-
-    if host == "admin.weconstruct.uz":
-        await admin_app(scope, receive, send)
-    else:
-        await site_app(scope, receive, send)
-
 if __name__ == "__main__":
     # Для локальной разработки можно запустить только одно приложение
     # uvicorn.run("main:admin_app", host="0.0.0.0", port=8000, reload=True)

@@ -12,9 +12,10 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
 
-  web:
+  site:
     build: .
-    command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:app
+    # Запускаем ТОЛЬКО приложение сайта
+    command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:site_app
     environment:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
@@ -28,10 +29,26 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/ru"]
-      interval: 30s    
-      timeout: 10s     
-      retries: 5        
-      start_period: 30s 
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # НОВЫЙ СЕРВИС ДЛЯ АДМИНКИ
+  admin:
+    build: .
+    command: gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:admin_app
+    environment:
+      - FORWARDED_ALLOW_IPS=*
+      - TZ=Asia/Tashkent
+    volumes:
+      - .:/app
+      - media_volume:/app/media
+    depends_on:
+      - db
+      - redis
+    env_file: .env
+    restart: unless-stopped
       
   nginx:
     image: nginx:latest
@@ -44,8 +61,10 @@ services:
       - ./src/static:/app/src/static:ro
       - media_volume:/app/media:ro
     depends_on:
-      web:
+      site: 
         condition: service_healthy
+      admin: 
+        condition: service_started
     restart: unless-stopped
     command: nginx -g 'daemon off;'
     
