@@ -28,28 +28,18 @@
         
         <div class="modal-grid">
             {% set all_images = [] %}
-            {% if product.main_image %}
-                {% set _ = all_images.append(product.main_image) %}
-            {% endif %}
-            {% for img in product.images %}
-                {% set _ = all_images.append(img.image) %}
-            {% endfor %}
+            {% if product.main_image %}{% set _ = all_images.append(product.main_image) %}{% endif %}
+            {% for img in product.images %}{% set _ = all_images.append(img.image) %}{% endfor %}
 
-            <!-- =================================================================================== -->
-            <!-- НОВАЯ, ПРОСТАЯ И НАДЕЖНАЯ ГАЛЕРЕЯ -->
-            <!-- =================================================================================== -->
             <div class="modal-gallery">
-                <!-- Главное изображение - это просто первая ссылка в галерее -->
                 <a href="{{ url_for('media', path=all_images[0]) if all_images else url_for('static', path='img/placeholder.png') }}" 
                    class="gallery-main-link lightbox" 
                    data-gallery="product-{{ product.id }}">
                     <img src="{{ url_for('media', path=all_images[0]) if all_images else url_for('static', path='img/placeholder.png') }}" alt="Основное изображение">
                 </a>
                 
-                <!-- Миниатюры (скрыты, если изображений мало) -->
                 {% if all_images|length > 1 %}
                 <div class="modal-gallery__thumbnails">
-                    <!-- Пропускаем первое изображение, так как оно уже главное -->
                     {% for image_path in all_images[1:] %}
                     <a href="{{ url_for('media', path=image_path) }}" 
                        class="lightbox" 

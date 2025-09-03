@@ -1,5 +1,3 @@
-// src/js/main.js
-
 document.addEventListener("DOMContentLoaded", () => {
   // Плавный скролл по якорям
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
@@ -20,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Глобальный обработчик событий HTMX
   document.body.addEventListener('htmx:afterSwap', function(event) {
     // 1. Инициализация GLightbox после загрузки модального окна
+    // Эта функция найдет все ссылки с классом .lightbox и объединит их в галерею
     initLightbox();
 
     // 2. Логика закрытия модалки после успешной отправки формы
@@ -38,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Функция для инициализации GLightbox
 function initLightbox() {
   const lightbox = GLightbox({
-    selector: '.lightbox', // Ищем все ссылки с этим классом
+    selector: '.lightbox',
     touchNavigation: true,
     loop: true,
     zoomable: true,
