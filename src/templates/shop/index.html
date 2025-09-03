@@ -17,45 +17,30 @@ Zamonaviy modulli va karkasli uylar, ofislar va pavilyonlarni loyihalash, ishlab
 {% block twitter_description %}{{ page_description }}{% endblock %}
 {% block content %}
 <section class="hero">
-  <div class="hero-blueprint">
-      <svg class="hero-blueprint__svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
-          <!-- Grid -->
-          <defs>
-              <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(56, 97, 122, 0.3)" stroke-width="0.5"/>
-              </pattern>
-              <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
-                  <rect width="100" height="100" fill="url(#smallGrid)"/>
-                  <path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(56, 97, 122, 0.5)" stroke-width="1"/>
-              </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-
-          <!-- Blueprint Drawing -->
-          <g class="blueprint-drawing">
-              <path class="blueprint-drawing__path" d="M150 500 L150 250 L650 250 L650 500 Z" />
-              <path class="blueprint-drawing__path" d="M120 250 L680 250" />
-              <path class="blueprint-drawing__path" d="M400 250 L400 180 L120 180" />
-              <path class="blueprint-drawing__path" d="M680 180 L400 180" />
-              <path class="blueprint-drawing__path" d="M120 180 L100 200" />
-              <path class="blueprint-drawing__path" d="M680 180 L700 200" />
-              <path class="blueprint-drawing__path" d="M250 350 L250 500" />
-              <path class="blueprint-drawing__path" d="M550 350 L550 500" />
-              <path class="blueprint-drawing__path" d="M250 350 L550 350" />
-          </g>
-      </svg>
-  </div>
+  <div class="hero__background-overlay"></div>
   <div class="container hero__content">
     <h1 class="hero__title">
-      <span class="hero__title-main">Всё начинается с точного расчёта.</span>
-      <span class="hero__title-sub">Ваше будущее — не исключение.</span>
+      {% if request.state.locale == 'uz' %}
+      <span class="hero__title-main">Hayot va biznes uchun</span>
+      <span class="hero__title-sub">zamonaviy modulli yechimlar</span>
+      {% else %}
+      <span class="hero__title-main">Современные модульные решения</span>
+      <span class="hero__title-sub">для жизни и бизнеса</span>
+      {% endif %}
     </h1>
+    <p class="hero__description">
+      {% if request.state.locale == 'uz' %}
+      Ofislar va savdo pavilyonlaridan tortib turar-joy binolari va sanitariya bloklarigacha bo'lgan har qanday maqsaddagi tez quriladigan binolarni loyihalashtiramiz, ishlab chiqaramiz va o'rnatamiz.
+      {% else %}
+      Проектируем, производим и монтируем быстровозводимые здания любого назначения: от офисов и торговых павильонов до жилых домов и санитарных блоков.
+      {% endif %}
+    </p>
     <div class="hero__actions">
         <button hx-get="{{ request.url_for('htmx_general_quote_form', locale=request.state.locale) }}"
                 hx-target="#modal-placeholder"
                 hx-swap="innerHTML"
-                class="btn btn--white btn--hero">
-          <span>Начать проектирование</span>
+                class="btn btn--primary btn--hero">
+          <span>{% if request.state.locale == 'uz' %}Ariza qoldirish{% else %}Оставить заявку{% endif %}</span>
           <svg class="icon icon-arrow" width="24" height="24"><use xlink:href="#icon-arrow-right"></use></svg>
         </button>
     </div>
