@@ -5,10 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token(request) }}">
-
-    <!-- =================================================================================== -->
-    <!-- SEO-ТЕГИ (будут определены в дочерних шаблонах) -->
-    <!-- =================================================================================== -->
     <title>{% block title %}WeConstruct{% endblock %}</title>
     <meta name="description" content="{% block meta_description %}Современные быстровозводимые здания в Узбекистане.{% endblock %}">
     <link rel="canonical" href="{{ request.url }}">
@@ -19,15 +15,11 @@
         {% set path_params_ru = request.path_params.copy() %}
         {% set _ = path_params_ru.update({'locale': 'ru'}) %}
         <link rel="alternate" hreflang="ru" href="{{ url_for(route_name, **path_params_ru) }}" />
-
         {% set path_params_uz = request.path_params.copy() %}
         {% set _ = path_params_uz.update({'locale': 'uz'}) %}
         <link rel="alternate" hreflang="uz" href="{{ url_for(route_name, **path_params_uz) }}" />
-        
-        <!-- Указываем версию по умолчанию для пользователей без определенного языка -->
         <link rel="alternate" hreflang="x-default" href="{{ url_for(route_name, **path_params_ru) }}" />
     {% endif %}
-
 
     <!-- Open Graph / Social Media -->
     <meta property="og:title" content="{% block og_title %}{% endblock %}">
@@ -37,14 +29,9 @@
     <meta property="og:site_name" content="WeConstruct">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="{{ 'ru_RU' if request.state.locale == 'ru' else 'uz_UZ' }}">
-
-    <!-- =================================================================================== -->
-    <!-- 4. FAVICONS И СТИЛИ -->
-    <!-- =================================================================================== -->
-    <!-- Главная иконка в формате SVG для современных браузеров -->
+    
+    <!-- Favicons -->
     <link rel="icon" href="{{ url_for('static', path='favicons/favicon.svg') }}" type="image/svg+xml">
-
-    <!-- Фолбэки для старых браузеров и Apple-устройств -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
@@ -52,20 +39,29 @@
     <link rel="shortcut icon" href="{{ url_for('static', path='favicons/favicon.ico') }}?v=1.1">
     <meta name="msapplication-TileColor" content="#07385a">
     <meta name="theme-color" content="#ffffff">
+    
+    <!-- Styles -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    <!-- GLightbox CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <link rel="stylesheet" href="{{ url_for('static', path='css/production.css') }}" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" media="print" onload="this.media='all'">
     <noscript>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
         <link rel="stylesheet" href="{{ url_for('static', path='css/production.css') }}">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     </noscript>
+
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="{{ url_for('static', path='js/main.js') }}" defer></script>
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+    <!-- GLightbox JS -->
+    <script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js" defer></script>
+    <script src="{{ url_for('static', path='js/main.js') }}" defer></script>
 </head>
 <body x-data="{ mobileMenuOpen: false, pageLoading: true }" @load.window="pageLoading = false" @keydown.escape.window="mobileMenuOpen = false">
 
