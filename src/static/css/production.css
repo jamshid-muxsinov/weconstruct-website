@@ -1589,6 +1589,174 @@ select {
     align-items: center;
   }
 }
+/* ===== NEW: Customization Note in Modal ===== */
+.customization-note {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: var(--primary-50);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--primary-light);
+}
+
+.customization-note__icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    background-color: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.customization-note__text h5 {
+    margin: 0 0 0.25rem 0;
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.customization-note__text p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+}
+/* ===== NEW: Animated Timeline Steps Section (Refined) ===== */
+.steps-section {
+    /* 1. Убрали лишний фон и сделали секцию компактнее */
+    padding: var(--space-12) 0; /* Было 128px, стало 96px */
+    background-color: transparent;
+}
+
+.steps-timeline {
+    position: relative;
+    max-width: 900px; /* Немного увеличим ширину для лучшего вида */
+    margin: 0 auto;
+}
+
+/* Вертикальная линия */
+.steps-timeline::after {
+    content: '';
+    position: absolute;
+    width: 2px; /* Сделали линию тоньше */
+    background-color: var(--gray-200);
+    top: 10px;
+    bottom: 10px;
+    left: 50%;
+    margin-left: -1px;
+}
+
+/* Контейнер для каждого шага */
+.step {
+    padding: 20px 40px; /* Увеличили вертикальный отступ для баланса */
+    position: relative;
+    width: 50%;
+}
+
+/* Точка на линии */
+.step__point {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    right: -8px;
+    background-color: white;
+    border: 3px solid var(--primary);
+    top: 38px;
+    border-radius: 50%;
+    z-index: 1;
+    transition: transform 0.3s ease;
+}
+
+.step:nth-child(odd) { left: 0; }
+.step:nth-child(even) { left: 50%; }
+
+/* Карточка с контентом */
+.step__card {
+    /* 2. Сделали карточки компактнее */
+    padding: var(--space-4); /* Было 40px, стало 32px */
+    background: var(--bg-card);
+    position: relative;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elevation-2);
+    border: 1px solid var(--gray-200);
+    transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
+}
+
+.step:hover .step__card {
+    transform: translateY(-5px);
+    box-shadow: var(--elevation-8);
+}
+.step:hover .step__point {
+    transform: scale(1.2);
+}
+
+/* Контент внутри карточки */
+.step__number {
+    /* 3. Изменили цвет цифр на полупрозрачный синий */
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: rgba(7, 56, 90, 0.1); /* Полупрозрачный основной цвет */
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    line-height: 1;
+    z-index: 0;
+    user-select: none;
+}
+
+.step__title {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: var(--space-2);
+    position: relative;
+}
+
+.step__text {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: var(--font-size-sm);
+    position: relative;
+}
+
+/* Анимация появления */
+.step__card {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp linear forwards;
+    animation-timeline: view();
+    animation-range-start: entry 10%;
+    animation-range-end: entry 50%;
+}
+
+/* Адаптивность для мобильных */
+@media screen and (max-width: 768px) {
+    .steps-timeline::after {
+        left: 31px;
+    }
+
+    .step {
+        width: 100%;
+        padding-left: 70px;
+        padding-right: 15px; /* Уменьшили отступ справа */
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .step:nth-child(even) {
+        left: 0%;
+    }
+
+    .step__point {
+        left: 23px; /* Скорректировали положение точки */
+    }
+}
 /* ===== WECONSTRUCT - RESPONSIVE & ACCESSIBILITY STYLES (Final) ===== */
 
 /* ===== ANIMATIONS ===== */
@@ -1607,6 +1775,39 @@ select {
   animation: shake-modal 0.5s ease-in-out;
 }
 
+/* ===== NEW: PRELOADER ===== */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.preloader {
+  position: fixed;
+  inset: 0;
+  background-color: var(--bg-primary);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.preloader__spinner {
+  border: 4px solid var(--primary-50);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+.preloader__text {
+    margin-top: var(--space-3);
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    color: var(--primary);
+}
+
+
 /* ===== MODAL WINDOW - MODERN DESIGN ===== */
 .modal-overlay {
   position: fixed;
@@ -1619,7 +1820,6 @@ select {
   justify-content: center;
   z-index: var(--z-modal);
   padding: 1rem;
-  animation: fadeIn 0.3s ease-out;
 }
 
 .modal-content {
@@ -1713,6 +1913,21 @@ select {
   flex-direction: column;
   min-height: 0;
 }
+/* Custom Scrollbar for Modal */
+.modal-info-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+.modal-info-scrollable::-webkit-scrollbar-track {
+    background: transparent;
+}
+.modal-info-scrollable::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 3px;
+}
+.modal-info-scrollable::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-400);
+}
+
 
 .modal-title {
   font-size: 2rem;
@@ -2009,135 +2224,4 @@ select {
     color: var(--text-secondary);
     font-size: var(--font-size-sm);
     line-height: 1.5;
-}
-/* ===== NEW: Animated Timeline Steps Section (Refined) ===== */
-.steps-section {
-    /* 1. Убрали лишний фон и сделали секцию компактнее */
-    padding: var(--space-12) 0; /* Было 128px, стало 96px */
-    background-color: transparent;
-}
-
-.steps-timeline {
-    position: relative;
-    max-width: 900px; /* Немного увеличим ширину для лучшего вида */
-    margin: 0 auto;
-}
-
-/* Вертикальная линия */
-.steps-timeline::after {
-    content: '';
-    position: absolute;
-    width: 2px; /* Сделали линию тоньше */
-    background-color: var(--gray-200);
-    top: 10px;
-    bottom: 10px;
-    left: 50%;
-    margin-left: -1px;
-}
-
-/* Контейнер для каждого шага */
-.step {
-    padding: 20px 40px; /* Увеличили вертикальный отступ для баланса */
-    position: relative;
-    width: 50%;
-}
-
-/* Точка на линии */
-.step__point {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    right: -8px;
-    background-color: white;
-    border: 3px solid var(--primary);
-    top: 38px;
-    border-radius: 50%;
-    z-index: 1;
-    transition: transform 0.3s ease;
-}
-
-.step:nth-child(odd) { left: 0; }
-.step:nth-child(even) { left: 50%; }
-
-/* Карточка с контентом */
-.step__card {
-    /* 2. Сделали карточки компактнее */
-    padding: var(--space-4); /* Было 40px, стало 32px */
-    background: var(--bg-card);
-    position: relative;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--elevation-2);
-    border: 1px solid var(--gray-200);
-    transition: transform var(--transition-smooth), box-shadow var(--transition-smooth);
-}
-
-.step:hover .step__card {
-    transform: translateY(-5px);
-    box-shadow: var(--elevation-8);
-}
-.step:hover .step__point {
-    transform: scale(1.2);
-}
-
-/* Контент внутри карточки */
-.step__number {
-    /* 3. Изменили цвет цифр на полупрозрачный синий */
-    font-size: 3.5rem;
-    font-weight: 700;
-    color: rgba(7, 56, 90, 0.1); /* Полупрозрачный основной цвет */
-    position: absolute;
-    top: 15px;
-    right: 25px;
-    line-height: 1;
-    z-index: 0;
-    user-select: none;
-}
-
-.step__title {
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-    color: var(--primary);
-    margin-bottom: var(--space-2);
-    position: relative;
-}
-
-.step__text {
-    color: var(--text-secondary);
-    line-height: 1.6;
-    font-size: var(--font-size-sm);
-    position: relative;
-}
-
-/* Анимация появления */
-.step__card {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: fadeInUp linear forwards;
-    animation-timeline: view();
-    animation-range-start: entry 10%;
-    animation-range-end: entry 50%;
-}
-
-/* Адаптивность для мобильных */
-@media screen and (max-width: 768px) {
-    .steps-timeline::after {
-        left: 31px;
-    }
-
-    .step {
-        width: 100%;
-        padding-left: 70px;
-        padding-right: 15px; /* Уменьшили отступ справа */
-        padding-top: 10px;
-        padding-bottom: 10px;
-    }
-
-    .step:nth-child(even) {
-        left: 0%;
-    }
-
-    .step__point {
-        left: 23px; /* Скорректировали положение точки */
-    }
 }

@@ -1,12 +1,27 @@
 <div 
-    x-data="{ shake: false }" 
+    x-data="{ show: false }"
+    x-init="() => { $nextTick(() => show = true) }"
     class="modal-overlay" 
-    @keydown.escape.window="$el.remove()" 
-    @click.self="shake = true; setTimeout(() => shake = false, 500)">
+    @keydown.escape.window="$el.remove()"
+    @click.self="$el.remove()"
+    x-show="show"
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+>
     <div 
         class="modal-content" 
-        :class="{ 'shake-it': shake }"
-        @click.away="!shake && $el.parentElement.remove()"
+        @click.away="$el.parentElement.remove()"
+        x-show="show"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
         style="max-width: 500px;">
         
         <button class="modal-close-btn" @click="$el.parentElement.parentElement.remove()">&times;</button>
