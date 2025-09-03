@@ -48,6 +48,7 @@
                     lightboxOpen: false,
                     currentIndex: 0,
                     panzoomInstance: null,
+                    loading: true, // НОВОЕ СОСТОЯНИЕ ДЛЯ СПИННЕРА
                     
                     init() { this.mainImage = this.images[0]; },
 
@@ -58,7 +59,8 @@
                             this.panzoomInstance = Panzoom(elem, {
                                 maxScale: 5, contain: 'inside', canvas: true, panOnlyWhenZoomed: true,
                             });
-                            elem.parentElement.addEventListener('wheel', (event) => {
+                            // Вешаем слушатель на весь оверлей
+                            this.$refs.lightboxOverlay.addEventListener('wheel', (event) => {
                                 if (this.panzoomInstance) this.panzoomInstance.zoomWithWheel(event);
                             });
                         }
@@ -68,8 +70,9 @@
                         this.currentIndex = this.images.indexOf(clickedImage);
                         if (this.currentIndex === -1) this.currentIndex = 0;
                         document.body.classList.add('body-no-scroll');
+                        this.loading = true; // Включаем спиннер
                         this.lightboxOpen = true;
-                        this.$nextTick(() => this.initPanzoom());
+                        // Panzoom инициализируется после загрузки картинки
                     },
 
                     closeLightbox() {
@@ -82,9 +85,14 @@
                     },
                     
                     changeImage(newIndex) {
-                        if (this.currentIndex === newIndex) return;
+                        if (this.currentIndex === newIndex || this.loading) return;
+                        this.loading = true; // Включаем спиннер перед сменой
                         this.currentIndex = newIndex;
-                        this.$nextTick(() => this.initPanzoom());
+                    },
+
+                    onImageLoad() {
+                        this.loading = false; // Выключаем спиннер
+                        this.$nextTick(() => this.initPanzoom()); // Инициализируем Panzoom
                     },
 
                     nextImage() { this.changeImage((this.currentIndex + 1) % this.images.length); },
@@ -111,28 +119,27 @@
                 </div>
                 {% endif %}
 
-                <!-- Lightbox (ПЕРЕРАБОТАННАЯ СТРУКТУРА) -->
-                <div x-show="lightboxOpen" class="lightbox-overlay" @click.self="closeLightbox()" x-cloak>
+                <!-- Lightbox (ФИНАЛЬНАЯ ПРОФЕССИОНАЛЬНАЯ СТРУКТУРА) -->
+                <div x-show="lightboxOpen" class="lightbox-overlay" @click.self="closeLightbox()" x-ref="lightboxOverlay" x-cloak>
                     
-                    <div class="lightbox-content">
-                        <img :key="currentIndex" 
-                             :src="images[currentIndex]" 
-                             alt="Fullscreen image" 
-                             class="lightbox-image" 
-                             x-ref="panzoomImage"
-                             x-transition:enter="transition ease-out duration-150"
-                             x-transition:enter-start="opacity-0"
-                             x-transition:enter-end="opacity-100">
-                    </div>
+                    <div x-show="loading" class="lightbox-spinner"></div>
                     
-                    <button @click="prevImage()" class="lightbox-nav lightbox-prev" aria-label="Предыдущее изображение" x-show="images.length > 1">&lt;</button>
-                    <button @click="nextImage()" class="lightbox-nav lightbox-next" aria-label="Следующее изображение" x-show="images.length > 1">&gt;</button>
+                    <img :key="currentIndex" 
+                         :src="images[currentIndex]" 
+                         @load="onImageLoad()"
+                         alt="Fullscreen image" 
+                         class="lightbox-image" 
+                         x-ref="panzoomImage"
+                         :class="{ 'loading': loading }">
                     
-                    <div class="lightbox-counter" x-show="images.length > 1">
+                    <button @click="prevImage()" class="lightbox-nav lightbox-prev" aria-label="Предыдущее изображение" x-show="!loading && images.length > 1">&lt;</button>
+                    <button @click="nextImage()" class="lightbox-nav lightbox-next" aria-label="Следующее изображение" x-show="!loading && images.length > 1">&gt;</button>
+                    
+                    <div class="lightbox-counter" x-show="!loading && images.length > 1">
                         <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
                     </div>
 
-                    <div class="lightbox-controls">
+                    <div class="lightbox-controls" x-show="!loading">
                         <button @click="panzoomInstance?.zoomIn()" class="lightbox-control-btn" aria-label="Приблизить"><i class="fas fa-plus"></i></button>
                         <button @click="panzoomInstance?.zoomOut()" class="lightbox-control-btn" aria-label="Отдалить"><i class="fas fa-minus"></i></button>
                         <button @click="panzoomInstance?.reset()" class="lightbox-control-btn" aria-label="Сбросить масштаб"><i class="fas fa-expand"></i></button>
