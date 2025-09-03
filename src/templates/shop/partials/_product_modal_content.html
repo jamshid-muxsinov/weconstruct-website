@@ -47,39 +47,60 @@
                     mainImage: null,
                     lightboxOpen: false,
                     currentIndex: 0,
+                    panzoomInstance: null,
                     
                     init() {
                         this.mainImage = this.images[0];
+                        this.$watch('lightboxOpen', (isOpen) => {
+                            if (!isOpen && this.panzoomInstance) {
+                                this.panzoomInstance.destroy();
+                                this.panzoomInstance = null;
+                            }
+                        });
                     },
 
                     openLightbox(clickedImage) {
                         this.currentIndex = this.images.indexOf(clickedImage);
                         if (this.currentIndex === -1) this.currentIndex = 0;
                         this.lightboxOpen = true;
+
+                        this.$nextTick(() => {
+                            const elem = this.$refs.lightboxImage;
+                            if (elem) {
+                                this.panzoomInstance = Panzoom(elem, {
+                                    maxScale: 4,
+                                    contain: 'outside',
+                                    canvas: true
+                                });
+                                // Добавляем слушатель для зума колесиком мыши
+                                elem.parentElement.addEventListener('wheel', (event) => {
+                                    if(this.panzoomInstance) this.panzoomInstance.zoomWithWheel(event);
+                                });
+                            }
+                        });
                     },
+
+                    changeImage(newIndex) {
+                        this.currentIndex = newIndex;
+                        this.$nextTick(() => {
+                            if (this.panzoomInstance) {
+                                this.panzoomInstance.reset();
+                            }
+                        });
+                    },
+
                     nextImage() {
-                        this.currentIndex = (this.currentIndex + 1) % this.images.length;
+                        this.changeImage((this.currentIndex + 1) % this.images.length);
                     },
+
                     prevImage() {
-                        this.currentIndex = (this.currentIndex - 1 + this.images.length) % this.images.length;
+                        this.changeImage((this.currentIndex - 1 + this.images.length) % this.images.length);
                     }
                 }"
                 x-init="init()"
                 @keydown.escape.window="lightboxOpen = false"
                 @keydown.arrow-right.window="if(lightboxOpen) { nextImage() }"
-                @keydown.arrow-left.window="if(lightboxOpen) { prevImage() }"
-                x-data="{ 
-                    touchStartX: 0,
-                    touchEndX: 0,
-                    handleTouchStart(e) { this.touchStartX = e.touches[0].clientX; },
-                    handleTouchEnd(e) { 
-                        this.touchEndX = e.changedTouches[0].clientX;
-                        if (this.touchStartX - this.touchEndX > 50) { this.nextImage(); }
-                        if (this.touchEndX - this.touchStartX > 50) { this.prevImage(); }
-                    }
-                }"
-                @touchstart="handleTouchStart"
-                @touchend="handleTouchEnd">
+                @keydown.arrow-left.window="if(lightboxOpen) { prevImage() }">
 
                 <div class="modal-gallery__main">
                     <a href="#" @click.prevent="openLightbox(mainImage)" class="gallery-main-link" title="Увеличить изображение">
@@ -97,19 +118,32 @@
                 </div>
                 {% endif %}
 
+                <!-- Lightbox with Panzoom -->
                 <div x-show="lightboxOpen" class="lightbox-overlay" x-transition x-cloak>
                     <div class="lightbox-content" @click.away="lightboxOpen = false">
-                        <button @click="prevImage()" class="lightbox-nav lightbox-prev" aria-label="Предыдущее изображение">&lt;</button>
                         
-                        <img :src="images[currentIndex]" alt="Fullscreen image" class="lightbox-image">
+                        <img :src="images[currentIndex]" alt="Fullscreen image" class="lightbox-image" x-ref="lightboxImage">
+                        
+                        <div class="lightbox-controls">
+                            <button @click="panzoomInstance?.zoomIn()" class="lightbox-control-btn" aria-label="Приблизить">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button @click="panzoomInstance?.zoomOut()" class="lightbox-control-btn" aria-label="Отдалить">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <button @click="panzoomInstance?.reset()" class="lightbox-control-btn" aria-label="Сбросить масштаб">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+
+                        <button @click="prevImage()" class="lightbox-nav lightbox-prev" aria-label="Предыдущее изображение" x-show="images.length > 1">&lt;</button>
+                        <button @click="nextImage()" class="lightbox-nav lightbox-next" aria-label="Следующее изображение" x-show="images.length > 1">&gt;</button>
                         
                         <div class="lightbox-counter" x-show="images.length > 1">
                             <span x-text="currentIndex + 1"></span> / <span x-text="images.length"></span>
                         </div>
-                        
-                        <button @click="nextImage()" class="lightbox-nav lightbox-next" aria-label="Next image">&gt;</button>
 
-                        <button @click="lightboxOpen = false" class="lightbox-close" aria-label="Close">&times;</button>
+                        <button @click="lightboxOpen = false" class="lightbox-close" aria-label="Закрыть">&times;</button>
                     </div>
                 </div>
             </div>
