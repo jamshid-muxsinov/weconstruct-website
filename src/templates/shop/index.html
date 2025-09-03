@@ -19,30 +19,84 @@ Zamonaviy modulli va karkasli uylar, ofislar va pavilyonlarni loyihalash, ishlab
 <section class="hero">
   <div class="hero__background-overlay"></div>
   <div class="container hero__content">
-    <h1 class="hero__title">
-      {% if request.state.locale == 'uz' %}
-      <span class="hero__title-main">Hayot va biznes uchun</span>
-      <span class="hero__title-sub">zamonaviy modulli yechimlar</span>
-      {% else %}
-      <span class="hero__title-main">Современные модульные решения</span>
-      <span class="hero__title-sub">для жизни и бизнеса</span>
-      {% endif %}
-    </h1>
-    <p class="hero__description">
-      {% if request.state.locale == 'uz' %}
-      Ofislar va savdo pavilyonlaridan tortib turar-joy binolari va sanitariya bloklarigacha bo'lgan har qanday maqsaddagi tez quriladigan binolarni loyihalashtiramiz, ishlab chiqaramiz va o'rnatamiz.
-      {% else %}
-      Проектируем, производим и монтируем быстровозводимые здания любого назначения: от офисов и торговых павильонов до жилых домов и санитарных блоков.
-      {% endif %}
-    </p>
-    <div class="hero__actions">
-        <button hx-get="{{ request.url_for('htmx_general_quote_form', locale=request.state.locale) }}"
-                hx-target="#modal-placeholder"
-                hx-swap="innerHTML"
-                class="btn btn--primary btn--hero">
-          <span>{% if request.state.locale == 'uz' %}Ariza qoldirish{% else %}Оставить заявку{% endif %}</span>
-          <svg class="icon icon-arrow" width="24" height="24"><use xlink:href="#icon-arrow-right"></use></svg>
-        </button>
+    <div 
+      class="hero-showroom"
+      x-data="{
+        activeIndex: 0,
+        projects: [
+          { 
+            id: 1, 
+            tabName: 'Офис',
+            title: 'Современный офис там, где он нужен вам',
+            subtitle: 'Стильный и функциональный модуль для вашей команды. Идеальное решение для отдела продаж, представительства или IT-компании.',
+            imageSrc: '{{ url_for('static', path='img/office-module.png') }}' 
+          },
+          { 
+            id: 2, 
+            tabName: 'Жилая капсула',
+            title: 'Жильё будущего. Комфорт и футуризм в одном решении',
+            subtitle: 'Уникальные жилые капсулы с панорамным остеклением. Идеально для глэмпинга, загородного отдыха или как гостевой дом.',
+            imageSrc: '{{ url_for('static', path='img/residential-capsule.png') }}'
+          },
+          { 
+            id: 3, 
+            tabName: 'Кофейня',
+            title: 'Ваш бизнес готов к старту. Стильная кофейня за несколько дней',
+            subtitle: 'Элегантный и светлый павильон, идеально подходящий для кофейни, шоу-рума или точки продаж. Привлекайте клиентов с первого взгляда.',
+            imageSrc: '{{ url_for('static', path='img/coffee-shop.png') }}'
+          }
+        ]
+      }"
+    >
+      <div class="hero-showroom__content">
+        <div class="hero-showroom__text">
+          <!-- Alpine.js будет выводить сюда заголовок в зависимости от активного таба -->
+          <h1 class="hero__title" x-text="projects[activeIndex].title"></h1>
+          <!-- И описание -->
+          <p class="hero__description" x-text="projects[activeIndex].subtitle"></p>
+        </div>
+        
+        <div class="hero-showroom__tabs">
+          <!-- Цикл для создания кнопок-табов -->
+          <template x-for="(project, index) in projects" :key="project.id">
+            <button 
+              @click="activeIndex = index" 
+              :class="{ 'active': activeIndex === index }"
+              class="hero-showroom__tab-btn"
+              x-text="project.tabName"
+            ></button>
+          </template>
+        </div>
+        
+        <div class="hero__actions">
+          <button hx-get="{{ url_for('htmx_general_quote_form', locale=request.state.locale) }}"
+                  hx-target="#modal-placeholder"
+                  hx-swap="innerHTML"
+                  class="btn btn--primary btn--hero">
+            <span>Узнать стоимость</span>
+            <svg class="icon icon-arrow" width="24" height="24"><use xlink:href="#icon-arrow-right"></use></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-showroom__visual">
+        <!-- Цикл для создания блоков с изображениями -->
+        <template x-for="(project, index) in projects" :key="project.id">
+          <div 
+            x-show="activeIndex === index" 
+            x-transition:enter="transition ease-out duration-500" 
+            x-transition:enter-start="opacity-0 scale-95" 
+            x-transition:enter-end="opacity-100 scale-100" 
+            x-transition:leave="transition ease-in duration-300" 
+            x-transition:leave-start="opacity-100 scale-100" 
+            x-transition:leave-end="opacity-0 scale-95" 
+            class="hero-showroom__image-wrapper"
+          >
+            <img :src="project.imageSrc" :alt="project.title">
+          </div>
+        </template>
+      </div>
+
     </div>
   </div>
 </section>
