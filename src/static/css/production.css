@@ -2231,7 +2231,7 @@ select {
 }
 
 
-/* ===== LIGHTBOX STYLES (GURU EDITION - FINAL & STABLE) ===== */
+/* ===== LIGHTBOX STYLES (GURU EDITION - REWRITTEN FROM SCRATCH) ===== */
 .lightbox-overlay {
   position: fixed;
   inset: 0;
@@ -2246,8 +2246,8 @@ select {
 }
 
 .lightbox-image {
-  max-width: calc(100vw - 120px);
-  max-height: calc(100vh - 120px);
+  max-width: calc(100vw - 120px);  /* Оставляем место для стрелок */
+  max-height: calc(100vh - 120px); /* Оставляем место для UI */
   display: block;
   cursor: grab;
   transition: opacity 0.2s ease-in-out;
@@ -2255,7 +2255,7 @@ select {
 }
 
 .lightbox-image.loading {
-  opacity: 0;
+  opacity: 0; /* Прячем картинку, пока она грузится */
 }
 
 .panzoom-panning, .panzoom-panning * {
@@ -2263,6 +2263,7 @@ select {
 }
 
 /* --- UI Controls --- */
+/* Все элементы управления позиционируются абсолютно относительно .lightbox-overlay */
 .lightbox-nav,
 .lightbox-close,
 .lightbox-counter,
@@ -2273,42 +2274,86 @@ select {
 }
 
 .lightbox-nav {
-  top: 50%; transform: translateY(-50%);
-  background: rgba(30, 30, 30, 0.5); color: white; border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%; width: 50px; height: 50px; font-size: 2rem;
-  cursor: pointer; transition: background-color 0.2s, transform 0.2s;
-  display: flex; align-items: center; justify-content: center;
+  top: 50%; 
+  transform: translateY(-50%);
+  background: rgba(30, 30, 30, 0.5); 
+  color: white; 
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%; 
+  width: 50px; 
+  height: 50px; 
+  font-size: 2rem;
+  cursor: pointer; 
+  transition: background-color 0.2s, transform 0.2s;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
 }
-.lightbox-nav:hover { background-color: rgba(0, 0, 0, 0.7); transform: translateY(-50%) scale(1.05); }
+.lightbox-nav:hover { 
+  background-color: rgba(0, 0, 0, 0.7); 
+  transform: translateY(-50%) scale(1.05); 
+}
 .lightbox-prev { left: 20px; }
 .lightbox-next { right: 20px; }
 
 .lightbox-close {
-  top: 20px; right: 20px; 
-  background: rgba(30, 30, 30, 0.7); color: white; border: 1px solid rgba(255, 255, 255, 0.2);
-  width: 44px; height: 44px; border-radius: 50%;
-  font-size: 1.5rem; cursor: pointer; transition: all 0.2s;
-  display: flex; align-items: center; justify-content: center;
+  top: 20px; 
+  right: 20px; 
+  background: rgba(30, 30, 30, 0.7); 
+  color: white; 
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 44px; 
+  height: 44px; 
+  border-radius: 50%;
+  font-size: 1.5rem; 
+  cursor: pointer; 
+  transition: all 0.2s;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
 }
-.lightbox-close:hover { transform: rotate(90deg); background-color: rgba(0, 0, 0, 0.9); }
+.lightbox-close:hover { 
+  transform: rotate(90deg); 
+  background-color: rgba(0, 0, 0, 0.9); 
+}
 
 .lightbox-counter {
-  top: 30px; left: 50%; transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.7); color: white; padding: 8px 16px;
-  border-radius: 20px; font-size: 0.9rem; font-weight: 500;
+  top: 30px; 
+  left: 50%; 
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7); 
+  color: white; 
+  padding: 8px 16px;
+  border-radius: 20px; 
+  font-size: 0.9rem; 
+  font-weight: 500;
 }
 
 .lightbox-controls {
-    bottom: 20px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 8px; background: rgba(30, 30, 30, 0.7);
-    padding: 8px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.2);
+    bottom: 20px; 
+    left: 50%; 
+    transform: translateX(-50%);
+    display: flex; 
+    gap: 8px; 
+    background: rgba(30, 30, 30, 0.7);
+    padding: 8px; 
+    border-radius: 22px; 
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .lightbox-control-btn {
-    background: transparent; color: white; border: none;
-    border-radius: 50%; width: 36px; height: 36px; font-size: 1rem;
-    cursor: pointer; transition: background-color 0.2s ease, transform 0.2s ease;
-    display: flex; align-items: center; justify-content: center;
+    background: transparent; 
+    color: white; 
+    border: none;
+    border-radius: 50%; 
+    width: 36px; 
+    height: 36px; 
+    font-size: 1rem;
+    cursor: pointer; 
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
 }
 .lightbox-control-btn:hover { background-color: rgba(255, 255, 255, 0.2); }
 .lightbox-control-btn:active { transform: scale(0.95); }

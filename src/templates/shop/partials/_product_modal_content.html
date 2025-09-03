@@ -35,6 +35,9 @@
                 {% set _ = all_images.append(img.image) %}
             {% endfor %}
 
+            <!-- =================================================================================== -->
+            <!-- ГАЛЕРЕЯ И ЛАЙТБОКС (ПОЛНОСТЬЮ ПЕРЕПИСАННАЯ ЛОГИКА) -->
+            <!-- =================================================================================== -->
             <div class="modal-gallery" 
                 x-data="{ 
                     images: [
@@ -48,10 +51,11 @@
                     lightboxOpen: false,
                     currentIndex: 0,
                     panzoomInstance: null,
-                    loading: true,
+                    loading: true, // Состояние для спиннера загрузки
                     
                     init() { this.mainImage = this.images[0]; },
 
+                    // Инициализация Panzoom
                     initPanzoom() {
                         if (this.panzoomInstance) { this.panzoomInstance.destroy(); }
                         const elem = this.$refs.panzoomImage;
@@ -59,54 +63,62 @@
                             this.panzoomInstance = Panzoom(elem, {
                                 maxScale: 5, contain: 'inside', canvas: true, panOnlyWhenZoomed: true,
                             });
+                            // Вешаем слушатель колесика на весь оверлей для удобства
                             this.$refs.lightboxOverlay.addEventListener('wheel', (event) => {
                                 if (this.panzoomInstance) this.panzoomInstance.zoomWithWheel(event);
                             });
                         }
                     },
 
+                    // Открытие лайтбокса
                     openLightbox(clickedImage) {
                         this.currentIndex = this.images.indexOf(clickedImage);
                         if (this.currentIndex === -1) this.currentIndex = 0;
-                        document.body.classList.add('body-no-scroll');
-                        this.loading = true;
-                        this.lightboxOpen = true;
+                        document.body.classList.add('body-no-scroll'); // Блокируем скролл страницы
+                        this.loading = true; // Включаем спиннер
+                        this.lightboxOpen = true; // Открываем оверлей
+                        // Panzoom инициализируется только после полной загрузки картинки
                     },
 
+                    // Закрытие лайтбокса
                     closeLightbox() {
                         this.lightboxOpen = false;
-                        document.body.classList.remove('body-no-scroll');
+                        document.body.classList.remove('body-no-scroll'); // Разблокируем скролл
                         if (this.panzoomInstance) {
-                            this.panzoomInstance.destroy();
+                            this.panzoomInstance.destroy(); // Уничтожаем экземпляр Panzoom
                             this.panzoomInstance = null;
                         }
                     },
                     
+                    // Смена изображения
                     changeImage(newIndex) {
-                        if (this.currentIndex === newIndex || this.loading) return;
-                        this.loading = true;
+                        if (this.currentIndex === newIndex || this.loading) return; // Блокируем быструю смену
+                        this.loading = true; // Включаем спиннер перед сменой
                         this.currentIndex = newIndex;
                     },
 
+                    // Событие после загрузки изображения
                     onImageLoad() {
-                        this.loading = false;
-                        this.$nextTick(() => this.initPanzoom());
+                        this.loading = false; // Выключаем спиннер
+                        this.$nextTick(() => this.initPanzoom()); // Инициализируем Panzoom на загруженном фото
                     },
 
                     nextImage() { this.changeImage((this.currentIndex + 1) % this.images.length); },
                     prevImage() { this.changeImage((this.currentIndex - 1 + this.images.length) % this.images.length); }
                 }"
                 x-init="init()"
-                @keydown.escape.window="closeLightbox()"
-                @keydown.arrow-right.window="if(lightboxOpen) { nextImage() }"
-                @keydown.arrow-left.window="if(lightboxOpen) { prevImage() }">
+                @keydown.escape.window="if(lightboxOpen) closeLightbox()"
+                @keydown.arrow-right.window="if(lightboxOpen) nextImage()"
+                @keydown.arrow-left.window="if(lightboxOpen) prevImage()">
 
+                <!-- Основное изображение в карточке товара -->
                 <div class="modal-gallery__main">
                     <a href="#" @click.prevent="openLightbox(mainImage)" class="gallery-main-link" title="Увеличить изображение">
                         <img :src="mainImage" alt="Основное изображение" x-show="mainImage", loading="lazy">
                     </a>
                 </div>
                 
+                <!-- Миниатюры -->
                 {% if all_images|length > 1 %}
                 <div class="modal-gallery__thumbnails">
                     {% for image_path in all_images %}
@@ -117,11 +129,13 @@
                 </div>
                 {% endif %}
 
-                <!-- Lightbox (ФИНАЛЬНАЯ ПРОФЕССИОНАЛЬНАЯ СТРУКТУРА) -->
+                <!-- ФИНАЛЬНАЯ, МАКСИМАЛЬНО ПРОСТАЯ И НАДЕЖНАЯ СТРУКТУРА ЛАЙТБОКСА -->
                 <div x-show="lightboxOpen" class="lightbox-overlay" @click.self="closeLightbox()" x-ref="lightboxOverlay" x-cloak>
                     
+                    <!-- 1. Спиннер загрузки -->
                     <div x-show="loading" class="lightbox-spinner"></div>
                     
+                    <!-- 2. Само изображение -->
                     <img :key="currentIndex" 
                          :src="images[currentIndex]" 
                          @load="onImageLoad()"
@@ -130,6 +144,7 @@
                          x-ref="panzoomImage"
                          :class="{ 'loading': loading }">
                     
+                    <!-- 3. Все элементы UI как соседи изображения, а не обертки -->
                     <template x-if="!loading">
                         <div>
                             <button @click="prevImage()" class="lightbox-nav lightbox-prev" aria-label="Предыдущее изображение" x-show="images.length > 1">&lt;</button>
@@ -150,6 +165,8 @@
                     </template>
                 </div>
             </div>
+            
+            <!-- Остальная часть модального окна без изменений -->
             <div class="modal-info-scrollable">
                 <h2 class="modal-title">{{ t_get(request, product, 'name') }}</h2>
                 
