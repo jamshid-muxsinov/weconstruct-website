@@ -18,7 +18,6 @@ services:
     environment:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
-      - ROOT_PATH=/admin
     volumes:
       - .:/app
       - media_volume:/app/media
