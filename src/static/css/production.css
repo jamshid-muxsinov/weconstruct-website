@@ -2226,7 +2226,7 @@ select {
     line-height: 1.5;
 }
 
-/* ===== LIGHTBOX STYLES (FIXED & ENHANCED) ===== */
+/* ===== LIGHTBOX STYLES (REBUILT & FIXED) ===== */
 .gallery-main-link {
     display: flex; align-items: center; justify-content: center;
     position: relative; cursor: zoom-in; overflow: hidden; border-radius: 12px;
@@ -2255,21 +2255,15 @@ select {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.lightbox-panzoom-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow: hidden; /* Важно! */
 }
 
 .lightbox-image {
   max-width: 95vw;
   max-height: 95vh;
-  display: block; /* Убираем лишние отступы */
+  display: block;
   cursor: grab;
+  /* Panzoom добавит transform, поэтому убираем его отсюда */
 }
 
 .panzoom-panning, .panzoom-panning * {
@@ -2288,26 +2282,16 @@ select {
 .lightbox-prev { left: 20px; }
 .lightbox-next { right: 20px; }
 
-/* Общий контейнер для всех элементов UI */
-.lightbox-ui {
-    position: absolute;
-    inset: 0;
-    pointer-events: none; /* Делаем контейнер "прозрачным" для кликов */
-}
-/* Восстанавливаем кликабельность для дочерних элементов */
-.lightbox-ui > * {
-    pointer-events: auto;
-}
 
 .lightbox-close {
   position: absolute; top: 20px; right: 20px; 
   background: rgba(30, 30, 30, 0.7); color: white; border: 1px solid rgba(255, 255, 255, 0.2);
   width: 44px; height: 44px; border-radius: 50%;
-  font-size: 1.5rem; cursor: pointer; opacity: 0.8;
+  font-size: 1.5rem; cursor: pointer; opacity: 1;
   transition: all 0.2s; z-index: 20;
   display: flex; align-items: center; justify-content: center;
 }
-.lightbox-close:hover { opacity: 1; transform: rotate(90deg); }
+.lightbox-close:hover { transform: rotate(90deg); background-color: rgba(0, 0, 0, 0.9); }
 
 .lightbox-counter {
   position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
