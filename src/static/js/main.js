@@ -1,4 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const heroSection = document.querySelector('.hero');
+  if (heroSection) {
+    const skipAnimation = () => {
+      document.body.classList.add('animation-skipped');
+      // Удаляем обработчики после первого срабатывания для оптимизации
+      window.removeEventListener('scroll', skipAnimation);
+      window.removeEventListener('mousemove', skipAnimation);
+    };
+
+    window.addEventListener('scroll', skipAnimation, { once: true });
+    window.addEventListener('mousemove', skipAnimation, { once: true });
+  }
   // Плавный скролл по якорям
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener("click", function (e) {

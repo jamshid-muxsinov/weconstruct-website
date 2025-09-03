@@ -901,7 +901,7 @@ select {
 
 /* ===== WECONSTRUCT - PAGE-SPECIFIC STYLES (Cleaned & Animated) ===== */
 
-/* ===== PAGE: HERO SECTION ===== */
+/* ===== PAGE: HERO SECTION (NEW BLUEPRINT STYLE) ===== */
 .hero {
   position: relative;
   min-height: 100vh;
@@ -909,67 +909,96 @@ select {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  margin-top: -80px;
-  background: transparent;
+  margin-top: calc(-80px - var(--space-4)); /* Compensate for header height */
+  background-color: var(--primary-dark);
+  color: var(--text-white);
 }
-.hero__background-overlay {
-  content: '';
+
+.hero-blueprint {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(circle at 15% 20%, hsla(207, 85%, 95%, 0.7), transparent 40%),
-    radial-gradient(circle at 85% 75%, hsla(38, 100%, 95%, 0.5), transparent 40%);
+  width: 100%;
+  height: 100%;
   z-index: 1;
-  animation: slow-pan 20s ease-in-out infinite alternate;
 }
-@keyframes slow-pan {
-  from { transform: scale(1); }
-  to { transform: scale(1.1); }
+
+.hero-blueprint__svg {
+  width: 100%;
+  height: 100%;
 }
+
+.blueprint-drawing__path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 2;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw 2s ease-out forwards;
+}
+
+/* Staggered animation for drawing effect */
+.blueprint-drawing__path:nth-child(1) { animation-delay: 0s; }
+.blueprint-drawing__path:nth-child(2) { animation-delay: 0.2s; }
+.blueprint-drawing__path:nth-child(3) { animation-delay: 0.4s; }
+.blueprint-drawing__path:nth-child(4) { animation-delay: 0.6s; }
+.blueprint-drawing__path:nth-child(5) { animation-delay: 0.8s; }
+.blueprint-drawing__path:nth-child(6) { animation-delay: 1.0s; }
+.blueprint-drawing__path:nth-child(7) { animation-delay: 1.2s; }
+.blueprint-drawing__path:nth-child(8) { animation-delay: 1.4s; }
+.blueprint-drawing__path:nth-child(9) { animation-delay: 1.6s; }
+
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 .hero__content {
   text-align: center;
   max-width: 900px;
   margin: 0 auto;
-  padding: var(--space-20) 0;
   position: relative;
   z-index: 2;
 }
-.hero__title { margin-bottom: var(--space-6); animation: fadeInUp 0.8s 0.2s ease-out both; }
+
+.hero__title { 
+  margin-bottom: var(--space-6); 
+  opacity: 0;
+  animation: fadeInUp 0.8s 1.5s ease-out both; /* Text appears at 1.5s */
+}
+
 .hero__title-main {
   display: block;
   font-size: clamp(2.5rem, 6vw, 4.5rem);
   font-weight: 400;
   line-height: 1.1;
   letter-spacing: -2px;
-  color: var(--text-primary);
+  color: var(--text-white);
 }
 .hero__title-sub {
   display: block;
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
   font-weight: 700;
-  background: linear-gradient(45deg, var(--primary), var(--primary-light));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-fill-color: transparent;
+  color: var(--secondary);
   letter-spacing: -1px;
 }
-.hero__description {
-  font-size: clamp(1.125rem, 2vw, 1.25rem);
-  line-height: 1.7;
-  color: var(--text-secondary);
-  margin-bottom: var(--space-8);
-  max-width: 65ch;
-  margin-left: auto;
-  margin-right: auto;
-  animation: fadeInUp 0.8s 0.4s ease-out both;
-}
+
 .hero__actions {
-  display: flex;
-  gap: var(--space-3);
-  justify-content: center;
-  flex-wrap: wrap;
-  animation: fadeInUp 0.8s 0.6s ease-out both;
+  opacity: 0;
+  animation: fadeInUp 0.8s 1.7s ease-out both; /* Button appears at 1.7s */
+}
+
+/* Styles to instantly skip animation */
+.animation-skipped .blueprint-drawing__path {
+  stroke-dashoffset: 0;
+  animation: none;
+}
+.animation-skipped .hero__title,
+.animation-skipped .hero__actions {
+  opacity: 1;
+  transform: translateY(0);
+  animation: none;
 }
 
 /* ===== PAGE: GENERAL SECTIONS & HEADERS ===== */
