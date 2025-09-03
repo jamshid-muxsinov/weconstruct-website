@@ -42,7 +42,17 @@
     
     <!-- Critical Preloader CSS -->
     <style>
-      @keyframes spin { to { transform: rotate(360deg); } }
+      /* Preloader Animations */
+      @keyframes pulse-logo {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+      }
+      @keyframes indeterminate-progress {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(200%); }
+      }
+
+      /* Preloader Styles */
       .preloader {
         position: fixed;
         inset: 0;
@@ -52,21 +62,36 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        transition: opacity 0.4s ease-out;
       }
-      .preloader__spinner {
-        border: 4px solid #e6ebee;
-        border-top-color: #07385a;
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-      }
-      .preloader__text {
-        margin-top: 16px;
-        font-family: "Space Grotesk", sans-serif;
-        font-size: 1.125rem;
-        font-weight: 500;
+      .preloader__logo {
+        width: 120px;
+        height: 120px;
         color: #07385a;
+        animation: pulse-logo 2s ease-in-out infinite;
+      }
+      .preloader__logo svg {
+        width: 100%;
+        height: 100%;
+      }
+      .preloader__progress {
+        width: 120px;
+        height: 3px;
+        background-color: #e6ebee;
+        margin-top: 24px;
+        border-radius: 3px;
+        overflow: hidden;
+        position: relative;
+      }
+      .preloader__progress-bar {
+        width: 50%;
+        height: 100%;
+        background-color: #07385a;
+        border-radius: 3px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        animation: indeterminate-progress 1.5s linear infinite;
       }
     </style>
 
@@ -98,9 +123,13 @@
   <!-- =================================================================================== -->
   <!-- PRELOADER -->
   <!-- =================================================================================== -->
-  <div x-show="pageLoading" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="preloader">
-    <div class="preloader__spinner"></div>
-    <span class="preloader__text">WeConstruct</span>
+  <div x-show="pageLoading" x-transition:leave="transition ease-in duration-400" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="preloader">
+    <div class="preloader__logo">
+      {% include 'shop/partials/_logo.html' %}
+    </div>
+    <div class="preloader__progress">
+        <div class="preloader__progress-bar"></div>
+    </div>
   </div>
 
   <svg style="position: absolute; width: 0; height: 0; overflow: hidden;" aria-hidden="true">
