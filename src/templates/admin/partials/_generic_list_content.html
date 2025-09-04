@@ -12,8 +12,11 @@
 
                 {% for header in list_display %}
                     <th>
+                        {# Специальное правило для отображения "Тип бизнеса" вместо "Product" для заявок #}
                         {% if header == 'product' and meta.model_name == 'quoterequest' %}
                             Тип бизнеса
+                        {% elif header == 'full_name' and meta.model_name == 'contact' %}
+                            Полное имя
                         {% else %}
                             {{ header.replace('_', ' ')|capfirst }}
                         {% endif %}
@@ -23,8 +26,15 @@
         </thead>
         <tbody>
             {% for item in page.items %}
+                {# --- ИЗМЕНЕНИЕ: Безопасно получаем URL для редактирования/деталей --- #}
+                {% set change_url = request.url_for(meta.change_url_name, pk=item.id) if meta.change_url_name else '#' %}
+                
                 <tr class="clickable-row" 
-                    onclick="window.location.href='{{ request.url_for(meta.change_url_name, pk=item.id) }}';">
+                    {# --- ИЗМЕНЕНИЕ: Делаем строку кликабельной, только если URL существует --- #}
+                    {% if change_url != '#' %}
+                    onclick="window.location.href='{{ change_url }}';"
+                    {% endif %}
+                    >
                     
                     {% if meta.model_name == 'quoterequest' %}
                     <td data-label="Выбрать" onclick="event.stopPropagation();" style="text-align: center;">
@@ -47,28 +57,42 @@
                                 {% else %}
                                     <span style="color: var(--status-red);">Контакт удален</span>
                                 {% endif %}
+                            
                             {% elif field_name == 'phone' and meta.model_name == 'quoterequest' %}
                                 {{ item.phone | format_phone }}
+
+                            {# --- ИЗМЕНЕНИЕ: Отображаем ссылку в первой колонке, только если URL существует --- #}
                             {% elif loop.first %}
-                                <a href="{{ request.url_for(meta.change_url_name, pk=item.id) }}" class="link-to-change">
+                                {% if change_url != '#' %}
+                                <a href="{{ change_url }}" class="link-to-change">
                                     {{ value }}
                                 </a>
+                                {% else %}
+                                    {{ value }}
+                                {% endif %}
+
                             {% elif field_name == 'status' and hasattr(item, 'get_status_display') %}
                                 <span class="status-badge status-{{ item.status.value }}">{{ item.get_status_display() }}</span>
+                            
                             {% elif field_name == 'source' and hasattr(item, 'get_source_display') %}
                                 {{ item.get_source_display() }}
+                            
                             {% elif field_name == 'category' and value %}
                                 {{ value.name }}
+                            
                             {% elif field_name == 'product' and meta.model_name == 'quoterequest' %}
                                 {% if item.business_type %}
                                     <span style="font-weight: 500; color: var(--accent-primary);">{{ item.business_type }}</span>
                                 {% else %}
                                     <span style="color: var(--text-secondary); font-style: italic;">Не указан</span>
                                 {% endif %}
+                            
                             {% elif field_name == 'price_min' and value is not none %}
                                 {{ value|format_number }} сум
+                            
                             {% elif value is none %}
                                 <span style="color: var(--text-secondary);">&mdash;</span>
+                            
                             {% else %}
                                 {{ value }}
                             {% endif %}

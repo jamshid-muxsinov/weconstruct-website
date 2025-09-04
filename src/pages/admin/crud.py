@@ -107,6 +107,8 @@ CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "К�
 QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'product', 'status', 'source'], QuoteRequestForm, "Заявка", "Заявки")
 CONTACT_META = Meta(Contact, ['full_name', 'phone', 'email'], None, "Контакт", "Контакты")
 
+CONTACT_META.change_url_name = "admin_contact_detail"
+
 def sanitize_for_csv(value):
     if value is None:
         return ""
