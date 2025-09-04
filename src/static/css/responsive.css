@@ -1,7 +1,4 @@
-/* ===== WECONSTRUCT - RESPONSIVE & ACCESSIBILITY STYLES (Enhanced) ===== */
-
-/* ===== MOBILE-FIRST RESPONSIVE DESIGN ===== */
-/* Base styles are mobile-first, then enhanced for larger screens */
+/* ===== WECONSTRUCT - RESPONSIVE & ACCESSIBILITY STYLES (Enhanced & Adapted for Mobile) ===== */
 
 /* ===== MOBILE-FIRST KANBAN BOARD ENHANCEMENTS ===== */
 /* Mobile-first approach - base styles for mobile, then enhanced for desktop */
@@ -587,17 +584,50 @@
   .navbar__toggle { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; }
   .desktop-nav { display: none; }
   
+  /* === GURU ADDITION: Более компактный хедер на мобильных === */
+  .site-header {
+    top: var(--space-1);
+    width: calc(100% - (var(--space-1) * 2));
+  }
+
   .hero { margin-top: calc(-48px - (var(--space-2) * 2)); }
   .hero__content { padding: var(--space-12) 0; }
   .hero__actions { flex-direction: column; align-items: stretch; gap: var(--space-3); }
   .form-grid { grid-template-columns: 1fr; }
   .cta__content { flex-direction: column; text-align: center; gap: var(--space-6); }
-  .section-header { text-align: center; }
+  
+  /* === GURU ADDITION: Уменьшаем отступы между секциями === */
+  .section-header { 
+    text-align: center;
+    margin-bottom: var(--space-8); 
+  }
   .section-header .section-title::after { left: 50%; transform: translateX(-50%); }
   
-  /* ИЗМЕНЕНИЯ ЗДЕСЬ УЖЕ ВНЕСЕНЫ В pages.css, поэтому дублировать не нужно */
-  /* .team-member ... */
+  .team-member {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+    text-align: center;
+  }
   
+  /* === GURU ADDITION: Адаптивное изображение основателя === */
+  .team-member__image {
+    height: auto;
+    aspect-ratio: 1 / 1.1;
+    object-fit: cover;
+    max-width: 250px;
+    margin: 0 auto;
+  }
+
+  .team-member__info {
+    align-items: center;
+  }
+  
+  /* === GURU ADDITION: Адаптация сетки в футере === */
+  .footer__nav {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
   .modal-grid { display: flex; flex-direction: column; }
   .modal-content { padding: 1.5rem; max-height: 85vh; }
   
@@ -618,9 +648,28 @@
     --space-12: var(--space-10);
     --space-16: var(--space-12);
   }
-  .page-header { padding: calc(var(--space-12) + 80px) 0 var(--space-8); }
+  
+  /* === GURU ADDITION: Уменьшаем отступы на самых маленьких экранах === */
+  .page-header { 
+    padding: calc(var(--space-10) + 48px) 0 var(--space-8); 
+  }
+
+  /* === GURU ADDITION: Более компактные заголовки === */
+  .page-title {
+    font-size: clamp(2rem, 6vw, 2.8rem);
+  }
+  .section-title {
+      font-size: clamp(1.8rem, 5vw, 2.2rem);
+  }
+
   .btn--hero { padding: var(--space-3) var(--space-6); font-size: var(--font-size-base); min-height: 48px; }
   .products-grid, .stats__grid { grid-template-columns: 1fr; }
+  
+  /* === GURU ADDITION: Уменьшаем внутренние отступы карточек === */
+  .product-card__content, .advantage-card, .stat-card {
+    padding: var(--space-4);
+  }
+
   .modal-gallery__thumbnails { grid-template-columns: repeat(3, 1fr); }
   .modal-title { font-size: 1.6rem; }
   .spec-item { padding: 1.2rem; }
