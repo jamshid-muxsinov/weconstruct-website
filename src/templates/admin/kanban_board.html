@@ -71,7 +71,7 @@
         <select @change="bulkUpdateStatus($event.target.value); $event.target.value = ''" class="select-field" style="min-width: 120px;">
             <option value="">Статус...</option>
             {% for status in QuoteRequest.StatusEnum %}
-            <option value="{{ status.value }}">{{ status.value.replace('_', ' ')|capfirst }}</option>
+              <option value="{{ status.value }}">{{ get_status_display(status) }}</option>
             {% endfor %}
         </select>
         

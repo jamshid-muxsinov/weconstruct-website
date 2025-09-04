@@ -11,6 +11,21 @@ templates = Jinja2Templates(directory="src/templates", extensions=['jinja2.ext.d
 
 translation_cache = TTLCache(maxsize=2000, ttl=3600)
 
+STATUS_DISPLAY_MAP = {
+    'imported': 'Импортировано',
+    'qualification': 'Квалификация',
+    'contacted': 'Контакт установлен',
+    'proposal': 'Предложение',
+    'negotiation': 'Переговоры',
+    'closed': 'Успешно закрыто',
+    'archived': 'В архиве',
+}
+
+def get_status_display(status):
+    status_key = getattr(status, 'value', str(status))
+    return STATUS_DISPLAY_MAP.get(status_key, status_key.replace('_', ' ').capitalize())
+
+
 def format_phone(value: str) -> str:
     """Форматирует номер телефона в вид +998 (XX) XXX-XX-XX."""
     if not value:
@@ -56,6 +71,7 @@ templates.env.globals['current_year'] = datetime.now().year
 templates.env.globals['t_get'] = t_get
 templates.env.globals['csrf_token'] = csrf_token
 templates.env.globals['urlencode'] = urlencode
+templates.env.globals['get_status_display'] = get_status_display
 templates.env.filters['capfirst'] = lambda x: x.capitalize() if x else ''
 templates.env.filters['format_number'] = format_number
 templates.env.filters['format_phone'] = format_phone

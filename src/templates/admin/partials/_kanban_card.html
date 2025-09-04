@@ -6,8 +6,15 @@
      data-status="{{ req.status.value }}"
      data-assignee="{{ req.assigned_to.id if req.assigned_to else '' }}"
      id="kanban-card-{{ req.id }}"
-     @click="toggleSelection('{{ req.id }}', $event)"
+     
+     hx-get="{{ request.url_for('admin_htmx_quote_slide_over', pk=req.id) }}"
+     hx-target="#slide-over-content"
+     hx-trigger="open-details from:closest .kanban-card"
+     
+     @click="handleCardClick(this, '{{ req.id }}', $event)"
      :class="{ 'selected': selectedCards.has('{{ req.id }}') }">
+
+    <!-- ... остальное содержимое карточки остается без изменений ... -->
 
     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
         <h4 class="card-title" style="margin: 0; font-weight: 600; font-size: 1rem;">
@@ -16,7 +23,7 @@
                 {{ req.contact.full_name }}
             </a>
         </h4>
-        <div style="font-size: 0.75rem; color: var(--text-secondary); background: var(--surface-2); padding: 2px 6px; border-radius: var(--radius-md);">#{{ req.id }}</div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary); background: var(--surface-2); padding: 2px 6px; border-radius: var(--border-radius-md);">#{{ req.id }}</div>
     </div>
     <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">{{ req.contact.phone|format_phone }}</div>
 

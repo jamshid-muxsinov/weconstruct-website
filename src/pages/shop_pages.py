@@ -60,7 +60,7 @@ async def htmx_post_request_quote(
     form = await QuoteForm.from_formdata(request)
 
     if await form.validate_on_submit():
-        await shop_service.process_quote_request(
+        result = await shop_service.process_quote_request(
             db=db, 
             name=form.name.data, 
             phone=form.phone.data, 
@@ -68,6 +68,13 @@ async def htmx_post_request_quote(
             product_id=product_id, 
             source="website"
         )
+        
+        if result == "duplicate":
+            context = {"request": request, "product": product, "form": form}
+            response = templates.TemplateResponse("shop/partials/_quote_form.html", context, status_code=422)
+            response.headers["HX-Trigger-After-Swap"] = json.dumps({"show-toast": {"message": "Вы недавно уже отправляли заявку. Мы скоро с вами свяжемся!", "type": "warning"}})
+            return response
+
         response = templates.TemplateResponse("shop/partials/_quote_success.html", {"request": request, "product": product})
         response.headers["HX-Trigger-After-Swap"] = json.dumps({"new-quote-request": True})
         return response
@@ -93,7 +100,7 @@ async def htmx_post_general_quote(
     form = await GeneralQuoteForm.from_formdata(request)
     
     if await form.validate_on_submit():
-        await shop_service.process_quote_request(
+        result = await shop_service.process_quote_request(
             db=db, 
             name=form.name.data, 
             phone=form.phone.data, 
@@ -101,6 +108,13 @@ async def htmx_post_general_quote(
             product_id=None, 
             source="contact_form"
         )
+        
+        if result == "duplicate":
+            context = {"request": request, "form": form}
+            response = templates.TemplateResponse("shop/partials/_general_quote_form.html", context, status_code=422)
+            response.headers["HX-Trigger-After-Swap"] = json.dumps({"show-toast": {"message": "Вы недавно уже отправляли заявку!", "type": "warning"}})
+            return response
+
         response = templates.TemplateResponse("shop/partials/_quote_success.html", {"request": request, "product": None})
         response.headers["HX-Trigger-After-Swap"] = json.dumps({"new-quote-request": True})
         return response
