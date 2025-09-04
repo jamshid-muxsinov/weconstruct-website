@@ -1,10 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy import func, desc, update, and_
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import selectinload, joinedload
 import wtforms
-
+from sqlalchemy import func, desc, update, and_, delete
+from sqlalchemy.future import select
 from src.models.shop_models import QuoteRequest, Task, StatusChangeLog, Contact, ContactNote, User
 from src.schemas.crm_schemas import QuoteRequestStatusUpdate, TaskCreate
 
@@ -584,3 +583,96 @@ async def export_requests_csv(db: AsyncSession, card_ids: list[int] = None) -> s
     except Exception as e:
         print(f"Error exporting requests to CSV: {e}")
         raise
+
+async def merge_duplicate_contacts(db: AsyncSession) -> dict:
+    """
+    Находит и объединяет дубликаты контактов по номеру телефона.
+    Возвращает статистику по выполненной работе.
+    """
+    log.info("Запуск процесса поиска и слияния дубликатов контактов.")
+
+    # Создаем нормализованное поле телефона (только цифры, последние 9)
+    # для надежного сравнения
+    normalized_phone = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
+
+    # Находим группы телефонных номеров, у которых больше одного контакта
+    subquery = (
+        select(normalized_phone.label("phone_normalized"))
+        .group_by("phone_normalized")
+        .having(func.count(Contact.id) > 1)
+        .subquery()
+    )
+
+    # Выбираем все контакты, которые являются дубликатами
+    stmt = (
+        select(Contact)
+        .where(normalized_phone.in_(select(subquery)))
+        .order_by(normalized_phone, Contact.id) # Сортируем, чтобы самый старый был первым
+    )
+
+    result = await db.execute(stmt)
+    all_duplicates = result.scalars().all()
+
+    if not all_duplicates:
+        log.info("Дубликаты контактов не найдены.")
+        return {"merged_groups": 0, "deleted_contacts": 0, "message": "Дубликаты контактов не найдены."}
+
+    # Группируем контакты по нормализованному номеру
+    contacts_by_phone = {}
+    for contact in all_duplicates:
+        phone_key = ''.join(filter(str.isdigit, contact.phone))[-9:]
+        if phone_key not in contacts_by_phone:
+            contacts_by_phone[phone_key] = []
+        contacts_by_phone[phone_key].append(contact)
+
+    merged_groups_count = 0
+    deleted_contacts_count = 0
+
+    for phone, contacts in contacts_by_phone.items():
+        if len(contacts) < 2:
+            continue
+        
+        # Первый контакт в группе (самый старый по id) - наш главный
+        master_contact = contacts[0]
+        duplicate_contacts = contacts[1:]
+        duplicate_ids = [c.id for c in duplicate_contacts]
+
+        log.info(f"Обнаружена группа дубликатов для номера *****{phone[-4:]}. "
+                 f"Главный ID: {master_contact.id}, дубликаты: {duplicate_ids}")
+
+        # 1. Переназначаем QuoteRequests
+        await db.execute(
+            update(QuoteRequest)
+            .where(QuoteRequest.contact_id.in_(duplicate_ids))
+            .values(contact_id=master_contact.id)
+        )
+        # 2. Переназначаем Tasks
+        await db.execute(
+            update(Task)
+            .where(Task.contact_id.in_(duplicate_ids))
+            .values(contact_id=master_contact.id)
+        )
+        # 3. Переназначаем ContactNotes
+        await db.execute(
+            update(ContactNote)
+            .where(ContactNote.contact_id.in_(duplicate_ids))
+            .values(contact_id=master_contact.id)
+        )
+        
+        # 4. Удаляем "пустые" дубликаты контактов
+        await db.execute(
+            delete(Contact)
+            .where(Contact.id.in_(duplicate_ids))
+        )
+        
+        merged_groups_count += 1
+        deleted_contacts_count += len(duplicate_ids)
+        log.info(f"Успешно объединены. {len(duplicate_ids)} контактов удалено.")
+
+    await db.commit()
+    
+    message = (f"Операция завершена. "
+               f"Обработано групп дубликатов: {merged_groups_count}. "
+               f"Объединено и удалено контактов: {deleted_contacts_count}.")
+    log.info(message)
+    return {"merged_groups": merged_groups_count, "deleted_contacts": deleted_contacts_count, "message": message}

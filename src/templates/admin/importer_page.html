@@ -38,7 +38,29 @@
             </button>
         </form>
     </div>
-
+     <div class="card">
+            <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Удаление дубликатов</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                Эта функция найдет контакты с одинаковыми номерами телефонов, объединит их данные в одну карточку и удалит лишние. 
+                Рекомендуется запускать после крупного импорта.
+            </p>
+            <form hx-post="{{ request.url_for('admin_merge_duplicates') }}"
+                  hx-target="#merge-results"
+                  hx-swap="outerHTML"
+                  hx-confirm="Вы уверены, что хотите запустить слияние дубликатов? Это действие необратимо и может занять некоторое время."
+                  hx-indicator="#merge-spinner">
+                
+                <button type="submit" class="btn btn-secondary" style="width: 100%;" hx-disabled-elt="this">
+                    <span>Найти и объединить дубликаты</span>
+                    <i id="merge-spinner" class='bx bx-loader-alt bx-spin htmx-indicator' style="font-size: 1.25rem; margin-left: 8px;"></i>
+                </button>
+            </form>
+            
+            <div id="merge-results">
+                <!-- Сюда будет загружен результат выполнения -->
+            </div>
+        </div>
+        
     <!-- Колонка с результатом или инструкцией -->
     <div>
         {% if result %}
