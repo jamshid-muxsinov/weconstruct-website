@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
 from .dependencies import get_common_context
-from src.services.sheets_importer_service import import_leads_from_sheet # Наш новый сервис
+from src.services.sheets_importer_service import import_leads_from_sheet
 
 router = APIRouter()
 
@@ -18,6 +18,8 @@ async def get_import_page(
     context: dict = Depends(get_common_context)
 ):
     context["title"] = "Импорт из Google Sheets"
+    # --- ДОБАВЬТЕ ЭТУ СТРОКУ ---
+    context["htmx_request"] = "HX-Request" in request.headers
     return templates.TemplateResponse("admin/importer_page.html", context)
 
 
@@ -28,6 +30,9 @@ async def run_import_from_sheet(
     context: dict = Depends(get_common_context),
     db: AsyncSession = Depends(get_db_session)
 ):
+    # --- И ДОБАВЬТЕ ЭТУ СТРОКУ СЮДА ТОЖЕ ---
+    context["htmx_request"] = "HX-Request" in request.headers
+
     # Извлекаем ID таблицы из URL
     sheet_id_match = re.search(r'/spreadsheets/d/([a-zA-Z0-9-_]+)', sheet_url)
     if not sheet_id_match:
@@ -46,7 +51,6 @@ async def run_import_from_sheet(
 
     context["title"] = "Результат импорта"
     context["result"] = result
-    # Передаем обратно введенный URL, чтобы он сохранился в форме
     context["current_sheet_url"] = sheet_url 
 
     return templates.TemplateResponse("admin/importer_page.html", context)
