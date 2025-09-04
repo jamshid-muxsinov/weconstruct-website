@@ -1,63 +1,14 @@
 // src/static/js/kanban-enhanced.js
 
-const notyf = new Notyf({
-    duration: 3500,
-    position: { x: 'right', y: 'top' },
-    dismissible: true
-});
+// Мы выносим всю логику инициализации внутрь этого слушателя.
+// Он сработает в нужный момент жизненного цикла Alpine.js.
+document.addEventListener('alpine:init', () => {
 
-function initializeKanban() {
-    const kanbanColumns = document.querySelectorAll('.kanban-column-body');
-    if (kanbanColumns.length === 0) return;
-
-    kanbanColumns.forEach(column => {
-        if (column.sortableInstance) {
-            column.sortableInstance.destroy();
-        }
-        
-        column.sortableInstance = new Sortable(column, {
-            group: 'kanban',
-            animation: 150,
-            ghostClass: 'kanban-card-ghost',
-            chosenClass: 'kanban-card-chosen',
-            dragClass: 'kanban-card-drag',
-            onEnd: function (evt) {
-                const cardId = evt.item.dataset.id;
-                const newStatus = evt.to.parentElement.dataset.status;
-
-                if (!cardId || !newStatus) {
-                    console.error('Card ID or new status is missing.');
-                    return;
-                }
-                
-                htmx.ajax('POST', '/api/update-status', {
-                    values: { card_id: parseInt(cardId), status: newStatus },
-                    swap: 'none'
-                }).then(() => {
-                    notyf.success('Статус заявки обновлен');
-                    updateColumnCounts();
-                }).catch(() => {
-                    notyf.error('Ошибка при обновлении статуса');
-                });
-            }
-        });
+    const notyf = new Notyf({
+        duration: 3500,
+        position: { x: 'right', y: 'top' },
+        dismissible: true
     });
-}
-
-function updateColumnCounts() {
-    document.querySelectorAll('.kanban-column').forEach(col => {
-        const count = col.querySelectorAll('.kanban-card:not([style*="display: none"])').length;
-        const countElement = col.querySelector('.kanban-count');
-        if (countElement) {
-            countElement.textContent = count;
-        }
-    });
-}
-
-function initializeAlpineComponents() {
-    if (window.Alpine && Alpine.store('kanbanManager')) {
-        return;
-    }
 
     Alpine.store('kanbanManager', {
         searchQuery: '',
@@ -127,31 +78,82 @@ function initializeAlpineComponents() {
         }
     });
 
-    // --- НОВОЕ: Автоматический "наблюдатель" за фильтрами ---
-    // Эта функция будет сама запускать applyFilters(), когда searchQuery или activeFilters изменятся.
+    // Автоматический "наблюдатель" за фильтрами
     Alpine.effect(() => {
         const store = Alpine.store('kanbanManager');
-        // Просто обращаемся к переменным, чтобы Alpine "узнал", что за ними нужно следить
         const query = store.searchQuery;
         const assignee = store.activeFilters.assignee;
-        
-        // Запускаем фильтрацию
         store.applyFilters();
+    });
+
+});
+
+
+// Эти функции остаются за пределами `alpine:init`, так как они вызываются независимо.
+function initializeKanban() {
+    const kanbanColumns = document.querySelectorAll('.kanban-column-body');
+    if (kanbanColumns.length === 0) return;
+
+    kanbanColumns.forEach(column => {
+        if (column.sortableInstance) {
+            column.sortableInstance.destroy();
+        }
+        
+        column.sortableInstance = new Sortable(column, {
+            group: 'kanban',
+            animation: 150,
+            ghostClass: 'kanban-card-ghost',
+            chosenClass: 'kanban-card-chosen',
+            dragClass: 'kanban-card-drag',
+            onEnd: function (evt) {
+                const cardId = evt.item.dataset.id;
+                const newStatus = evt.to.parentElement.dataset.status;
+
+                if (!cardId || !newStatus) {
+                    console.error('Card ID or new status is missing.');
+                    return;
+                }
+                
+                htmx.ajax('POST', '/api/update-status', {
+                    values: { card_id: parseInt(cardId), status: newStatus },
+                    swap: 'none'
+                }).then(() => {
+                    // Используем Notyf, который теперь доступен
+                    const notyf = new Notyf({ duration: 3500, position: { x: 'right', y: 'top' }, dismissible: true });
+                    notyf.success('Статус заявки обновлен');
+                    updateColumnCounts();
+                }).catch(() => {
+                    const notyf = new Notyf({ duration: 3500, position: { x: 'right', y: 'top' }, dismissible: true });
+                    notyf.error('Ошибка при обновлении статуса');
+                });
+            }
+        });
     });
 }
 
+function updateColumnCounts() {
+    document.querySelectorAll('.kanban-column').forEach(col => {
+        const count = col.querySelectorAll('.kanban-card:not([style*="display: none"])').length;
+        const countElement = col.querySelector('.kanban-count');
+        if (countElement) {
+            countElement.textContent = count;
+        }
+    });
+}
+
+// Этот слушатель инициализирует Sortable.js при первой загрузке
 document.addEventListener('DOMContentLoaded', function () {
-    if (typeof Alpine !== 'undefined') {
-        initializeAlpineComponents();
-    } else {
-        console.error("Alpine.js is not loaded.");
-    }
-    
     initializeKanban();
 });
 
+// Этот слушатель ре-инициализирует Sortable.js после обновлений от HTMX
 document.body.addEventListener('htmx:afterSwap', function(event) {
     if (event.detail.target.id === 'kanban-board-container') {
         initializeKanban();
+        // После загрузки контента доски, запускаем фильтрацию на случай, если
+        // в поле поиска или фильтрах уже есть значения.
+        if (window.Alpine && Alpine.store('kanbanManager')) {
+            Alpine.store('kanbanManager').applyFilters();
+        }
     }
 });
