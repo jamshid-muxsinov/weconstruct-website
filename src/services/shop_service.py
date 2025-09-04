@@ -124,4 +124,4 @@ async def get_product_for_modal(db: AsyncSession, product_id: int):
         .where(Product.id == product_id)
     )
     result = await db.execute(stmt)
-    return result.scalars().first()
+    return result.scalars().first() 

@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 document.body.addEventListener('htmx:afterSwap', function(event) {
+    // Переинициализируем канбан-доску после того, как ее содержимое было обновлено
     if (event.detail.target.id === 'kanban-board-container') {
         initializeKanban();
     }
@@ -19,7 +20,7 @@ function initializeKanban() {
     if (kanbanColumns.length === 0) return;
 
     kanbanColumns.forEach(column => {
-        // Избегаем повторной инициализации
+        // Избегаем повторной инициализации, уничтожая старый экземпляр
         if (column.sortableInstance) {
             column.sortableInstance.destroy();
         }
@@ -64,7 +65,10 @@ function updateColumnCounts() {
     });
 }
 
+// Инициализация компонентов Alpine.js
 function initializeAlpineComponents() {
+    if (typeof Alpine.data('kanbanManager') !== 'undefined') return;
+
     Alpine.data('kanbanManager', () => ({
         searchQuery: '',
         activeFilters: { assignee: null },
@@ -94,28 +98,30 @@ function initializeAlpineComponents() {
             updateColumnCounts();
         },
 
-        // <<< ИЗМЕНЕНИЕ ЗДЕСЬ: Логика клика исправлена >>>
+        // <<< КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ >>>
         handleCardClick(cardElement, cardId, event) {
+            // Если нажат Ctrl или Cmd (для Mac), работаем с выделением
             if (event.ctrlKey || event.metaKey) {
-                event.preventDefault(); // Предотвращаем срабатывание hx-get
-                if (this.selectedCards.has(cardId)) {
-                    this.selectedCards.delete(cardId);
-                } else {
-                    this.selectedCards.add(cardId);
-                }
-            } else if (!event.target.closest('a')) {
-                // Если это обычный клик (не на ссылку), программно вызываем HTMX
-                htmx.trigger(cardElement, 'open-details');
+                event.preventDefault(); // Запрещаем HTMX реагировать
+                this.selectedCards.has(cardId) ? this.selectedCards.delete(cardId) : this.selectedCards.add(cardId);
+            } 
+            // Если это обычный клик и он не был по ссылке внутри карточки
+            else if (!event.target.closest('a')) {
+                // Мы вручную даем команду HTMX открыть окно
+                htmx.trigger(cardElement, 'openDetails');
             }
+            // Если кликнули по ссылке, ничего не делаем, даем ссылке сработать
         },
         
         get selectedIds() { return Array.from(this.selectedCards); },
         clearSelection() { this.selectedCards.clear(); },
 
+        // Массовые действия теперь триггерят обновление доски
         bulkAssign(userId) {
             if (!userId || this.selectedIds.length === 0) return;
             htmx.ajax('POST', '/api/bulk-assign', {
                 values: { card_ids: this.selectedIds, user_id: parseInt(userId) },
+                swap: 'none'
             }).then(() => {
                 notyf.success(`Назначено ${this.selectedIds.length} заявок.`);
                 this.clearSelection();
@@ -127,6 +133,7 @@ function initializeAlpineComponents() {
             if (!status || this.selectedIds.length === 0) return;
              htmx.ajax('POST', '/api/bulk-status', {
                 values: { card_ids: this.selectedIds, status: status },
+                swap: 'none'
             }).then(() => {
                 notyf.success(`Статус ${this.selectedIds.length} заявок обновлен.`);
                 this.clearSelection();
