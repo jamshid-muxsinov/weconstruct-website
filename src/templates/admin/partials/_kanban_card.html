@@ -9,17 +9,18 @@
      
      hx-get="{{ request.url_for('admin_htmx_quote_slide_over', pk=req.id) }}"
      hx-target="#slide-over-content"
-     hx-trigger="openDetails from:closest .kanban-card"
+     hx-trigger="click"
      
-     @click="handleCardClick(this, '{{ req.id }}', $event)"
-     :class="{ 'selected': selectedCards.has('{{ req.id }}') }">
+     x-data
+     @click="$store.kanbanManager.handleCardClick($event, '{{ req.id }}')"
+     :class="{ 'selected': $store.kanbanManager.selectedCards.has('{{ req.id }}') }">
 
     {# Контактная информация #}
     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
         <h4 class="card-title" style="margin: 0; font-weight: 600; font-size: 1rem;">
             {% if req.contact %}
             <a href="{{ request.url_for('admin_contact_detail', pk=req.contact.id) }}" 
-               @click.stop title="Перейти к профилю клиента" class="link-to-change">
+               class="link-to-change">
                 {{ req.contact.full_name }}
             </a>
             {% else %}
@@ -49,7 +50,7 @@
     {% endif %}
 
     {# Футер карточки #}
-    <div class="card-footer" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border-color);">
+    <div class.card-footer" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border-color);">
         <span style="font-weight: 500;">{{ req.created_at.strftime('%d %b, %H:%M') }}</span>
         {% if req.assigned_to %}
         <div class="assignee" title="Ответственный: {{ req.assigned_to.username }}">

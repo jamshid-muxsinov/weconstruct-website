@@ -283,3 +283,22 @@ body.navigating #content-wrapper main {
     box-shadow: 0 0 0 2px var(--accent-primary), var(--shadow-lg);
     background-color: var(--surface-2);
 }
+
+.bulk-actions-bar {
+    padding: 16px 24px; /* Увеличиваем отступы */
+    gap: 16px; /* Увеличиваем расстояние между элементами */
+    font-size: 1rem; /* Увеличиваем шрифт текста "Выбрано: X" */
+    align-items: center;
+}
+
+.bulk-actions-bar .select-field,
+.bulk-actions-bar .btn {
+    padding-top: 8px; /* Делаем селекты и кнопки чуть выше */
+    padding-bottom: 8px;
+    font-size: 0.9rem; /* Увеличиваем шрифт внутри них */
+}
+
+.bulk-actions-bar .btn-icon {
+    width: 36px;
+    height: 36px;
+}
