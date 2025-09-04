@@ -156,7 +156,10 @@ async def handle_list_view(
     items_query = select(meta.model)
     count_query = select(func.count(distinct(meta.model.id)))
 
-    if meta.model == QuoteRequest or meta.model == Contact: 
+    if meta.model == QuoteRequest or meta.model == Contact:
+        count_query = count_query.select_from(meta.model)
+
+    if meta.model == QuoteRequest or meta.model == Contact:
         if search_query:
             search_like = f"%{search_query}%"
             if meta.model == Contact:
@@ -166,12 +169,14 @@ async def handle_list_view(
                     Contact.name.ilike(search_like)
                 )
             else:
+                items_query = items_query.join(Contact)
+                count_query = count_query.join(Contact)
                 filter_condition = or_(
                     func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), 
                     Contact.phone.ilike(search_like)
                 )
-            items_query = items_query.join(Contact).where(filter_condition)
-            count_query = count_query.join(Contact).where(filter_condition)
+            items_query = items_query.where(filter_condition)
+            count_query = count_query.where(filter_condition)
 
     if meta.model == Product:
         items_query = items_query.options(selectinload(Product.category))
