@@ -285,10 +285,25 @@ body.navigating #content-wrapper main {
 }
 
 .bulk-actions-bar {
-    padding: 16px 24px; /* Увеличиваем отступы */
-    gap: 16px; /* Увеличиваем расстояние между элементами */
-    font-size: 1rem; /* Увеличиваем шрифт текста "Выбрано: X" */
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface-1);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 20px;
+    display: flex;
+    gap: 12px;
     align-items: center;
+    box-shadow: var(--shadow-lg);
+    z-index: 1040;
+    transition: all 0.3s ease;
+
+    /* --- ДОБАВЬТЕ ЭТИ СТРОКИ --- */
+    min-width: 720px; /* Задаем минимальную ширину, чтобы все поместилось */
+    max-width: calc(100% - 40px); /* Ограничиваем, чтобы панель не касалась краев экрана */
+    justify-content: center; /* Дополнительно центрируем контент внутри панели */
 }
 
 .bulk-actions-bar .select-field,
