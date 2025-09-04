@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% raw %}<!DOCTYPE html>
 <html lang="{{ request.state.locale }}">
 
 <head>
@@ -227,6 +227,11 @@
             <span class="footer__logo-text">WeConstruct</span>
           </a>
           <p class="footer__description">{% if request.state.locale == 'uz' %}Hayot va biznes uchun tez quriladigan binolarni loyihalashtiramiz, ishlab chiqaramiz va o'rnatamiz.{% else %}Проектируем, производим и монтируем быстровозводимые здания для жизни и бизнеса.{% endif %}</p>
+          <div class="footer__socials">
+            <a href="https://t.me/weconstructowner" target="_blank" rel="noopener noreferrer" class="footer__social-link" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
+            <a href="https://www.instagram.com/weconstruct.uz/" target="_blank" rel="noopener noreferrer" class="footer__social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.linkedin.com/in/%D1%81%D0%BE%D0%B1%D0%B8%D1%80-%D0%BA%D0%B0%D1%8E%D0%BC%D0%BE%D0%B2-4b8582374/" target="_blank" rel="noopener noreferrer" class="footer__social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
         </div>
         <div class="footer__nav">
           <div>
@@ -276,10 +281,11 @@
   },
   "sameAs": [
     "https://t.me/weconstructowner",
+    "https://www.instagram.com/weconstruct.uz/",
     "https://www.linkedin.com/in/%D1%81%D0%BE%D0%B1%D0%B8%D1%80-%D0%BA%D0%B0%D1%8E%D0%BC%D0%BE%D0%B2-4b8582374/"
   ]
 }
 </script>
 {% endblock %}
 </body>
-</html>
+</html>{% endraw %}

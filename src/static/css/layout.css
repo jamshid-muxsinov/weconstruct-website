@@ -236,6 +236,36 @@
   text-align: center;
 }
 
+.footer__socials {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.footer__social-link {
+    width: 40px;
+    height: 40px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+    font-size: var(--font-size-base);
+    border: 1px solid var(--gray-200);
+}
+
+.footer__social-link:hover {
+    background: var(--primary);
+    color: var(--text-white);
+    transform: translateY(-3px);
+    box-shadow: var(--elevation-4);
+    border-color: var(--primary);
+}
+
+
 .footer__bottom {
   text-align: center;
   padding-top: var(--space-6);

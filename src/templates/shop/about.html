@@ -1,4 +1,4 @@
-{% extends 'shop/base.html' %}
+{% raw %}{% extends 'shop/base.html' %}
 
 {% set page_title %}{% if request.state.locale == 'uz' %}Kompaniya haqida — WeConstruct{% else %}О компании — WeConstruct{% endif %}{% endset %}
 {% set page_description %}
@@ -100,7 +100,7 @@ WeConstruct — это команда инженеров, дизайнеров �
                 <path d="M7028 3894 c-5 -4 -8 -236 -8 -516 l0 -508 96 0 97 0 -5 205 -4 206 55 -3 56 -3 68 -202 69 -203 94 0 c52 0 94 1 94 3 0 1 -34 94 -76 207 -42 113 -78 214 -81 226 -3 15 5 28 30 47 51 39 87 119 94 209 11 153 -33 247 -142 303 -58 30 -61 30 -244 33 -102 2 -189 0 -193 -4z m344 -168 c28 -13 50 -74 50 -140 -1 -120 -35 -156 -148 -156 l-74 0 0 158 0 157 77 -6 c43 -3 86 -9 95 -13z"/>
                 <path d="M7740 3892 c-6 -3 -10 -148 -10 -420 0 -475 -1 -464 85 -540 56 -49 122 -72 210 -72 99 0 160 23 221 85 86 86 87 94 79 556 l-8 389 -88 0 -89 0 0 -400 0 -400 -28 -31 c-23 -25 -38 -33 -78 -36 -43 -5 -54 -2 -82 22 -29 24 -39 50 -48 120 -1 11 -3 181 -3 377 l-1 357 -75 -2 c-41 -1 -79 -3 -85 -5z"/>
                 <path d="M9114 3887 c-3 -8 -4 -43 -2 -78 l3 -64 108 -3 107 -3 0 -432 -1 -432 88 0 88 0 3 433 2 432 101 0 100 0 -3 78 -3 77 -293 3 c-240 2 -293 0 -298 -11z"/>
-              </g>
+            </g>
         </svg>
       </div>
       <div class="logo-story__text">
@@ -132,6 +132,7 @@ WeConstruct — это команда инженеров, дизайнеров �
           </p>
           <div class="team-member__socials">
             <a href="https://t.me/weconstructowner" target="_blank" rel="noopener noreferrer" class="team-member__social-link" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
+            <a href="https://www.instagram.com/weconstruct.uz/" target="_blank" rel="noopener noreferrer" class="team-member__social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
             <a href="https://www.linkedin.com/in/%D1%81%D0%BE%D0%B1%D0%B8%D1%80-%D0%BA%D0%B0%D1%8E%D0%BC%D0%BE%D0%B2-4b8582374/" target="_blank" rel="noopener noreferrer" class="team-member__social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
           </div>
         </div>
@@ -182,7 +183,7 @@ WeConstruct — это команда инженеров, дизайнеров �
       </div>
       <div class="production__text">
         <h2 class="production__title section-title">{% if request.state.locale == 'uz' %}Sifat kafolati — <span class="text-primary">tasdiqlangan hamkorlar</span>{% else %}Гарантия качества — <span class="text-primary">проверенные партнёры</span>{% endif %}</h2>
-        <p class="production__description">{% if request.state.locale == 'uz' %}Biz Xitoydagi yetakchi zavod-ishlab chiqaruvchilar bilan bevosita hamkorlik qilamiz. Hamkorlarni sinchkovlik bilan tanlash va ishlab chiqarishning barcha bosqichlarida qat'iy nazorat qilish bizga yuqori sifatli mahsulot, zamonaviy texnologiyalar va ishonchli materiallardan foydalanishni kafolatlash imkonini beradi. Siz texnologik mahsulotni optimal narxda olasiz.{% else %}Мы сотрудничаем напрямую с ведущими заводами-производителями в Китае. Тщательный отбор партнёров и строгий контроль на всех этапах производства позволяют нам гарантировать высокое качество продукции, использование современных технологий и надёжных материалов. Вы получаете технологичный продукт по оптимальной цене.{% endif %}</p>
+        <p class="production__description">{% if request.state.locale == 'uz' %}Biz Xitoydagi yetakchi zavod-ishlab chiqaruvchilar bilan bevosita hamkorlik qilamiz. Hamkorlarni sinchkovlik bilan tanlash va ishlab chiqarishning barcha bosquchlarida qat'iy nazorat qilish bizga yuqori sifatli mahsulot, zamonaviy texnologiyalar va ishonchli materiallardan foydalanishni kafolatlash imkonini beradi. Siz texnologik mahsulotni optimal narxda olasiz.{% else %}Мы сотрудничаем напрямую с ведущими заводами-производителями в Китае. Тщательный отбор партнёров и строгий контроль на всех этапах производства позволяют нам гарантировать высокое качество продукции, использование современных технологий и надёжных материалов. Вы получаете технологичный продукт по оптимальной цене.{% endif %}</p>
         <a href="{{ request.url_for('index', locale=request.state.locale) }}" class="btn btn--primary btn--lg">
           <span>{% if request.state.locale == 'uz' %}Mahsulotlarni ko'rish{% else %}Посмотреть продукцию{% endif %}</span>
           <svg class="icon icon-arrow" width="24" height="24"><use xlink:href="#icon-arrow-right"></use></svg>
@@ -204,4 +205,4 @@ WeConstruct — это команда инженеров, дизайнеров �
     </iframe>
   </div>
 </section>
-{% endblock %}
+{% endblock %}{% endraw %}
