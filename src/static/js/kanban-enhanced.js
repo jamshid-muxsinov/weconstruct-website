@@ -1,3 +1,4 @@
+// src/static/js/kanban-enhanced.js
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeKanban();
@@ -9,6 +10,7 @@ document.body.addEventListener('htmx:afterSwap', function(event) {
     }
 });
 
+// Инициализируем Alpine.js компоненты один раз
 if (typeof Alpine !== 'undefined') {
     initializeAlpineComponents();
 }
@@ -55,7 +57,7 @@ function updateColumnCounts() {
 }
 
 function initializeAlpineComponents() {
-    if (Alpine.store('kanbanManager')) return;
+    if (Alpine.store('kanbanManager')) return; // Предотвращаем повторную инициализацию
 
     Alpine.store('kanbanManager', {
         searchQuery: '',
