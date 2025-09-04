@@ -400,7 +400,6 @@ async def get_top_managers(db: AsyncSession, days: int = 30):
     top_managers = result.all() 
     return top_managers
 
-# Bulk Operations for Enhanced Kanban
 async def bulk_assign_requests(db: AsyncSession, card_ids: list[int], user_id: int, current_user_id: int) -> int:
     """Bulk assign multiple quote requests to a user"""
     try:

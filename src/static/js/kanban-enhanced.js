@@ -1,74 +1,147 @@
-// Enhanced Kanban Board Functionality
-document.addEventListener('alpine:init', () => {
-    Alpine.data('kanbanFilters', () => ({
-        searchQuery: '',
-        filters: { assignee: '', status: '', priority: '' },
-        toggleFilter(type, value) { this.filters[type] = this.filters[type] === value ? '' : value; this.filterCards(); },
-        clearFilters() { this.filters = { assignee: '', status: '', priority: '' }; this.searchQuery = ''; this.filterCards(); },
-        hasActiveFilters() { return this.searchQuery || Object.values(this.filters).some(f => f); },
-        filterCards() {
-            document.querySelectorAll('.kanban-card').forEach(card => {
-                const searchMatch = !this.searchQuery || (card.dataset.clientName + card.dataset.phone + card.dataset.id).toLowerCase().includes(this.searchQuery.toLowerCase());
-                const statusMatch = !this.filters.status || card.dataset.status === this.filters.status;
-                const assigneeMatch = this.filters.assignee !== 'me' || card.dataset.assignee === document.querySelector('meta[name="current-user-id"]')?.content;
-                card.style.display = searchMatch && statusMatch && assigneeMatch ? '' : 'none';
-            });
-            this.updateColumnCounts();
-        },
-        updateColumnCounts() {
-            document.querySelectorAll('.kanban-column').forEach(col => {
-                const count = col.querySelectorAll('.kanban-card:not([style*="display: none"])').length;
-                col.querySelector('.kanban-count').textContent = count;
-            });
-        }
-    }));
-    Alpine.data('bulkActions', () => ({
-        selectedCards: [],
-        init() { this.$watch('selectedCards', () => this.updateCardStyles()); },
-        toggleSelection(cardId) {
-            const index = this.selectedCards.indexOf(cardId);
-            if (index > -1) this.selectedCards.splice(index, 1);
-            else this.selectedCards.push(cardId);
-        },
-        updateCardStyles() {
-            document.querySelectorAll('.kanban-card').forEach(card => {
-                if (this.selectedCards.includes(card.dataset.id)) card.classList.add('selected');
-                else card.classList.remove('selected');
-            });
-        },
-        clearSelection() { this.selectedCards = []; }
-    }));
-    Alpine.data('kanbanCard', (id) => ({
-        cardId: id,
-        handleCardClick(event, bulkActions) {
-            if (event.ctrlKey || event.metaKey) {
-                event.preventDefault();
-                bulkActions.toggleSelection(this.cardId);
-            } else {
-                htmx.trigger(event.currentTarget, 'click');
-            }
-        }
-    }));
+// src/static/js/kanban-enhanced.js
+
+document.addEventListener('DOMContentLoaded', function () {
+    initializeKanban();
 });
 
-// --- KEYBOARD SHORTCUTS & PWA ---
-function showKeyboardShortcuts() {
-    htmx.ajax('GET', '/admin/htmx/keyboard-shortcuts', { target: '#modal-body-content' })
-        .then(() => document.getElementById('modal-overlay').classList.add('show'));
-}
-
-document.addEventListener('keydown', (e) => {
-    if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
-    if (e.key === '?') { e.preventDefault(); showKeyboardShortcuts(); }
-    if (e.key === '/') { e.preventDefault(); document.querySelector('.search-box input')?.focus(); }
-});
-
-function initializePWA() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/static/sw.js').catch(err => console.error('Service Worker registration failed:', err));
+document.body.addEventListener('htmx:afterSwap', function(event) {
+    // Re-initialize kanban after the container is swapped
+    if (event.detail.target.id === 'kanban-board-container') {
+        initializeKanban();
     }
+});
+
+function initializeKanban() {
+    const kanbanColumns = document.querySelectorAll('.kanban-column-body');
+    if (kanbanColumns.length === 0) return;
+
+    kanbanColumns.forEach(column => {
+        new Sortable(column, {
+            group: 'kanban',
+            animation: 150,
+            ghostClass: 'kanban-card-ghost',
+            chosenClass: 'kanban-card-chosen',
+            dragClass: 'kanban-card-drag',
+            onEnd: function (evt) {
+                const card = evt.item;
+                const toColumn = evt.to;
+                const newStatus = toColumn.parentElement.dataset.status;
+                const cardId = card.dataset.id;
+
+                if (!cardId || !newStatus) {
+                    console.error('Card ID or new status is missing!');
+                    return;
+                }
+                
+                // Используем HTMX для отправки запроса на обновление статуса
+                htmx.ajax('POST', '/api/update-status', {
+                    values: {
+                        card_id: parseInt(cardId),
+                        status: newStatus
+                    },
+                    swap: 'none' // Нам не нужно ничего обновлять в ответ
+                }).then(data => {
+                    // Показываем уведомление об успехе
+                    notyf.success('Статус заявки обновлен!');
+                    // Обновляем счетчики в колонках
+                    updateColumnCounts();
+                }).catch(error => {
+                    notyf.error('Ошибка при обновлении статуса.');
+                    // В случае ошибки, можно вернуть карточку обратно (опционально)
+                    console.error("Error updating card status:", error);
+                });
+            }
+        });
+    });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    initializePWA();
+function updateColumnCounts() {
+    document.querySelectorAll('.kanban-column').forEach(col => {
+        const count = col.querySelectorAll('.kanban-card:not([style*="display: none"])').length;
+        const countElement = col.querySelector('.kanban-count');
+        if (countElement) {
+            countElement.textContent = count;
+        }
+    });
+}
+
+// Alpine.js data for filters and bulk actions
+document.addEventListener('alpine:init', () => {
+    Alpine.data('kanbanManager', () => ({
+        searchQuery: '',
+        activeFilters: {
+            assignee: null
+        },
+        selectedCards: new Set(),
+
+        init() {
+            this.$watch('searchQuery', () => this.applyFilters());
+            this.$watch('activeFilters', () => this.applyFilters(), { deep: true });
+        },
+
+        toggleFilter(type, value) {
+            this.activeFilters[type] = this.activeFilters[type] === value ? null : value;
+        },
+
+        applyFilters() {
+            const currentUserId = document.querySelector('meta[name="current-user-id"]')?.content;
+            
+            document.querySelectorAll('.kanban-card').forEach(card => {
+                const searchMatch = !this.searchQuery || 
+                                    (card.dataset.clientName + card.dataset.phone + card.dataset.id)
+                                    .toLowerCase().includes(this.searchQuery.toLowerCase());
+
+                const assigneeMatch = !this.activeFilters.assignee || 
+                                      (this.activeFilters.assignee === 'me' && card.dataset.assignee === currentUserId);
+
+                card.style.display = searchMatch && assigneeMatch ? '' : 'none';
+            });
+            updateColumnCounts();
+        },
+
+        toggleSelection(cardId, event) {
+            if (event.ctrlKey || event.metaKey) {
+                if (this.selectedCards.has(cardId)) {
+                    this.selectedCards.delete(cardId);
+                } else {
+                    this.selectedCards.add(cardId);
+                }
+            } else if (!event.target.closest('a')) { // Не перехватываем клики по ссылкам
+                 htmx.trigger(event.currentTarget, 'click');
+            }
+        },
+        
+        get selectedIds() {
+            return Array.from(this.selectedCards);
+        },
+
+        clearSelection() {
+            this.selectedCards.clear();
+        },
+
+        // Bulk actions would go here
+        bulkAssign(userId) {
+            if (!userId || this.selectedIds.length === 0) return;
+            htmx.ajax('POST', '/admin/bulk-assign', {
+                values: { card_ids: this.selectedIds, user_id: parseInt(userId) },
+                target: '#kanban-board-container',
+                swap: 'innerHTML'
+            }).then(() => {
+                notyf.success(`Назначено ${this.selectedIds.length} заявок.`);
+                this.clearSelection();
+            });
+        },
+        
+        bulkUpdateStatus(status) {
+            if (!status || this.selectedIds.length === 0) return;
+             htmx.ajax('POST', '/admin/bulk-status', {
+                values: { card_ids: this.selectedIds, status: status },
+                target: '#kanban-board-container',
+                swap: 'innerHTML'
+            }).then(() => {
+                notyf.success(`Статус ${this.selectedIds.length} заявок обновлен.`);
+                this.clearSelection();
+            });
+        }
+    }));
 });

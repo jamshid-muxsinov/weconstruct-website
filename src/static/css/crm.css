@@ -277,3 +277,9 @@ body.navigating #content-wrapper main {
     opacity: 0.7;
     transition: opacity 0.1s ease-in;
 }
+
+.kanban-card.selected {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 2px var(--accent-primary), var(--shadow-lg);
+    background-color: var(--surface-2);
+}

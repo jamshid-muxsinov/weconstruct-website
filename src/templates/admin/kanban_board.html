@@ -1,124 +1,97 @@
+{# src/templates/admin/kanban_board.html #}
 {% if not htmx_request %}
     {% extends "admin/base.html" %}
 {% endif %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Воронка продаж</h1>
-    <div class="page-header-actions">
-        <form class="filter-form" 
-              hx-get="{{ request.url_for('admin_htmx_kanban_content') }}"
-              hx-target="#kanban-board-container" 
-              hx-swap="innerHTML" 
-              hx-push-url="true">
-            <label class="switch">
-                <input type="checkbox" name="show_archived" value="true" {% if show_archived %}checked{% endif %}
-                    onchange="this.form.requestSubmit()">
-                <span class="slider"></span>
-            </label>
-            <span>Показать архивные</span>
-        </form>
+<div x-data="kanbanManager">
+    <div class="page-header">
+        <h1>Воронка продаж</h1>
+        <div class="page-header-actions">
+            <form class="filter-form" 
+                  hx-get="{{ request.url_for('admin_htmx_kanban_content') }}"
+                  hx-target="#kanban-board-container" 
+                  hx-swap="innerHTML" 
+                  hx-push-url="true">
+                <label class="switch">
+                    <input type="checkbox" name="show_archived" value="true" {% if show_archived %}checked{% endif %}
+                        onchange="this.form.requestSubmit()">
+                    <span class="slider"></span>
+                </label>
+                <span>Показать архивные</span>
+            </form>
 
-        <a href="{{ request.url_for('admin_quoterequest_add') }}" class="btn btn-primary">
-            <i class='bx bx-plus'></i>
-            Новая заявка
+            <a href="{{ request.url_for('admin_quoterequest_add') }}" class="btn btn-primary">
+                <i class='bx bx-plus'></i>
+                Новая заявка
+            </a>
+        </div>
+    </div>
+
+    <!-- Advanced Search and Filters -->
+    <div class="advanced-filters">
+        <div class="search-box" style="flex: 1; min-width: 250px;">
+            <input type="text" 
+                   x-model.debounce.300ms="searchQuery"
+                   placeholder="Поиск по имени, телефону или ID..."
+                   class="input-field"
+                   style="margin: 0;">
+        </div>
+        
+        <div class="filter-chips" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" 
+                    @click="toggleFilter('assignee', 'me')"
+                    :class="{'filter-chip': true, 'active': activeFilters.assignee === 'me'}">
+                <i class='bx bx-user'></i>
+                Мои задачи
+            </button>
+            
+            <button type="button"
+                    @click="searchQuery = ''; activeFilters.assignee = null"
+                    x-show="searchQuery || activeFilters.assignee"
+                    class="btn btn-sm btn-secondary">
+                <i class='bx bx-x'></i>
+                Очистить
+            </button>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="bulk-actions-bar" x-show="selectedCards.size > 0" x-transition>
+        <span x-text="`Выбрано: ${selectedCards.size}`" style="font-weight: 500;"></span>
+        
+        <select @change="bulkAssign($event.target.value); $event.target.value = ''" class="select-field" style="min-width: 150px;">
+            <option value="">Назначить...</option>
+            {# Динамически загрузите сюда ваших менеджеров #}
+            {% for user in staff_users %}
+            <option value="{{ user.id }}">{{ user.username }}</option>
+            {% endfor %}
+        </select>
+        
+        <select @change="bulkUpdateStatus($event.target.value); $event.target.value = ''" class="select-field" style="min-width: 120px;">
+            <option value="">Статус...</option>
+            {% for status in QuoteRequest.StatusEnum %}
+            <option value="{{ status.value }}">{{ status.value.replace('_', ' ')|capfirst }}</option>
+            {% endfor %}
+        </select>
+        
+        <a :href="'{{ url_for('api_export_requests') }}?card_ids=' + selectedIds.join(',')" 
+           class="btn btn-sm btn-secondary">
+           <i class='bx bx-download'></i> Экспорт
         </a>
-    </div>
-</div>
-
-<!-- Advanced Search and Filters -->
-<div class="advanced-filters" x-data="kanbanFilters()">
-    <div class="search-box" style="flex: 1; min-width: 250px;">
-        <input type="text" 
-               x-model="searchQuery"
-               @input.debounce.300ms="filterCards()"
-               placeholder="Поиск по имени клиента, телефону или ID..."
-               class="input-field"
-               style="margin: 0;">
-    </div>
-    
-    <div class="filter-chips" style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button type="button" 
-                @click="toggleFilter('assignee', 'me')"
-                :class="{'filter-chip': true, 'active': filters.assignee === 'me'}"
-                class="filter-chip">
-            <i class='bx bx-user'></i>
-            Мои задачи
-        </button>
         
-        <button type="button"
-                @click="toggleFilter('status', 'imported')"
-                :class="{'filter-chip': true, 'active': filters.status === 'imported'}"
-                class="filter-chip">
-            <i class='bx bx-time'></i>
-            Новые
-        </button>
-        
-        <button type="button"
-                @click="toggleFilter('status', 'qualification')"
-                :class="{'filter-chip': true, 'active': filters.status === 'qualification'}"
-                class="filter-chip">
-            <i class='bx bx-loader-alt'></i>
-            В работе
-        </button>
-        
-        <button type="button"
-                @click="toggleFilter('priority', 'hot')"
-                :class="{'filter-chip': true, 'active': filters.priority === 'hot'}"
-                class="filter-chip">
-            <i class='bx bx-up-arrow-alt'></i>
-            Приоритет
-        </button>
-        
-        <button type="button"
-                @click="clearFilters()"
-                x-show="hasActiveFilters()"
-                class="btn btn-sm btn-secondary">
+        <button @click="clearSelection()" class="btn-icon btn-icon-danger" title="Отменить выбор">
             <i class='bx bx-x'></i>
-            Очистить
         </button>
     </div>
-</div>
 
-<!-- Bulk Actions Bar -->
-<div class="bulk-actions-bar" x-data="bulkActions()" x-show="selectedCards.length > 0" x-transition>
-    <span x-text="`Выбрано: ${selectedCards.length}`" class="text-secondary"></span>
-    
-    <select @change="bulkAssign($event.target.value)" class="select-field" style="min-width: 150px;">
-        <option value="">Назначить...</option>
-        <option value="1">Иван Иванов</option>
-        <option value="2">Петр Петров</option>
-        <!-- Add more users dynamically -->
-    </select>
-    
-    <select @change="bulkChangeStatus($event.target.value)" class="select-field" style="min-width: 120px;">
-        <option value="">Статус...</option>
-        <option value="imported">Imported</option>
-        <option value="qualification">Qualification</option>
-        <option value="contacted">Contacted</option>
-        <option value="proposal">Proposal</option>
-        <option value="negotiation">Negotiation</option>
-        <option value="closed">Closed</option>
-        <option value="archived">Archived</option>
-    </select>
-    
-    <button @click="exportSelected()" class="btn btn-sm btn-secondary">
-        <i class='bx bx-download'></i>
-        Экспорт
-    </button>
-    
-    <button @click="clearSelection()" class="btn btn-sm btn-danger">
-        <i class='bx bx-x'></i>
-        Отменить
-    </button>
-</div>
-
-<div id="kanban-board-container" 
-     hx-get="{{ request.url_for('admin_htmx_kanban_content') }}?show_archived={{ show_archived }}"
-     hx-trigger="load, updateKanban from:body"
-     hx-swap="innerHTML">
-    <div class="modal-loading-placeholder" style="padding: 100px 0;">
-        <i class='bx bx-loader-alt bx-spin'></i><span>Загрузка канбан-доски...</span>
+    <div id="kanban-board-container" 
+         hx-get="{{ request.url_for('admin_htmx_kanban_content') }}?show_archived={{ show_archived }}"
+         hx-trigger="load, updateKanban from:body"
+         hx-swap="innerHTML">
+        <div class="modal-loading-placeholder" style="padding: 100px 0;">
+            <i class='bx bx-loader-alt bx-spin'></i><span>Загрузка канбан-доски...</span>
+        </div>
     </div>
 </div>
 {% endblock %}

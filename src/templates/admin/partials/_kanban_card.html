@@ -1,57 +1,32 @@
-<div class="kanban-card status-{{ req.status.value }} interactive hover-lift"
+{# src/templates/admin/partials/_kanban_card.html #}
+<div class="kanban-card status-{{ req.status.value }}"
      data-id="{{ req.id }}"
      data-client-name="{{ req.contact.full_name|lower }}"
      data-phone="{{ req.contact.phone or '' }}"
      data-status="{{ req.status.value }}"
      data-assignee="{{ req.assigned_to.id if req.assigned_to else '' }}"
      id="kanban-card-{{ req.id }}"
-     hx-get="{{ request.url_for('admin_htmx_quote_slide_over', pk=req.id) }}"
-     hx-target="#slide-over-content"
-     hx-trigger="click"
-     x-data="kanbanCard('{{ req.id }}')"
-     @click.prevent="handleCardClick($event, $store.bulkActions)"
-     :class="{ 'selected': $store.bulkActions.selectedCards.includes(cardId) }">
+     @click="toggleSelection('{{ req.id }}', $event)"
+     :class="{ 'selected': selectedCards.has('{{ req.id }}') }">
 
-    <!-- Client Header -->
-    <div class="card-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
-        <div class="client-info" style="display: flex; align-items: center; gap: 12px;">
-            <i class='bx bxs-user-circle' style="font-size: 2.5rem; color: var(--accent-primary);"></i>
-            <div>
-                <h4 class="card-title" style="margin: 0; font-weight: 600; font-size: 1rem;">
-                    <a href="{{ request.url_for('admin_contact_detail', pk=req.contact_id) }}" 
-                       @click.stop title="Перейти к профилю клиента" class="link-to-change">
-                        {{ req.contact.full_name }}
-                    </a>
-                </h4>
-                {% if req.contact.phone %}
-                <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
-                    <i class='bx bxs-phone' style="font-size: 0.9rem; color: var(--text-secondary);"></i>
-                    <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">{{ req.contact.phone|format_phone }}</span>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); background: var(--surface-2); padding: 4px 8px; border-radius: var(--radius-md);">#{{ req.id }}</div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+        <h4 class="card-title" style="margin: 0; font-weight: 600; font-size: 1rem;">
+             <a href="{{ request.url_for('admin_contact_detail', pk=req.contact_id) }}" 
+               @click.stop title="Перейти к профилю клиента" class="link-to-change">
+                {{ req.contact.full_name }}
+            </a>
+        </h4>
+        <div style="font-size: 0.75rem; color: var(--text-secondary); background: var(--surface-2); padding: 2px 6px; border-radius: var(--radius-md);">#{{ req.id }}</div>
     </div>
+    <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">{{ req.contact.phone|format_phone }}</div>
 
-    <!-- Request Info -->
-    <div class="card-content" style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
-        {% if req.business_type %}
-        <div style="display: inline-flex; align-items: center; gap: 6px; background: color-mix(in srgb, var(--status-blue) 10%, transparent); color: var(--status-blue); padding: 6px 12px; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; border: 1px solid color-mix(in srgb, var(--status-blue) 20%, transparent); align-self: flex-start;">
-            <i class='bx bxs-briefcase'></i>
-            <span>{{ req.business_type }}</span>
-        </div>
-        {% endif %}
-        
-        {% if req.message %}
-        <div style="display: flex; align-items: flex-start; gap: 8px; background: var(--surface-2); padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-            <i class='bx bx-message-dots' style="color: var(--text-secondary); font-size: 1rem; margin-top: 2px; flex-shrink: 0;"></i>
-            <span style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.4;">{{ req.message|truncate(70) }}</span>
-        </div>
-        {% endif %}
+    {% if req.business_type %}
+    <div style="margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; background: color-mix(in srgb, var(--status-blue) 10%, transparent); color: var(--status-blue); padding: 4px 10px; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600;">
+        <i class='bx bxs-briefcase'></i>
+        <span>{{ req.business_type }}</span>
     </div>
+    {% endif %}
 
-    <!-- Pinned Note -->
     {% if req.contact.pinned_note %}
     <div class="pinned-note" title="Закрепленная заметка: {{ req.contact.pinned_note.note }}">
         <i class='bx bxs-pin'></i>
@@ -59,16 +34,12 @@
     </div>
     {% endif %}
 
-    <!-- Footer -->
-    <div class="card-footer" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color); font-size: 0.75rem;">
-        <div style="display: flex; align-items: center; gap: 6px; color: var(--text-secondary);">
-            <i class='bx bx-time'></i>
-            <span style="font-weight: 500;">{{ req.created_at.strftime('%d %b, %H:%M') }}</span>
-        </div>
+    <div class="card-footer" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border-color);">
+        <span style="font-weight: 500;">{{ req.created_at.strftime('%d %b, %H:%M') }}</span>
         {% if req.assigned_to %}
-        <div class="assignee" title="Ответственный: {{ req.assigned_to.username }}" style="display: flex; align-items: center; gap: 6px; color: var(--text-secondary);">
+        <div class="assignee" title="Ответственный: {{ req.assigned_to.username }}">
              <i class='bx bxs-user'></i>
-            <span style="font-weight: 600;">{{ req.assigned_to.username|truncate(15) }}</span>
+            <span>{{ req.assigned_to.username|truncate(15) }}</span>
         </div>
         {% endif %}
     </div>
