@@ -180,11 +180,14 @@ class QuoteRequest(Base):
     __tablename__ = 'shop_quoterequest'
 
     class StatusEnum(str, enum.Enum):
-        NEW = 'new'
-        IN_PROGRESS = 'in_progress'
-        COMPLETED = 'completed'
-        CANCELLED = 'cancelled'
-    
+        IMPORTED = 'imported'
+        QUALIFICATION = 'qualification'
+        CONTACTED = 'contacted'
+        PROPOSAL = 'proposal'
+        NEGOTIATION = 'negotiation'
+        CLOSED = 'closed'
+        ARCHIVED = 'archived'
+
     class SourceEnum(str, enum.Enum):
         WEBSITE = 'website'
         CONTACT_FORM = 'contact_form'
@@ -204,7 +207,7 @@ class QuoteRequest(Base):
             native_enum=False, 
             values_callable=lambda obj: [e.value for e in obj]
         ),
-        default=StatusEnum.NEW,
+        default=StatusEnum.IMPORTED,
         index=True
     )
     source: Mapped[SourceEnum] = mapped_column(

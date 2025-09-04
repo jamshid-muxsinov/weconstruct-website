@@ -31,16 +31,6 @@
                 </small>
             </div>
             
-            <div class="input-group">
-                <label for="date_column">Номер колонки с датой</label>
-                <input type="number" name="date_column" id="date_column" 
-                       class="input-field" min="0" value="0"
-                       placeholder="0">
-                <small class="form-field-description" style="margin-top: 8px;">
-                    Номер колонки с датой (начиная с 0). Поддерживаемые форматы: 8.13.25, 13.8.25, 8/13/25, и т.д.
-                </small>
-            </div>
-            
             <button type="submit" class="btn btn-primary" style="width: 100%;"
                     hx-indicator="#import-spinner" hx-disabled-elt="this">
                 <span>Запустить импорт</span>
@@ -75,12 +65,16 @@
             <ol style="list-style: decimal; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; color: var(--text-secondary);">
                 <li>Убедитесь, что ваша Google-таблица <strong>общедоступна для просмотра по ссылке</strong>. Без этого импорт не сработает.</li>
                 <li>Вставьте полную ссылку на вашу таблицу. Система автоматически извлечет ID таблицы и ID листа (gid).</li>
-                <li><strong>Новое!</strong> Укажите номер колонки с датой. Система поддерживает различные форматы дат: <code>8.13.25</code>, <code>13.8.25</code>, <code>8/13/25</code> и другие.</li>
-                <li>Данные будут импортированы с сохранением даты из таблицы как <code>created_at</code> для каждой заявки.</li>
-            </ol>
-                <li>Данные будут читаться из колонок согласно последней настройке (имя, телефон, тип бизнеса).</li>
+                <li><strong>Важно:</strong> Система ожидает, что данные будут в определенных колонках:
+                    <ul style="list-style-type: disc; padding-left: 20px; margin-top: 8px;">
+                        <li><b>Дата:</b> 2-я колонка (B)</li>
+                        <li><b>Тип бизнеса:</b> 14-я колонка (N)</li>
+                        <li><b>Имя клиента:</b> 16-я колонка (P)</li>
+                        <li><b>Телефон:</b> 17-я колонка (Q)</li>
+                    </ul>
+                </li>
+                <li>Система поддерживает разные форматы дат, включая <code>8.13.25</code> и <code>2025-08-22T11:31:06-05:00</code>.</li>
                 <li><strong>Защита от дублей:</strong> Если заявка с таким же номером телефона и сообщением уже есть, она будет пропущена.</li>
-                <li>Если контакта нет, он будет создан автоматически, и для него будет создана заявка.</li>
             </ol>
         </div>
         {% endif %}

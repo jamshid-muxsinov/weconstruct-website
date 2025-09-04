@@ -47,24 +47,24 @@
         </button>
         
         <button type="button"
-                @click="toggleFilter('status', 'new')"
-                :class="{'filter-chip': true, 'active': filters.status === 'new'}"
+                @click="toggleFilter('status', 'imported')"
+                :class="{'filter-chip': true, 'active': filters.status === 'imported'}"
                 class="filter-chip">
             <i class='bx bx-time'></i>
             Новые
         </button>
         
         <button type="button"
-                @click="toggleFilter('status', 'in_progress')"
-                :class="{'filter-chip': true, 'active': filters.status === 'in_progress'}"
+                @click="toggleFilter('status', 'qualification')"
+                :class="{'filter-chip': true, 'active': filters.status === 'qualification'}"
                 class="filter-chip">
             <i class='bx bx-loader-alt'></i>
             В работе
         </button>
         
         <button type="button"
-                @click="toggleFilter('priority', 'high')"
-                :class="{'filter-chip': true, 'active': filters.priority === 'high'}"
+                @click="toggleFilter('priority', 'hot')"
+                :class="{'filter-chip': true, 'active': filters.priority === 'hot'}"
                 class="filter-chip">
             <i class='bx bx-up-arrow-alt'></i>
             Приоритет
@@ -93,10 +93,13 @@
     
     <select @change="bulkChangeStatus($event.target.value)" class="select-field" style="min-width: 120px;">
         <option value="">Статус...</option>
-        <option value="new">Новая</option>
-        <option value="in_progress">В работе</option>
-        <option value="completed">Завершена</option>
-        <option value="cancelled">Отменена</option>
+        <option value="imported">Imported</option>
+        <option value="qualification">Qualification</option>
+        <option value="contacted">Contacted</option>
+        <option value="proposal">Proposal</option>
+        <option value="negotiation">Negotiation</option>
+        <option value="closed">Closed</option>
+        <option value="archived">Archived</option>
     </select>
     
     <button @click="exportSelected()" class="btn btn-sm btn-secondary">

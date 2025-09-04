@@ -25,7 +25,6 @@ async def get_import_page(
 async def run_import_from_sheet(
     request: Request,
     sheet_url: str = Form(...),
-    date_column: int = Form(0, description="Колонка с датой (0-индексация)"),
     context: dict = Depends(get_common_context),
     db: AsyncSession = Depends(get_db_session)
 ):
@@ -43,7 +42,7 @@ async def run_import_from_sheet(
     gid = int(gid_match.group(1)) if gid_match else 0
 
     # Запускаем импорт
-    result = await import_leads_from_sheet(db, spreadsheet_id=spreadsheet_id, gid=gid, date_column=date_column)
+    result = await import_leads_from_sheet(db, spreadsheet_id=spreadsheet_id, gid=gid)
 
     context["title"] = "Результат импорта"
     context["result"] = result

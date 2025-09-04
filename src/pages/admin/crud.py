@@ -76,7 +76,7 @@ class QuoteRequestForm(wtforms.Form):
     new_contact_phone = wtforms.StringField('Телефон нового клиента', validators=[wtforms.validators.Optional()])
     product_id = wtforms.SelectField('Товар (необязательно)', coerce=int, validators=[wtforms.validators.Optional()])
     message = wtforms.TextAreaField('Сообщение клиента', render_kw={"rows": 4})
-    status = wtforms.SelectField('Статус', choices=[(s.value, s.name.replace('_', ' ').capitalize()) for s in QuoteRequest.StatusEnum], default=QuoteRequest.StatusEnum.NEW.value)
+    status = wtforms.SelectField('Статус', choices=[(s.value, s.name.replace('_', ' ').capitalize()) for s in QuoteRequest.StatusEnum], default=QuoteRequest.StatusEnum.IMPORTED.value)
     assigned_to_id = wtforms.SelectField('Ответственный', coerce=int, validators=[wtforms.validators.Optional()])
     business_type = wtforms.StringField('Тип бизнеса клиента', validators=[wtforms.validators.Optional()])
     dimensions = wtforms.StringField('Предполагаемые размеры объекта', validators=[wtforms.validators.Optional()])

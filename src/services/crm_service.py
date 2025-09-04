@@ -62,7 +62,7 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
     new_req_stmt = (
         select(QuoteRequest)
         .where(
-            QuoteRequest.status == QuoteRequest.StatusEnum.NEW, 
+            QuoteRequest.status == QuoteRequest.StatusEnum.IMPORTED, 
             QuoteRequest.assigned_to_id.is_(None)
         )
         .options(
@@ -96,8 +96,8 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False):
     Получает данные для канбан-доски.
     """
     archived_statuses = [
-        QuoteRequest.StatusEnum.COMPLETED,
-        QuoteRequest.StatusEnum.CANCELLED,
+        QuoteRequest.StatusEnum.CLOSED,
+        QuoteRequest.StatusEnum.ARCHIVED,
     ]
     
     stmt = (
@@ -172,8 +172,8 @@ async def assign_quote_request_to_user(db: AsyncSession, quote_id: int, user_id:
     if req.assigned_to_id != new_assigned_id:
         old_status = req.status
         req.assigned_to_id = new_assigned_id
-        if new_assigned_id is not None and old_status == QuoteRequest.StatusEnum.NEW:
-            req.status = QuoteRequest.StatusEnum.IN_PROGRESS
+        if new_assigned_id is not None and old_status == QuoteRequest.StatusEnum.IMPORTED:
+            req.status = QuoteRequest.StatusEnum.QUALIFICATION
             log = StatusChangeLog(
                 quote_request_id=req.id,
                 user_id=new_assigned_id,
@@ -233,14 +233,14 @@ async def get_user_performance_stats(db: AsyncSession, user_id: int):
     
     completed_stmt = select(func.count(func.distinct(StatusChangeLog.quote_request_id))).where(
         StatusChangeLog.user_id == user_id,
-        StatusChangeLog.new_status == QuoteRequest.StatusEnum.COMPLETED,
+        StatusChangeLog.new_status == QuoteRequest.StatusEnum.CLOSED,
         StatusChangeLog.timestamp >= thirty_days_ago_naive
     )
     completed_count = (await db.execute(completed_stmt)).scalar_one_or_none() or 0
     
     in_progress_stmt = select(func.count(func.distinct(StatusChangeLog.quote_request_id))).where(
         StatusChangeLog.user_id == user_id,
-        StatusChangeLog.new_status == QuoteRequest.StatusEnum.IN_PROGRESS,
+        StatusChangeLog.new_status == QuoteRequest.StatusEnum.QUALIFICATION,
         StatusChangeLog.timestamp >= thirty_days_ago_naive
     )
     in_progress_count = (await db.execute(in_progress_stmt)).scalar_one_or_none() or 0
@@ -377,7 +377,7 @@ async def get_top_managers(db: AsyncSession, days: int = 30):
         )
         .where(
             and_(
-                StatusChangeLog.new_status == QuoteRequest.StatusEnum.COMPLETED,
+                StatusChangeLog.new_status == QuoteRequest.StatusEnum.CLOSED,
                 StatusChangeLog.timestamp >= start_date_naive,
                 StatusChangeLog.user_id.isnot(None)
             )
@@ -418,9 +418,9 @@ async def bulk_assign_requests(db: AsyncSession, card_ids: list[int], user_id: i
                 update(QuoteRequest)
                 .where(
                     QuoteRequest.id.in_(card_ids),
-                    QuoteRequest.status == QuoteRequest.StatusEnum.NEW
+                    QuoteRequest.status == QuoteRequest.StatusEnum.IMPORTED
                 )
-                .values(status=QuoteRequest.StatusEnum.IN_PROGRESS)
+                .values(status=QuoteRequest.StatusEnum.QUALIFICATION)
             )
             await db.execute(update_status_stmt)
             
@@ -429,8 +429,8 @@ async def bulk_assign_requests(db: AsyncSession, card_ids: list[int], user_id: i
                 log = StatusChangeLog(
                     quote_request_id=card_id,
                     user_id=current_user_id,
-                    old_status=QuoteRequest.StatusEnum.NEW,
-                    new_status=QuoteRequest.StatusEnum.IN_PROGRESS,
+                    old_status=QuoteRequest.StatusEnum.IMPORTED,
+                    new_status=QuoteRequest.StatusEnum.QUALIFICATION,
                     note=f"Bulk assigned to user {user_id}"
                 )
                 db.add(log)

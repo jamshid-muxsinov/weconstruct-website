@@ -13,11 +13,14 @@
     <div class="stats-card">
         <div class="stats-card-content">
             {% set status_val = item.status.value if item.status else 'unknown' %}
-            <div class="stats-icon status-{{ status_val if status_val in ['new', 'in_progress', 'completed', 'cancelled'] else 'blue' }}">
-                {% if status_val == 'new' %}<i class='bx bx-log-in-circle'></i>
-                {% elif status_val == 'in_progress' %}<i class='bx bx-loader-circle'></i>
-                {% elif status_val == 'completed' %}<i class='bx bx-check-double'></i>
-                {% elif status_val == 'cancelled' %}<i class='bx bx-x-circle'></i>
+            <div class="stats-icon status-{{ status_val if status_val in ['imported', 'qualification', 'contacted', 'proposal', 'negotiation', 'closed', 'archived'] else 'blue' }}">
+                {% if status_val == 'imported' %}<i class='bx bx-log-in-circle'></i>
+                {% elif status_val == 'qualification' %}<i class='bx bx-loader-circle'></i>
+                {% elif status_val == 'contacted' %}<i class='bx bx-phone-call'></i>
+                {% elif status_val == 'proposal' %}<i class='bx bx-file'></i>
+                {% elif status_val == 'negotiation' %}<i class='bx bx-user-voice'></i>
+                {% elif status_val == 'closed' %}<i class='bx bx-check-double'></i>
+                {% elif status_val == 'archived' %}<i class='bx bx-archive'></i>
                 {% else %}<i class='bx bxs-help-circle'></i>
                 {% endif %}
             </div>
