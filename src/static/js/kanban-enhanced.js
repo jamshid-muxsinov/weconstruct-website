@@ -1,4 +1,3 @@
-// src/static/js/kanban-enhanced.js
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeKanban();
@@ -10,7 +9,6 @@ document.body.addEventListener('htmx:afterSwap', function(event) {
     }
 });
 
-// Инициализируем Alpine.js компоненты один раз
 if (typeof Alpine !== 'undefined') {
     initializeAlpineComponents();
 }
@@ -57,7 +55,7 @@ function updateColumnCounts() {
 }
 
 function initializeAlpineComponents() {
-    if (Alpine.store('kanbanManager')) return; // Предотвращаем повторную инициализацию
+    if (Alpine.store('kanbanManager')) return;
 
     Alpine.store('kanbanManager', {
         searchQuery: '',
@@ -77,22 +75,18 @@ function initializeAlpineComponents() {
             updateColumnCounts();
         },
 
-        // <<< КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ >>>
-        handleCardClick(event, cardId) {
-            // Если нажат Ctrl или Cmd (для Mac), работаем с выделением
+        // <<< ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ ЛОГИКИ КЛИКА >>>
+        handleCardClick(cardElement, cardId, event) {
+            // Если нажат Ctrl или Cmd (для Mac), работаем ТОЛЬКО с выделением
             if (event.ctrlKey || event.metaKey) {
-                // ПРЕДОТВРАЩАЕМ стандартное поведение клика (и для HTMX, и для браузера)
-                event.preventDefault();
-                event.stopPropagation();
-                
                 this.selectedCards.has(cardId) ? this.selectedCards.delete(cardId) : this.selectedCards.add(cardId);
             } 
-            // Если кликнули по ссылке, позволяем ей сработать
-            else if (event.target.closest('a')) {
-                event.stopPropagation();
+            // Если это обычный клик и он НЕ был по ссылке внутри карточки
+            else if (!event.target.closest('a')) {
+                // Мы вручную даем команду HTMX сработать по кастомному событию
+                htmx.trigger(cardElement, 'openDetails');
             }
-            // Иначе - это обычный клик, и мы ничего не делаем,
-            // позволяя сработать стандартному триггеру hx-trigger="click"
+            // Если кликнули по ссылке, ничего не делаем, даем ссылке сработать
         },
         
         get selectedIds() { return Array.from(this.selectedCards); },

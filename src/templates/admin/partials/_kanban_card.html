@@ -7,12 +7,11 @@
      data-assignee="{{ req.assigned_to.id if req.assigned_to else '' }}"
      id="kanban-card-{{ req.id }}"
      
-     hx-get="{{ request.url_for('admin_htmx_quote_slide_over', pk=req.id) }}"
+      hx-get="{{ request.url_for('admin_htmx_quote_slide_over', pk=req.id) }}"
      hx-target="#slide-over-content"
-     hx-trigger="click"
-     
+     hx-trigger="openDetails"
      x-data
-     @click="$store.kanbanManager.handleCardClick($event, '{{ req.id }}')"
+     @click="$store.kanbanManager.handleCardClick($el, '{{ req.id }}', $event)"
      :class="{ 'selected': $store.kanbanManager.selectedCards.has('{{ req.id }}') }">
 
     {# Контактная информация #}
@@ -50,7 +49,7 @@
     {% endif %}
 
     {# Футер карточки #}
-    <div class.card-footer" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border-color);">
+    <div class="card-footer" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border-color);">
         <span style="font-weight: 500;">{{ req.created_at.strftime('%d %b, %H:%M') }}</span>
         {% if req.assigned_to %}
         <div class="assignee" title="Ответственный: {{ req.assigned_to.username }}">
