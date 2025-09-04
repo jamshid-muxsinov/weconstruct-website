@@ -1,59 +1,62 @@
 {
-  \"name\": \"WeConstruct CRM\",
-  \"short_name\": \"WeConstruct\",
-  \"description\": \"CRM система для управления заявками и продажами\",
-  \"start_url\": \"/admin/\",
-  \"display\": \"standalone\",
-  \"background_color\": \"#111317\",
-  \"theme_color\": \"#3B82F6\",
-  \"orientation\": \"portrait-primary\",
-  \"scope\": \"/admin/\",
-  \"icons\": [
+  "name": "WeConstruct CRM",
+  "short_name": "WeConstruct",
+  "description": "CRM система для управления заявками и продажами",
+  "start_url": "/admin/",
+  "display": "standalone",
+  "background_color": "#111317",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "scope": "/admin/",
+  "icons": [
     {
-      \"src\": \"/static/favicons/favicon-16x16.png\",
-      \"sizes\": \"16x16\",
-      \"type\": \"image/png\"
+      "src": "/static/favicons/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
     },
     {
-      \"src\": \"/static/favicons/favicon-32x32.png\",
-      \"sizes\": \"32x32\",
-      \"type\": \"image/png\"
+      "src": "/static/favicons/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
     },
     {
-      \"src\": \"/static/favicons/apple-touch-icon.png\",
-      \"sizes\": \"180x180\",
-      \"type\": \"image/png\"
+      "src": "/static/favicons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
     },
     {
-      \"src\": \"/static/favicons/android-chrome-192x192.png\",
-      \"sizes\": \"192x192\",
-      \"type\": \"image/png\",
-      \"purpose\": \"any maskable\"
+      "src": "/static/favicons/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      \"src\": \"/static/favicons/android-chrome-512x512.png\",
-      \"sizes\": \"512x512\",
-      \"type\": \"image/png\",
-      \"purpose\": \"any maskable\"
+      "src": "/static/favicons/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  \"screenshots\": [
+  "screenshots": [
     {
-      \"src\": \"/static/img/screenshots/kanban-mobile.png\",
-      \"sizes\": \"390x844\",
-      \"type\": \"image/png\",
-      \"form_factor\": \"narrow\",
-      \"label\": \"Kanban Board on Mobile\"
+      "src": "/static/img/screenshots/kanban-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Kanban Board on Mobile"
     },
     {
-      \"src\": \"/static/img/screenshots/dashboard-desktop.png\",
-      \"sizes\": \"1200x800\",
-      \"type\": \"image/png\",
-      \"form_factor\": \"wide\",
-      \"label\": \"Dashboard on Desktop\"
+      "src": "/static/img/screenshots/dashboard-desktop.png",
+      "sizes": "1200x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard on Desktop"
     }
   ],
-  \"categories\": [\"business\", \"productivity\"],
-  \"lang\": \"ru\",
-  \"dir\": \"ltr\"
+  "categories": [
+    "business",
+    "productivity"
+  ],
+  "lang": "ru",
+  "dir": "ltr"
 }

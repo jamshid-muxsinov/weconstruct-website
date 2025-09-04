@@ -14,7 +14,7 @@
             <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(prev_params) }}"
                class="btn btn-secondary"
                hx-get="{{ request.url_for(endpoint_name) }}?{{ urlencode(prev_params) }}"
-               hx-target="#list-content"
+               hx-target="#main-content"
                hx-push-url="true">
                 <i class='bx bx-chevron-left'></i> Назад
             </a>
@@ -25,8 +25,9 @@
             {% set _ = next_params.update({'page': page_obj.page + 1}) %}
             <a href="{{ request.url_for(endpoint_name) }}?{{ urlencode(next_params) }}"
                class="btn btn-secondary"
+               {# --- И ИЗМЕНЕНИЕ ЗДЕСЬ: #list-content -> #main-content --- #}
                hx-get="{{ request.url_for(endpoint_name) }}?{{ urlencode(next_params) }}"
-               hx-target="#list-content"
+               hx-target="#main-content"
                hx-push-url="true">
                 Вперед <i class='bx bx-chevron-right'></i>
             </a>
