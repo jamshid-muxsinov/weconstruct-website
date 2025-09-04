@@ -1,23 +1,23 @@
 import json
-from urllib.parse import quote
-from fastapi import APIRouter, Depends, HTTPException, Body, Request, Form, Response, status
+from typing import List
+from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Form, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, update
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy import update
 
 from src.core.db import get_db_session
 from src.core.security import get_current_active_user
-from src.models.shop_models import User, QuoteRequest, Contact, Notification
+from src.models.shop_models import User, QuoteRequest, Notification
 from src.schemas.crm_schemas import QuoteRequestStatusUpdate
 from src.services import crm_service
-from src.pages.jinja_config import templates
 
 router = APIRouter(prefix="/api", tags=["Admin API"])
 
+# --- СТАРЫЕ МАРШРУТЫ, КОТОРЫЕ УЖЕ БЫЛИ В ЭТОМ ФАЙЛЕ ---
+
 @router.post("/quoterequests/update-status", name="admin_api_update_request_status")
 async def update_request_status(
-    request: Request,
-    update_data: QuoteRequestStatusUpdate = Body(...),
+    update_data: QuoteRequestStatusUpdate,
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -28,12 +28,10 @@ async def update_request_status(
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
     trigger_payload = {
         "updateKanban": True,
-        "update-notifications": True,
         "show-toast": {"message": "Статус обновлен!"}
     }
     response.headers["HX-Trigger"] = json.dumps(trigger_payload)
     return response
-
 
 @router.post("/quoterequests/{pk}/assign", name="admin_api_quote_assign")
 async def assign_quote_request(
@@ -42,15 +40,11 @@ async def assign_quote_request(
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    Назначает ответственного за заявку (из модального окна/слайдовера).
-    """
     req = await crm_service.assign_quote_request_to_user(db, pk, assigned_to_id)
     if not req:
         raise HTTPException(status_code=404, detail="Заявка не найдена")
     
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
-    # ИЗМЕНЕНИЕ: Добавляем updateKanban в триггер
     trigger_payload = {
         "updateKanban": True,
         "closeSlideOver": True,
@@ -64,9 +58,6 @@ async def mark_notifications_as_read(
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):
-    """
-    Помечает все непрочитанные уведомления пользователя как прочитанные.
-    """
     stmt = (
         update(Notification)
         .where(Notification.user_id == current_user.id, Notification.is_read == False)
@@ -78,3 +69,86 @@ async def mark_notifications_as_read(
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
     response.headers["HX-Trigger"] = json.dumps({"notifications-read": True})
     return response
+
+
+# --- НАЧАЛО НОВЫХ МАРШРУТОВ ДЛЯ КАНБАНА ---
+
+class BulkAssignRequest(BaseModel):
+    card_ids: List[int]
+    user_id: int
+
+class BulkStatusRequest(BaseModel):
+    card_ids: List[int]
+    status: str
+
+class CardStatusRequest(BaseModel):
+    card_id: int
+    status: str
+
+@router.post("/bulk-assign", name="api_bulk_assign")
+async def bulk_assign_requests(
+    bulk_data: BulkAssignRequest,
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Массовое назначение заявок пользователю"""
+    updated_count = await crm_service.bulk_assign_requests(
+        db, bulk_data.card_ids, bulk_data.user_id, current_user.id
+    )
+    # Возвращаем 204 No Content, чтобы HTMX просто выполнил триггер
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    response.headers["HX-Trigger"] = "updateKanban"
+    return response
+
+
+@router.post("/bulk-status", name="api_bulk_status")
+async def bulk_update_status(
+    bulk_data: BulkStatusRequest,
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Массовое обновление статуса заявок"""
+    updated_count = await crm_service.bulk_update_status(
+        db, bulk_data.card_ids, bulk_data.status, current_user.id
+    )
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    response.headers["HX-Trigger"] = "updateKanban"
+    return response
+
+
+@router.post("/update-status", name="api_update_single_status")
+async def update_single_card_status(
+    status_data: CardStatusRequest,
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Обновление статуса одной карточки (для Drag & Drop)"""
+    req = await crm_service.update_single_card_status(
+        db, status_data.card_id, status_data.status, current_user.id
+    )
+    if not req:
+        raise HTTPException(status_code=404, detail="QuoteRequest not found")
+    return {"status": "ok"}
+
+
+@router.get("/export-requests", name="api_export_requests")
+async def export_requests(
+    card_ids: str = None,
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Экспорт выбранных заявок в CSV"""
+    ids = []
+    if card_ids:
+        try:
+            ids = [int(id_str) for id_str in card_ids.split(',')]
+        except (ValueError, TypeError):
+            pass
+    
+    csv_content = await crm_service.export_requests_csv(db, ids)
+    
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=quote_requests.csv"}
+    )
