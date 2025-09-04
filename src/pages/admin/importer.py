@@ -75,3 +75,14 @@ async def merge_duplicates(
     </div>
     """
     return HTMLResponse(content=html_content)
+
+@router.post("/find-duplicates", response_class=HTMLResponse, name="admin_find_duplicates")
+async def find_duplicates_view(
+    request: Request,
+    context: dict = Depends(get_common_context),
+    db: AsyncSession = Depends(get_db_session)
+):
+    """Находит, но не объединяет дубликаты, и рендерит результат."""
+    duplicate_groups = await crm_service.find_potential_duplicates(db)
+    context["duplicate_groups"] = duplicate_groups
+    return templates.TemplateResponse("admin/partials/_duplicate_results.html", context)

@@ -679,3 +679,44 @@ async def merge_duplicate_contacts(db: AsyncSession) -> dict:
                f"Объединено и удалено контактов: {deleted_contacts_count}.")
     log.info(message)
     return {"merged_groups": merged_groups_count, "deleted_contacts": deleted_contacts_count, "message": message}
+
+async def find_potential_duplicates(db: AsyncSession) -> list:
+    """
+    Только находит группы потенциальных дубликатов без их слияния.
+    Нужно для диагностики.
+    """
+    log.info("Запуск диагностики дубликатов контактов.")
+
+    normalized_phone = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
+
+    subquery = (
+        select(normalized_phone.label("phone_normalized"))
+        .group_by("phone_normalized")
+        .having(func.count(Contact.id) > 1)
+        .subquery()
+    )
+
+    stmt = (
+        select(Contact)
+        .where(normalized_phone.in_(select(subquery)))
+        .order_by(normalized_phone, Contact.id)
+    )
+
+    result = await db.execute(stmt)
+    all_duplicates = result.scalars().all()
+
+    if not all_duplicates:
+        return []
+
+    # Группируем контакты для удобного отображения
+    contacts_by_phone = {}
+    for contact in all_duplicates:
+        phone_key = ''.join(filter(str.isdigit, contact.phone))[-9:]
+        if phone_key not in contacts_by_phone:
+            contacts_by_phone[phone_key] = {
+                "normalized_phone": phone_key,
+                "contacts": []
+            }
+        contacts_by_phone[phone_key]["contacts"].append(contact)
+
+    return list(contacts_by_phone.values())

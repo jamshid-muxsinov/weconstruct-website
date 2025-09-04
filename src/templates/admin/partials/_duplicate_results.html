@@ -1,0 +1,40 @@
+{# src/templates/admin/partials/_duplicate_results.html #}
+
+<div class="card" style="margin-top: 16px;">
+    <h3 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 16px;">Результаты диагностики</h3>
+
+    {% if not duplicate_groups %}
+        <p class="empty-list-placeholder" style="padding: 20px 0;">По текущим правилам дубликаты не найдены.</p>
+    {% else %}
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">Найдено {{ duplicate_groups|length }} групп(ы) потенциальных дубликатов. Ниже показано, какие именно контакты будут объединены.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            {% for group in duplicate_groups %}
+                <div style="border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 16px;">
+                    <p style="font-weight: 600; font-family: monospace; color: var(--status-yellow);">Группа для номера: ...{{ group.normalized_phone }}</p>
+                    <table class="styled-table" style="margin-top: 12px;">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">ID</th>
+                                <th>Имя</th>
+                                <th>Телефон (как в базе)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for contact in group.contacts %}
+                            <tr {% if loop.first %}style="background-color: color-mix(in srgb, var(--status-green) 10%, transparent);"{% endif %}>
+                                <td data-label="ID">
+                                    <a href="{{ request.url_for('admin_contact_detail', pk=contact.id) }}" target="_blank">{{ contact.id }}</a>
+                                    {% if loop.first %}<span style="font-size: 0.7rem; color: var(--status-green); display: block;">(Главный)</span>{% endif %}
+                                </td>
+                                <td data-label="Имя">{{ contact.full_name }}</td>
+                                <td data-label="Телефон">{{ contact.phone }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

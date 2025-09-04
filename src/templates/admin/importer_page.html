@@ -38,29 +38,43 @@
             </button>
         </form>
     </div>
-     <div class="card">
-            <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Удаление дубликатов</h2>
+    <div class="card">
+            <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Очистка дубликатов</h2>
             <p style="color: var(--text-secondary); margin-bottom: 16px;">
-                Эта функция найдет контакты с одинаковыми номерами телефонов, объединит их данные в одну карточку и удалит лишние. 
-                Рекомендуется запускать после крупного импорта.
+                Объединяет контакты с одинаковыми номерами и удаляет лишние. <strong>Сначала используйте диагностику, чтобы проверить, что будет удалено.</strong>
             </p>
-            <form hx-post="{{ request.url_for('admin_merge_duplicates') }}"
-                  hx-target="#merge-results"
-                  hx-swap="outerHTML"
-                  hx-confirm="Вы уверены, что хотите запустить слияние дубликатов? Это действие необратимо и может занять некоторое время."
-                  hx-indicator="#merge-spinner">
-                
+            
+            {# <!-- <<< ИЗМЕНЕНИЕ: Форма диагностики --> #}
+            <form hx-post="{{ request.url_for('admin_find_duplicates') }}"
+                  hx-target="#results-container"
+                  hx-swap="innerHTML"
+                  hx-indicator="#find-spinner"
+                  style="margin-bottom: 12px;">
                 <button type="submit" class="btn btn-secondary" style="width: 100%;" hx-disabled-elt="this">
-                    <span>Найти и объединить дубликаты</span>
+                    <span>1. Найти потенциальные дубликаты (Диагностика)</span>
+                    <i id="find-spinner" class='bx bx-loader-alt bx-spin htmx-indicator' style="font-size: 1.25rem; margin-left: 8px;"></i>
+                </button>
+            </form>
+
+            {# <!-- <<< ИЗМЕНЕНИЕ: Форма слияния --> #}
+            <form hx-post="{{ request.url_for('admin_merge_duplicates') }}"
+                  hx-target="#results-container"
+                  hx-swap="innerHTML"
+                  hx-confirm="Вы уверены, что хотите запустить слияние дубликатов? Это действие необратимо."
+                  hx-indicator="#merge-spinner">
+                <button type="submit" class="btn btn-danger" style="width: 100%;" hx-disabled-elt="this">
+                    <span>2. Объединить найденные дубликаты</span>
                     <i id="merge-spinner" class='bx bx-loader-alt bx-spin htmx-indicator' style="font-size: 1.25rem; margin-left: 8px;"></i>
                 </button>
             </form>
             
-            <div id="merge-results">
-                <!-- Сюда будет загружен результат выполнения -->
+            {# <!-- <<< ИЗМЕНЕНИЕ: Общий контейнер для результатов --> #}
+            <div id="results-container" style="margin-top: 16px;">
+                <!-- Сюда будут загружаться результаты диагностики или слияния -->
             </div>
         </div>
-        
+    </div>
+
     <!-- Колонка с результатом или инструкцией -->
     <div>
         {% if result %}
