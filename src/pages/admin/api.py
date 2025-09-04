@@ -118,13 +118,14 @@ async def bulk_update_status(
 
 @router.post("/update-status", name="api_update_single_status")
 async def update_single_card_status(
-    status_data: CardStatusRequest,
+    card_id: int = Form(...),  # <-- Теперь читает поле 'card_id' из формы
+    status: str = Form(...),   # <-- Теперь читает поле 'status' из формы
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):
     """Обновление статуса одной карточки (для Drag & Drop)"""
     req = await crm_service.update_single_card_status(
-        db, status_data.card_id, status_data.status, current_user.id
+        db, card_id, status, current_user.id
     )
     if not req:
         raise HTTPException(status_code=404, detail="QuoteRequest not found")
