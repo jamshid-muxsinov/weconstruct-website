@@ -7,7 +7,7 @@ import csv
 import io
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from src.services.shop_service import _get_or_create_contact, _create_quote_request, _notify_managers
 from src.models.shop_models import QuoteRequest
