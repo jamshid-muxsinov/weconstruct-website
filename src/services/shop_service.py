@@ -31,7 +31,7 @@ async def _create_quote_request(db: AsyncSession, contact_id: int, message: str,
         product_id=product_id,
         message=message,
         source=QuoteRequest.SourceEnum(source),
-        status=QuoteRequest.StatusEnum.NEW
+        status=QuoteRequest.StatusEnum.IMPORTED
     )
     db.add(quote)
     return quote

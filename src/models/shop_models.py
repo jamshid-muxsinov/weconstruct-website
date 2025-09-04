@@ -1,3 +1,5 @@
+# src/models/shop_models.py
+
 import uuid
 import enum
 from datetime import datetime
@@ -148,7 +150,10 @@ class Product(Base):
     price_max: Mapped[Optional[float]] = mapped_column(DECIMAL(12, 2), comment="Цена за м2 до")
 
     area: Mapped[int] = mapped_column(Integer, default=0)
-    status: Mapped[StatusEnum] = mapped_column(EnumType(StatusEnum), default=StatusEnum.IN_STOCK)
+    
+    # ИЗМЕНЕНИЕ №1: Добавляем явное имя для типа ENUM
+    status: Mapped[StatusEnum] = mapped_column(EnumType(StatusEnum, name="product_status_enum"), default=StatusEnum.IN_STOCK)
+    
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
@@ -179,6 +184,7 @@ class ProductImage(Base):
 class QuoteRequest(Base):
     __tablename__ = 'shop_quoterequest'
 
+    # ИЗМЕНЕНИЕ №2: Обновляем статусы на новые
     class StatusEnum(str, enum.Enum):
         IMPORTED = 'imported'
         QUALIFICATION = 'qualification'
@@ -187,7 +193,7 @@ class QuoteRequest(Base):
         NEGOTIATION = 'negotiation'
         CLOSED = 'closed'
         ARCHIVED = 'archived'
-
+    
     class SourceEnum(str, enum.Enum):
         WEBSITE = 'website'
         CONTACT_FORM = 'contact_form'
@@ -201,9 +207,11 @@ class QuoteRequest(Base):
 
     message: Mapped[Optional[str]] = mapped_column(Text)
     
+    # ИЗМЕНЕНИЕ №3: Добавляем явное имя для типа ENUM и меняем default
     status: Mapped[StatusEnum] = mapped_column(
         EnumType(
             StatusEnum,
+            name="quoterequest_status_enum",
             native_enum=False, 
             values_callable=lambda obj: [e.value for e in obj]
         ),
@@ -271,8 +279,10 @@ class StatusChangeLog(Base):
     user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("auth_user.id", ondelete="SET NULL"))
     user: Mapped[Optional["User"]] = relationship(back_populates="status_logs")
 
-    old_status: Mapped[QuoteRequest.StatusEnum] = mapped_column(EnumType(QuoteRequest.StatusEnum, native_enum=False, name="statusenum", values_callable=lambda obj: [e.value for e in obj]))
-    new_status: Mapped[QuoteRequest.StatusEnum] = mapped_column(EnumType(QuoteRequest.StatusEnum, native_enum=False, name="statusenum", values_callable=lambda obj: [e.value for e in obj]))
+    # ИЗМЕНЕНИЕ №4: Ссылаемся на новый именованный ENUM
+    old_status: Mapped[QuoteRequest.StatusEnum] = mapped_column(EnumType(QuoteRequest.StatusEnum, name="quoterequest_status_enum", native_enum=False, values_callable=lambda obj: [e.value for e in obj]))
+    new_status: Mapped[QuoteRequest.StatusEnum] = mapped_column(EnumType(QuoteRequest.StatusEnum, name="quoterequest_status_enum", native_enum=False, values_callable=lambda obj: [e.value for e in obj]))
+    
     timestamp: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     note: Mapped[Optional[str]] = mapped_column(String(255))
 
