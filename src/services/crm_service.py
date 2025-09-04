@@ -7,6 +7,9 @@ from sqlalchemy.future import select
 from src.models.shop_models import QuoteRequest, Task, StatusChangeLog, Contact, ContactNote, User
 from src.schemas.crm_schemas import QuoteRequestStatusUpdate, TaskCreate
 
+import logging
+log = logging.getLogger(__name__)
+
 def to_naive_datetime(dt: datetime) -> datetime:
     """Convert timezone-aware datetime to naive datetime for database compatibility."""
     return dt.replace(tzinfo=None) if dt.tzinfo else dt
