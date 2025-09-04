@@ -1,18 +1,11 @@
 // src/static/js/kanban-enhanced.js
 
-/**
- * Глобальная инициализация Notyf для уведомлений.
- */
 const notyf = new Notyf({
     duration: 3500,
     position: { x: 'right', y: 'top' },
     dismissible: true
 });
 
-/**
- * Инициализирует функционал канбан-доски.
- * Эта функция будет вызываться при первой загрузке и после каждого обновления доски через HTMX.
- */
 function initializeKanban() {
     const kanbanColumns = document.querySelectorAll('.kanban-column-body');
     if (kanbanColumns.length === 0) return;
@@ -51,9 +44,6 @@ function initializeKanban() {
     });
 }
 
-/**
- * Обновляет числовые счетчики в заголовках колонок канбана.
- */
 function updateColumnCounts() {
     document.querySelectorAll('.kanban-column').forEach(col => {
         const count = col.querySelectorAll('.kanban-card:not([style*="display: none"])').length;
@@ -64,10 +54,6 @@ function updateColumnCounts() {
     });
 }
 
-/**
- * Инициализирует глобальное хранилище Alpine.js для управления состоянием канбан-доски.
- * Эта функция должна вызываться только один раз.
- */
 function initializeAlpineComponents() {
     if (window.Alpine && Alpine.store('kanbanManager')) {
         return;
@@ -95,21 +81,13 @@ function initializeAlpineComponents() {
 
         handleCardClick(cardElement, cardId, event) {
             if (event.ctrlKey || event.metaKey) {
-                // <<< ИЗМЕНЕНИЕ ЗДЕСЬ: Обеспечиваем реактивность для Set >>>
-                // 1. Создаем новую копию Set из текущего состояния.
                 const newSelectedCards = new Set(this.selectedCards);
-                
-                // 2. Модифицируем эту новую копию.
                 if (newSelectedCards.has(cardId)) {
                     newSelectedCards.delete(cardId);
                 } else {
                     newSelectedCards.add(cardId);
                 }
-                
-                // 3. Присваиваем новую копию обратно в store.
-                //    Именно это действие Alpine.js гарантированно отследит.
                 this.selectedCards = newSelectedCards;
-                // <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
             } 
             else if (!event.target.closest('a')) {
                 htmx.trigger(cardElement, 'openDetails');
@@ -121,7 +99,7 @@ function initializeAlpineComponents() {
         },
 
         clearSelection() { 
-            this.selectedCards = new Set(); // Также заменяем на новый пустой Set
+            this.selectedCards = new Set();
         },
 
         bulkAssign(userId) {
@@ -148,11 +126,20 @@ function initializeAlpineComponents() {
             });
         }
     });
+
+    // --- НОВОЕ: Автоматический "наблюдатель" за фильтрами ---
+    // Эта функция будет сама запускать applyFilters(), когда searchQuery или activeFilters изменятся.
+    Alpine.effect(() => {
+        const store = Alpine.store('kanbanManager');
+        // Просто обращаемся к переменным, чтобы Alpine "узнал", что за ними нужно следить
+        const query = store.searchQuery;
+        const assignee = store.activeFilters.assignee;
+        
+        // Запускаем фильтрацию
+        store.applyFilters();
+    });
 }
 
-/**
- * Основная точка входа.
- */
 document.addEventListener('DOMContentLoaded', function () {
     if (typeof Alpine !== 'undefined') {
         initializeAlpineComponents();
@@ -163,9 +150,6 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeKanban();
 });
 
-/**
- * Слушатель событий HTMX для ре-инициализации Sortable.js.
- */
 document.body.addEventListener('htmx:afterSwap', function(event) {
     if (event.detail.target.id === 'kanban-board-container') {
         initializeKanban();

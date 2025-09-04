@@ -4,7 +4,7 @@
 {% endif %}
 
 {% block content %}
-<div x-data="kanbanManager">
+<div x-data>
     <div class="page-header">
         <h1>Воронка продаж</h1>
         <div class="page-header-actions">
@@ -32,7 +32,7 @@
     <div class="advanced-filters">
         <div class="search-box" style="flex: 1; min-width: 250px;">
             <input type="text" 
-                   x-model.debounce.300ms="searchQuery"
+                   x-model.debounce.300ms="$store.kanbanManager.searchQuery"
                    placeholder="Поиск по имени, телефону или ID..."
                    class="input-field"
                    style="margin: 0;">
@@ -40,15 +40,15 @@
         
         <div class="filter-chips" style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button type="button" 
-                    @click="toggleFilter('assignee', 'me')"
-                    :class="{'filter-chip': true, 'active': activeFilters.assignee === 'me'}">
+                    @click="$store.kanbanManager.activeFilters.assignee = ($store.kanbanManager.activeFilters.assignee === 'me' ? null : 'me')"
+                    :class="{'filter-chip': true, 'active': $store.kanbanManager.activeFilters.assignee === 'me'}">
                 <i class='bx bx-user'></i>
                 Мои задачи
             </button>
             
             <button type="button"
-                    @click="searchQuery = ''; activeFilters.assignee = null"
-                    x-show="searchQuery || activeFilters.assignee"
+                    @click="$store.kanbanManager.searchQuery = ''; $store.kanbanManager.activeFilters.assignee = null"
+                    x-show="$store.kanbanManager.searchQuery || $store.kanbanManager.activeFilters.assignee"
                     class="btn btn-sm btn-secondary">
                 <i class='bx bx-x'></i>
                 Очистить
@@ -57,30 +57,29 @@
     </div>
 
     <!-- Bulk Actions Bar -->
-    <div class="bulk-actions-bar" x-show="selectedCards.size > 0" x-transition>
-        <span x-text="`Выбрано: ${selectedCards.size}`" style="font-weight: 500;"></span>
+    <div class="bulk-actions-bar" x-show="$store.kanbanManager.selectedCards.size > 0" x-transition>
+        <span x-text="`Выбрано: ${$store.kanbanManager.selectedCards.size}`" style="font-weight: 500;"></span>
         
-        <select @change="bulkAssign($event.target.value); $event.target.value = ''" class="select-field" style="min-width: 150px;">
+        <select @change="$store.kanbanManager.bulkAssign($event.target.value); $event.target.value = ''" class="select-field" style="min-width: 150px;">
             <option value="">Назначить...</option>
-            {# Динамически загрузите сюда ваших менеджеров #}
             {% for user in staff_users %}
             <option value="{{ user.id }}">{{ user.username }}</option>
             {% endfor %}
         </select>
         
-        <select @change="bulkUpdateStatus($event.target.value); $event.target.value = ''" class="select-field" style="min-width: 120px;">
+        <select @change="$store.kanbanManager.bulkUpdateStatus($event.target.value); $event.target.value = ''" class="select-field" style="min-width: 120px;">
             <option value="">Статус...</option>
             {% for status in QuoteRequest.StatusEnum %}
               <option value="{{ status.value }}">{{ get_status_display(status) }}</option>
             {% endfor %}
         </select>
         
-        <a :href="'{{ url_for('api_export_requests') }}?card_ids=' + selectedIds.join(',')" 
+        <a :href="'{{ url_for('api_export_requests') }}?card_ids=' + $store.kanbanManager.selectedIds.join(',')" 
            class="btn btn-sm btn-secondary">
            <i class='bx bx-download'></i> Экспорт
         </a>
         
-        <button @click="clearSelection()" class="btn-icon btn-icon-danger" title="Отменить выбор">
+        <button @click="$store.kanbanManager.clearSelection()" class="btn-icon btn-icon-danger" title="Отменить выбор">
             <i class='bx bx-x'></i>
         </button>
     </div>
