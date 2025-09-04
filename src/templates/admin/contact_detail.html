@@ -20,6 +20,7 @@
             {% endfor %}
             <div class="form-actions" style="padding: 0; border: none; margin-top: 8px;">
                 <button type="submit" class="btn btn-primary">Сохранить</button>
+                 <a href="{{ request.url_for('admin_contact_delete', pk=contact.id) }}" class="btn btn-danger">Удалить контакт</a>
             </div>
         </form>
     </div>

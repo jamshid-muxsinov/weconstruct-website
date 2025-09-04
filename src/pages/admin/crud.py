@@ -100,10 +100,12 @@ class QuoteRequestForm(wtforms.Form):
 Product.__str__ = lambda self: self.name_ru
 Category.__str__ = lambda self: self.name_ru
 QuoteRequest.__str__ = lambda self: f"Заявка #{self.id}"
+Contact.__str__ = lambda self: self.full_name
 
 PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], ProductForm, "Товар", "Товары")
 CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "Категория", "Категории")
 QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'product', 'status', 'source'], QuoteRequestForm, "Заявка", "Заявки")
+CONTACT_META = Meta(Contact, ['full_name', 'phone', 'email'], None, "Контакт", "Контакты")
 
 def sanitize_for_csv(value):
     if value is None:
@@ -151,6 +153,23 @@ async def handle_list_view(
 ) -> Page:
     items_query = select(meta.model)
     count_query = select(func.count(distinct(meta.model.id)))
+
+    if meta.model == QuoteRequest or meta.model == Contact: 
+        if search_query:
+            search_like = f"%{search_query}%"
+            if meta.model == Contact:
+                 filter_condition = or_(
+                    func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), 
+                    Contact.phone.ilike(search_like),
+                    Contact.name.ilike(search_like)
+                )
+            else:
+                filter_condition = or_(
+                    func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), 
+                    Contact.phone.ilike(search_like)
+                )
+            items_query = items_query.join(Contact).where(filter_condition)
+            count_query = count_query.join(Contact).where(filter_condition)
 
     if meta.model == Product:
         items_query = items_query.options(selectinload(Product.category))
@@ -206,6 +225,25 @@ async def handle_list_view(
     
     params = Params(page=page, size=size)
     return create_page(items, total, params)
+
+@router.get("/contact/", response_class=HTMLResponse, name="admin_contact_list")
+async def contact_list(
+    request: Request, 
+    page: int = Query(1, ge=1), 
+    size: int = Query(20, ge=1, le=100), 
+    q: Optional[str] = Query(None), 
+    context: dict = Depends(get_common_context), 
+    db: AsyncSession = Depends(get_db_session)
+):
+    page_obj = await handle_list_view(db, CONTACT_META, page=page, size=size, search_query=q)
+    CONTACT_META.list_display = ['full_name', 'phone', 'email']
+    context.update({
+        "meta": CONTACT_META, 
+        "page": page_obj, 
+        "list_display": CONTACT_META.list_display,
+        "htmx_request": "HX-Request" in request.headers
+    })
+    return templates.TemplateResponse("admin/generic_list.html", context)
 
 @router.get("/quoterequest/", response_class=HTMLResponse, name="admin_quoterequest_list")
 async def quoterequest_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), sort: Optional[str] = Query(None), date_from: Optional[str] = Query(None), date_to: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):

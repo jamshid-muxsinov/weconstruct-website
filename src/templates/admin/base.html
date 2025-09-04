@@ -55,6 +55,7 @@
                 <!-- *** ИЗМЕНЕНИЕ: Добавлены атрибуты hx-target и hx-push-url к ссылкам *** -->
                 <a href="{{ request.url_for('admin_kanban_board') }}" class="nav-link {% if 'kanban' in request.url.path or request.url.path == '/admin/' %}active{% endif %}" hx-get="{{ request.url_for('admin_kanban_board') }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-grid-alt nav-icon'></i><span class="nav-text">Канбан-доска</span> </a>
                 <a href="{{ request.url_for('admin_quoterequest_list') }}" class="nav-link {% if 'quoterequest' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_quoterequest_list') }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bx-list-ul nav-icon'></i><span class="nav-text">Заявки</span> </a>
+                <a href="{{ request.url_for('admin_contact_list') }}" class="nav-link {% if 'contact' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_contact_list') }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-user-detail nav-icon'></i><span class="nav-text">Контакты</span> </a>
                 <a href="{{ request.url_for('admin_product_list') }}" class="nav-link {% if 'product' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_product_list') }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-package nav-icon'></i><span class="nav-text">Товары</span> </a>
                 <a href="{{ request.url_for('admin_category_list') }}" class="nav-link {% if 'category' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_category_list') }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-component nav-icon'></i><span class="nav-text">Категории</span> </a>
                 <a href="{{ request.url_for('admin_dashboard') }}" class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_dashboard') }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-bar-chart-alt-2 nav-icon'></i><span class="nav-text">Статистика</span> </a>
@@ -113,7 +114,6 @@
                 {% endif %}
             </header>
             
-            <!-- *** ИЗМЕНЕНИЕ: Обернули контент в ID, на который будут ссылаться ссылки *** -->
             <main id="main-content"> 
                 {% block content %}{% endblock %} 
             </main>

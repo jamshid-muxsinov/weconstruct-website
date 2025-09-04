@@ -10,6 +10,9 @@ from src.core.db import get_db_session
 from src.services import crm_service
 from .dependencies import get_common_context
 
+from sqlalchemy.exc import IntegrityError
+from src.models import Contact
+
 router = APIRouter()
 
 class ContactForm(wtforms.Form):
@@ -115,3 +118,39 @@ async def htmx_pin_note(
     })
     response.headers["HX-Trigger"] = quote(trigger_payload)
     return response
+
+@router.get("/contact/{pk}/delete/", response_class=HTMLResponse, name="admin_contact_delete")
+@router.post("/contact/{pk}/delete/", response_class=HTMLResponse)
+async def contact_delete(
+    request: Request, 
+    pk: int, 
+    context: dict = Depends(get_common_context), 
+    db: AsyncSession = Depends(get_db_session)
+):
+    contact = await db.get(Contact, pk)
+    if not contact: 
+        raise HTTPException(404)
+
+    if request.method == "POST":
+        try:
+            await db.delete(contact)
+            await db.commit()
+            redirect_url = request.url_for("admin_contact_list")
+            response = RedirectResponse(url=redirect_url, status_code=303)
+            return set_hx_trigger_header(response, "Контакт удален", "error")
+        except IntegrityError:
+            await db.rollback()
+            error_msg = "Нельзя удалить контакт, к которому привязаны заявки или задачи."
+            context.update({
+                "error_message": error_msg,
+                "title": "Ошибка удаления"
+            })
+            return templates.TemplateResponse("admin/500.html", context, status_code=400)
+
+    back_url = request.url_for("admin_contact_detail", pk=pk)
+    context.update({
+        "original": contact, 
+        "title": f"Удалить контакт: {contact.full_name}", 
+        "back_url": back_url
+    })
+    return templates.TemplateResponse("admin/delete_confirmation.html", context)
