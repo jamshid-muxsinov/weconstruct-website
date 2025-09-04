@@ -153,40 +153,39 @@ async def handle_list_view(
     date_from: Optional[str] = None,
     date_to: Optional[str] = None
 ) -> Page:
+    # Базовые запросы
     items_query = select(meta.model)
-    count_query = select(func.count(distinct(meta.model.id)))
+    count_query = select(func.count(distinct(meta.model.id))).select_from(meta.model)
 
-    if meta.model == QuoteRequest or meta.model == Contact:
-        count_query = count_query.select_from(meta.model)
-
-    if meta.model == QuoteRequest or meta.model == Contact:
-        if search_query:
-            search_like = f"%{search_query}%"
-            if meta.model == Contact:
-                 filter_condition = or_(
-                    func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), 
-                    Contact.phone.ilike(search_like),
-                    Contact.name.ilike(search_like)
-                )
-            else:
-                items_query = items_query.join(Contact)
-                count_query = count_query.join(Contact)
-                filter_condition = or_(
-                    func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), 
-                    Contact.phone.ilike(search_like)
-                )
-            items_query = items_query.where(filter_condition)
-            count_query = count_query.where(filter_condition)
-
-    if meta.model == Product:
-        items_query = items_query.options(selectinload(Product.category))
-
-    if meta.model == QuoteRequest:
-        if search_query:
-            search_like = f"%{search_query}%"
-            filter_condition = or_(func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), Contact.phone.ilike(search_like))
+    # Применяем JOIN'ы и WHERE в зависимости от модели
+    if search_query:
+        search_like = f"%{search_query}%"
+        if meta.model == QuoteRequest:
+            # Для заявок ищем по связанным контактам
+            filter_condition = or_(
+                func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like),
+                Contact.phone.ilike(search_like)
+            )
             items_query = items_query.join(Contact).where(filter_condition)
             count_query = count_query.join(Contact).where(filter_condition)
+        elif meta.model == Contact:
+            # Для контактов ищем напрямую в их полях
+            filter_condition = or_(
+                func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like),
+                Contact.phone.ilike(search_like),
+                Contact.name.ilike(search_like) # Добавим поиск только по имени
+            )
+            items_query = items_query.where(filter_condition)
+            count_query = count_query.where(filter_condition)
+        elif meta.model == Product:
+            items_query = items_query.where(Product.name_ru.ilike(search_like))
+            count_query = count_query.where(Product.name_ru.ilike(search_like))
+        elif meta.model == Category:
+            items_query = items_query.where(Category.name_ru.ilike(search_like))
+            count_query = count_query.where(Category.name_ru.ilike(search_like))
+
+    # Фильтрация по датам (только для заявок)
+    if meta.model == QuoteRequest:
         try:
             if date_from:
                 start_date = datetime.strptime(date_from, "%Y-%m-%d")
@@ -196,43 +195,41 @@ async def handle_list_view(
                 end_date = datetime.strptime(date_to, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
                 items_query = items_query.where(QuoteRequest.created_at <= end_date)
                 count_query = count_query.where(QuoteRequest.created_at <= end_date)
-        except ValueError: pass
-    elif meta.model == Product:
-        if search_query:
-            search_like = f"%{search_query}%"
-            items_query = items_query.where(Product.name_ru.ilike(search_like))
-            count_query = count_query.where(Product.name_ru.ilike(search_like))
-    elif meta.model == Category:
-        if search_query:
-            search_like = f"%{search_query}%"
-            items_query = items_query.where(Category.name_ru.ilike(search_like))
-            count_query = count_query.where(Category.name_ru.ilike(search_like))
+        except ValueError:
+            pass
+
+    # Выполняем запрос на общее количество
     total_result = await db.execute(count_query)
     total = total_result.scalar_one_or_none() or 0
     
     log.info(f"Manual count for {meta.model_name} found {total} items.")
     
-    if meta.model == QuoteRequest:
+    # Применяем Eager Loading для связанных моделей
+    if meta.model == Product:
+        items_query = items_query.options(selectinload(Product.category))
+    elif meta.model == QuoteRequest:
         items_query = items_query.options(
             selectinload(QuoteRequest.contact), 
             selectinload(QuoteRequest.product),
             selectinload(QuoteRequest.assigned_to)
         )
-        if sort == 'asc':
-            items_query = items_query.order_by(QuoteRequest.created_at.asc())
-        else:
-            items_query = items_query.order_by(QuoteRequest.created_at.desc())
+
+    # Применяем сортировку
+    if meta.model == QuoteRequest and sort == 'asc':
+        items_query = items_query.order_by(QuoteRequest.created_at.asc())
     else:
+        # Сортировка по убыванию ID для всех остальных случаев
         items_query = items_query.order_by(getattr(meta.model, 'id').desc())
 
+    # Применяем пагинацию
     paginated_items_query = items_query.offset((page - 1) * size).limit(size)
     
     items_result = await db.execute(paginated_items_query)
     items = items_result.scalars().unique().all()
     
+    # Создаем и возвращаем страницу
     params = Params(page=page, size=size)
     return create_page(items, total, params)
-
 @router.get("/contact/", response_class=HTMLResponse, name="admin_contact_list")
 async def contact_list(
     request: Request, 
