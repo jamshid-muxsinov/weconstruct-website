@@ -19,7 +19,7 @@ from typing import Optional, List
 from datetime import datetime
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
-from src.models.shop_models import User, Product, Category, QuoteRequest, Contact, RegistrationInvite, ProductImage, Task, Notification
+from src.models.shop_models import User, Product, Category, GoogleSheetLead, QuoteRequest, Contact, RegistrationInvite, ProductImage, Task, Notification
 from src.core.security import get_current_active_user
 from .dependencies import get_common_context
 from src.services import user_service, shop_service
@@ -374,12 +374,37 @@ async def quoterequest_change_form_post(request: Request, pk: int, context: dict
 async def quoterequest_delete(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     quote_req = await db.get(QuoteRequest, pk, options=[selectinload(QuoteRequest.tasks)]);
     if not quote_req: raise HTTPException(404, detail="QuoteRequest not found")
+    
     if request.method == "POST":
         try:
-            await db.delete(quote_req); await db.commit(); response = Response(status_code=200, content="Заявка удалена"); redirect_url = request.url_for(QUOTEREQUEST_META.list_url_name); trigger_payload = {"show-toast": {"message": "Заявка удалена", "type": "error"}, "updateKanban": True, "new-quote-request": True}; response.headers["HX-Redirect"] = str(redirect_url); response.headers["HX-Trigger"] = json.dumps(trigger_payload); return response
+            # <<< НАЧАЛО ИЗМЕНЕНИЯ: Архивируем лид перед удалением >>>
+            # Находим связанный лид в реестре и помечаем его как ARCHIVED.
+            # Это предотвратит его повторный импорт.
+            archive_lead_stmt = (
+                update(GoogleSheetLead)
+                .where(GoogleSheetLead.quote_request_id == pk)
+                .values(status=GoogleSheetLead.StatusEnum.ARCHIVED)
+                .execution_options(synchronize_session=False) 
+            )
+            await db.execute(archive_lead_stmt)
+            log.info(f"Лид, связанный с заявкой #{pk}, помечен как ARCHIVED.")
+            await db.delete(quote_req)
+            await db.commit()
+            
+            response = Response(status_code=200, content="Заявка удалена")
+            redirect_url = request.url_for(QUOTEREQUEST_META.list_url_name)
+            trigger_payload = {"show-toast": {"message": "Заявка удалена", "type": "error"}, "updateKanban": True, "new-quote-request": True}
+            response.headers["HX-Redirect"] = str(redirect_url)
+            response.headers["HX-Trigger"] = json.dumps(trigger_payload)
+            return response
         except IntegrityError:
-            await db.rollback(); context.update({"error_message": "Не удалось удалить заявку из-за связанных записей."}); return templates.TemplateResponse("admin/500.html", context, status_code=500)
-    back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name)); context.update({"meta": QUOTEREQUEST_META, "original": quote_req, "title": f"Удалить {QUOTEREQUEST_META.verbose_name}", "back_url": back_url, "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/delete_confirmation.html", context)
+            await db.rollback()
+            context.update({"error_message": "Не удалось удалить заявку из-за связанных записей."})
+            return templates.TemplateResponse("admin/500.html", context, status_code=500)
+            
+    back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name))
+    context.update({"meta": QUOTEREQUEST_META, "original": quote_req, "title": f"Удалить {QUOTEREQUEST_META.verbose_name}", "back_url": back_url, "htmx_request": "HX-Request" in request.headers})
+    return templates.TemplateResponse("admin/delete_confirmation.html", context)
 class InviteForm(wtforms.Form):
     note = wtforms.StringField('Заметка (для кого это приглашение)', validators=[wtforms.validators.DataRequired()])
 @router.get("/invites/", response_class=HTMLResponse, name="admin_invites")

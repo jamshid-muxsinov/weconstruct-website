@@ -4,7 +4,7 @@ import uuid
 import enum
 from datetime import datetime
 from typing import List, Optional
-
+from sqlalchemy import JSON
 from sqlalchemy import (
     String, Text, Boolean, DateTime, func, DECIMAL,
     ForeignKey, Integer, UUID, Enum as EnumType
@@ -184,7 +184,6 @@ class ProductImage(Base):
 class QuoteRequest(Base):
     __tablename__ = 'shop_quoterequest'
 
-    # ИЗМЕНЕНИЕ №2: Обновляем статусы на новые
     class StatusEnum(str, enum.Enum):
         IMPORTED = 'imported'
         QUALIFICATION = 'qualification'
@@ -207,7 +206,6 @@ class QuoteRequest(Base):
 
     message: Mapped[Optional[str]] = mapped_column(Text)
     
-    # ИЗМЕНЕНИЕ №3: Добавляем явное имя для типа ENUM и меняем default
     status: Mapped[StatusEnum] = mapped_column(
         EnumType(
             StatusEnum,
@@ -242,6 +240,8 @@ class QuoteRequest(Base):
     investment_details: Mapped[Optional[str]] = mapped_column(Text, comment="Бюджет/Инвестиции (Sarmoysi)")
     conclusion: Mapped[Optional[str]] = mapped_column(Text, comment="Заключение/Выводы (Xulosasi)")
     additional_info: Mapped[Optional[str]] = mapped_column(Text, comment="Дополнительные сведения")
+
+    google_sheet_lead: Mapped[Optional["GoogleSheetLead"]] = relationship(back_populates="quote_request")
 
     @property
     def name(self):
@@ -291,3 +291,27 @@ class StatusChangeLog(Base):
 
     def get_new_status_display(self):
         return self.new_status.value.replace('_', ' ').capitalize()
+    
+class GoogleSheetLead(Base):
+    """
+    Реестр для отслеживания всех лидов, полученных из Google Sheets.
+    """
+    __tablename__ = 'crm_googlesheet_lead'
+
+    class StatusEnum(str, enum.Enum):
+        PENDING = 'pending'
+        IMPORTED = 'imported'
+        SKIPPED = 'skipped'
+        ARCHIVED = 'archived'
+        ERROR = 'error'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sheet_row_id: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    spreadsheet_id: Mapped[str] = mapped_column(String(100), index=True)
+    status: Mapped[StatusEnum] = mapped_column(EnumType(StatusEnum, name="googlesheetlead_status_enum", native_enum=False), default=StatusEnum.PENDING, index=True)
+    quote_request_id: Mapped[Optional[int]] = mapped_column(ForeignKey("shop_quoterequest.id", ondelete="SET NULL"), unique=True)
+    quote_request: Mapped[Optional["QuoteRequest"]] = relationship(back_populates="google_sheet_lead")
+    raw_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    processing_notes: Mapped[Optional[str]] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
