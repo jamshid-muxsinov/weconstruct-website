@@ -1,5 +1,5 @@
 # src/services/shop_service.py
-
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -9,15 +9,25 @@ from src.models.shop_models import Category, Product, Contact, QuoteRequest, Use
 from src.core.cache import cache_result, invalidate_cache
 
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact:
-    # Нормализуем телефон для надежного поиска
-    normalized_phone = ''.join(filter(str.isdigit, phone))
-    
-    # Ищем по последним 9 цифрам, чтобы покрыть форматы 9989... и 9...
-    if len(normalized_phone) > 9:
-        normalized_phone = normalized_phone[-9:]
+    """
+    Находит или создает контакт, используя надежный поиск по нормализованному номеру телефона.
+    """
+    if not phone or not phone.strip():
+        # Если телефон не предоставлен, создаем "разовый" контакт без сохранения в базу для поиска
+        first_name, _, last_name = name.partition(" ")
+        return Contact(name=first_name, last_name=last_name or None, phone="N/A")
 
-    stmt = select(Contact).where(Contact.phone.like(f'%{normalized_phone}'))
+    # <<< НАЧАЛО ИЗМЕНЕНИЙ В ЛОГИКЕ >>>
+    # 1. Нормализуем входящий номер телефона до последних 9 цифр
+    search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
+
+    # 2. Создаем SQL-выражение для нормализации номера прямо в базе данных
+    phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
+
+    # 3. Ищем точное совпадение нормализованных номеров
+    stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
     contact = (await db.execute(stmt)).scalars().first()
+    # <<< КОНЕЦ ИЗМЕНЕНИЙ В ЛОГИКЕ >>>
 
     if not contact:
         first_name, _, last_name = name.partition(" ")
@@ -27,12 +37,13 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
             last_name=last_name or None
         )
         db.add(contact)
-    elif name and name.strip():
+        await db.flush() # Важно, чтобы получить ID для дальнейшего использования
+    elif name and name.strip() and name.lower() != 'без имени':
+        # Обновляем имя, если пришел более полный вариант
         first_name, _, last_name = name.partition(" ")
         contact.name = first_name
         contact.last_name = last_name or contact.last_name
     
-    await db.flush() 
     return contact
 
 async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, product_id: int = None, source: str = "website") -> QuoteRequest:

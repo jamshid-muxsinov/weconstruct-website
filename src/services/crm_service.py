@@ -595,7 +595,6 @@ async def merge_duplicate_contacts(db: AsyncSession) -> dict:
     log.info("Запуск процесса поиска и слияния дубликатов контактов.")
 
     # Создаем нормализованное поле телефона (только цифры, последние 9)
-    # для надежного сравнения
     normalized_phone = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
 
     # Находим группы телефонных номеров, у которых больше одного контакта
@@ -635,7 +634,6 @@ async def merge_duplicate_contacts(db: AsyncSession) -> dict:
         if len(contacts) < 2:
             continue
         
-        # Первый контакт в группе (самый старый по id) - наш главный
         master_contact = contacts[0]
         duplicate_contacts = contacts[1:]
         duplicate_ids = [c.id for c in duplicate_contacts]
@@ -679,7 +677,7 @@ async def merge_duplicate_contacts(db: AsyncSession) -> dict:
                f"Объединено и удалено контактов: {deleted_contacts_count}.")
     log.info(message)
     return {"merged_groups": merged_groups_count, "deleted_contacts": deleted_contacts_count, "message": message}
-
+    
 async def find_potential_duplicates(db: AsyncSession) -> list:
     """
     Только находит группы потенциальных дубликатов без их слияния.

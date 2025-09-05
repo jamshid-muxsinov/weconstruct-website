@@ -5,7 +5,7 @@ import re
 import requests
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, timedelta 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
