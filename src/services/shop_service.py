@@ -1,33 +1,43 @@
 # src/services/shop_service.py
-from sqlalchemy import func
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, Session # <<< Добавлен импорт Session
+from sqlalchemy import func # <<< Добавлен импорт func
 from datetime import datetime, timedelta
 
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
 
+# <<< НАЧАЛО КЛЮЧЕВЫХ ИЗМЕНЕНИЙ >>>
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact:
     """
     Находит или создает контакт, используя надежный поиск по нормализованному номеру телефона.
+    Эта версия устойчива к дубликатам в рамках одной транзакции.
     """
     if not phone or not phone.strip():
-        # Если телефон не предоставлен, создаем "разовый" контакт без сохранения в базу для поиска
         first_name, _, last_name = name.partition(" ")
         return Contact(name=first_name, last_name=last_name or None, phone="N/A")
 
-    # <<< НАЧАЛО ИЗМЕНЕНИЙ В ЛОГИКЕ >>>
     # 1. Нормализуем входящий номер телефона до последних 9 цифр
     search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
 
-    # 2. Создаем SQL-выражение для нормализации номера прямо в базе данных
-    phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
+    # 2. ПРОВЕРКА В ТЕКУЩЕЙ СЕССИИ (чтобы избежать ошибки дубликата внутри одной транзакции)
+    # Проверяем, не добавляли ли мы уже контакт с таким номером в этой же "пачке" данных
+    sync_session: Session = db.sync_session
+    for obj in sync_session.new:
+        if isinstance(obj, Contact):
+            existing_phone_normalized = "".join(filter(str.isdigit, obj.phone))[-9:]
+            if existing_phone_normalized == search_phone_normalized:
+                # Если нашли - возвращаем его и не идем в базу
+                return obj
 
-    # 3. Ищем точное совпадение нормализованных номеров
+    # 3. ПОИСК В БАЗЕ ДАННЫХ (если в сессии не нашли)
+    # Создаем SQL-выражение для нормализации номера прямо в базе данных
+    phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
     stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
     contact = (await db.execute(stmt)).scalars().first()
-    # <<< КОНЕЦ ИЗМЕНЕНИЙ В ЛОГИКЕ >>>
+    # <<< КОНЕЦ КЛЮЧЕВЫХ ИЗМЕНЕНИЙ >>>
 
     if not contact:
         first_name, _, last_name = name.partition(" ")
@@ -37,7 +47,7 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
             last_name=last_name or None
         )
         db.add(contact)
-        await db.flush() # Важно, чтобы получить ID для дальнейшего использования
+        # Убираем await db.flush() отсюда, чтобы все сохранилось в конце одной транзакцией
     elif name and name.strip() and name.lower() != 'без имени':
         # Обновляем имя, если пришел более полный вариант
         first_name, _, last_name = name.partition(" ")
@@ -63,6 +73,7 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
     
     if not managers: return
 
+    # Используем относительный URL, который будет работать везде
     quote_url = f"/admin/quoterequest/{quote.id}/change/"
     message_text = f"Новая заявка #{quote.id} от {contact_name}"
 
@@ -72,7 +83,7 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
     ]
     db.add_all(notifications)
 
-# <<< НАЧАЛО ИЗМЕНЕНИЙ >>>
+
 @invalidate_cache("categories_with_products") 
 async def process_quote_request(db: AsyncSession, name: str, phone: str, message: str, product_id: int = None, source: str = "website") -> QuoteRequest | str:
     """
@@ -80,13 +91,18 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
     или строку 'duplicate', если заявка является дубликатом.
     """
     contact = await _get_or_create_contact(db, name, phone)
-    
+    await db.flush() # Здесь flush нужен, чтобы получить contact.id
+
     # Проверка на дубликаты: ищем заявки от этого контакта за последнюю неделю
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     stmt = select(QuoteRequest).where(
         QuoteRequest.contact_id == contact.id,
         QuoteRequest.created_at >= seven_days_ago
     )
+    # Добавим проверку на сообщение, чтобы можно было отправить разные заявки
+    if message:
+        stmt = stmt.where(QuoteRequest.message == message)
+
     recent_requests = (await db.execute(stmt)).scalars().all()
     
     if recent_requests:
@@ -101,11 +117,9 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
     await db.refresh(quote) 
 
     return quote
-# <<< КОНЕЦ ИЗМЕНЕНИЙ >>>
 
 @cache_result("categories_with_products", ttl=1800)  
 async def get_categories_with_active_products(db: AsyncSession):
-    # ... остальной код этой функции без изменений
     stmt = (
         select(Category)
         .options(selectinload(Category.products))
@@ -128,11 +142,10 @@ async def get_categories_with_active_products(db: AsyncSession):
 
 @cache_result("product_modal", ttl=3600) 
 async def get_product_for_modal(db: AsyncSession, product_id: int):
-    # ... остальной код этой функции без изменений
     stmt = (
         select(Product)
         .options(selectinload(Product.images))
         .where(Product.id == product_id)
     )
     result = await db.execute(stmt)
-    return result.scalars().first() 
+    return result.scalars().first()
