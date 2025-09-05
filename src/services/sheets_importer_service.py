@@ -5,7 +5,7 @@ import re
 import requests
 import csv
 import io
-from datetime import datetime, timedelta 
+from datetime import datetime, timedelta  # <<< ИЗМЕНЕНИЕ: Добавлен timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
@@ -111,50 +111,44 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
                 skipped_headers_count += 1
                 continue
 
-            # <<< ИЗМЕНЕНИЕ: Новая логика извлечения данных по колонкам >>>
-            # B: created_time (индекс 1)
+            # Логика извлечения данных по колонкам
             date_str = _clean_prefixed_value(row[1]).strip() if len(row) > 1 else None
-            # N: qaysi_biznes... (индекс 13)
             business_type = _clean_prefixed_value(row[13]).strip() if len(row) > 13 else "Не указан"
-            # P: full_name (индекс 15)
             client_name = _clean_prefixed_value(row[15]).strip() if len(row) > 15 else "Без имени"
-            # Q: phone_number (индекс 16)
             phone_number_raw = _clean_prefixed_value(row[16]).strip() if len(row) > 16 else ""
             
-            # Если имя в колонке P пустое, пробуем взять его из колонки M (ism_familiyangiz?)
             if not client_name or client_name == "Без имени":
                 client_name = _clean_prefixed_value(row[12]).strip() if len(row) > 12 else "Без имени"
             
-            # Если телефон в колонке Q пустой, пробуем взять его из колонки O (telefon_raqamingiz?)
             if not phone_number_raw:
                 phone_number_raw = _clean_prefixed_value(row[14]).strip() if len(row) > 14 else ""
 
             phone_number = _normalize_phone(phone_number_raw)
-            # <<< КОНЕЦ ИЗМЕНЕНИЙ >>>
 
             if not phone_number:
                 log.warning(f"Пропуск строки {original_row_number}: не указан номер телефона.")
                 continue
 
-            # Создаем или находим контакт
+            # Создаем или находим контакт с использованием улучшенной логики из shop_service
             contact = await _get_or_create_contact(db, name=client_name, phone=phone_number)
             await db.flush()
 
-            # Проверяем на дубликаты более надежно
-            parsed_date = _parse_date(date_str)
+            # <<< ИЗМЕНЕНИЕ: Улучшенная и более гибкая проверка на дубликаты заявок >>>
+            # Считаем заявку дублем, если она от того же контакта на тот же тип бизнеса
+            # и была создана в течение последней недели.
+            seven_days_ago = datetime.utcnow() - timedelta(days=7)
             duplicate_check_stmt = select(QuoteRequest).where(
                 QuoteRequest.contact_id == contact.id,
-                QuoteRequest.business_type == business_type
+                QuoteRequest.business_type == business_type,
+                QuoteRequest.created_at >= seven_days_ago
             )
-            if parsed_date:
-                # Ищем дубликат только за тот же день
-                duplicate_check_stmt = duplicate_check_stmt.where(func.date(QuoteRequest.created_at) == parsed_date.date())
-
+            
             existing_quote = (await db.execute(duplicate_check_stmt)).scalars().first()
             if existing_quote:
-                log.info(f"Пропуск дубликата для '{contact.full_name}' от {parsed_date.strftime('%Y-%m-%d') if parsed_date else 'N/A'}.")
+                log.info(f"Пропуск дубликата заявки для '{contact.full_name}' (тип: {business_type}). Найдена существующая заявка #{existing_quote.id}.")
                 skipped_duplicates_count += 1
                 continue
+            # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
             # Создаем новую заявку
             message_for_crm = f"Лид из рекламной кампании. Тип бизнеса: {business_type}"
@@ -167,8 +161,8 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
             
             quote.business_type = business_type
             
-            # <<< ИЗМЕНЕНИЕ: Присваиваем дату из таблицы >>>
-            # Если дата была успешно распознана, устанавливаем ее как дату создания заявки
+            # Присваиваем дату из таблицы
+            parsed_date = _parse_date(date_str)
             if parsed_date:
                 quote.created_at = parsed_date
             
@@ -184,7 +178,7 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         except IndexError as e:
             log.warning(f"Пропуск строки {original_row_number}: неверная структура (не хватает колонок). Ошибка: {e}. Строка: {row}")
         except Exception as e:
-            log.error(f"Критическая ошибка при обработке строки {original_row_number}: {row}. Ошибка: {e}")
+            log.error(f"Критическая ошибка при обработке строки {original_row_number}: {row}. Ошибка: {e}", exc_info=True)
             await db.rollback()
 
     await db.commit()
