@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.future import select
 
-sys.path.append('.')
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from src.core.config import get_settings
 from src.models.shop_models import Contact
