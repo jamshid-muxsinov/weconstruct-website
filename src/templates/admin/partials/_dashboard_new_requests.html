@@ -5,7 +5,7 @@
         <div 
             class="kanban-card status-new" 
             style="margin: 0;"
-            hx-get="{{ request.url_for('admin_htmx_quote_slide_over', pk=req.id) }}"
+            hx-get="{{ request.url_for('admin_htmx_quote_slide_over', locale=request.state.locale, pk=req.id) }}"
             hx-target="#slide-over-content"
             hx-trigger="click">
             

@@ -26,7 +26,7 @@
 
         <div style="display: flex; gap: 16px; justify-content: center;">
              <a href="javascript:history.back()" class="btn btn-secondary">Вернуться назад</a>
-             <a href="{{ request.url_for('admin_dashboard') }}" class="btn btn-primary">Перейти на главную</a>
+             <a href="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" class="btn btn-primary">Перейти на главную</a>
         </div>
     </div>
 </body>
