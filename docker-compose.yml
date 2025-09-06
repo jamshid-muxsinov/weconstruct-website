@@ -14,9 +14,7 @@ services:
 
   site:
     build: .
-    # <<< ИЗМЕНЕНИЕ 1: Явно указываем рабочую директорию >>>
     working_dir: /app/src
-    # <<< ИЗМЕНЕНИЕ 2: Убираем 'src.' из команды, так как мы уже в этой папке >>>
     command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:site_app
     environment:
       - FORWARDED_ALLOW_IPS=*
@@ -39,9 +37,7 @@ services:
 
   admin:
     build: .
-    # <<< ИЗМЕНЕНИЕ 1: Явно указываем рабочую директорию >>>
     working_dir: /app/src
-    # <<< ИЗМЕНЕНИЕ 2: Убираем 'src.' из команды >>>
     command: gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:admin_app
     environment:
       - FORWARDED_ALLOW_IPS=*
@@ -57,10 +53,11 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login"]
-      interval: 30s
+      interval: 15s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      # <<< ИЗМЕНЕНИЕ: Даем сервису минуту на первый запуск без проверок >>>
+      start_period: 60s
       
   nginx:
     image: nginx:latest
