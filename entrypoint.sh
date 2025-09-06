@@ -3,15 +3,18 @@
 # Выходить из скрипта при любой ошибке
 set -e
 
-# --- Ожидание готовности базы данных ---
-# Извлекаем хост и порт из DATABASE_URL
-DB_HOST=$(echo $DATABASE_URL | cut -d'@' -f2 | cut -d':' -f1)
-DB_PORT=$(echo $DATABASE_URL | cut -d':' -f3 | cut -d'/' -f1)
+# --- Ожидание готовности базы данных (УЛУЧШЕННАЯ ВЕРСИЯ) ---
+# Извлекаем часть 'хост:порт' из URL
+HOST_PORT_PART=$(echo "$DATABASE_URL" | cut -d'@' -f2 | cut -d'/' -f1)
 
-echo "--> Waiting for database at host '$DB_HOST' on port $DB_PORT..."
+# Из этой части извлекаем хост и порт
+DB_HOST=$(echo "$HOST_PORT_PART" | cut -d':' -f1)
+DB_PORT=$(echo "$HOST_PORT_PART" | cut -d':' -f2)
+
+echo "--> Waiting for database at host '$DB_HOST' on port '$DB_PORT'..."
 
 # Используем netcat для проверки, доступен ли порт
-while ! nc -z $DB_HOST $DB_PORT; do
+while ! nc -z "$DB_HOST" "$DB_PORT"; do
   sleep 1
 done
 
