@@ -11,7 +11,7 @@ from pathlib import Path
 from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File, Response, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import or_, func, distinct
+from sqlalchemy import or_, func, distinct, update
 from sqlalchemy.orm import joinedload, selectinload
 from slugify import slugify
 import wtforms
@@ -405,14 +405,3 @@ async def quoterequest_delete(request: Request, pk: int, context: dict = Depends
     back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name))
     context.update({"meta": QUOTEREQUEST_META, "original": quote_req, "title": f"Удалить {QUOTEREQUEST_META.verbose_name}", "back_url": back_url, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
-class InviteForm(wtforms.Form):
-    note = wtforms.StringField('Заметка (для кого это приглашение)', validators=[wtforms.validators.DataRequired()])
-@router.get("/invites/", response_class=HTMLResponse)
-async def invites_page_get(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    invites = (await db.execute(select(RegistrationInvite).order_by(RegistrationInvite.created_at.desc()))).scalars().all(); form = InviteForm(); context.update({"title": "Управление приглашениями", "invites": invites, "form": form, "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/invites.html", context)
-@router.post("/invites/", response_class=HTMLResponse)
-async def invites_page_post(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    form_data = await request.form(); form = InviteForm(form_data)
-    if form.validate():
-        await user_service.create_invite(db, form.note.data, context["user"].id); response = RedirectResponse(request.url_for("admin_invites"), status_code=303); return set_hx_trigger_header(response, "Приглашение успешно создано!")
-    invites = (await db.execute(select(RegistrationInvite).order_by(RegistrationInvite.created_at.desc()))).scalars().all(); context.update({"title": "Управление приглашениями", "invites": invites, "form": form, "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/invites.html", context)
