@@ -18,6 +18,8 @@ services:
     environment:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
+      # <<< ИЗМЕНЕНИЕ: Добавляем путь к исходникам для Python >>>
+      - PYTHONPATH=/app
     volumes:
       - .:/app
       - media_volume:/app/media
@@ -39,6 +41,8 @@ services:
     environment:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
+      # <<< ИЗМЕНЕНИЕ: Добавляем путь к исходникам для Python >>>
+      - PYTHONPATH=/app
     volumes:
       - .:/app
       - media_volume:/app/media
@@ -47,7 +51,6 @@ services:
       - redis
     env_file: .env
     restart: unless-stopped
-    # <<< ИЗМЕНЕНИЕ: Добавлен healthcheck для админки >>>
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login"]
       interval: 30s
@@ -69,7 +72,6 @@ services:
       site: 
         condition: service_healthy
       admin: 
-        # <<< ИЗМЕНЕНИЕ: Nginx теперь будет ждать, пока админка станет "здоровой" >>>
         condition: service_healthy
     restart: unless-stopped
     
