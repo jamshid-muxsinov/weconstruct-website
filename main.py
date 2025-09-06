@@ -68,35 +68,35 @@ def create_admin_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
-    # <<< НАЧАЛО ИЗМЕНЕНИЙ >>>
+    # <<< НАЧАЛО ИСПРАВЛЕНИЯ >>>
     
-    # 1. Зависимость для установки языка
+    # 1. Зависимость для установки языка. Убираем значение по умолчанию из Path.
     async def set_locale_admin(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
         """Устанавливает request.state.locale из параметра пути URL."""
         if locale not in ["ru", "uz"]:
             locale = "ru"
         request.state.locale = locale
 
-    # 2. Роутер с префиксом языка
+    # 2. Роутер с префиксом языка.
     admin_router_with_locale = APIRouter(
         prefix="/{locale}", 
         dependencies=[Depends(set_locale_admin)]
     )
     admin_router_with_locale.include_router(admin_router)
 
-    # 3. Регистрация роутеров
+    # 3. Регистрация роутеров.
     app.include_router(admin_unprotected_router) # Роуты без защиты (логин)
     app.include_router(
         admin_router_with_locale, # Новый роутер с поддержкой языка
         dependencies=[Depends(get_current_active_user)] # Общая защита
     )
     
-    # 4. Редирект с корня админки (/) на язык по умолчанию (/ru/...)
+    # 4. Редирект с корня админки (/) на язык по умолчанию (/ru/...).
     @app.get("/", include_in_schema=False)
     async def admin_root_redirect(request: Request):
         return RedirectResponse(url=request.url_for('admin_dashboard', locale='ru'))
         
-    # <<< КОНЕЦ ИЗМЕНЕНИЙ >>>
+    # <<< КОНЕЦ ИСПРАВЛЕНИЯ >>>
     
     add_pagination(app)
 
