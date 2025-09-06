@@ -23,10 +23,12 @@ async def get_kanban_board(
     kanban_data = await crm_service.get_kanban_data(db, show_archived)
     
     # <<< НАЧАЛО ИЗМЕНЕНИЙ: Получаем данные для фильтров и массовых действий >>>
-    
-    # Получаем список всех менеджеров для выпадающего списка
+
     staff_users_result = await db.execute(
-        select(User).where(User.is_staff == True).order_by(User.username)
+        select(User).where(
+            User.is_staff == True,
+            User.is_superuser == False
+        ).order_by(User.username)
     )
     staff_users = staff_users_result.scalars().all()
 

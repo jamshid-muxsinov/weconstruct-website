@@ -59,7 +59,10 @@ async def get_quote_request_modal(
         quote_request = (await db.execute(stmt)).scalars().first()
         if not quote_request:
             return HTMLResponse("Заявка не найдена", status_code=404)
-
+        staff_users_query = select(User).where(
+            User.is_staff == True,
+            User.is_superuser == False
+        )
         staff_users = (await db.execute(select(User).where(User.is_staff == True))).scalars().all()
         form = TaskForm()
         form.assigned_to_id.choices = [(user.id, user.username) for user in staff_users]

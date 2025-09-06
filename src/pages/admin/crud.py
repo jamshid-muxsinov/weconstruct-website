@@ -104,7 +104,7 @@ Contact.__str__ = lambda self: self.full_name
 
 PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], ProductForm, "Товар", "Товары")
 CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "Категория", "Категории")
-QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'product', 'status', 'source'], QuoteRequestForm, "Заявка", "Заявки")
+QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'business_type', 'created_at', 'status', 'assigned_to'], QuoteRequestForm, "Заявка", "Заявки")
 CONTACT_META = Meta(Contact, ['full_name', 'phone', 'email'], None, "Контакт", "Контакты")
 
 CONTACT_META.change_url_name = "admin_contact_detail"
@@ -259,6 +259,10 @@ async def populate_request_form_choices(db: AsyncSession, form: QuoteRequestForm
     products = (await db.execute(select(Product).order_by(Product.name_ru))).scalars().all()
     form.product_id.choices = [(0, '--- Общая заявка ---')] + [(p.id, p.name_ru) for p in products]
     staff_users = (await db.execute(select(User).where(User.is_staff == True).order_by(User.username))).scalars().all()
+    staff_users_query = select(User).where(
+        User.is_staff == True, 
+        User.is_superuser == False
+    ).order_by(User.username)
     form.assigned_to_id.choices = [(0, '--- Не назначен ---')] + [(u.id, u.username) for u in staff_users]
 
 @router.get("/product/", response_class=HTMLResponse, name="admin_product_list")
