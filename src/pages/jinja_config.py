@@ -7,17 +7,12 @@ from starlette_wtf import csrf_token
 from urllib.parse import urlencode
 import re
 import pytz
-# <<< ИЗМЕНЕНИЕ 1: Импортируем Path для работы с путями >>>
 from pathlib import Path
 
-# <<< ИЗМЕНЕНИЕ 2: Определяем абсолютный путь к папке с шаблонами >>>
-# Path(__file__) -> текущий файл (jinja_config.py)
-# .parent.parent -> поднимаемся на 2 уровня вверх (до папки src)
-# / "templates" -> добавляем папку templates
-# Получается абсолютный путь /app/src/templates внутри контейнера
+# Определяем абсолютный путь к папке /app/src/templates
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
 
-# <<< ИЗМЕНЕНИЕ 3: Используем абсолютный путь при инициализации >>>
+# Используем этот абсолютный путь
 templates = Jinja2Templates(directory=TEMPLATE_DIR, extensions=['jinja2.ext.do'])
 
 
@@ -46,10 +41,6 @@ STATUS_DISPLAY_MAP = {
 
 
 def get_status_display(status, locale: str = 'ru'):
-    """
-    Возвращает переведенное название статуса в зависимости от локали.
-    Фолбэк на русский, затем на 'human-readable' ключ.
-    """
     if locale not in STATUS_DISPLAY_MAP:
         locale = 'ru'
     
@@ -65,7 +56,6 @@ def get_status_display(status, locale: str = 'ru'):
 
 
 def format_phone(value: str) -> str:
-    """Форматирует номер телефона в вид +998 (XX) XXX-XX-XX."""
     if not value:
         return "—"
     
@@ -105,7 +95,6 @@ def t_get(request: Request, obj: object, field_name: str) -> str:
     return result
 
 def format_localtime(utc_dt):
-    """Конвертирует UTC datetime в локальное время Ташкента и форматирует."""
     if not utc_dt:
         return ""
     if utc_dt.tzinfo is None:

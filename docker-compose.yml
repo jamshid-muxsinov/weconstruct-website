@@ -14,11 +14,12 @@ services:
 
   site:
     build: .
-    working_dir: /app/src
-    command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:site_app
+    # Возвращаем команду к виду с полным путем
+    command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 src.main:site_app
     environment:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
+      # Убеждаемся, что PYTHONPATH указывает на корень проекта
       - PYTHONPATH=/app
     volumes:
       - .:/app
@@ -37,11 +38,12 @@ services:
 
   admin:
     build: .
-    working_dir: /app/src
-    command: gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:admin_app
+    # Возвращаем команду к виду с полным путем
+    command: gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 src.main:admin_app
     environment:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
+      # Убеждаемся, что PYTHONPATH указывает на корень проекта
       - PYTHONPATH=/app
     volumes:
       - .:/app
@@ -52,11 +54,11 @@ services:
     env_file: .env
     restart: unless-stopped
     healthcheck:
+      # Пока оставляем мягкие настройки, чтобы избежать перезапусков
       test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login"]
-      interval: 15s
+      interval: 30s
       timeout: 10s
       retries: 5
-      # <<< ИЗМЕНЕНИЕ: Даем сервису минуту на первый запуск без проверок >>>
       start_period: 60s
       
   nginx:
