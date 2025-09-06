@@ -54,26 +54,25 @@
             </div>
             <nav id="sidebar-nav">
                 <!-- Эти ссылки видят все сотрудники -->
-                <a href="{{ request.url_for('admin_kanban_board') }}" class="nav-link {% if 'kanban' in request.url.path or request.url.path == '/admin/' %}active{% endif %}" hx-get="{{ request.url_for('admin_kanban_board') }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-grid-alt nav-icon'></i><span class="nav-text">Канбан-доска</span> </a>
-                <a href="{{ request.url_for('admin_quoterequest_list') }}" class="nav-link {% if 'quoterequest' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_quoterequest_list') }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bx-list-ul nav-icon'></i><span class="nav-text">Заявки</span> </a>
-                <a href="{{ request.url_for('admin_contact_list') }}" class="nav-link {% if 'contact' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_contact_list') }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-user-detail nav-icon'></i><span class="nav-text">Контакты</span> </a>
-                <a href="{{ request.url_for('admin_dashboard') }}" class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_dashboard') }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-bar-chart-alt-2 nav-icon'></i><span class="nav-text">Статистика</span> </a>
+                <a href="{{ request.url_for('admin_kanban_board', locale=request.state.locale) }}" class="nav-link {% if 'kanban' in request.url.path or request.url.path == '/admin/' or request.url.path.endswith('/admin/ru') or request.url.path.endswith('/admin/uz') %}active{% endif %}" hx-get="{{ request.url_for('admin_kanban_board', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-grid-alt nav-icon'></i><span class="nav-text">Канбан-доска</span> </a>
+                <a href="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" class="nav-link {% if 'quoterequest' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bx-list-ul nav-icon'></i><span class="nav-text">Заявки</span> </a>
+                <a href="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" class="nav-link {% if 'contact' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-user-detail nav-icon'></i><span class="nav-text">Контакты</span> </a>
+                <a href="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-bar-chart-alt-2 nav-icon'></i><span class="nav-text">Статистика</span> </a>
 
-                <!-- <<< НАЧАЛО ИЗМЕНЕНИЯ: Блок только для суперпользователей >>> -->
+                <!-- Блок только для суперпользователей -->
                 {% if user.is_superuser %}
-                <hr class="menu-divider"> <!-- Разделитель для наглядности -->
-                <a href="{{ request.url_for('admin_product_list') }}" class="nav-link {% if 'product' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_product_list') }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-package nav-icon'></i><span class="nav-text">Товары</span> </a>
-                <a href="{{ request.url_for('admin_category_list') }}" class="nav-link {% if 'category' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_category_list') }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-component nav-icon'></i><span class="nav-text">Категории</span> </a>
-                <a href="{{ request.url_for('admin_import_page') }}" class="nav-link {% if request.url.path.startswith('/admin/import') %} active {% endif %}" hx-get="{{ request.url_for('admin_import_page') }}" hx-target="#main-content" hx-push-url="true">
+                <hr class="menu-divider">
+                <a href="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" class="nav-link {% if 'product' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-package nav-icon'></i><span class="nav-text">Товары</span> </a>
+                <a href="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" class="nav-link {% if 'category' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-component nav-icon'></i><span class="nav-text">Категории</span> </a>
+                <a href="{{ request.url_for('admin_import_page', locale=request.state.locale) }}" class="nav-link {% if request.url.path.endswith('/import') %} active {% endif %}" hx-get="{{ request.url_for('admin_import_page', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
                     <i class='bx bx-import nav-icon'></i>
                     <span class="nav-text">Импорт</span>
                 </a>
-                <a href="{{ request.url_for('admin_invites') }}" class="nav-link {% if request.url.path.startswith('/admin/invites') %} active {% endif %}" hx-get="{{ request.url_for('admin_invites') }}" hx-target="#main-content" hx-push-url="true">
+                <a href="{{ request.url_for('admin_invites', locale=request.state.locale) }}" class="nav-link {% if request.url.path.endswith('/invites') or request.url.path.endswith('/invites/') %} active {% endif %}" hx-get="{{ request.url_for('admin_invites', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
                     <i class='bx bxs-paper-plane nav-icon'></i>
                     <span class="nav-text">Приглашения</span>
                 </a>
                 {% endif %}
-                <!-- <<< КОНЕЦ ИЗМЕНЕНИЯ >>> -->
             </nav>
             <div class="sidebar-footer"> 
                 <a href="{{ request.url_for('admin_logout') }}" class="logout-trigger nav-link"> <i class='bx bx-log-out nav-icon'></i><span class="nav-text">Выйти</span> </a> 
@@ -86,17 +85,29 @@
                 
                 <div class="header-spacer"></div> 
                 
+                <!-- <<< НАЧАЛО ИЗМЕНЕНИЯ: Переключатель языков >>> -->
                 <div class="language-switcher">
-                    <a href="/ru/{{ current_path }}" class="lang-link {% if request.state.locale == 'ru' %}active{% endif %}">RU</a>
-                    <a href="/uz/{{ current_path }}" class="lang-link {% if request.state.locale == 'uz' %}active{% endif %}">UZ</a>
+                    {% if request.scope.get('route') %}
+                        {% set route_name = request.scope.route.name %}
+                        {% set query_params = dict(request.query_params) %}
+                
+                        {% set path_params_ru = request.path_params.copy() %}
+                        {% set _ = path_params_ru.update({'locale': 'ru'}) %}
+                        <a href="{{ request.url_for(route_name, **path_params_ru) }}{% if query_params %}?{{ urlencode(query_params) }}{% endif %}" class="lang-link {% if request.state.locale == 'ru' %}active{% endif %}">RU</a>
+                
+                        {% set path_params_uz = request.path_params.copy() %}
+                        {% set _ = path_params_uz.update({'locale': 'uz'}) %}
+                        <a href="{{ request.url_for(route_name, **path_params_uz) }}{% if query_params %}?{{ urlencode(query_params) }}{% endif %}" class="lang-link {% if request.state.locale == 'uz' %}active{% endif %}">UZ</a>
+                    {% endif %}
                 </div>
+                <!-- <<< КОНЕЦ ИЗМЕНЕНИЯ >>> -->
 
                 {% if user %}
                 <div class="user-profile" x-data="{ open: false }" @click.away="open = false">
                     <button @click="open = !open" id="profile-menu-button" class="user-profile-button">
                         <span class="profile-name">Привет, {{ user.username }}!</span>
                         <div id="notification-indicator-wrapper" 
-                            hx-get="{{ request.url_for('admin_htmx_notification_indicator') }}"
+                            hx-get="{{ request.url_for('admin_htmx_notification_indicator', locale=request.state.locale) }}"
                             hx-trigger="load, every 8s, notifications-read from:body"
                             hx-swap="innerHTML">
                             {% include "admin/partials/_notification_indicator.html" %}
@@ -113,15 +124,15 @@
                          id="profile-menu" 
                          style="display: none;">
                         <div id="notifications-container"
-                             hx-get="{{ request.url_for('admin_htmx_notifications') }}"
+                             hx-get="{{ request.url_for('admin_htmx_notifications', locale=request.state.locale) }}"
                              hx-trigger="load, click from:#profile-menu-button"
                              hx-swap="innerHTML">
                              <div class="modal-loading-placeholder"><i class='bx bx-loader-alt bx-spin'></i></div>
                         </div>
                         
                         <ul class="profile-menu-list">
-                            <li><a href="{{ request.url_for('admin_profile') }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_profile') }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-user-circle'></i><span>Профиль</span></a></li>
-                            <li><a href="{{ request.url_for('admin_invites') }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_invites') }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-paper-plane'></i><span>Приглашения</span></a></li>
+                            <li><a href="{{ request.url_for('admin_profile', locale=request.state.locale) }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_profile', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-user-circle'></i><span>Профиль</span></a></li>
+                            <li><a href="{{ request.url_for('admin_invites', locale=request.state.locale) }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_invites', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-paper-plane'></i><span>Приглашения</span></a></li>
                             <li><hr class="menu-divider"></li>
                             <li><a href="{{ request.url_for('admin_logout') }}" class="profile-menu-link logout logout-trigger"><i class='bx bx-log-out'></i><span>Выйти</span></a></li>
                         </ul>
@@ -150,4 +161,4 @@
 	<script src="{{ url_for('static', path='js/crm.js') }}"></script>
     <script src="{{ url_for('static', path='js/kanban-enhanced.js') }}"></script>
 </body>
-</html> 
+</html>

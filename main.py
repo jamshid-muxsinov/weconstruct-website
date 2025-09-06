@@ -68,35 +68,37 @@ def create_admin_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
-    # <<< НАЧАЛО ИСПРАВЛЕНИЯ >>>
+    # <<< НАЧАЛО ИЗМЕНЕНИЯ >>>
     
-    # 1. Зависимость для установки языка. Убираем значение по умолчанию из Path.
+    # 1. Зависимость для установки языка из URL-пути.
     async def set_locale_admin(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
         """Устанавливает request.state.locale из параметра пути URL."""
         if locale not in ["ru", "uz"]:
-            locale = "ru"
+            locale = "ru"  # По умолчанию русский, если передан неверный код
         request.state.locale = locale
 
-    # 2. Роутер с префиксом языка.
+    # 2. Создаем новый роутер, который будет включать префикс языка.
     admin_router_with_locale = APIRouter(
         prefix="/{locale}", 
         dependencies=[Depends(set_locale_admin)]
     )
     admin_router_with_locale.include_router(admin_router)
 
-    # 3. Регистрация роутеров.
-    app.include_router(admin_unprotected_router) # Роуты без защиты (логин)
+    # 3. Регистрируем роутеры: сначала незащищенные (логин), затем защищенные с поддержкой языка.
+    app.include_router(admin_unprotected_router, prefix="/admin")
     app.include_router(
-        admin_router_with_locale, # Новый роутер с поддержкой языка
-        dependencies=[Depends(get_current_active_user)] # Общая защита
+        admin_router_with_locale,
+        prefix="/admin",
+        dependencies=[Depends(get_current_active_user)] # Общая защита для всех роутов с языком
     )
     
-    # 4. Редирект с корня админки (/) на язык по умолчанию (/ru/...).
-    @app.get("/", include_in_schema=False)
+    # 4. Перенаправление с корня админки (/admin/) на язык по умолчанию (/admin/ru/...).
+    @app.get("/admin", include_in_schema=False)
+    @app.get("/admin/", include_in_schema=False)
     async def admin_root_redirect(request: Request):
         return RedirectResponse(url=request.url_for('admin_dashboard', locale='ru'))
         
-    # <<< КОНЕЦ ИСПРАВЛЕНИЯ >>>
+    # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
     
     add_pagination(app)
 

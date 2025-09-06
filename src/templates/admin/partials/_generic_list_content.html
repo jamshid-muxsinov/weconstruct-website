@@ -12,29 +12,27 @@
 
                 {% for header in list_display %}
                     <th>
-                        {# --- ИЗМЕНЕНИЕ: Переводим заголовки, если это возможно --- #}
-                        {% if header == 'name_ru' and meta.model_name == 'product' %}
-                            Название
-                        {% elif header == 'name_ru' and meta.model_name == 'category' %}
-                            Название
+                        {# --- ИЗМЕНЕНИЕ: Заголовки теперь зависят от языка --- #}
+                        {% if header == 'name_ru' and meta.model_name in ['product', 'category'] %}
+                            {{ 'Nomi' if request.state.locale == 'uz' else 'Название' }}
                         {% elif header == 'name' and meta.model_name == 'quoterequest' %}
-                            Клиент
+                            {{ 'Mijoz' if request.state.locale == 'uz' else 'Клиент' }}
                         {% elif header == 'phone' and meta.model_name == 'quoterequest' %}
-                            Телефон
+                            {{ 'Telefon' if request.state.locale == 'uz' else 'Телефон' }}
                         {% elif header == 'business_type' %}
-                            Тип бизнеса
+                            {{ 'Biznes turi' if request.state.locale == 'uz' else 'Тип бизнеса' }}
                         {% elif header == 'created_at' %}
-                            Дата создания
+                            {{ 'Yaratilgan sana' if request.state.locale == 'uz' else 'Дата создания' }}
                         {% elif header == 'status' %}
-                            Статус
+                            {{ 'Holati' if request.state.locale == 'uz' else 'Статус' }}
                         {% elif header == 'assigned_to' %}
-                            Ответственный
+                            {{ 'Masʼul' if request.state.locale == 'uz' else 'Ответственный' }}
                         {% elif header == 'category' %}
-                            Категория
+                            {{ 'Kategoriya' if request.state.locale == 'uz' else 'Категория' }}
                         {% elif header == 'price_min' %}
-                            Цена от
+                            {{ 'Narx (dan)' if request.state.locale == 'uz' else 'Цена от' }}
                         {% elif header == 'is_active' %}
-                            Активен
+                            {{ 'Aktiv' if request.state.locale == 'uz' else 'Активен' }}
                         {% else %}
                             {{ header.replace('_', ' ')|capfirst }}
                         {% endif %}
@@ -63,8 +61,6 @@
                         <td data-label="{{ field_name.replace('_', ' ')|capfirst }}">
                             {% set value = getattr(item, field_name, '') %}
 
-                            {# --- НАЧАЛО БЛОКА ИЗМЕНЕНИЙ С t_get --- #}
-
                             {# Для имени клиента в заявках (ссылка на контакт) #}
                             {% if field_name == 'name' and meta.model_name == 'quoterequest' %}
                                 {% if item.contact %}
@@ -90,10 +86,9 @@
                             {% elif field_name == 'category' and value %}
                                 {{ t_get(request, value, 'name') }}
 
-                            {# --- КОНЕЦ БЛОКА ИЗМЕНЕНИЙ С t_get --- #}
-
-                            {% elif field_name == 'status' and hasattr(item, 'get_status_display') %}
-                                <span class="status-badge status-{{ item.status.value }}">{{ item.get_status_display() }}</span>
+                            {# --- ИЗМЕНЕНИЕ: Используем локализованный статус --- #}
+                            {% elif field_name == 'status' and hasattr(item, 'status') %}
+                                <span class="status-badge status-{{ item.status.value }}">{{ get_status_display(item.status, request.state.locale) }}</span>
                             
                             {% elif field_name == 'created_at' %}
                                 {{ item.created_at | localtime }}
@@ -105,7 +100,7 @@
                                 {{ value or '—' }}
 
                             {% elif field_name == 'price_min' and value is not none %}
-                                {{ value|format_number }} сум
+                                {{ value|format_number }} so'm
                             
                             {% elif value is none %}
                                 <span style="color: var(--text-secondary);">&mdash;</span>
@@ -119,7 +114,7 @@
             {% else %}
                 <tr>
                     <td colspan="{{ (list_display|length) + (1 if meta.model_name == 'quoterequest' else 0) }}" class="empty-list-placeholder">
-                        Записей не найдено.
+                        {{ "Yozuvlar topilmadi" if request.state.locale == 'uz' else "Записей не найдено" }}.
                     </td>
                 </tr>
             {% endfor %}

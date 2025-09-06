@@ -26,7 +26,8 @@
             </div>
             <div class="stats-details">
                 <h3>{{ item.count }}</h3>
-                <p>{{ get_status_display(item.status) }}</p>
+                {# --- ИЗМЕНЕНИЕ: Используем локализованный статус --- #}
+                <p>{{ get_status_display(item.status, request.state.locale) }}</p>
             </div>
         </div>
     </div>
@@ -50,7 +51,7 @@
                     <tr>
                         <td data-label="#"><span class="rank-badge rank-{{ loop.index }}">{{ loop.index }}</span></td>
                         <td data-label="Менеджер">
-                            <a href="{{ request.url_for('admin_user_profile', pk=user.id) }}" class="link-to-change">{{ user.username }}</a>
+                            <a href="{{ request.url_for('admin_user_profile', locale=request.state.locale, pk=user.id) }}" class="link-to-change">{{ user.username }}</a>
                         </td>
                         <td data-label="Закрыто заявок" style="text-align: right; font-weight: 700; font-size: 1.2rem; color: var(--accent-primary-solid);">{{ count }}</td>
                     </tr>
@@ -74,7 +75,7 @@
     {% if my_tasks %}
     <ul style="display: flex; flex-direction: column; gap: 16px; list-style: none; padding: 0; margin: 0;">
         {% for task in my_tasks %}
-        <a href="{{ request.url_for('admin_contact_detail', pk=task.contact.id) if task.contact else '#' }}"
+        <a href="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=task.contact.id) if task.contact else '#' }}"
             class="task-link-item">
             <li style="display: flex; align-items: center; justify-content: space-between;">
                 <div>

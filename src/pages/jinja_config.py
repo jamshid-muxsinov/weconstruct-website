@@ -13,19 +13,44 @@ templates = Jinja2Templates(directory="src/templates", extensions=['jinja2.ext.d
 translation_cache = TTLCache(maxsize=2000, ttl=3600)
 
 STATUS_DISPLAY_MAP = {
-    'imported': 'Импортировано',
-    'qualification': 'Квалификация',
-    'contacted': 'Контакт установлен',
-    'proposal': 'Предложение',
-    'negotiation': 'Переговоры',
-    'closed': 'Успешно закрыто',
-    'archived': 'В архиве',
+    'ru': {
+        'imported': 'Импортировано',
+        'qualification': 'Квалификация',
+        'contacted': 'Контакт установлен',
+        'proposal': 'Предложение',
+        'negotiation': 'Переговоры',
+        'closed': 'Успешно закрыто',
+        'archived': 'В архиве',
+    },
+    'uz': {
+        'imported': 'Import qilindi',
+        'qualification': 'Saralash',
+        'contacted': "Aloqa o'rnatildi",
+        'proposal': 'Taklif yuborildi',
+        'negotiation': 'Muzokaralar',
+        'closed': 'Muvaffaqiyatli yopildi',
+        'archived': 'Arxivda',
+    }
 }
 
 
-def get_status_display(status):
+def get_status_display(status, locale: str = 'ru'):
+    """
+    Возвращает переведенное название статуса в зависимости от локали.
+    Фолбэк на русский, затем на 'human-readable' ключ.
+    """
+    if locale not in STATUS_DISPLAY_MAP:
+        locale = 'ru'
+    
     status_key = getattr(status, 'value', str(status))
-    return STATUS_DISPLAY_MAP.get(status_key, status_key.replace('_', ' ').capitalize())
+    
+    return STATUS_DISPLAY_MAP.get(locale, {}).get(
+        status_key, 
+        STATUS_DISPLAY_MAP.get('ru', {}).get(
+            status_key, 
+            status_key.replace('_', ' ').capitalize()
+        )
+    )
 
 
 def format_phone(value: str) -> str:
