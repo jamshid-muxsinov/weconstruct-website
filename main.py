@@ -68,38 +68,30 @@ def create_admin_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
-    # <<< НАЧАЛО ИЗМЕНЕНИЯ >>>
-    
-    # 1. Зависимость для установки языка из URL-пути.
     async def set_locale_admin(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
-        """Устанавливает request.state.locale из параметра пути URL."""
         if locale not in ["ru", "uz"]:
-            locale = "ru"  # По умолчанию русский, если передан неверный код
+            locale = "ru"
         request.state.locale = locale
 
-    # 2. Создаем новый роутер, который будет включать префикс языка.
     admin_router_with_locale = APIRouter(
         prefix="/{locale}", 
         dependencies=[Depends(set_locale_admin)]
     )
     admin_router_with_locale.include_router(admin_router)
 
-    # 3. Регистрируем роутеры: сначала незащищенные (логин), затем защищенные с поддержкой языка.
-    app.include_router(admin_unprotected_router, prefix="/admin")
+    # <<< НАЧАЛО ИЗМЕНЕНИЯ: Убираем префиксы /admin >>>
+    app.include_router(admin_unprotected_router) 
     app.include_router(
         admin_router_with_locale,
-        prefix="/admin",
-        dependencies=[Depends(get_current_active_user)] # Общая защита для всех роутов с языком
+        dependencies=[Depends(get_current_active_user)]
     )
     
-    # 4. Перенаправление с корня админки (/admin/) на язык по умолчанию (/admin/ru/...).
-    @app.get("/admin", include_in_schema=False)
-    @app.get("/admin/", include_in_schema=False)
+    @app.get("/", include_in_schema=False)
     async def admin_root_redirect(request: Request):
+        # Редиректим на /ru/dashboard, так как префикса /admin в приложении больше нет
         return RedirectResponse(url=request.url_for('admin_dashboard', locale='ru'))
-        
     # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
-    
+        
     add_pagination(app)
 
     @app.exception_handler(401)
