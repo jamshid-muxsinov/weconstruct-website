@@ -369,7 +369,6 @@ async def toggle_pin_contact_note(db: AsyncSession, note_id: int, contact_id: in
 
 async def get_top_managers(db: AsyncSession, days: int = 30):
     start_date = datetime.now(timezone.utc) - timedelta(days=days)
-    # Convert to naive datetime for database compatibility
     start_date_naive = to_naive_datetime(start_date)
     
     completed_subq = (
@@ -393,7 +392,10 @@ async def get_top_managers(db: AsyncSession, days: int = 30):
             func.coalesce(completed_subq.c.completed_count, 0).label("completed_total")
         )
         .outerjoin(completed_subq, User.id == completed_subq.c.user_id)
-        .where(User.is_staff == True)
+        
+        # <<< ДОБАВЬТЕ ЭТУ СТРОКУ >>>
+        .where(User.is_staff == True, User.is_superuser == False)
+        
         .order_by(desc("completed_total"))
         .limit(5)
     )
