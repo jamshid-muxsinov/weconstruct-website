@@ -407,7 +407,7 @@ async def quoterequest_delete(request: Request, pk: int, context: dict = Depends
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
 class InviteForm(wtforms.Form):
     note = wtforms.StringField('Заметка (для кого это приглашение)', validators=[wtforms.validators.DataRequired()])
-@router.get("/invites/", response_class=HTMLResponse, name="admin_invites")
+@router.get("/invites/", response_class=HTMLResponse)
 async def invites_page_get(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     invites = (await db.execute(select(RegistrationInvite).order_by(RegistrationInvite.created_at.desc()))).scalars().all(); form = InviteForm(); context.update({"title": "Управление приглашениями", "invites": invites, "form": form, "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/invites.html", context)
 @router.post("/invites/", response_class=HTMLResponse)

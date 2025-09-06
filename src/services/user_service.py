@@ -74,7 +74,6 @@ async def create_user_from_invite(db: AsyncSession, user_data: UserCreate, invit
 async def create_first_superuser(db: AsyncSession):
     """
     Создает первого суперпользователя из переменных окружения, если он не существует.
-    Теперь корректно обрабатывает гонку состояний при запуске нескольких воркеров.
     """
     if settings.FIRST_SUPERUSER and settings.FIRST_SUPERUSER_PASSWORD:
         user = await get_user_by_username(db, settings.FIRST_SUPERUSER)
@@ -86,6 +85,7 @@ async def create_first_superuser(db: AsyncSession):
                     hashed_password=hashed_password,
                     is_active=True,
                     is_staff=True,
+                    is_superuser=True 
                 )
                 db.add(new_user)
                 await db.commit()

@@ -1,6 +1,6 @@
 # src/pages/admin/router.py
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 from fastapi.responses import RedirectResponse
 from . import auth
 from . import dashboard
@@ -11,7 +11,7 @@ from . import profile
 from . import htmx
 from . import api
 from . import importer
-
+from src.core.security import get_current_superuser
 router = APIRouter()
 unprotected_router = APIRouter()
 
@@ -26,10 +26,16 @@ async def admin_root_redirect(request: Request):
 
 router.include_router(dashboard.router)
 router.include_router(kanban.router)
-router.include_router(crud.router)
+router.include_router(
+    crud.router, 
+    dependencies=[Depends(get_current_superuser)]
+)
 router.include_router(contact.router)
 router.include_router(profile.router)
-router.include_router(importer.router)
+router.include_router(
+    importer.router,
+    dependencies=[Depends(get_current_superuser)]
+)
 router.include_router(htmx.router)
 router.include_router(api.router)
 

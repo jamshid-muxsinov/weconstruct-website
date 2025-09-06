@@ -84,3 +84,14 @@ async def get_current_staff_user(current_user: User = Depends(get_current_active
             detail="Insufficient permissions. Staff access required."
         )
     return current_user
+
+async def get_current_superuser(current_user: User = Depends(get_current_active_user)) -> User:
+    """
+    Проверяет, что текущий пользователь не только активен, но и является суперпользователем.
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Доступ запрещен. Требуются права администратора."
+        )
+    return current_user

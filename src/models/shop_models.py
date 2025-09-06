@@ -24,6 +24,8 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_staff: Mapped[bool] = mapped_column(Boolean, default=False)
     
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
     tasks: Mapped[List["Task"]] = relationship(back_populates="assigned_to")
     assigned_requests: Mapped[List["QuoteRequest"]] = relationship(back_populates="assigned_to")
     notifications: Mapped[List["Notification"]] = relationship(back_populates="user")
