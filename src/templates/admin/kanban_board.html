@@ -9,7 +9,8 @@
         <h1>Воронка продаж</h1>
         <div class="page-header-actions">
             <form class="filter-form" 
-                  hx-get="{{ request.url_for('admin_htmx_kanban_content') }}"
+                  {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
+                  hx-get="{{ request.url_for('admin_htmx_kanban_content', locale=request.state.locale) }}"
                   hx-target="#kanban-board-container" 
                   hx-swap="innerHTML" 
                   hx-push-url="true">
@@ -21,7 +22,8 @@
                 <span>Показать архивные</span>
             </form>
 
-            <a href="{{ request.url_for('admin_quoterequest_add') }}" class="btn btn-primary">
+            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
+            <a href="{{ request.url_for('admin_quoterequest_add', locale=request.state.locale) }}" class="btn btn-primary">
                 <i class='bx bx-plus'></i>
                 Новая заявка
             </a>
@@ -74,7 +76,8 @@
             {% endfor %}
         </select>
         
-        <a :href="'{{ url_for('api_export_requests') }}?card_ids=' + $store.kanbanManager.selectedIds.join(',')" 
+        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
+        <a :href="'{{ url_for('api_export_requests', locale=request.state.locale) }}?card_ids=' + $store.kanbanManager.selectedIds.join(',')" 
            class="btn btn-sm btn-secondary">
            <i class='bx bx-download'></i> Экспорт
         </a>
@@ -85,7 +88,8 @@
     </div>
 
     <div id="kanban-board-container" 
-         hx-get="{{ request.url_for('admin_htmx_kanban_content') }}?show_archived={{ show_archived }}"
+         {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
+         hx-get="{{ request.url_for('admin_htmx_kanban_content', locale=request.state.locale) }}?show_archived={{ show_archived }}"
          hx-trigger="load, updateKanban from:body"
          hx-swap="innerHTML">
         <div class="modal-loading-placeholder" style="padding: 100px 0;">

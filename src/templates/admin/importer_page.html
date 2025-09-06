@@ -19,7 +19,8 @@
     <!-- Колонка с формой -->
     <div class="card">
         <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Запуск импорта</h2>
-        <form action="{{ url_for('admin_run_import') }}" method="post">
+        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
+        <form action="{{ url_for('admin_run_import', locale=request.state.locale) }}" method="post">
             <div class="input-group">
                 <label for="sheet_url">URL таблицы Google Sheets</label>
                 <input type="url" name="sheet_url" id="sheet_url" required
@@ -45,7 +46,8 @@
             </p>
             
             {# <!-- <<< ИЗМЕНЕНИЕ: Форма диагностики --> #}
-            <form hx-post="{{ request.url_for('admin_find_duplicates') }}"
+            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
+            <form hx-post="{{ request.url_for('admin_find_duplicates', locale=request.state.locale) }}"
                   hx-target="#results-container"
                   hx-swap="innerHTML"
                   hx-indicator="#find-spinner"
@@ -57,7 +59,8 @@
             </form>
 
             {# <!-- <<< ИЗМЕНЕНИЕ: Форма слияния --> #}
-            <form hx-post="{{ request.url_for('admin_merge_duplicates') }}"
+            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
+            <form hx-post="{{ request.url_for('admin_merge_duplicates', locale=request.state.locale) }}"
                   hx-target="#results-container"
                   hx-swap="innerHTML"
                   hx-confirm="Вы уверены, что хотите запустить слияние дубликатов? Это действие необратимо."

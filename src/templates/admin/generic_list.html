@@ -7,7 +7,8 @@
     <h1>{{ meta.verbose_name_plural|capfirst }}</h1>
     <div class="page-header-actions">
         {% if meta.model_name == 'quoterequest' %}
-            <a href="{{ request.url_for('admin_quoterequest_export') }}" class="btn btn-secondary">
+            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
+            <a href="{{ request.url_for('admin_quoterequest_export', locale=request.state.locale) }}" class="btn btn-secondary">
                 <i class='bx bx-export'></i> <span>Экспорт всех</span>
             </a>
             <button id="export-selected-btn" class="btn btn-secondary" disabled>
@@ -16,7 +17,8 @@
             </button>
         {% endif %}
         {% if meta.add_url_name %}
-        <a href="{{ request.url_for(meta.add_url_name) }}" class="btn btn-primary" hx-get="{{ request.url_for(meta.add_url_name) }}" hx-target="#main-content" hx-push-url="true">
+        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль в href и hx-get --- #}
+        <a href="{{ request.url_for(meta.add_url_name, locale=request.state.locale) }}" class="btn btn-primary" hx-get="{{ request.url_for(meta.add_url_name, locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
             <i class='bx bx-plus'></i> <span>Добавить {{ meta.verbose_name }}</span>
         </a>
         {% endif %}
