@@ -32,8 +32,8 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s -
 log = logging.getLogger(__name__)
 settings = get_settings()
 
-# <<< ИЗМЕНЕНИЕ: Определяем базовую директорию проекта (/app) >>>
-BASE_DIR = FilePath(__file__).resolve().parent.parent
+# <<< КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Жестко задаем путь к корню проекта внутри контейнера >>>
+BASE_DIR = FilePath("/app")
 
 # --- ОБЩИЕ ОБРАБОТЧИКИ СОБЫТИЙ ---
 async def on_startup():
@@ -69,7 +69,7 @@ def create_admin_app() -> FastAPI:
     app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.SECRET_KEY)
     app.add_middleware(RateLimitMiddleware, max_requests=200, window_seconds=60)
 
-    # <<< ИЗМЕНЕНИЕ: Используем абсолютные пути для статики и медиа >>>
+    # Теперь этот путь будет вычислен правильно: /app/src/static
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
@@ -137,7 +137,7 @@ def create_site_app() -> FastAPI:
     async def root_redirect(request: Request):
         return RedirectResponse(url="/ru")
 
-    # <<< ИЗМЕНЕНИЕ: Используем абсолютные пути для статики и медиа >>>
+    # Теперь этот путь будет вычислен правильно: /app/src/static
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
     
