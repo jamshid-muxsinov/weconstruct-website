@@ -4,6 +4,8 @@ import logging
 import sys
 import traceback
 from typing import Callable
+# <<< ИЗМЕНЕНИЕ: Добавляем импорт asyncio >>>
+import asyncio
 
 import uvicorn
 from fastapi import FastAPI, Request, Depends, APIRouter, Path
@@ -43,10 +45,12 @@ async def on_startup():
     log.info("Initializing cache...")
     await init_cache()
     log.info("Cache initialization complete.")
-    await warm_up_cache()
-    import asyncio
+    
+    # <<< ИЗМЕНЕНИЕ: Запускаем прогрев кэша и планировщик как фоновые задачи >>>
+    asyncio.create_task(warm_up_cache())
     asyncio.create_task(schedule_cache_cleanup())
-    log.info("Cache cleanup scheduler started.")
+    log.info("Cache warm-up and cleanup scheduler started in background.")
+
 
 async def on_shutdown():
     log.info("Application shutdown...")
@@ -79,7 +83,6 @@ def create_admin_app() -> FastAPI:
     )
     admin_router_with_locale.include_router(admin_router)
 
-    # <<< НАЧАЛО ИЗМЕНЕНИЯ: Убираем префиксы /admin >>>
     app.include_router(admin_unprotected_router) 
     app.include_router(
         admin_router_with_locale,
@@ -88,9 +91,7 @@ def create_admin_app() -> FastAPI:
     
     @app.get("/", include_in_schema=False)
     async def admin_root_redirect(request: Request):
-        # Редиректим на /ru/dashboard, так как префикса /admin в приложении больше нет
         return RedirectResponse(url=request.url_for('admin_dashboard', locale='ru'))
-    # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
         
     add_pagination(app)
 
