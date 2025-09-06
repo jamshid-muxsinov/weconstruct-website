@@ -8,7 +8,7 @@ import io
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update
-
+from sqlalchemy.orm import selectinload
 from src.services.shop_service import _get_or_create_contact, _create_quote_request, _notify_managers
 from src.models.shop_models import QuoteRequest, GoogleSheetLead 
 
@@ -83,7 +83,9 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
     if not sheet_row_ids:
         return {"status": "success", "message": "В таблице не найдено строк с ID для обработки.", "processed": 0, "created": 0, "skipped": 0}
 
-    existing_leads_stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id.in_(sheet_row_ids))
+    existing_leads_stmt = select(GoogleSheetLead).where(
+        GoogleSheetLead.sheet_row_id.in_(sheet_row_ids)
+    ).options(selectinload('*')) 
     existing_leads_result = await db.execute(existing_leads_stmt)
     existing_leads_map = {lead.sheet_row_id: lead for lead in existing_leads_result.scalars().all()}
     
@@ -153,6 +155,8 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
             )
             
             quote.business_type = business_type
+
+            quote.investment_details = comment
             
             parsed_date = _parse_date(comment)
             if parsed_date:

@@ -2,7 +2,7 @@
 from fastapi import Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-
+from sqlalchemy.orm import undefer
 from src.core.db import get_db_session
 from src.core.security import get_current_active_user
 from src.models.shop_models import User, Notification
@@ -22,6 +22,8 @@ async def get_common_context(
     user: User = Depends(get_current_active_user)
 ) -> dict:
     """Возвращает общий контекст для всех страниц админки."""
+    await db.refresh(user) 
+    
     unread_count = await get_unread_notifications_count(db, user.id)
     return {
         "request": request,

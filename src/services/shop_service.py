@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
 
-# <<< НАЧАЛО КЛЮЧЕВЫХ ИЗМЕНЕНИЙ >>>
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact:
     """
     Находит или создает контакт, используя надежный поиск по нормализованному номеру телефона.
@@ -37,7 +36,6 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
     phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
     stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
     contact = (await db.execute(stmt)).scalars().first()
-    # <<< КОНЕЦ КЛЮЧЕВЫХ ИЗМЕНЕНИЙ >>>
 
     if not contact:
         first_name, _, last_name = name.partition(" ")
