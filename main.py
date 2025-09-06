@@ -63,19 +63,49 @@ def create_admin_app() -> FastAPI:
 
     app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
     app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.SECRET_KEY)
-    app.add_middleware(RateLimitMiddleware, max_requests=200, window_seconds=60) # Более высокий лимит для админки
+    app.add_middleware(RateLimitMiddleware, max_requests=200, window_seconds=60)
 
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
-    app.include_router(admin_unprotected_router)
-    app.include_router(admin_router, dependencies=[Depends(get_current_active_user)])
+    # <<< НАЧАЛО ИЗМЕНЕНИЙ ДЛЯ ЛОКАЛИЗАЦИИ >>>
+    
+    # 1. Создаем зависимость, которая будет устанавливать язык из URL
+    async def set_locale_admin(request: Request, locale: str = Path("ru", description="Код языка (ru или uz)")):
+        """Устанавливает request.state.locale из параметра пути URL."""
+        if locale not in ["ru", "uz"]:
+            locale = "ru"
+        request.state.locale = locale
+
+    # 2. Создаем новый APIRouter, который будет иметь префикс /{locale}
+    # и применять нашу зависимость ко всем своим маршрутам.
+    admin_router_with_locale = APIRouter(
+        prefix="/{locale}", 
+        dependencies=[Depends(set_locale_admin)]
+    )
+    # Вкладываем в него все наши существующие роуты из admin_router.
+    admin_router_with_locale.include_router(admin_router)
+
+    # 3. Регистрируем роутеры в приложении
+    app.include_router(admin_unprotected_router) # Роуты без защиты (логин)
+    app.include_router(
+        admin_router_with_locale, # Новый роутер с поддержкой языка
+        dependencies=[Depends(get_current_active_user)] # Общая защита для всех роутов
+    )
+    
+    # 4. Добавляем редирект с корня админки (/) на язык по умолчанию (/ru/...)
+    @app.get("/", include_in_schema=False)
+    async def admin_root_redirect(request: Request):
+        # Используем `url_path_for` для безопасного построения URL
+        return RedirectResponse(url=request.url_for('admin_dashboard', locale='ru'))
+        
+    # <<< КОНЕЦ ИЗМЕНЕНИЙ ДЛЯ ЛОКАЛИЗАЦИИ >>>
     
     add_pagination(app)
 
     @app.exception_handler(401)
     async def unauthorized_exception_handler(request: Request, exc: Exception):
-        login_url = request.url_for('admin_login') # Генерирует /login
+        login_url = request.url_for('admin_login')
         return RedirectResponse(url=f"{login_url}?next={request.url.path}", status_code=302)
 
     @app.exception_handler(Exception)
@@ -147,9 +177,4 @@ admin_app = create_admin_app()
 site_app = create_site_app()
 
 if __name__ == "__main__":
-    # Для локальной разработки можно запустить только одно приложение
-    # uvicorn.run("main:admin_app", host="0.0.0.0", port=8000, reload=True)
-    # или
-    # uvicorn.run("main:site_app", host="0.0.0.0", port=8000, reload=True)
-    # На сервере будет работать главный диспетчер `app`
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:admin_app", host="0.0.0.0", port=8000, reload=True)

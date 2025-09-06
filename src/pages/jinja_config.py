@@ -22,6 +22,7 @@ STATUS_DISPLAY_MAP = {
     'archived': 'В архиве',
 }
 
+
 def get_status_display(status):
     status_key = getattr(status, 'value', str(status))
     return STATUS_DISPLAY_MAP.get(status_key, status_key.replace('_', ' ').capitalize())

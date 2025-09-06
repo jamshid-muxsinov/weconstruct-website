@@ -4,7 +4,7 @@
     <table class="styled-table">
         <thead>
             <tr>
-                 {% if meta.model_name == 'quoterequest' %}
+                {% if meta.model_name == 'quoterequest' %}
                 <th style="width: 40px; text-align: center;">
                     <input type="checkbox" id="select-all-checkbox" title="Выбрать все на странице">
                 </th>
@@ -12,11 +12,29 @@
 
                 {% for header in list_display %}
                     <th>
-                        {# Специальное правило для отображения "Тип бизнеса" вместо "Product" для заявок #}
-                        {% if header == 'product' and meta.model_name == 'quoterequest' %}
+                        {# --- ИЗМЕНЕНИЕ: Переводим заголовки, если это возможно --- #}
+                        {% if header == 'name_ru' and meta.model_name == 'product' %}
+                            Название
+                        {% elif header == 'name_ru' and meta.model_name == 'category' %}
+                            Название
+                        {% elif header == 'name' and meta.model_name == 'quoterequest' %}
+                            Клиент
+                        {% elif header == 'phone' and meta.model_name == 'quoterequest' %}
+                            Телефон
+                        {% elif header == 'business_type' %}
                             Тип бизнеса
-                        {% elif header == 'full_name' and meta.model_name == 'contact' %}
-                            Полное имя
+                        {% elif header == 'created_at' %}
+                            Дата создания
+                        {% elif header == 'status' %}
+                            Статус
+                        {% elif header == 'assigned_to' %}
+                            Ответственный
+                        {% elif header == 'category' %}
+                            Категория
+                        {% elif header == 'price_min' %}
+                            Цена от
+                        {% elif header == 'is_active' %}
+                            Активен
                         {% else %}
                             {{ header.replace('_', ' ')|capfirst }}
                         {% endif %}
@@ -26,11 +44,10 @@
         </thead>
         <tbody>
             {% for item in page.items %}
-                {# --- ИЗМЕНЕНИЕ: Безопасно получаем URL для редактирования/деталей --- #}
-                {% set change_url = request.url_for(meta.change_url_name, pk=item.id) if meta.change_url_name else '#' %}
+                {# Безопасно получаем URL для редактирования/деталей, теперь с учетом локали #}
+                {% set change_url = request.url_for(meta.change_url_name, locale=request.state.locale, pk=item.id) if meta.change_url_name else '#' %}
                 
                 <tr class="clickable-row" 
-                    {# --- ИЗМЕНЕНИЕ: Делаем строку кликабельной, только если URL существует --- #}
                     {% if change_url != '#' %}
                     onclick="window.location.href='{{ change_url }}';"
                     {% endif %}
@@ -46,9 +63,12 @@
                         <td data-label="{{ field_name.replace('_', ' ')|capfirst }}">
                             {% set value = getattr(item, field_name, '') %}
 
+                            {# --- НАЧАЛО БЛОКА ИЗМЕНЕНИЙ С t_get --- #}
+
+                            {# Для имени клиента в заявках (ссылка на контакт) #}
                             {% if field_name == 'name' and meta.model_name == 'quoterequest' %}
                                 {% if item.contact %}
-                                    <a href="{{ request.url_for('admin_contact_detail', pk=item.contact_id) }}" 
+                                    <a href="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=item.contact_id) }}" 
                                        class="link-to-change" 
                                        onclick="event.stopPropagation();"
                                        title="Перейти к профилю клиента">
@@ -58,18 +78,19 @@
                                     <span style="color: var(--status-red);">Контакт удален</span>
                                 {% endif %}
                             
+                            {# Для телефона в заявках (форматирование) #}
                             {% elif field_name == 'phone' and meta.model_name == 'quoterequest' %}
                                 {{ item.phone | format_phone }}
 
-                            {# --- ИЗМЕНЕНИЕ: Отображаем ссылку в первой колонке, только если URL существует --- #}
-                            {% elif loop.first %}
-                                {% if change_url != '#' %}
-                                <a href="{{ change_url }}" class="link-to-change">
-                                    {{ value }}
-                                </a>
-                                {% else %}
-                                    {{ value }}
-                                {% endif %}
+                            {# Для названия продукта или категории (с переводом) #}
+                            {% elif field_name == 'name_ru' %}
+                                <a href="{{ change_url }}" class="link-to-change">{{ t_get(request, item, 'name') }}</a>
+
+                            {# Для категории продукта (с переводом) #}
+                            {% elif field_name == 'category' and value %}
+                                {{ t_get(request, value, 'name') }}
+
+                            {# --- КОНЕЦ БЛОКА ИЗМЕНЕНИЙ С t_get --- #}
 
                             {% elif field_name == 'status' and hasattr(item, 'get_status_display') %}
                                 <span class="status-badge status-{{ item.status.value }}">{{ item.get_status_display() }}</span>
@@ -83,19 +104,6 @@
                             {% elif field_name == 'business_type' %}
                                 {{ value or '—' }}
 
-                            {% elif field_name == 'source' and hasattr(item, 'get_source_display') %}
-                                {{ item.get_source_display() }}
-                            
-                            {% elif field_name == 'category' and value %}
-                                {{ value.name }}
-                            
-                            {% elif field_name == 'product' and meta.model_name == 'quoterequest' %}
-                                {% if item.business_type %}
-                                    <span style="font-weight: 500; color: var(--accent-primary);">{{ item.business_type }}</span>
-                                {% else %}
-                                    <span style="color: var(--text-secondary); font-style: italic;">Не указан</span>
-                                {% endif %}
-                            
                             {% elif field_name == 'price_min' and value is not none %}
                                 {{ value|format_number }} сум
                             
