@@ -7,7 +7,18 @@ from starlette_wtf import csrf_token
 from urllib.parse import urlencode
 import re
 import pytz
-templates = Jinja2Templates(directory="src/templates", extensions=['jinja2.ext.do'])
+# <<< ИЗМЕНЕНИЕ 1: Импортируем Path для работы с путями >>>
+from pathlib import Path
+
+# <<< ИЗМЕНЕНИЕ 2: Определяем абсолютный путь к папке с шаблонами >>>
+# Path(__file__) -> текущий файл (jinja_config.py)
+# .parent.parent -> поднимаемся на 2 уровня вверх (до папки src)
+# / "templates" -> добавляем папку templates
+# Получается абсолютный путь /app/src/templates внутри контейнера
+TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
+
+# <<< ИЗМЕНЕНИЕ 3: Используем абсолютный путь при инициализации >>>
+templates = Jinja2Templates(directory=TEMPLATE_DIR, extensions=['jinja2.ext.do'])
 
 
 translation_cache = TTLCache(maxsize=2000, ttl=3600)
