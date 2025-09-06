@@ -6,6 +6,7 @@ from cachetools import TTLCache
 from starlette_wtf import csrf_token
 from urllib.parse import urlencode
 import re
+import pytz
 templates = Jinja2Templates(directory="src/templates", extensions=['jinja2.ext.do'])
 
 
@@ -66,6 +67,17 @@ def t_get(request: Request, obj: object, field_name: str) -> str:
         translation_cache[cache_key] = result
     return result
 
+def format_localtime(utc_dt):
+    """Конвертирует UTC datetime в локальное время Ташкента и форматирует."""
+    if not utc_dt:
+        return ""
+    if utc_dt.tzinfo is None:
+        utc_dt = utc_dt.replace(tzinfo=pytz.utc)
+    
+    tashkent_tz = pytz.timezone('Asia/Tashkent')
+    local_dt = utc_dt.astimezone(tashkent_tz)
+    return local_dt.strftime('%d.%m.%Y %H:%M')
+
 templates.env.globals['hasattr'] = hasattr
 templates.env.globals['current_year'] = datetime.now().year
 templates.env.globals['t_get'] = t_get
@@ -75,3 +87,4 @@ templates.env.globals['get_status_display'] = get_status_display
 templates.env.filters['capfirst'] = lambda x: x.capitalize() if x else ''
 templates.env.filters['format_number'] = format_number
 templates.env.filters['format_phone'] = format_phone
+templates.env.filters['localtime'] = format_localtime

@@ -75,8 +75,8 @@
                                 <span class="status-badge status-{{ item.status.value }}">{{ item.get_status_display() }}</span>
                             
                             {% elif field_name == 'created_at' %}
-                                {{ item.created_at.strftime('%d.%m.%Y %H:%M') }}
-                            
+                                {{ item.created_at | localtime }}
+                                                        
                             {% elif field_name == 'assigned_to' and value %}
                                 {{ value.username }}
                             

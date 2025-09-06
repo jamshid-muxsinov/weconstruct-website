@@ -1,13 +1,11 @@
-# src/models/shop_models.py
-
 import uuid
 import enum
 from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import JSON
+
 from sqlalchemy import (
     String, Text, Boolean, DateTime, func, DECIMAL,
-    ForeignKey, Integer, UUID, Enum as EnumType
+    ForeignKey, Integer, UUID, Enum as EnumType, JSON
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,9 +21,8 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_staff: Mapped[bool] = mapped_column(Boolean, default=False)
-    
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-
+    
     tasks: Mapped[List["Task"]] = relationship(back_populates="assigned_to")
     assigned_requests: Mapped[List["QuoteRequest"]] = relationship(back_populates="assigned_to")
     notifications: Mapped[List["Notification"]] = relationship(back_populates="user")
@@ -43,8 +40,9 @@ class Contact(Base):
     email: Mapped[Optional[str]] = mapped_column(String(100))
     company: Mapped[Optional[str]] = mapped_column(String(150))
     notes: Mapped[Optional[str]] = mapped_column(Text, comment="Старые заметки")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
     
     requests: Mapped[List["QuoteRequest"]] = relationship(back_populates="contact")
     tasks: Mapped[List["Task"]] = relationship(back_populates="contact")
@@ -65,9 +63,10 @@ class ContactNote(Base):
     __tablename__ = 'shop_contactnote'
     id: Mapped[int] = mapped_column(primary_key=True)
     note: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
     is_pinned: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
     
     contact_id: Mapped[int] = mapped_column(ForeignKey("shop_contact.id", ondelete="CASCADE"))
     contact: Mapped["Contact"] = relationship(back_populates="timeline_notes")
@@ -80,9 +79,10 @@ class Task(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(255))
     description: Mapped[Optional[str]] = mapped_column(Text)
-    due_date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     completed: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    
+    due_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
 
     assigned_to_id: Mapped[Optional[int]] = mapped_column(ForeignKey("auth_user.id", ondelete="SET NULL"))
     assigned_to: Mapped[Optional["User"]] = relationship(back_populates="tasks")
@@ -101,7 +101,7 @@ class Notification(Base):
     message: Mapped[str] = mapped_column(String(255))
     link: Mapped[Optional[str]] = mapped_column(String(200))
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
 
 class Category(Base):
     __tablename__ = 'shop_category'
@@ -153,12 +153,12 @@ class Product(Base):
 
     area: Mapped[int] = mapped_column(Integer, default=0)
     
-    # ИЗМЕНЕНИЕ №1: Добавляем явное имя для типа ENUM
     status: Mapped[StatusEnum] = mapped_column(EnumType(StatusEnum, name="product_status_enum"), default=StatusEnum.IN_STOCK)
     
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
 
     images: Mapped[List["ProductImage"]] = relationship(back_populates="product")
     quote_requests: Mapped[List["QuoteRequest"]] = relationship(back_populates="product")
@@ -230,8 +230,8 @@ class QuoteRequest(Base):
     assigned_to_id: Mapped[Optional[int]] = mapped_column(ForeignKey("auth_user.id", ondelete="SET NULL"))
     assigned_to: Mapped[Optional["User"]] = relationship(back_populates="assigned_requests")
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
     internal_notes: Mapped[Optional[str]] = mapped_column(Text)
 
     tasks: Mapped[List["Task"]] = relationship(back_populates="quote_request", cascade="all, delete-orphan")
@@ -270,7 +270,7 @@ class RegistrationInvite(Base):
     created_by_id: Mapped[int] = mapped_column(ForeignKey("auth_user.id", ondelete="CASCADE"))
     created_by: Mapped["User"] = relationship(back_populates="invites_sent")
     is_used: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
 
 class StatusChangeLog(Base):
     __tablename__ = 'shop_statuschangelog'
@@ -281,11 +281,10 @@ class StatusChangeLog(Base):
     user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("auth_user.id", ondelete="SET NULL"))
     user: Mapped[Optional["User"]] = relationship(back_populates="status_logs")
 
-    # ИЗМЕНЕНИЕ №4: Ссылаемся на новый именованный ENUM
     old_status: Mapped[QuoteRequest.StatusEnum] = mapped_column(EnumType(QuoteRequest.StatusEnum, name="quoterequest_status_enum", native_enum=False, values_callable=lambda obj: [e.value for e in obj]))
     new_status: Mapped[QuoteRequest.StatusEnum] = mapped_column(EnumType(QuoteRequest.StatusEnum, name="quoterequest_status_enum", native_enum=False, values_callable=lambda obj: [e.value for e in obj]))
     
-    timestamp: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     note: Mapped[Optional[str]] = mapped_column(String(255))
 
     def get_old_status_display(self):
@@ -293,7 +292,7 @@ class StatusChangeLog(Base):
 
     def get_new_status_display(self):
         return self.new_status.value.replace('_', ' ').capitalize()
-    
+
 class GoogleSheetLead(Base):
     """
     Реестр для отслеживания всех лидов, полученных из Google Sheets.
@@ -315,5 +314,5 @@ class GoogleSheetLead(Base):
     quote_request: Mapped[Optional["QuoteRequest"]] = relationship(back_populates="google_sheet_lead")
     raw_data: Mapped[Optional[dict]] = mapped_column(JSON)
     processing_notes: Mapped[Optional[str]] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
-    processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))

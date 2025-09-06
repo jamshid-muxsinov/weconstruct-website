@@ -60,7 +60,7 @@
                             }}</span>
                     </div>
                 </div>
-                <small style="color: var(--text-secondary);">{{ log.timestamp.strftime('%d.%m.%Y') }}</small>
+                <small style="color: var(--text-secondary);">{{ log.timestamp | localtime }}</small>
             </li>
             {% endfor %}
         </ul>
