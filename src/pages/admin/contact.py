@@ -5,8 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 import wtforms
 
-# --- ИСПРАВЛЕНИЕ: Импортируем translate_ui ---
-from src.pages.jinja_config import templates, translate_ui
+from src.pages.jinja_config import templates
 from src.core.db import get_db_session
 from src.services import crm_service
 from .dependencies import get_common_context
@@ -21,10 +20,7 @@ class ContactForm(wtforms.Form):
     last_name = wtforms.StringField('Фамилия')
     phone = wtforms.StringField('Телефон')
 
-# --- ИСПРАВЛЕНИЕ: Функция теперь принимает request для перевода ---
 def set_hx_trigger_header(response: RedirectResponse, message_key: str, request: Request, type: str = "success"):
-    # Создаем контекст и вызываем функцию перевода
-    message = translate_ui({'request': request}, message_key)
     payload = json.dumps({"show-toast": {"message": message, "type": type}})
     response.headers["HX-Trigger"] = quote(payload)
     return response

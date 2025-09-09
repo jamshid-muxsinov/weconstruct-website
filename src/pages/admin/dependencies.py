@@ -7,8 +7,7 @@ from sqlalchemy.orm import undefer
 from src.core.db import get_db_session
 from src.core.security import get_current_active_user
 from src.models.shop_models import User, Notification
-# --- ШАГ 1: УДАЛИТЕ ЭТУ СТРОКУ ---
-# from src.pages.jinja_config import translate_ui 
+from src.pages.jinja_config import templates
 
 async def get_unread_notifications_count(db: AsyncSession, user_id: int) -> int:
     """Подсчитывает непрочитанные уведомления для пользователя."""
@@ -28,11 +27,19 @@ async def get_common_context(
     await db.refresh(user) 
     
     unread_count = await get_unread_notifications_count(db, user.id)
+    
+    def translate_with_context(key: str, **kwargs):
+        translator = templates.env.globals.get('_')
+        if translator:
+            return translator({'request': request}, key, **kwargs)
+        return key # Fallback
+    
+    request.state._ = translate_with_context
+
     return {
         "request": request,
         "user": user,
         "unread_notifications_count": unread_count,
         "getattr": getattr,
         "url_for": request.url_for,
-        # Мы уже убрали отсюда '_', это правильно
     }
