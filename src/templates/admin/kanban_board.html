@@ -70,10 +70,10 @@
         <select @change="$store.kanbanManager.bulkUpdateStatus($event.target.value); $event.target.value = ''" class="select-field" style="min-width: 120px;">
             <option value="">{{ _('status_placeholder') }}</option>
             {% for status in QuoteRequest.StatusEnum %}
-              <option value="{{ status.value }}">{{ get_status_display(status) }}</option>
+            <option value="{{ status.value }}">{{ get_status_display(status) }}</option>
             {% endfor %}
         </select>
-        
+                
         <a :href="'{{ url_for('api_export_requests', locale=request.state.locale) }}?card_ids=' + $store.kanbanManager.selectedIds.join(',')" 
            class="btn btn-sm btn-secondary">
            <i class='bx bx-download'></i> {{ _('export') }}

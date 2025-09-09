@@ -52,6 +52,15 @@ TRANSLATIONS = {
     'loading_kanban': {'ru': 'Загрузка канбан-доски...', 'uz': 'Kanban-doska yuklanmoqda...'},
     'export_selected': {'ru': 'Экспорт выбранных', 'uz': 'Tanlanganlarni eksport qilish'},
 
+    # Статусы заявок
+    'status_imported': {'ru': 'Импортировано', 'uz': 'Import qilindi'},
+    'status_qualification': {'ru': 'Квалификация', 'uz': 'Saralash'},
+    'status_contacted': {'ru': 'Контакт установлен', 'uz': "Aloqa o'rnatildi"},
+    'status_proposal': {'ru': 'Предложение', 'uz': 'Taklif yuborildi'},
+    'status_negotiation': {'ru': 'Переговоры', 'uz': 'Muzokaralar'},
+    'status_closed': {'ru': 'Успешно закрыто', 'uz': 'Muvaffaqiyatli yopildi'},
+    'status_archived': {'ru': 'В архиве', 'uz': 'Arxivda'},
+
     # CRUD
     'list_requests': {'ru': 'Заявки', 'uz': 'Arizalar'},
     'request_single': {'ru': 'Заявка', 'uz': 'Ariza'},

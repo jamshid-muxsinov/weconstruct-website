@@ -16,10 +16,8 @@ from .translations import TRANSLATIONS
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
 
-# Просто создаем объект, БЕЗ НАСТРОЙКИ
 templates = Jinja2Templates(directory=TEMPLATE_DIR, extensions=['jinja2.ext.do'])
 
-# --- ВСЯ ЛОГИКА НАСТРОЙКИ ТЕПЕРЬ ВНУТРИ ЭТОЙ ФУНКЦИИ ---
 def configure_jinja_templates(app_templates: Jinja2Templates):
     """Применяет все глобальные переменные и фильтры к экземпляру Jinja2Templates."""
     
@@ -40,21 +38,11 @@ def configure_jinja_templates(app_templates: Jinja2Templates):
                 return translation
         return translation
 
-    STATUS_DISPLAY_MAP = {
-        'ru': {
-            'imported': 'Импортировано', 'qualification': 'Квалификация', 'contacted': 'Контакт установлен',
-            'proposal': 'Предложение', 'negotiation': 'Переговоры', 'closed': 'Успешно закрыто', 'archived': 'В архиве',
-        },
-        'uz': {
-            'imported': 'Import qilindi', 'qualification': 'Saralash', 'contacted': "Aloqa o'rnatildi",
-            'proposal': 'Taklif yuborildi', 'negotiation': 'Muzokaralar', 'closed': 'Muvaffaqiyatli yopildi', 'archived': 'Arxivda',
-        }
-    }
-
-    def get_status_display(status, locale: str = 'ru'):
-        if locale not in STATUS_DISPLAY_MAP: locale = 'ru'
+    @jinja2.pass_context
+    def get_status_display(context: dict, status) -> str:
         status_key = getattr(status, 'value', str(status))
-        return STATUS_DISPLAY_MAP.get(locale, {}).get(status_key, STATUS_DISPLAY_MAP.get('ru', {}).get(status_key, status_key.replace('_', ' ').capitalize()))
+        translation_key = f"status_{status_key}"
+        return translate_ui(context, translation_key)
 
     def format_phone(value: str) -> str:
         if not value: return "—"
@@ -89,7 +77,6 @@ def configure_jinja_templates(app_templates: Jinja2Templates):
         local_dt = utc_dt.astimezone(tashkent_tz)
         return local_dt.strftime('%d.%m.%Y %H:%M')
 
-    # Применяем все настройки к переданному объекту
     app_templates.env.globals['_'] = translate_ui
     app_templates.env.globals['hasattr'] = hasattr
     app_templates.env.globals['current_year'] = datetime.now().year
