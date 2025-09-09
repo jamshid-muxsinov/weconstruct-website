@@ -40,8 +40,6 @@ def translate_ui(context: dict, key: str, **kwargs) -> str:
 
 templates.env.globals['_'] = translate_ui
 
-print("<<<<< JINJA_CONFIG DEBUG: Глобальная функция '_' была установлена. >>>>>")
-
 # Остальной код без изменений
 STATUS_DISPLAY_MAP = {
     'ru': {

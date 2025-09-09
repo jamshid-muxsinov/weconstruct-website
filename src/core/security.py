@@ -20,11 +20,13 @@ class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
     async def __call__(self, request: Request) -> Optional[str]:
         authorization: str = request.headers.get("Authorization")
         
+        # Проверяем, что заголовок существует, перед тем как его парсить
         if authorization:
             scheme, _, param = authorization.partition(" ")
             if scheme.lower() == "bearer":
                 return param
         
+        # Если в заголовке нет, ищем в cookie
         token = request.cookies.get("access_token")
         if token:
             return token
@@ -43,17 +45,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-# --- ГЛАВНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-# Теперь `request` передается как зависимость, и `get_current_user` будет иметь к нему доступ.
+# --- ВОТ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ---
 async def get_current_user(
-    request: Request, # <-- request теперь является зависимостью
+    request: Request, # <-- `request` теперь является зависимостью для этой функции
     db: AsyncSession = Depends(get_db_session), 
     token: Optional[str] = Depends(oauth2_scheme)
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_303_SEE_OTHER,
         detail="Not authenticated",
-        # Теперь `request.url_for` будет работать корректно
+        # Теперь `request.url_for` будет работать, так как `request` доступен
         headers={"Location": str(request.url_for("admin_login"))},
     )
     
