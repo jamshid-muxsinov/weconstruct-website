@@ -34,11 +34,7 @@ router = APIRouter()
 log = logging.getLogger(__name__)
 
 def set_hx_trigger_header(response: Response, message_key: str, request: Request, type: str = "success"):
-    """
-    Устанавливает заголовок HX-Trigger с переведенным сообщением для Notyf.
-    """
     translator = templates.env.globals.get('_')
-    # Переводим сообщение, используя контекст запроса для определения локали
     message = translator({'request': request}, message_key) if translator else message_key
     payload = json.dumps({"show-toast": {"message": message, "type": type}})
     response.headers["HX-Trigger"] = quote(payload)
@@ -226,6 +222,17 @@ async def handle_list_view(
     params = Params(page=page, size=size)
     return create_page(items, total, params)
 
+async def populate_request_form_choices(db: AsyncSession, request: Request, form: QuoteRequestForm):
+    _ = templates.env.globals['_']
+    products = (await db.execute(select(Product).order_by(Product.name_ru))).scalars().all()
+    form.product_id.choices = [(0, _({'request': request}, 'general_request_option'))] + [(p.id, p.name_ru) for p in products]
+    
+    staff_users_result = await db.execute(
+        select(User).where(User.is_staff == True).order_by(User.username)
+    )
+    staff_users = staff_users_result.scalars().all()
+    form.assigned_to_id.choices = [(0, _({'request': request}, 'unassigned_option'))] + [(u.id, u.username) for u in staff_users]
+
 @router.get("/contact/", response_class=HTMLResponse, name="admin_contact_list")
 async def contact_list(
     request: Request, 
@@ -250,17 +257,6 @@ async def quoterequest_list(request: Request, page: int = Query(1, ge=1), size: 
     page_obj = await handle_list_view(db, QUOTEREQUEST_META, page=page, size=size, search_query=q, sort=sort, date_from=date_from, date_to=date_to)
     context.update({"meta": QUOTEREQUEST_META, "page": page_obj, "list_display": QUOTEREQUEST_META.list_display, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/generic_list.html", context)
-
-async def populate_request_form_choices(db: AsyncSession, request: Request, form: QuoteRequestForm):
-    _ = templates.env.globals['_']
-    products = (await db.execute(select(Product).order_by(Product.name_ru))).scalars().all()
-    form.product_id.choices = [(0, _({'request': request}, 'general_request_option'))] + [(p.id, p.name_ru) for p in products]
-    
-    staff_users_result = await db.execute(
-        select(User).where(User.is_staff == True).order_by(User.username)
-    )
-    staff_users = staff_users_result.scalars().all()
-    form.assigned_to_id.choices = [(0, _({'request': request}, 'unassigned_option'))] + [(u.id, u.username) for u in staff_users]
 
 @router.get("/product/", response_class=HTMLResponse, name="admin_product_list")
 async def product_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
@@ -367,52 +363,83 @@ async def quoterequest_form_get_add(request: Request, context: dict = Depends(ge
 
 @router.post("/quoterequest/add/", response_class=HTMLResponse)
 async def quoterequest_form_post_add(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    form_data = await request.form(); form = QUOTEREQUEST_META.form_class(form_data);
+    form_data = await request.form()
+    form = QUOTEREQUEST_META.form_class(form_data)
     await populate_request_form_choices(db, request, form)
     if form.validate():
-        contact_id = int(form.contact_id.data) if form.contact_id.data else None; new_quote_request = None
+        contact_id = int(form.contact_id.data) if form.contact_id.data else None
+        new_quote_request = None
         if not contact_id:
-            contact = await shop_service._get_or_create_contact(db, form.new_contact_name.data, form.new_contact_phone.data); await db.flush(); new_quote_request = await shop_service._create_quote_request(db, contact.id, form.message.data, form.product_id.data if form.product_id.data else None, "contact_form")
-        else: new_quote_request = QuoteRequest(contact_id=contact_id, product_id=form.product_id.data if form.product_id.data else None, message=form.message.data, status=form.status.data, source=QuoteRequest.SourceEnum.CONTACT_FORM)
+            contact = await shop_service._get_or_create_contact(db, form.new_contact_name.data, form.new_contact_phone.data)
+            await db.flush()
+            new_quote_request = await shop_service._create_quote_request(db, contact.id, form.message.data, form.product_id.data if form.product_id.data else None, "contact_form")
+        else:
+            new_quote_request = QuoteRequest(contact_id=contact_id, product_id=form.product_id.data if form.product_id.data else None, message=form.message.data, status=form.status.data, source=QuoteRequest.SourceEnum.CONTACT_FORM)
+        
         if new_quote_request:
-            new_quote_request.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None; new_quote_request.business_type = form.business_type.data; new_quote_request.dimensions = form.dimensions.data; new_quote_request.investment_details = form.investment_details.data; new_quote_request.conclusion = form.conclusion.data; new_quote_request.additional_info = form.additional_info.data; db.add(new_quote_request); await db.flush()
-            if not contact_id: await shop_service._notify_managers(db, new_quote_request, contact.full_name)
-        await db.commit(); response = RedirectResponse(request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale), status_code=303);
+            new_quote_request.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None
+            new_quote_request.business_type = form.business_type.data
+            new_quote_request.dimensions = form.dimensions.data
+            new_quote_request.investment_details = form.investment_details.data
+            new_quote_request.conclusion = form.conclusion.data
+            new_quote_request.additional_info = form.additional_info.data
+            db.add(new_quote_request)
+            await db.flush()
+            if not contact_id:
+                await shop_service._notify_managers(db, new_quote_request, contact.full_name)
+        
+        await db.commit()
+        response = RedirectResponse(request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale), status_code=303)
         return set_hx_trigger_header(response, "request_created_success", request)
+    
     _ = templates.env.globals['_']
     title = f"{_({'request': request}, 'adding')}: {_({'request': request}, 'request_single')}"
-    context.update({"meta": QUOTEREQUEST_META, "original": None, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers}); 
+    context.update({"meta": QUOTEREQUEST_META, "original": None, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
 
 @router.get("/quoterequest/{pk}/change/", response_class=HTMLResponse, name="admin_quoterequest_change")
 async def quoterequest_change_form_get(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)]);
+    quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)])
     if not quote: raise HTTPException(404)
-    form = QUOTEREQUEST_META.form_class(obj=quote); form.contact_id.data = quote.contact_id;
+    form = QUOTEREQUEST_META.form_class(obj=quote)
+    form.contact_id.data = quote.contact_id
     await populate_request_form_choices(db, request, form)
     _ = templates.env.globals['_']
     title = f"{_({'request': request}, 'editing')}: {_({'request': request}, 'request_single')} #{pk}"
-    context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers}); 
+    context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/quoterequest_form.html", context)
 
 @router.post("/quoterequest/{pk}/change/", response_class=HTMLResponse)
 async def quoterequest_change_form_post(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)]);
+    quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)])
     if not quote: raise HTTPException(404)
-    form_data = await request.form(); form = QUOTEREQUEST_META.form_class(form_data, obj=quote);
+    form_data = await request.form()
+    form = QUOTEREQUEST_META.form_class(form_data, obj=quote)
     await populate_request_form_choices(db, request, form)
     if form.validate():
-        quote.product_id = form.product_id.data if form.product_id.data else None; quote.message = form.message.data; quote.status = form.status.data; quote.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None; quote.business_type = form.business_type.data; quote.dimensions = form.dimensions.data; quote.investment_details = form.investment_details.data; quote.conclusion = form.conclusion.data; quote.additional_info = form.additional_info.data; db.add(quote); await db.commit(); response = RedirectResponse(request.url_for(QUOTEREQUEST_META.change_url_name, locale=request.state.locale, pk=pk), status_code=303);
+        quote.product_id = form.product_id.data if form.product_id.data else None
+        quote.message = form.message.data
+        quote.status = form.status.data
+        quote.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None
+        quote.business_type = form.business_type.data
+        quote.dimensions = form.dimensions.data
+        quote.investment_details = form.investment_details.data
+        quote.conclusion = form.conclusion.data
+        quote.additional_info = form.additional_info.data
+        db.add(quote)
+        await db.commit()
+        response = RedirectResponse(request.url_for(QUOTEREQUEST_META.change_url_name, locale=request.state.locale, pk=pk), status_code=303)
         return set_hx_trigger_header(response, "request_saved_success", request)
+    
     _ = templates.env.globals['_']
     title = f"{_({'request': request}, 'editing')}: {_({'request': request}, 'request_single')} #{pk}"
-    context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers}); 
+    context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
 
 @router.get("/quoterequest/{pk}/delete/", response_class=HTMLResponse, name="admin_quoterequest_delete")
 @router.post("/quoterequest/{pk}/delete/", response_class=Response)
 async def quoterequest_delete(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    quote_req = await db.get(QuoteRequest, pk, options=[selectinload(QuoteRequest.tasks)]);
+    quote_req = await db.get(QuoteRequest, pk, options=[selectinload(QuoteRequest.tasks)])
     if not quote_req: raise HTTPException(404, detail="QuoteRequest not found")
     
     if request.method == "POST":
