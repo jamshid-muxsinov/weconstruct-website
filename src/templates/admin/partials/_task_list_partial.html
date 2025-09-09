@@ -3,7 +3,7 @@
         <li style="display: flex; align-items: center; gap: 10px; background: var(--bg-main); padding: 12px; border-radius: var(--border-radius-md); opacity: {{ '0.6' if task.completed else '1' }};">
             <input type="checkbox" id="modal_task_{{task.id}}" 
                    style="width: 16px; height: 16px;"
-                   hx-post="{{ request.url_for('admin_htmx_toggle_task', pk=task.id) }}"
+                   hx-post="{{ request.url_for('admin_htmx_toggle_task', locale=request.state.locale, pk=task.id) }}"
                    hx-target=".task-list"
                    hx-swap="outerHTML"
                    {{ 'checked' if task.completed }}>
@@ -13,6 +13,6 @@
             <small style="color: var(--text-secondary);">{{ task.assigned_to.username or '-' }}</small>
         </li>
     {% else %}
-        <li class="empty-list-placeholder" style="padding: 20px 0;">Задач по этой заявке нет.</li>
+        <li class="empty-list-placeholder" style="padding: 20px 0;">{{ _('no_tasks_for_request') }}</li>
     {% endfor %}
 </ul>

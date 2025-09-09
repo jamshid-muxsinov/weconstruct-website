@@ -1,4 +1,4 @@
-{# _contact_timeline.html #}
+{# /src/templates/admin/partials/_contact_timeline.html #}
 <ul id="timeline-list" style="list-style: none; display: flex; flex-direction: column; gap: 16px;">
     {% for item in timeline %}
         <li class="timeline-item">
@@ -9,20 +9,21 @@
                     {% elif item.type == 'note' %}<i class='bx bxs-note'></i>
                     {% endif %}
                 </div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary); text-align: center;">{{ item.timestamp.strftime('%d %b') }} <br> {{ item.timestamp.strftime('%H:%M') }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); text-align: center;">{{ item.timestamp | localtime }}</div>
             </div>
 
             <div class="timeline-content card" style="padding: 16px; flex-grow: 1; background-color: {{ 'var(--surface-2)' if item.obj and item.obj.is_pinned else 'var(--bg-main)' }};">
                 {% if item.type == 'request' %}
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                         <div>
-                            <p style="font-weight: 500;">Заявка #{{ item.obj.id }} на "{{ item.obj.product.name if item.obj.product else 'Общая' }}"</p>
-                            <span class="status-badge status-{{ item.obj.status.value }}">{{ item.obj.get_status_display() }}</span>
+                            <p style="font-weight: 500;">{{ _('request_single') }} #{{ item.obj.id }} на "{{ t_get(request, item.obj.product, 'name') if item.obj.product else _('general_request_option') }}"</p>
+                            <span class="status-badge status-{{ item.obj.status.value }}">{{ get_status_display(item.obj.status, request.state.locale) }}</span>
                             {% if item.obj.assigned_to %}<small style="color: var(--text-secondary); margin-left: 8px;"><i class='bx bxs-user'></i> {{ item.obj.assigned_to.username }}</small>{% endif %}
                         </div>
                         <div class="timeline-item-actions">
-                            <a href="{{ request.url_for('admin_quoterequest_change', pk=item.obj.id) }}" class="btn btn-secondary btn-sm" title="Редактировать заявку"><i class='bx bxs-edit-alt'></i> <span>Редактировать</span></a>
-                            <a href="{{ request.url_for('admin_quoterequest_delete', pk=item.obj.id) }}" class="btn btn-icon btn-icon-danger" title="Удалить заявку"><i class='bx bxs-trash'></i></a>
+                            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена locale --- #}
+                            <a href="{{ request.url_for('admin_quoterequest_change', locale=request.state.locale, pk=item.obj.id) }}" class="btn btn-secondary btn-sm" title="{{ _('edit') }}"><i class='bx bxs-edit-alt'></i> <span>{{ _('edit') }}</span></a>
+                            <a href="{{ request.url_for('admin_quoterequest_delete', locale=request.state.locale, pk=item.obj.id) }}" class="btn btn-icon btn-icon-danger" title="{{ _('delete') }}"><i class='bx bxs-trash'></i></a>
                         </div>
                     </div>
                 {% elif item.type == 'note' %}
@@ -32,7 +33,7 @@
                             <p style="color: var(--text-secondary); font-style: italic; margin-top: 4px; white-space: pre-wrap;">"{{ item.obj.note }}"</p>
                         </div>
                         <button class="btn-icon" 
-                                hx-post="{{ request.url_for('admin_contact_pin_note', pk=item.obj.contact_id, note_id=item.obj.id) }}"
+                                hx-post="{{ request.url_for('admin_contact_pin_note', locale=request.state.locale, pk=item.obj.contact_id, note_id=item.obj.id) }}"
                                 hx-target="#timeline-list" hx-swap="innerHTML"
                                 title="{{ 'Открепить заметку' if item.obj.is_pinned else 'Закрепить заметку' }}"
                                 style="color: {{ 'var(--status-yellow)' if item.obj.is_pinned else 'var(--text-secondary)' }};">
@@ -43,6 +44,6 @@
             </div>
         </li>
     {% else %}
-    <li class="empty-list-placeholder">Нет истории взаимодействий с этим клиентом.</li>
+    <li class="empty-list-placeholder">{{ _('no_activity_log') }}</li>
     {% endfor %}
 </ul>
