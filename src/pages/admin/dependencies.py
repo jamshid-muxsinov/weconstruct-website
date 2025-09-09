@@ -5,8 +5,8 @@ from sqlalchemy.orm import undefer
 from src.core.db import get_db_session
 from src.core.security import get_current_active_user
 from src.models.shop_models import User, Notification
-# --- ИСПРАВЛЕНИЕ: Импортируем нашу функцию перевода ---
-from src.pages.jinja_config import translate_ui
+# Убираем импорт translate_ui, он здесь больше не нужен
+# from src.pages.jinja_config import translate_ui 
 
 async def get_unread_notifications_count(db: AsyncSession, user_id: int) -> int:
     """Подсчитывает непрочитанные уведомления для пользователя."""
@@ -31,7 +31,6 @@ async def get_common_context(
         "user": user,
         "unread_notifications_count": unread_count,
         "getattr": getattr,
-        "url_for": request.url_for,
-        # --- ИСПРАВЛЕНИЕ: Добавляем функцию перевода в контекст ---
-        "_": lambda key, **kwargs: translate_ui({'request': request}, key, **kwargs)
+        "url_for": request.url_for
+        # --- УДАЛЯЕМ ОТСЮДА СТРОКУ С "_" ---
     }
