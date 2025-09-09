@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 import re
 import pytz
 from pathlib import Path
-import jinja2 # Убедитесь, что этот импорт есть
+import jinja2
 
 from .translations import TRANSLATIONS
 
@@ -17,15 +17,13 @@ templates = Jinja2Templates(directory=TEMPLATE_DIR, extensions=['jinja2.ext.do']
 
 translation_cache = TTLCache(maxsize=2000, ttl=3600)
 
-# --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-# Используем правильный декоратор @jinja2.pass_context
 @jinja2.pass_context
 def translate_ui(context: dict, key: str, **kwargs) -> str:
-    """
-    Переводит строку интерфейса по ключу.
-    Использует 'request' из контекста.
-    """
-    request = context['request']
+    request = context.get('request')
+    if not request:
+        # Запасной вариант, если request отсутствует в контексте
+        return key
+
     locale = getattr(request.state, 'locale', 'ru')
     
     translation_dict = TRANSLATIONS.get(key, {})
@@ -34,12 +32,13 @@ def translate_ui(context: dict, key: str, **kwargs) -> str:
     if kwargs:
         try:
             return translation.format(**kwargs)
-        except KeyError:
+        except (KeyError, ValueError):
             return translation
     
     return translation
-# --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
+# --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Регистрируем функцию СРАЗУ ---
+templates.env.globals['_'] = translate_ui
 
 STATUS_DISPLAY_MAP = {
     'ru': {
@@ -127,8 +126,7 @@ def format_localtime(utc_dt):
     local_dt = utc_dt.astimezone(tashkent_tz)
     return local_dt.strftime('%d.%m.%Y %H:%M')
 
-# Регистрируем наши функции в окружении Jinja2
-templates.env.globals['_'] = translate_ui
+# Регистрируем остальные функции
 templates.env.globals['hasattr'] = hasattr
 templates.env.globals['current_year'] = datetime.now().year
 templates.env.globals['t_get'] = t_get
