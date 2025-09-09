@@ -48,28 +48,24 @@ async def login_for_access_token(
     user = await user_service.authenticate_user(db, username, password)
     
     if not user or not user.is_staff:
-        # Если логин/пароль неверный, снова рендерим страницу входа с сообщением об ошибке
         return templates.TemplateResponse("admin/login.html", {
             "request": request,
             "error": "Неверное имя пользователя или пароль."
         }, status_code=401)
 
-    # Создаем токен
     expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     token = create_access_token(data={"sub": user.username}, expires_delta=expires)
     
-    # Создаем редирект на главную страницу админки
-    redirect_url = request.url_for('admin_dashboard')
+    redirect_url = request.url_for('admin_dashboard', locale='ru')
     response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
     
-    # Устанавливаем токен в безопасную HttpOnly cookie
     response.set_cookie(
         key="access_token", 
         value=token, 
         httponly=True,
         samesite="lax",
-        secure=not settings.DEBUG,  # Use secure cookies in production
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60  # Set explicit expiration
+        secure=not settings.DEBUG,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60  
     )
     
     return response
