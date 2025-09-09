@@ -50,7 +50,7 @@
             <div id="gallery-item-{{ img.id }}" style="position:relative;">
                 <img src="{{ url_for('media', path=img.image) }}" alt="Image" loading="lazy" style="width:100px; height:100px; object-fit:cover; border-radius:var(--border-radius-md);">
                 <button type="button" class="btn-icon btn-icon-danger" style="position:absolute; top:-5px; right:-5px; width:24px; height:24px; font-size:1rem;"
-                    hx-delete="{{ request.url_for('admin_htmx_delete_product_image', pk=img.id) }}"
+                    hx-delete="{{ request.url_for('admin_htmx_delete_product_image', locale=request.state.locale, pk=img.id) }}"
                     hx-target="#gallery-item-{{ img.id }}" hx-swap="outerHTML"
                     hx-confirm="{{ _('delete_confirmation_text', item='это изображение') }}">&times;</button>
             </div>

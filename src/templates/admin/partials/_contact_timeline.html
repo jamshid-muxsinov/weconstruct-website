@@ -12,7 +12,7 @@
                 <div style="font-size: 0.75rem; color: var(--text-secondary); text-align: center;">{{ item.timestamp | localtime }}</div>
             </div>
 
-            <div class="timeline-content card" style="padding: 16px; flex-grow: 1; background-color: {{ 'var(--surface-2)' if item.obj and item.obj.is_pinned else 'var(--bg-main)' }};">
+            <div class="timeline-content card" style="padding: 16px; flex-grow: 1; background-color: {{ 'var(--surface-2)' if item.obj and hasattr(item.obj, 'is_pinned') and item.obj.is_pinned else 'var(--bg-main)' }};">
                 {% if item.type == 'request' %}
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                         <div>
@@ -21,7 +21,6 @@
                             {% if item.obj.assigned_to %}<small style="color: var(--text-secondary); margin-left: 8px;"><i class='bx bxs-user'></i> {{ item.obj.assigned_to.username }}</small>{% endif %}
                         </div>
                         <div class="timeline-item-actions">
-                            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена locale --- #}
                             <a href="{{ request.url_for('admin_quoterequest_change', locale=request.state.locale, pk=item.obj.id) }}" class="btn btn-secondary btn-sm" title="{{ _('edit') }}"><i class='bx bxs-edit-alt'></i> <span>{{ _('edit') }}</span></a>
                             <a href="{{ request.url_for('admin_quoterequest_delete', locale=request.state.locale, pk=item.obj.id) }}" class="btn btn-icon btn-icon-danger" title="{{ _('delete') }}"><i class='bx bxs-trash'></i></a>
                         </div>
@@ -39,6 +38,13 @@
                                 style="color: {{ 'var(--status-yellow)' if item.obj.is_pinned else 'var(--text-secondary)' }};">
                             <i class='bx bxs-pin'></i>
                         </button>
+                    </div>
+                {% elif item.type == 'task' %}
+                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <p style="font-weight: 500; {{ 'text-decoration: line-through;' if item.obj.completed else '' }}">{{ item.obj.title }}</p>
+                            <small style="color: var(--text-secondary);">Задача для {{ item.obj.assigned_to.username if item.obj.assigned_to else 'N/A' }}</small>
+                        </div>
                     </div>
                 {% endif %}
             </div>
