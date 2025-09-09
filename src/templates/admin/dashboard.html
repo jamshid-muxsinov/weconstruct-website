@@ -4,10 +4,12 @@
 
 {% block content %}
 <div class="page-header">
-    <h1>Статистика и Обзор</h1>
+    {# --- ИЗМЕНЕНИЕ: Используем ключ для заголовка --- #}
+    <h1>{{ _('page_title_stats') }}</h1>
 </div>
 
-<h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 24px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Воронка продаж (за все время)</h2>
+{# --- ИЗМЕНЕНИЕ: Используем ключ --- #}
+<h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 24px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">{{ _('sales_funnel') }} (за все время)</h2>
 <div class="dashboard-stats">
     {% for item in sales_funnel %}
     <div class="stats-card">
@@ -26,7 +28,6 @@
             </div>
             <div class="stats-details">
                 <h3>{{ item.count }}</h3>
-                {# --- ИЗМЕНЕНИЕ: Используем локализованный статус --- #}
                 <p>{{ get_status_display(item.status, request.state.locale) }}</p>
             </div>
         </div>
@@ -71,7 +72,8 @@
 </div>
 
 <div class="card" style="margin-top: 32px;">
-    <h3 style="margin-bottom: 20px; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">Мои актуальные задачи</h3>
+    {# --- ИЗМЕНЕНИЕ: Используем ключ --- #}
+    <h3 style="margin-bottom: 20px; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">{{ _('my_tasks') }}</h3>
     {% if my_tasks %}
     <ul style="display: flex; flex-direction: column; gap: 16px; list-style: none; padding: 0; margin: 0;">
         {% for task in my_tasks %}

@@ -4,22 +4,23 @@
 
 {% block content %}
 <div class="page-header">
-    <h1>{{ meta.verbose_name_plural|capfirst }}</h1>
+    {# --- ИЗМЕНЕНИЕ: Переводим заголовок через ключ --- #}
+    <h1>{{ _(meta.verbose_name_plural) }}</h1>
     <div class="page-header-actions">
         {% if meta.model_name == 'quoterequest' %}
-            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
+            {# --- ИЗМЕНЕНИЕ: Добавлена локаль и перевод --- #}
             <a href="{{ request.url_for('admin_quoterequest_export', locale=request.state.locale) }}" class="btn btn-secondary">
-                <i class='bx bx-export'></i> <span>Экспорт всех</span>
+                <i class='bx bx-export'></i> <span>{{ _('export') }}</span>
             </a>
             <button id="export-selected-btn" class="btn btn-secondary" disabled>
                 <i class='bx bxs-file-export'></i>
-                <span id="export-btn-text">Экспорт выбранных</span>
+                <span id="export-btn-text">{{ _('export') }} {{ _('selected') }}</span>
             </button>
         {% endif %}
         {% if meta.add_url_name %}
-        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль в href и hx-get --- #}
+        {# --- ИЗМЕНЕНИЕ: Добавлена локаль и перевод --- #}
         <a href="{{ request.url_for(meta.add_url_name, locale=request.state.locale) }}" class="btn btn-primary" hx-get="{{ request.url_for(meta.add_url_name, locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
-            <i class='bx bx-plus'></i> <span>Добавить {{ meta.verbose_name }}</span>
+            <i class='bx bx-plus'></i> <span>{{ _('add_button', entity=_(meta.verbose_name)) }}</span>
         </a>
         {% endif %}
     </div>
@@ -34,8 +35,9 @@
 
         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 16px; align-items: flex-end;">
             <div class="input-group" style="margin: 0;">
-                <label>Поиск</label>
-                <input type="search" name="q" class="input-field" placeholder="Имя, телефон, название..." value="{{ request.query_params.get('q', '') }}" autocomplete="off">
+                {# --- ИЗМЕНЕНИЕ: Перевод --- #}
+                <label>{{ _('search') }}</label>
+                <input type="search" name="q" class="input-field" placeholder="..." value="{{ request.query_params.get('q', '') }}" autocomplete="off">
             </div>
             {% if meta.model_name == 'quoterequest' %}
             <div class="input-group" style="margin: 0;">
@@ -48,8 +50,9 @@
             </div>
             {% endif %}
             <div style="display: flex; gap: 8px;">
-                <button type="submit" class="btn btn-primary"><i class='bx bx-filter-alt'></i> Применить</button>
-                <a href="{{ request.url.path }}" class="btn btn-secondary" title="Сбросить все фильтры" hx-get="{{ request.url.path }}" hx-target="#main-content" hx-push-url="true"><i class='bx bx-x'></i></a>
+                {# --- ИЗМЕНЕНИЕ: Перевод --- #}
+                <button type="submit" class="btn btn-primary"><i class='bx bx-filter-alt'></i> {{ _('apply') }}</button>
+                <a href="{{ request.url.path }}" class="btn btn-secondary" title="{{ _('clear') }}" hx-get="{{ request.url.path }}" hx-target="#main-content" hx-push-url="true"><i class='bx bx-x'></i></a>
             </div>
         </div>
     </form>

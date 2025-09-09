@@ -12,7 +12,7 @@
 
                 {% for header in list_display %}
                     <th>
-                        {# --- ИЗМЕНЕНИЯ ЗДЕСЬ: Переводим заголовки по ключам --- #}
+                        {# --- ИЗМЕНЕНИЕ: Логика перевода заголовков таблиц --- #}
                         {% if header == 'name_ru' and meta.model_name in ['product', 'category'] %}
                             {{ _('header_name') }}
                         {% elif header == 'name' and meta.model_name == 'quoterequest' %}
@@ -108,7 +108,7 @@
             {% else %}
                 <tr>
                     <td colspan="{{ (list_display|length) + (1 if meta.model_name == 'quoterequest' else 0) }}" class="empty-list-placeholder">
-                        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
+                        {# --- ИЗМЕНЕНИЕ: Используем ключ --- #}
                         {{ _('no_records_found') }}
                     </td>
                 </tr>
