@@ -7,14 +7,12 @@
     <meta name="csrf-token" content="{{ csrf_token(request) }}">
     <meta name="current-user-id" content="{{ user.id if user else '' }}">
     
-    <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="WeConstruct CRM">
     <link rel="manifest" href="{{ url_for('static', path='manifest.json') }}">
     
-    
-    <title>{{ title|default("Панель управления") }} | WeConstruct CRM</title>
+    <title>{{ title|default(_('admin_panel')) }} | WeConstruct CRM</title>
     
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
@@ -24,17 +22,14 @@
     <meta name="msapplication-TileColor" content="#07385a">
     <meta name="theme-color" content="#ffffff">
 
-    <!-- Enhanced Styles & Fonts -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/crm-enhanced.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
     
-    <!-- Flatpickr (календарь для выбора дат) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-    <!-- Scripts -->
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
     <script src="https://unpkg.com/htmx.org/dist/ext/sse.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -53,29 +48,28 @@
                 <span class="logo-text">WeConstruct</span>
             </div>
             <nav id="sidebar-nav">
-                <!-- Эти ссылки видят все сотрудники -->
-                <a href="{{ request.url_for('admin_kanban_board', locale=request.state.locale) }}" class="nav-link {% if 'kanban' in request.url.path or request.url.path == '/admin/' or request.url.path.endswith('/admin/ru') or request.url.path.endswith('/admin/uz') %}active{% endif %}" hx-get="{{ request.url_for('admin_kanban_board', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-grid-alt nav-icon'></i><span class="nav-text">Канбан-доска</span> </a>
-                <a href="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" class="nav-link {% if 'quoterequest' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bx-list-ul nav-icon'></i><span class="nav-text">Заявки</span> </a>
-                <a href="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" class="nav-link {% if 'contact' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-user-detail nav-icon'></i><span class="nav-text">Контакты</span> </a>
-                <a href="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-bar-chart-alt-2 nav-icon'></i><span class="nav-text">Статистика</span> </a>
+                {# --- ИЗМЕНЕНИЯ: Перевод меню --- #}
+                <a href="{{ request.url_for('admin_kanban_board', locale=request.state.locale) }}" class="nav-link {% if 'kanban' in request.url.path or request.url.path == '/admin/' or request.url.path.endswith('/admin/ru') or request.url.path.endswith('/admin/uz') %}active{% endif %}" hx-get="{{ request.url_for('admin_kanban_board', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-grid-alt nav-icon'></i><span class="nav-text">{{ _('sidebar_kanban') }}</span> </a>
+                <a href="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" class="nav-link {% if 'quoterequest' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bx-list-ul nav-icon'></i><span class="nav-text">{{ _('sidebar_requests') }}</span> </a>
+                <a href="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" class="nav-link {% if 'contact' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-user-detail nav-icon'></i><span class="nav-text">{{ _('sidebar_contacts') }}</span> </a>
+                <a href="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-bar-chart-alt-2 nav-icon'></i><span class="nav-text">{{ _('sidebar_statistics') }}</span> </a>
 
-                <!-- Блок только для суперпользователей -->
                 {% if user.is_superuser %}
                 <hr class="menu-divider">
-                <a href="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" class="nav-link {% if 'product' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-package nav-icon'></i><span class="nav-text">Товары</span> </a>
-                <a href="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" class="nav-link {% if 'category' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-component nav-icon'></i><span class="nav-text">Категории</span> </a>
+                <a href="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" class="nav-link {% if 'product' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-package nav-icon'></i><span class="nav-text">{{ _('sidebar_products') }}</span> </a>
+                <a href="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" class="nav-link {% if 'category' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-component nav-icon'></i><span class="nav-text">{{ _('sidebar_categories') }}</span> </a>
                 <a href="{{ request.url_for('admin_import_page', locale=request.state.locale) }}" class="nav-link {% if request.url.path.endswith('/import') %} active {% endif %}" hx-get="{{ request.url_for('admin_import_page', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
                     <i class='bx bx-import nav-icon'></i>
-                    <span class="nav-text">Импорт</span>
+                    <span class="nav-text">{{ _('sidebar_import') }}</span>
                 </a>
                 <a href="{{ request.url_for('admin_invites', locale=request.state.locale) }}" class="nav-link {% if request.url.path.endswith('/invites') or request.url.path.endswith('/invites/') %} active {% endif %}" hx-get="{{ request.url_for('admin_invites', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
                     <i class='bx bxs-paper-plane nav-icon'></i>
-                    <span class="nav-text">Приглашения</span>
+                    <span class="nav-text">{{ _('sidebar_invites') }}</span>
                 </a>
                 {% endif %}
             </nav>
             <div class="sidebar-footer"> 
-                <a href="{{ request.url_for('admin_logout') }}" class="logout-trigger nav-link"> <i class='bx bx-log-out nav-icon'></i><span class="nav-text">Выйти</span> </a> 
+                <a href="{{ request.url_for('admin_logout') }}" class="logout-trigger nav-link"> <i class='bx bx-log-out nav-icon'></i><span class="nav-text">{{ _('logout') }}</span> </a> 
             </div>
         </aside>
         
@@ -85,7 +79,6 @@
                 
                 <div class="header-spacer"></div> 
                 
-                <!-- <<< НАЧАЛО ИЗМЕНЕНИЯ: Переключатель языков >>> -->
                 <div class="language-switcher">
                     {% if request.scope.get('route') %}
                         {% set route_name = request.scope.route.name %}
@@ -100,12 +93,12 @@
                         <a href="{{ request.url_for(route_name, **path_params_uz) }}{% if query_params %}?{{ urlencode(query_params) }}{% endif %}" class="lang-link {% if request.state.locale == 'uz' %}active{% endif %}">UZ</a>
                     {% endif %}
                 </div>
-                <!-- <<< КОНЕЦ ИЗМЕНЕНИЯ >>> -->
 
                 {% if user %}
                 <div class="user-profile" x-data="{ open: false }" @click.away="open = false">
                     <button @click="open = !open" id="profile-menu-button" class="user-profile-button">
-                        <span class="profile-name">Привет, {{ user.username }}!</span>
+                        {# --- ИЗМЕНЕНИЕ: Приветствие пользователя --- #}
+                        <span class="profile-name">{{ _('hello_user', username=user.username) }}</span>
                         <div id="notification-indicator-wrapper" 
                             hx-get="{{ request.url_for('admin_htmx_notification_indicator', locale=request.state.locale) }}"
                             hx-trigger="load, every 8s, notifications-read from:body"
@@ -131,10 +124,11 @@
                         </div>
                         
                         <ul class="profile-menu-list">
-                            <li><a href="{{ request.url_for('admin_profile', locale=request.state.locale) }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_profile', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-user-circle'></i><span>Профиль</span></a></li>
-                            <li><a href="{{ request.url_for('admin_invites', locale=request.state.locale) }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_invites', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-paper-plane'></i><span>Приглашения</span></a></li>
+                            {# --- ИЗМЕНЕНИЯ: Выпадающее меню профиля --- #}
+                            <li><a href="{{ request.url_for('admin_profile', locale=request.state.locale) }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_profile', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-user-circle'></i><span>{{ _('profile') }}</span></a></li>
+                            <li><a href="{{ request.url_for('admin_invites', locale=request.state.locale) }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_invites', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-paper-plane'></i><span>{{ _('sidebar_invites') }}</span></a></li>
                             <li><hr class="menu-divider"></li>
-                            <li><a href="{{ request.url_for('admin_logout') }}" class="profile-menu-link logout logout-trigger"><i class='bx bx-log-out'></i><span>Выйти</span></a></li>
+                            <li><a href="{{ request.url_for('admin_logout') }}" class="profile-menu-link logout logout-trigger"><i class='bx bx-log-out'></i><span>{{ _('logout') }}</span></a></li>
                         </ul>
                     </div>
                 </div>

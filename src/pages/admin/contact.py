@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 import wtforms
 
-from src.pages.jinja_config import templates
+from src.pages.jinja_config import templates, translate_ui
 from src.core.db import get_db_session
 from src.services import crm_service
 from .dependencies import get_common_context
@@ -20,7 +20,8 @@ class ContactForm(wtforms.Form):
     last_name = wtforms.StringField('Фамилия')
     phone = wtforms.StringField('Телефон')
 
-def set_hx_trigger_header(response: RedirectResponse, message: str, type: str = "success"):
+def set_hx_trigger_header(response: RedirectResponse, message_key: str, request: Request, type: str = "success"):
+    message = translate_ui(request, message_key)
     payload = json.dumps({"show-toast": {"message": message, "type": type}})
     response.headers["HX-Trigger"] = quote(payload)
     return response
@@ -61,18 +62,11 @@ async def post_contact_detail_page(
         if not updated_contact:
             raise HTTPException(status_code=404, detail="Contact not found")
 
-        redirect_url = request.url_for("admin_contact_detail", pk=pk)
+        redirect_url = request.url_for("admin_contact_detail", locale=request.state.locale, pk=pk)
         response = RedirectResponse(redirect_url, status_code=303)
-        return set_hx_trigger_header(response, "Данные клиента успешно обновлены!")
+        # --- ИЗМЕНЕНИЕ: Передаем ключ 'contact_updated_success' и request ---
+        return set_hx_trigger_header(response, "contact_updated_success", request)
     
-    contact_data = await crm_service.get_contact_360_view(db, pk)
-    context.update({
-        "title": f"Клиент: {contact_data['contact'].full_name}",
-        "contact": contact_data["contact"],
-        "timeline": contact_data["timeline"],
-        "form": form
-    })
-    return templates.TemplateResponse("admin/contact_detail.html", context, status_code=422)
 
 @router.post("/contact/{pk}/add-note", response_class=HTMLResponse, name="admin_contact_add_note")
 async def htmx_add_note(

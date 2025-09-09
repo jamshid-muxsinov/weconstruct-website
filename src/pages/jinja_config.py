@@ -7,7 +7,7 @@ from starlette_wtf import csrf_token
 from urllib.parse import urlencode
 import re
 import pytz
-# <<< ИЗМЕНЕНИЕ: Импортируем Path для работы с путями >>>
+from .translations import TRANSLATIONS
 from pathlib import Path
 
 # <<< ИЗМЕНЕНИЕ: Определяем абсолютный путь к папке /app/src/templates >>>
@@ -41,6 +41,27 @@ STATUS_DISPLAY_MAP = {
     }
 }
 
+def translate_ui(request: Request, key: str, **kwargs) -> str:
+    """
+    Переводит строку интерфейса по ключу.
+    Поддерживает форматирование (например, для 'Привет, {username}!').
+    """
+    locale = getattr(request.state, 'locale', 'ru')
+    
+    # Получаем словарь для конкретного ключа, например {'ru': '...', 'uz': '...'}
+    translation_dict = TRANSLATIONS.get(key, {})
+    
+    # Выбираем перевод для текущей локали, если его нет - берем русский как запасной
+    translation = translation_dict.get(locale, TRANSLATIONS.get(key, {}).get('ru', key))
+    
+    # Если в переводе есть плейсхолдеры, форматируем строку
+    if kwargs:
+        try:
+            return translation.format(**kwargs)
+        except KeyError:
+            return translation # Возвращаем без форматирования, если ключи не совпали
+    
+    return translation
 
 def get_status_display(status, locale: str = 'ru'):
     if locale not in STATUS_DISPLAY_MAP:
@@ -106,6 +127,7 @@ def format_localtime(utc_dt):
     local_dt = utc_dt.astimezone(tashkent_tz)
     return local_dt.strftime('%d.%m.%Y %H:%M')
 
+templates.env.globals['_'] = translate_ui
 templates.env.globals['hasattr'] = hasattr
 templates.env.globals['current_year'] = datetime.now().year
 templates.env.globals['t_get'] = t_get

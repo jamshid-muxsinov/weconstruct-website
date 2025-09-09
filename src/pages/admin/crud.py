@@ -102,10 +102,10 @@ Category.__str__ = lambda self: self.name_ru
 QuoteRequest.__str__ = lambda self: f"Заявка #{self.id}"
 Contact.__str__ = lambda self: self.full_name
 
-PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], ProductForm, "Товар", "Товары")
-CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "Категория", "Категории")
-QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'business_type', 'created_at', 'status', 'assigned_to'], QuoteRequestForm, "Заявка", "Заявки")
-CONTACT_META = Meta(Contact, ['full_name', 'phone', 'email'], None, "Контакт", "Контакты")
+PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], ProductForm, "product_single", "list_products")
+CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "category_single", "list_categories")
+QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'business_type', 'created_at', 'status', 'assigned_to'], QuoteRequestForm, "request_single", "list_requests")
+CONTACT_META = Meta(Contact, ['full_name', 'phone', 'email'], None, "contact_single", "list_contacts")
 
 CONTACT_META.change_url_name = "admin_contact_detail"
 

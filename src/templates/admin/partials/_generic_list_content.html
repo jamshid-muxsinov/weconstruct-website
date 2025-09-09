@@ -12,27 +12,27 @@
 
                 {% for header in list_display %}
                     <th>
-                        {# --- ИЗМЕНЕНИЕ: Заголовки теперь зависят от языка --- #}
+                        {# --- ИЗМЕНЕНИЯ ЗДЕСЬ: Переводим заголовки по ключам --- #}
                         {% if header == 'name_ru' and meta.model_name in ['product', 'category'] %}
-                            {{ 'Nomi' if request.state.locale == 'uz' else 'Название' }}
+                            {{ _('header_name') }}
                         {% elif header == 'name' and meta.model_name == 'quoterequest' %}
-                            {{ 'Mijoz' if request.state.locale == 'uz' else 'Клиент' }}
+                            {{ _('header_client') }}
                         {% elif header == 'phone' and meta.model_name == 'quoterequest' %}
-                            {{ 'Telefon' if request.state.locale == 'uz' else 'Телефон' }}
+                            {{ _('header_phone') }}
                         {% elif header == 'business_type' %}
-                            {{ 'Biznes turi' if request.state.locale == 'uz' else 'Тип бизнеса' }}
+                            {{ _('header_business_type') }}
                         {% elif header == 'created_at' %}
-                            {{ 'Yaratilgan sana' if request.state.locale == 'uz' else 'Дата создания' }}
+                            {{ _('header_created_at') }}
                         {% elif header == 'status' %}
-                            {{ 'Holati' if request.state.locale == 'uz' else 'Статус' }}
+                            {{ _('header_status') }}
                         {% elif header == 'assigned_to' %}
-                            {{ 'Masʼul' if request.state.locale == 'uz' else 'Ответственный' }}
+                            {{ _('header_assignee') }}
                         {% elif header == 'category' %}
-                            {{ 'Kategoriya' if request.state.locale == 'uz' else 'Категория' }}
+                            {{ _('header_category') }}
                         {% elif header == 'price_min' %}
-                            {{ 'Narx (dan)' if request.state.locale == 'uz' else 'Цена от' }}
+                            {{ _('header_price_from') }}
                         {% elif header == 'is_active' %}
-                            {{ 'Aktiv' if request.state.locale == 'uz' else 'Активен' }}
+                            {{ _('header_is_active') }}
                         {% else %}
                             {{ header.replace('_', ' ')|capfirst }}
                         {% endif %}
@@ -42,7 +42,6 @@
         </thead>
         <tbody>
             {% for item in page.items %}
-                {# Безопасно получаем URL для редактирования/деталей, теперь с учетом локали #}
                 {% set change_url = request.url_for(meta.change_url_name, locale=request.state.locale, pk=item.id) if meta.change_url_name else '#' %}
                 
                 <tr class="clickable-row" 
@@ -61,7 +60,6 @@
                         <td data-label="{{ field_name.replace('_', ' ')|capfirst }}">
                             {% set value = getattr(item, field_name, '') %}
 
-                            {# Для имени клиента в заявках (ссылка на контакт) #}
                             {% if field_name == 'name' and meta.model_name == 'quoterequest' %}
                                 {% if item.contact %}
                                     <a href="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=item.contact_id) }}" 
@@ -74,19 +72,15 @@
                                     <span style="color: var(--status-red);">Контакт удален</span>
                                 {% endif %}
                             
-                            {# Для телефона в заявках (форматирование) #}
                             {% elif field_name == 'phone' and meta.model_name == 'quoterequest' %}
                                 {{ item.phone | format_phone }}
 
-                            {# Для названия продукта или категории (с переводом) #}
                             {% elif field_name == 'name_ru' %}
                                 <a href="{{ change_url }}" class="link-to-change">{{ t_get(request, item, 'name') }}</a>
 
-                            {# Для категории продукта (с переводом) #}
                             {% elif field_name == 'category' and value %}
                                 {{ t_get(request, value, 'name') }}
 
-                            {# --- ИЗМЕНЕНИЕ: Используем локализованный статус --- #}
                             {% elif field_name == 'status' and hasattr(item, 'status') %}
                                 <span class="status-badge status-{{ item.status.value }}">{{ get_status_display(item.status, request.state.locale) }}</span>
                             
@@ -114,7 +108,8 @@
             {% else %}
                 <tr>
                     <td colspan="{{ (list_display|length) + (1 if meta.model_name == 'quoterequest' else 0) }}" class="empty-list-placeholder">
-                        {{ "Yozuvlar topilmadi" if request.state.locale == 'uz' else "Записей не найдено" }}.
+                        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
+                        {{ _('no_records_found') }}
                     </td>
                 </tr>
             {% endfor %}
