@@ -25,19 +25,20 @@ from src.services.user_service import create_first_superuser
 from src.core.cache import init_cache, cleanup_cache
 from src.core.middleware import CacheMiddleware, RateLimitMiddleware
 from src.core.cache_utils import schedule_cache_cleanup, warm_up_cache
-from src.pages.jinja_config import templates
+from src.pages.jinja_config import templates, configure_jinja_templates
 
 # --- БАЗОВАЯ НАСТРОЙКА ---
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 log = logging.getLogger(__name__)
 settings = get_settings()
 
-# <<< КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Жестко задаем путь к корню проекта внутри контейнера >>>
 BASE_DIR = FilePath("/app")
 
 # --- ОБЩИЕ ОБРАБОТЧИКИ СОБЫТИЙ ---
 async def on_startup():
     log.info("Application startup...")
+    configure_jinja_templates(templates)
+    
     await check_db_connection()
     log.info("Creating first superuser if necessary...")
     async with async_session_factory() as session:
@@ -69,7 +70,6 @@ def create_admin_app() -> FastAPI:
     app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.SECRET_KEY)
     app.add_middleware(RateLimitMiddleware, max_requests=200, window_seconds=60)
 
-    # Теперь этот путь будет вычислен правильно: /app/src/static
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
@@ -137,7 +137,6 @@ def create_site_app() -> FastAPI:
     async def root_redirect(request: Request):
         return RedirectResponse(url="/ru")
 
-    # Теперь этот путь будет вычислен правильно: /app/src/static
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
     

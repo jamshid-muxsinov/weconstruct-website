@@ -15,91 +15,91 @@ import jinja2
 from .translations import TRANSLATIONS
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
+
+# Просто создаем объект, БЕЗ НАСТРОЙКИ
 templates = Jinja2Templates(directory=TEMPLATE_DIR, extensions=['jinja2.ext.do'])
 
-translation_cache = TTLCache(maxsize=2000, ttl=3600)
-
-@jinja2.pass_context
-def translate_ui(context: dict, key: str, **kwargs) -> str:
-    request = context.get('request')
-    if not request:
-        return key
-
-    locale = getattr(request.state, 'locale', 'ru')
+# --- ВСЯ ЛОГИКА НАСТРОЙКИ ТЕПЕРЬ ВНУТРИ ЭТОЙ ФУНКЦИИ ---
+def configure_jinja_templates(app_templates: Jinja2Templates):
+    """Применяет все глобальные переменные и фильтры к экземпляру Jinja2Templates."""
     
-    translation_dict = TRANSLATIONS.get(key, {})
-    translation = translation_dict.get(locale, TRANSLATIONS.get(key, {}).get('ru', key))
-    
-    if kwargs:
-        try:
-            return translation.format(**kwargs)
-        except (KeyError, ValueError):
-            return translation
-    
-    return translation
+    translation_cache = TTLCache(maxsize=2000, ttl=3600)
 
-templates.env.globals['_'] = translate_ui
+    @jinja2.pass_context
+    def translate_ui(context: dict, key: str, **kwargs) -> str:
+        request = context.get('request')
+        if not request:
+            return key
+        locale = getattr(request.state, 'locale', 'ru')
+        translation_dict = TRANSLATIONS.get(key, {})
+        translation = translation_dict.get(locale, TRANSLATIONS.get(key, {}).get('ru', key))
+        if kwargs:
+            try:
+                return translation.format(**kwargs)
+            except (KeyError, ValueError):
+                return translation
+        return translation
 
-# Остальной код без изменений
-STATUS_DISPLAY_MAP = {
-    'ru': {
-        'imported': 'Импортировано', 'qualification': 'Квалификация', 'contacted': 'Контакт установлен',
-        'proposal': 'Предложение', 'negotiation': 'Переговоры', 'closed': 'Успешно закрыто', 'archived': 'В архиве',
-    },
-    'uz': {
-        'imported': 'Import qilindi', 'qualification': 'Saralash', 'contacted': "Aloqa o'rnatildi",
-        'proposal': 'Taklif yuborildi', 'negotiation': 'Muzokaralar', 'closed': 'Muvaffaqiyatli yopildi', 'archived': 'Arxivda',
+    STATUS_DISPLAY_MAP = {
+        'ru': {
+            'imported': 'Импортировано', 'qualification': 'Квалификация', 'contacted': 'Контакт установлен',
+            'proposal': 'Предложение', 'negotiation': 'Переговоры', 'closed': 'Успешно закрыто', 'archived': 'В архиве',
+        },
+        'uz': {
+            'imported': 'Import qilindi', 'qualification': 'Saralash', 'contacted': "Aloqa o'rnatildi",
+            'proposal': 'Taklif yuborildi', 'negotiation': 'Muzokaralar', 'closed': 'Muvaffaqiyatli yopildi', 'archived': 'Arxivda',
+        }
     }
-}
 
+    def get_status_display(status, locale: str = 'ru'):
+        if locale not in STATUS_DISPLAY_MAP: locale = 'ru'
+        status_key = getattr(status, 'value', str(status))
+        return STATUS_DISPLAY_MAP.get(locale, {}).get(status_key, STATUS_DISPLAY_MAP.get('ru', {}).get(status_key, status_key.replace('_', ' ').capitalize()))
 
-def get_status_display(status, locale: str = 'ru'):
-    if locale not in STATUS_DISPLAY_MAP: locale = 'ru'
-    status_key = getattr(status, 'value', str(status))
-    return STATUS_DISPLAY_MAP.get(locale, {}).get(status_key, STATUS_DISPLAY_MAP.get('ru', {}).get(status_key, status_key.replace('_', ' ').capitalize()))
+    def format_phone(value: str) -> str:
+        if not value: return "—"
+        digits = re.sub(r'\D', '', value)
+        if len(digits) == 12 and digits.startswith('998'): pass
+        elif len(digits) == 9: digits = '998' + digits
+        else: return value
+        return f"+{digits[0:3]} ({digits[3:5]}) {digits[5:8]}-{digits[8:10]}-{digits[10:12]}"
 
+    def format_number(value):
+        if value is None: return ""
+        try: return f"{int(value):,}".replace(",", " ")
+        except (ValueError, TypeError): return value
 
-def format_phone(value: str) -> str:
-    if not value: return "—"
-    digits = re.sub(r'\D', '', value)
-    if len(digits) == 12 and digits.startswith('998'): pass
-    elif len(digits) == 9: digits = '998' + digits
-    else: return value
-    return f"+{digits[0:3]} ({digits[3:5]}) {digits[5:8]}-{digits[8:10]}-{digits[10:12]}"
+    def t_get(request: Request, obj: object, field_name: str) -> str:
+        locale = getattr(request.state, 'locale', 'ru')
+        obj_id = getattr(obj, 'id', None)
+        if obj_id:
+            cache_key = f"translation_{obj.__class__.__name__}_{obj_id}_{field_name}_{locale}"
+            cached_value = translation_cache.get(cache_key)
+            if cached_value is not None: return cached_value
+        value = getattr(obj, f"{field_name}_{locale}", None)
+        if value is None or value == '': value = getattr(obj, f"{field_name}_ru", None)
+        result = value or ''
+        if obj_id: translation_cache[cache_key] = result
+        return result
 
-def format_number(value):
-    if value is None: return ""
-    try: return f"{int(value):,}".replace(",", " ")
-    except (ValueError, TypeError): return value
+    def format_localtime(utc_dt):
+        if not utc_dt: return ""
+        if utc_dt.tzinfo is None: utc_dt = utc_dt.replace(tzinfo=pytz.utc)
+        tashkent_tz = pytz.timezone('Asia/Tashkent')
+        local_dt = utc_dt.astimezone(tashkent_tz)
+        return local_dt.strftime('%d.%m.%Y %H:%M')
 
-def t_get(request: Request, obj: object, field_name: str) -> str:
-    locale = getattr(request.state, 'locale', 'ru')
-    obj_id = getattr(obj, 'id', None)
-    if obj_id:
-        cache_key = f"translation_{obj.__class__.__name__}_{obj_id}_{field_name}_{locale}"
-        cached_value = translation_cache.get(cache_key)
-        if cached_value is not None: return cached_value
-    value = getattr(obj, f"{field_name}_{locale}", None)
-    if value is None or value == '': value = getattr(obj, f"{field_name}_ru", None)
-    result = value or ''
-    if obj_id: translation_cache[cache_key] = result
-    return result
-
-def format_localtime(utc_dt):
-    if not utc_dt: return ""
-    if utc_dt.tzinfo is None: utc_dt = utc_dt.replace(tzinfo=pytz.utc)
-    tashkent_tz = pytz.timezone('Asia/Tashkent')
-    local_dt = utc_dt.astimezone(tashkent_tz)
-    return local_dt.strftime('%d.%m.%Y %H:%M')
-
-# Регистрируем остальные функции
-templates.env.globals['hasattr'] = hasattr
-templates.env.globals['current_year'] = datetime.now().year
-templates.env.globals['t_get'] = t_get
-templates.env.globals['csrf_token'] = csrf_token
-templates.env.globals['urlencode'] = urlencode
-templates.env.globals['get_status_display'] = get_status_display
-templates.env.filters['capfirst'] = lambda x: x.capitalize() if x else ''
-templates.env.filters['format_number'] = format_number
-templates.env.filters['format_phone'] = format_phone
-templates.env.filters['localtime'] = format_localtime
+    # Применяем все настройки к переданному объекту
+    app_templates.env.globals['_'] = translate_ui
+    app_templates.env.globals['hasattr'] = hasattr
+    app_templates.env.globals['current_year'] = datetime.now().year
+    app_templates.env.globals['t_get'] = t_get
+    app_templates.env.globals['csrf_token'] = csrf_token
+    app_templates.env.globals['urlencode'] = urlencode
+    app_templates.env.globals['get_status_display'] = get_status_display
+    app_templates.env.filters['capfirst'] = lambda x: x.capitalize() if x else ''
+    app_templates.env.filters['format_number'] = format_number
+    app_templates.env.filters['format_phone'] = format_phone
+    app_templates.env.filters['localtime'] = format_localtime
+    
+    print(f"--- Jinja templates instance {id(app_templates)} configured successfully ---")
