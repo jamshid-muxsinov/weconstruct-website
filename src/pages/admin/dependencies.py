@@ -1,3 +1,5 @@
+# src/pages/admin/dependencies.py
+
 from fastapi import Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -32,6 +34,4 @@ async def get_common_context(
         "unread_notifications_count": unread_count,
         "getattr": getattr,
         "url_for": request.url_for,
-        # --- ШАГ 2: Добавляем функцию перевода в контекст через lambda ---
-        "_": lambda key, **kwargs: translate_ui({'request': request}, key, **kwargs)
     }
