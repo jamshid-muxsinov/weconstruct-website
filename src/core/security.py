@@ -45,9 +45,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-# --- ВОТ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ---
+# --- ЕДИНСТВЕННАЯ И ПРАВИЛЬНАЯ ВЕРСИЯ ЭТОЙ ФУНКЦИИ ---
 async def get_current_user(
-    request: Request, # <-- `request` теперь является зависимостью для этой функции
+    request: Request, # <-- `request` теперь является зависимостью
     db: AsyncSession = Depends(get_db_session), 
     token: Optional[str] = Depends(oauth2_scheme)
 ) -> User:
