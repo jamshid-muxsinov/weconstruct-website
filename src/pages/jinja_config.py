@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 import re
 import pytz
 from pathlib import Path
-import jinja2
+import jinja2  # Убедитесь, что этот импорт есть
 
 from .translations import TRANSLATIONS
 
@@ -17,8 +17,13 @@ templates = Jinja2Templates(directory=TEMPLATE_DIR, extensions=['jinja2.ext.do']
 
 translation_cache = TTLCache(maxsize=2000, ttl=3600)
 
+# --- ИСПОЛЬЗУЕМ ПРАВИЛЬНЫЙ ДЕКОРАТОР @jinja2.pass_context ---
 @jinja2.pass_context
 def translate_ui(context: dict, key: str, **kwargs) -> str:
+    """
+    Переводит строку интерфейса по ключу.
+    Использует 'request' из контекста.
+    """
     request = context.get('request')
     if not request:
         # Запасной вариант, если request отсутствует в контексте
@@ -37,68 +42,38 @@ def translate_ui(context: dict, key: str, **kwargs) -> str:
     
     return translation
 
-# --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Регистрируем функцию СРАЗУ ---
+# Регистрируем функцию СРАЗУ, чтобы избежать проблем с импортом
 templates.env.globals['_'] = translate_ui
 
+# Остальной код файла без изменений
 STATUS_DISPLAY_MAP = {
     'ru': {
-        'imported': 'Импортировано',
-        'qualification': 'Квалификация',
-        'contacted': 'Контакт установлен',
-        'proposal': 'Предложение',
-        'negotiation': 'Переговоры',
-        'closed': 'Успешно закрыто',
-        'archived': 'В архиве',
+        'imported': 'Импортировано', 'qualification': 'Квалификация', 'contacted': 'Контакт установлен',
+        'proposal': 'Предложение', 'negotiation': 'Переговоры', 'closed': 'Успешно закрыто', 'archived': 'В архиве',
     },
     'uz': {
-        'imported': 'Import qilindi',
-        'qualification': 'Saralash',
-        'contacted': "Aloqa o'rnatildi",
-        'proposal': 'Taklif yuborildi',
-        'negotiation': 'Muzokaralar',
-        'closed': 'Muvaffaqiyatli yopildi',
-        'archived': 'Arxivda',
+        'imported': 'Import qilindi', 'qualification': 'Saralash', 'contacted': "Aloqa o'rnatildi",
+        'proposal': 'Taklif yuborildi', 'negotiation': 'Muzokaralar', 'closed': 'Muvaffaqiyatli yopildi', 'archived': 'Arxivda',
     }
 }
 
-
 def get_status_display(status, locale: str = 'ru'):
-    if locale not in STATUS_DISPLAY_MAP:
-        locale = 'ru'
-    
+    if locale not in STATUS_DISPLAY_MAP: locale = 'ru'
     status_key = getattr(status, 'value', str(status))
-    
-    return STATUS_DISPLAY_MAP.get(locale, {}).get(
-        status_key, 
-        STATUS_DISPLAY_MAP.get('ru', {}).get(
-            status_key, 
-            status_key.replace('_', ' ').capitalize()
-        )
-    )
-
+    return STATUS_DISPLAY_MAP.get(locale, {}).get(status_key, STATUS_DISPLAY_MAP.get('ru', {}).get(status_key, status_key.replace('_', ' ').capitalize()))
 
 def format_phone(value: str) -> str:
-    if not value:
-        return "—"
-    
+    if not value: return "—"
     digits = re.sub(r'\D', '', value)
-    
-    if len(digits) == 12 and digits.startswith('998'):
-        pass
-    elif len(digits) == 9:
-        digits = '998' + digits
-    else:
-        return value
-        
+    if len(digits) == 12 and digits.startswith('998'): pass
+    elif len(digits) == 9: digits = '998' + digits
+    else: return value
     return f"+{digits[0:3]} ({digits[3:5]}) {digits[5:8]}-{digits[8:10]}-{digits[10:12]}"
 
 def format_number(value):
-    if value is None:
-        return ""
-    try:
-        return f"{int(value):,}".replace(",", " ")
-    except (ValueError, TypeError):
-        return value
+    if value is None: return ""
+    try: return f"{int(value):,}".replace(",", " ")
+    except (ValueError, TypeError): return value
 
 def t_get(request: Request, obj: object, field_name: str) -> str:
     locale = getattr(request.state, 'locale', 'ru')
@@ -106,22 +81,16 @@ def t_get(request: Request, obj: object, field_name: str) -> str:
     if obj_id:
         cache_key = f"translation_{obj.__class__.__name__}_{obj_id}_{field_name}_{locale}"
         cached_value = translation_cache.get(cache_key)
-        if cached_value is not None:
-            return cached_value
+        if cached_value is not None: return cached_value
     value = getattr(obj, f"{field_name}_{locale}", None)
-    if value is None or value == '':
-        value = getattr(obj, f"{field_name}_ru", None)
+    if value is None or value == '': value = getattr(obj, f"{field_name}_ru", None)
     result = value or ''
-    if obj_id:
-        translation_cache[cache_key] = result
+    if obj_id: translation_cache[cache_key] = result
     return result
 
 def format_localtime(utc_dt):
-    if not utc_dt:
-        return ""
-    if utc_dt.tzinfo is None:
-        utc_dt = utc_dt.replace(tzinfo=pytz.utc)
-    
+    if not utc_dt: return ""
+    if utc_dt.tzinfo is None: utc_dt = utc_dt.replace(tzinfo=pytz.utc)
     tashkent_tz = pytz.timezone('Asia/Tashkent')
     local_dt = utc_dt.astimezone(tashkent_tz)
     return local_dt.strftime('%d.%m.%Y %H:%M')

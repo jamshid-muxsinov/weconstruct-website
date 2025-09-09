@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 import wtforms
 
+# --- ИСПРАВЛЕНИЕ: Импортируем translate_ui ---
 from src.pages.jinja_config import templates, translate_ui
 from src.core.db import get_db_session
 from src.services import crm_service
@@ -20,8 +21,10 @@ class ContactForm(wtforms.Form):
     last_name = wtforms.StringField('Фамилия')
     phone = wtforms.StringField('Телефон')
 
+# --- ИСПРАВЛЕНИЕ: Функция теперь принимает request для перевода ---
 def set_hx_trigger_header(response: RedirectResponse, message_key: str, request: Request, type: str = "success"):
-    message = translate_ui(request, message_key)
+    # Создаем контекст и вызываем функцию перевода
+    message = translate_ui({'request': request}, message_key)
     payload = json.dumps({"show-toast": {"message": message, "type": type}})
     response.headers["HX-Trigger"] = quote(payload)
     return response
@@ -64,10 +67,19 @@ async def post_contact_detail_page(
 
         redirect_url = request.url_for("admin_contact_detail", locale=request.state.locale, pk=pk)
         response = RedirectResponse(redirect_url, status_code=303)
-        # --- ИЗМЕНЕНИЕ: Передаем ключ 'contact_updated_success' и request ---
+        # --- ИСПРАВЛЕНИЕ: Передаем request в функцию ---
         return set_hx_trigger_header(response, "contact_updated_success", request)
     
+    contact_data = await crm_service.get_contact_360_view(db, pk)
+    context.update({
+        "title": f"Клиент: {contact_data['contact'].full_name}",
+        "contact": contact_data["contact"],
+        "timeline": contact_data["timeline"],
+        "form": form
+    })
+    return templates.TemplateResponse("admin/contact_detail.html", context, status_code=422)
 
+# Остальная часть файла остается без изменений
 @router.post("/contact/{pk}/add-note", response_class=HTMLResponse, name="admin_contact_add_note")
 async def htmx_add_note(
     pk: int,
@@ -129,9 +141,9 @@ async def contact_delete(
         try:
             await db.delete(contact)
             await db.commit()
-            redirect_url = request.url_for("admin_contact_list")
+            redirect_url = request.url_for("admin_contact_list", locale=request.state.locale)
             response = RedirectResponse(url=redirect_url, status_code=303)
-            return set_hx_trigger_header(response, "Контакт удален", "error")
+            return set_hx_trigger_header(response, "Контакт удален", request, "error")
         except IntegrityError:
             await db.rollback()
             error_msg = "Нельзя удалить контакт, к которому привязаны заявки или задачи."
@@ -141,7 +153,7 @@ async def contact_delete(
             })
             return templates.TemplateResponse("admin/500.html", context, status_code=400)
 
-    back_url = request.url_for("admin_contact_detail", pk=pk)
+    back_url = request.url_for("admin_contact_detail", locale=request.state.locale, pk=pk)
     context.update({
         "original": contact, 
         "title": f"Удалить контакт: {contact.full_name}", 
