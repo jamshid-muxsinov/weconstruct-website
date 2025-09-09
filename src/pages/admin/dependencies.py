@@ -1,5 +1,3 @@
-# src/pages/admin/dependencies.py
-
 from fastapi import Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -7,7 +5,6 @@ from sqlalchemy.orm import undefer
 from src.core.db import get_db_session
 from src.core.security import get_current_active_user
 from src.models.shop_models import User, Notification
-# --- ШАГ 1: Импортируем нашу функцию перевода ---
 from src.pages.jinja_config import translate_ui
 
 async def get_unread_notifications_count(db: AsyncSession, user_id: int) -> int:

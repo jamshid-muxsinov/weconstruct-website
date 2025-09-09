@@ -1,3 +1,5 @@
+# src/pages/jinja_config.py
+
 import os
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
@@ -36,7 +38,6 @@ def translate_ui(context: dict, key: str, **kwargs) -> str:
     
     return translation
 
-# --- УДАЛИТЕ ИЛИ ЗАКОММЕНТИРУЙТЕ СЛЕДУЮЩУЮ СТРОКУ ---
 templates.env.globals['_'] = translate_ui
 
 # Остальной код без изменений
