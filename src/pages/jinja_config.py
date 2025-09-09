@@ -37,7 +37,7 @@ def translate_ui(context: dict, key: str, **kwargs) -> str:
     return translation
 
 # --- УДАЛИТЕ ИЛИ ЗАКОММЕНТИРУЙТЕ СЛЕДУЮЩУЮ СТРОКУ ---
-# templates.env.globals['_'] = translate_ui
+templates.env.globals['_'] = translate_ui
 
 # Остальной код без изменений
 STATUS_DISPLAY_MAP = {
