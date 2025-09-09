@@ -17,7 +17,8 @@
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                         <div>
                             <p style="font-weight: 500;">{{ _('request_single') }} #{{ item.obj.id }} на "{{ t_get(request, item.obj.product, 'name') if item.obj.product else _('general_request_option') }}"</p>
-                            <span class="status-badge status-{{ item.obj.status.value }}">{{ get_status_display(item.obj.status, request.state.locale) }}</span>
+                            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Убран лишний аргумент --- #}
+                            <span class="status-badge status-{{ item.obj.status.value }}">{{ get_status_display(item.obj.status) }}</span>
                             {% if item.obj.assigned_to %}<small style="color: var(--text-secondary); margin-left: 8px;"><i class='bx bxs-user'></i> {{ item.obj.assigned_to.username }}</small>{% endif %}
                         </div>
                         <div class="timeline-item-actions">
