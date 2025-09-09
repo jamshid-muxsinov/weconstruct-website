@@ -22,7 +22,7 @@ async def admin_root_redirect(request: Request):
     """
     Перенаправляет с / на /dashboard.
     """
-    dashboard_url = request.url_for('admin_dashboard')
+    dashboard_url = request.url_for('admin_dashboard', locale='ru')
     return RedirectResponse(url=dashboard_url)
 
 router.include_router(dashboard.router)
