@@ -161,15 +161,12 @@ async def handle_list_view(
     date_from: Optional[str] = None,
     date_to: Optional[str] = None
 ) -> Page:
-    # Базовые запросы
     items_query = select(meta.model)
     count_query = select(func.count(distinct(meta.model.id))).select_from(meta.model)
 
-    # Применяем JOIN'ы и WHERE в зависимости от модели
     if search_query:
         search_like = f"%{search_query}%"
         if meta.model == QuoteRequest:
-            # Для заявок ищем по связанным контактам
             filter_condition = or_(
                 func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like),
                 Contact.phone.ilike(search_like)
@@ -177,11 +174,10 @@ async def handle_list_view(
             items_query = items_query.join(Contact).where(filter_condition)
             count_query = count_query.join(Contact).where(filter_condition)
         elif meta.model == Contact:
-            # Для контактов ищем напрямую в их полях
             filter_condition = or_(
                 func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like),
                 Contact.phone.ilike(search_like),
-                Contact.name.ilike(search_like) # Добавим поиск только по имени
+                Contact.name.ilike(search_like)
             )
             items_query = items_query.where(filter_condition)
             count_query = count_query.where(filter_condition)
@@ -192,7 +188,6 @@ async def handle_list_view(
             items_query = items_query.where(Category.name_ru.ilike(search_like))
             count_query = count_query.where(Category.name_ru.ilike(search_like))
 
-    # Фильтрация по датам (только для заявок)
     if meta.model == QuoteRequest:
         try:
             if date_from:
@@ -206,13 +201,9 @@ async def handle_list_view(
         except ValueError:
             pass
 
-    # Выполняем запрос на общее количество
     total_result = await db.execute(count_query)
     total = total_result.scalar_one_or_none() or 0
     
-    log.info(f"Manual count for {meta.model_name} found {total} items.")
-    
-    # Применяем Eager Loading для связанных моделей
     if meta.model == Product:
         items_query = items_query.options(selectinload(Product.category))
     elif meta.model == QuoteRequest:
@@ -222,20 +213,16 @@ async def handle_list_view(
             selectinload(QuoteRequest.assigned_to)
         )
 
-    # Применяем сортировку
     if meta.model == QuoteRequest and sort == 'asc':
         items_query = items_query.order_by(QuoteRequest.created_at.asc())
     else:
-        # Сортировка по убыванию ID для всех остальных случаев
         items_query = items_query.order_by(getattr(meta.model, 'id').desc())
 
-    # Применяем пагинацию
     paginated_items_query = items_query.offset((page - 1) * size).limit(size)
     
     items_result = await db.execute(paginated_items_query)
     items = items_result.scalars().unique().all()
     
-    # Создаем и возвращаем страницу
     params = Params(page=page, size=size)
     return create_page(items, total, params)
 
@@ -327,7 +314,9 @@ async def product_delete(request: Request, pk: int, context: dict = Depends(get_
     if request.method == "POST":
         await db.delete(product); await db.commit(); response = RedirectResponse(url=request.url_for(PRODUCT_META.list_url_name, locale=request.state.locale), status_code=303);
         return set_hx_trigger_header(response, "product_deleted_success", request, "error")
-    context.update({"meta": PRODUCT_META, "original": product, "back_url": request.url_for(PRODUCT_META.change_url_name, locale=request.state.locale, pk=pk), "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/delete_confirmation.html", context)
+    _ = templates.env.globals['_']
+    title = f"{_({'request': request}, 'delete_confirmation_title', entity=_(PRODUCT_META.verbose_name))}"
+    context.update({"meta": PRODUCT_META, "original": product, "title": title, "back_url": request.url_for(PRODUCT_META.change_url_name, locale=request.state.locale, pk=pk), "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/delete_confirmation.html", context)
 
 @router.get("/category/", response_class=HTMLResponse, name="admin_category_list")
 async def category_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
@@ -363,7 +352,9 @@ async def category_delete(request: Request, pk: int, context: dict = Depends(get
             return set_hx_trigger_header(response, "category_deleted_success", request, "error")
         except IntegrityError:
             await db.rollback(); context.update({"error_message": "Нельзя удалить категорию, к которой привязаны товары. Сначала измените категорию у этих товаров или удалите их."}); return templates.TemplateResponse("admin/500.html", context, status_code=500)
-    context.update({"meta": CATEGORY_META, "original": category, "back_url": request.url_for(CATEGORY_META.change_url_name, locale=request.state.locale, pk=pk), "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/delete_confirmation.html", context)
+    _ = templates.env.globals['_']
+    title = f"{_({'request': request}, 'delete_confirmation_title', entity=_(CATEGORY_META.verbose_name))}"
+    context.update({"meta": CATEGORY_META, "original": category, "title": title, "back_url": request.url_for(CATEGORY_META.change_url_name, locale=request.state.locale, pk=pk), "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/delete_confirmation.html", context)
 
 @router.get("/quoterequest/add/", response_class=HTMLResponse, name="admin_quoterequest_add")
 async def quoterequest_form_get_add(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
@@ -452,6 +443,6 @@ async def quoterequest_delete(request: Request, pk: int, context: dict = Depends
             
     back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale))
     _ = templates.env.globals['_']
-    title = f"{_({'request': request}, 'delete')}: {_({'request': request}, 'request_single')}"
+    title = f"{_({'request': request}, 'delete_confirmation_title', entity=_(QUOTEREQUEST_META.verbose_name))}"
     context.update({"meta": QUOTEREQUEST_META, "original": quote_req, "title": title, "back_url": back_url, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/delete_confirmation.html", context)

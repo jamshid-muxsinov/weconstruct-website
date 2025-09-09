@@ -32,13 +32,13 @@
                     {% if field_name in form %}
                         {% set field = form[field_name] %}
                         <div class="input-group">
-                            <label for="{{ field.id }}">{{ field.label.text }}</label>
+                            <label for="{{ field.id }}">{{ _(field.label.text) }}</label>
                             {% if field.type == 'TextAreaField' %}
                                 {{ field(class_='textarea-field') }}
                             {% else %}
                                 {{ field(class_='input-field') }}
                             {% endif %}
-                            {% if field.description %}<small class="form-field-description">{{ field.description }}</small>{% endif %}
+                            {% if field.description %}<small class="form-field-description">{{ _(field.description) }}</small>{% endif %}
                             {% if field.errors %}<div class="error-text">{{ field.errors[0] }}</div>{% endif %}
                         </div>
                     {% endif %}
@@ -50,13 +50,13 @@
                     {% if field_name in form %}
                         {% set field = form[field_name] %}
                         <div class="input-group">
-                            <label for="{{ field.id }}">{{ field.label.text }}</label>
+                            <label for="{{ field.id }}">{{ _(field.label.text) }}</label>
                             {% if field.type == 'TextAreaField' %}
                                 {{ field(class_='textarea-field') }}
                             {% else %}
                                 {{ field(class_='input-field') }}
                             {% endif %}
-                            {% if field.description %}<small class="form-field-description">{{ field.description }}</small>{% endif %}
+                            {% if field.description %}<small class="form-field-description">{{ _(field.description) }}</small>{% endif %}
                             {% if field.errors %}<div class="error-text">{{ field.errors[0] }}</div>{% endif %}
                         </div>
                     {% endif %}
