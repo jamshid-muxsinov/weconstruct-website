@@ -7,18 +7,36 @@ from starlette_wtf import csrf_token
 from urllib.parse import urlencode
 import re
 import pytz
-from .translations import TRANSLATIONS
 from pathlib import Path
+import jinja2  # <<< --- ШАГ 1: ДОБАВЬТЕ ЭТОТ ИМПОРТ
 
-# <<< ИЗМЕНЕНИЕ: Определяем абсолютный путь к папке /app/src/templates >>>
+from .translations import TRANSLATIONS
+
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates"
-
-# <<< ИЗМЕНЕНИЕ: Используем этот абсолютный путь >>>
 templates = Jinja2Templates(directory=TEMPLATE_DIR, extensions=['jinja2.ext.do'])
 
-# ... остальной код файла остается без изменений ...
-
 translation_cache = TTLCache(maxsize=2000, ttl=3600)
+
+# <<< --- ШАГ 2: ИЗМЕНИТЕ ДЕКОРАТОР ---
+@jinja2.contextfunction
+def translate_ui(context: dict, key: str, **kwargs) -> str:
+    """
+    Переводит строку интерфейса по ключу.
+    Использует 'request' из контекста.
+    """
+    request = context['request']
+    locale = getattr(request.state, 'locale', 'ru')
+    
+    translation_dict = TRANSLATIONS.get(key, {})
+    translation = translation_dict.get(locale, TRANSLATIONS.get(key, {}).get('ru', key))
+    
+    if kwargs:
+        try:
+            return translation.format(**kwargs)
+        except KeyError:
+            return translation
+    
+    return translation
 
 STATUS_DISPLAY_MAP = {
     'ru': {
@@ -41,25 +59,6 @@ STATUS_DISPLAY_MAP = {
     }
 }
 
-@templates.env.contextfunction
-def translate_ui(context: dict, key: str, **kwargs) -> str:
-    """
-    Переводит строку интерфейса по ключу.
-    Использует 'request' из контекста.
-    """
-    request = context['request'] # Извлекаем request из контекста
-    locale = getattr(request.state, 'locale', 'ru')
-    
-    translation_dict = TRANSLATIONS.get(key, {})
-    translation = translation_dict.get(locale, TRANSLATIONS.get(key, {}).get('ru', key))
-    
-    if kwargs:
-        try:
-            return translation.format(**kwargs)
-        except KeyError:
-            return translation
-    
-    return translation
 
 def get_status_display(status, locale: str = 'ru'):
     if locale not in STATUS_DISPLAY_MAP:
@@ -125,6 +124,7 @@ def format_localtime(utc_dt):
     local_dt = utc_dt.astimezone(tashkent_tz)
     return local_dt.strftime('%d.%m.%Y %H:%M')
 
+# Регистрируем наши функции в окружении Jinja2
 templates.env.globals['_'] = translate_ui
 templates.env.globals['hasattr'] = hasattr
 templates.env.globals['current_year'] = datetime.now().year
