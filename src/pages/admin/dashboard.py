@@ -1,3 +1,5 @@
+# src/pages/admin/dashboard.py
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,4 +28,16 @@ async def get_dashboard(
         "top_managers": top_managers_data,
         "htmx_request": "HX-Request" in request.headers
     })
+
+    # --- ДОБАВЬТЕ ЭТИ СТРОКИ ДЛЯ ДИАГНОСТИКИ ---
+    print("\n" + "="*20 + " DEBUG START: Контекст для шаблона dashboard.html " + "="*20)
+    print(f"Ключи в контексте: {list(context.keys())}")
+    if 'user' in context:
+        print(f"Объект user в контексте: {context['user']}")
+        print(f"Имя пользователя: {context['user'].username}")
+    else:
+        print("!!! Ключ 'user' ОТСУТСТВУЕТ в контексте !!!")
+    print("="*78 + "\n")
+    # --- КОНЕЦ БЛОКА ДИАГНОСТИКИ ---
+    
     return templates.TemplateResponse("admin/dashboard.html", context)
