@@ -12,8 +12,28 @@ from src.models.shop_models import User
 from src.services.user_service import get_user_by_username
 from src.schemas.user_schemas import TokenData
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login/token")
 settings = get_settings()
+
+# Мы создаем зависимость, которая будет искать токен
+class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
+    async def __call__(self, request: Request) -> Optional[str]:
+        # Сначала ищем в заголовке Authorization (стандартный способ)
+        authorization: str = request.headers.get("Authorization")
+        scheme, _, param = authorization.partition(" ")
+        if authorization and scheme.lower() == "bearer":
+            return param
+        
+        # Если в заголовке нет, ищем в cookie
+        token = request.cookies.get("access_token")
+        if token:
+            return token
+        
+        # Если нигде нет, будет ошибка (но мы позволим ей быть опциональной)
+        # В нашем случае get_current_user обработает None
+        return None
+
+# Инициализируем нашу кастомную схему
+oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl="/admin/login/token", auto_error=False)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -25,26 +45,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-async def get_token_from_header_or_cookie(request: Request) -> Optional[str]:
-    token_from_cookie = request.cookies.get("access_token")
-    if token_from_cookie:
-        return token_from_cookie
-
-    authorization: str = request.headers.get("Authorization")
-    if authorization:
-        scheme, _, token = authorization.partition(" ")
-        if scheme.lower() == "bearer":
-            return token
-    return None
-
 async def get_current_user(
     db: AsyncSession = Depends(get_db_session), 
-    token: str = Depends(get_token_from_header_or_cookie)
+    token: Optional[str] = Depends(oauth2_scheme) # <-- Используем нашу новую зависимость
 ) -> User:
     credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
+        status_code=status.HTTP_303_SEE_OTHER, # <-- Меняем на 303 для редиректа
         detail="Could not validate credentials, please log in again",
-        headers={"WWW-Authenticate": "Bearer"},
+        headers={"Location": "/admin/login"}, # <-- Указываем куда редиректить
     )
     if token is None:
         raise credentials_exception
@@ -55,15 +63,12 @@ async def get_current_user(
         if username is None:
             raise credentials_exception
         
-        # Check token expiration explicitly
         exp = payload.get("exp")
         if exp is None or datetime.now(timezone.utc).timestamp() > exp:
             raise credentials_exception
             
         token_data = TokenData(username=username)
-    except JWTError as e:
-        # Log security events (in production, use proper logging)
-        print(f"JWT validation failed: {e}")
+    except JWTError:
         raise credentials_exception
         
     user = await get_user_by_username(db, username=token_data.username)
@@ -77,7 +82,6 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 async def get_current_staff_user(current_user: User = Depends(get_current_active_user)) -> User:
-    """Additional security layer to ensure only staff users can access admin resources."""
     if not current_user.is_staff:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
@@ -86,9 +90,6 @@ async def get_current_staff_user(current_user: User = Depends(get_current_active
     return current_user
 
 async def get_current_superuser(current_user: User = Depends(get_current_active_user)) -> User:
-    """
-    Проверяет, что текущий пользователь не только активен, но и является суперпользователем.
-    """
     if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
