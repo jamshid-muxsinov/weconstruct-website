@@ -4,13 +4,13 @@
 
 {% block content %}
 <div class="page-header">
-    <h1><i class='bx bxs-user-rectangle' style="vertical-align: middle;"></i> Клиент: {{ contact.full_name }}</h1>
+    <h1><i class='bx bxs-user-rectangle' style="vertical-align: middle;"></i> {{ _('client_single') }}: {{ contact.full_name }}</h1>
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: flex-start;">
     <div class="card">
-        <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Контактная информация</h2>
-        <form method="post" action="{{ request.url_for('post_contact_detail_page', pk=contact.id) }}" novalidate>
+        <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">{{ _('contact_info') }}</h2>
+        <form method="post" action="{{ request.url_for('post_contact_detail_page', locale=request.state.locale, pk=contact.id) }}" novalidate>
             {% for field in form %}
             <div class="input-group">
                 <label for="{{ field.id }}">{{ field.label.text }}</label>
@@ -19,21 +19,21 @@
             </div>
             {% endfor %}
             <div class="form-actions" style="padding: 0; border: none; margin-top: 8px;">
-                <button type="submit" class="btn btn-primary">Сохранить</button>
-                 <a href="{{ request.url_for('admin_contact_delete', pk=contact.id) }}" class="btn btn-danger">Удалить контакт</a>
+                <button type="submit" class="btn btn-primary">{{ _('save') }}</button>
+                 <a href="{{ request.url_for('admin_contact_delete', locale=request.state.locale, pk=contact.id) }}" class="btn btn-danger">{{ _('delete_contact') }}</a>
             </div>
         </form>
     </div>
 
     <div class="card">
-        <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Лента взаимодействий</h2>
+        <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">{{ _('interaction_feed') }}</h2>
         
-        <form hx-post="{{ request.url_for('admin_contact_add_note', pk=contact.id) }}" hx-target="#timeline-list"
+        <form hx-post="{{ request.url_for('admin_contact_add_note', locale=request.state.locale, pk=contact.id) }}" hx-target="#timeline-list"
             hx-swap="innerHTML" hx-on::after-request="this.reset()"
             style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color);">
-            <textarea name="note" class="textarea-field" rows="3" placeholder="Добавить заметку о звонке или встрече..."></textarea>
+            <textarea name="note" class="textarea-field" rows="3" placeholder="{{ _('add_note_placeholder') }}"></textarea>
             <div style="text-align: right; margin-top: 10px;">
-                <button type="submit" class="btn btn-secondary">Добавить заметку</button>
+                <button type="submit" class="btn btn-secondary">{{ _('add_note_button') }}</button>
             </div>
         </form>
 

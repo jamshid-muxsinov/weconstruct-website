@@ -6,9 +6,9 @@
 <div class="page-header">
     <h1>
         {% if original %}
-        <i class='bx bxs-edit-alt'></i> Редактирование: {{ meta.verbose_name }}
+        <i class='bx bxs-edit-alt'></i> {{ _('editing') }}: {{ _(meta.verbose_name) }}
         {% else %}
-        <i class='bx bx-plus-circle'></i> Добавление: {{ meta.verbose_name }}
+        <i class='bx bx-plus-circle'></i> {{ _('adding') }}: {{ _(meta.verbose_name) }}
         {% endif %}
     </h1>
 </div>
@@ -23,8 +23,8 @@
         {% if 'name_ru' in form %}
         <div class="tabs">
             <div class="tab-header">
-                <button type="button" class="tab-link active" onclick="openTab(event, 'lang-ru')">Русский</button>
-                <button type="button" class="tab-link" onclick="openTab(event, 'lang-uz')">O'zbekcha</button>
+                <button type="button" class="tab-link active" onclick="openTab(event, 'lang-ru')">{{ _('lang_ru') }}</button>
+                <button type="button" class="tab-link" onclick="openTab(event, 'lang-uz')">{{ _('lang_uz') }}</button>
             </div>
 
             <div id="lang-ru" class="tab-content active">
@@ -64,7 +64,7 @@
             </div>
         </div>
         <hr style="margin: 24px 0; border-color: var(--border-color);">
-        <h3 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 16px;">Общие настройки</h3>
+        <h3 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 16px;">{{ _('general_settings') }}</h3>
         {% endif %}
 
         {% for field in form %}
@@ -74,11 +74,11 @@
         {% endfor %}
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <button type="submit" class="btn btn-primary">{{ _('save') }}</button>
             {% if original and meta.delete_url_name %}
-            <a href="{{ request.url_for(meta.delete_url_name, pk=original.id) }}" class="btn btn-danger">Удалить</a>
+            <a href="{{ request.url_for(meta.delete_url_name, locale=request.state.locale, pk=original.id) }}" class="btn btn-danger">{{ _('delete') }}</a>
             {% endif %}
-            <a href="{{ request.url_for(meta.list_url_name) }}" class="btn btn-secondary" style="margin-left: auto;">Отмена</a>
+            <a href="{{ request.url_for(meta.list_url_name, locale=request.state.locale) }}" class="btn btn-secondary" style="margin-left: auto;">{{ _('cancel') }}</a>
         </div>
     </form>
 </div>

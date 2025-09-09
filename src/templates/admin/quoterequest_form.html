@@ -4,38 +4,33 @@
 
 {% block content %}
 <div class="page-header">
-    <h1>{{ title }}</h1>
-    {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
+    <h1>{{ _(title) }}</h1>
     <a href="{{ request.url_for(meta.list_url_name, locale=request.state.locale) }}" class="btn btn-secondary">
-        <i class='bx bx-arrow-back'></i> К списку заявок
+        <i class='bx bx-arrow-back'></i> {{ _('back_to_request_list') }}
     </a>
 </div>
 
 <div class="card form-container">
     <form method="post" novalidate id="quote-request-form">
         
-        <!-- Двухколоночный макет -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;" class="two-column-layout">
             
-            {# --- ЛЕВАЯ КОЛОНКА: ИНФОРМАЦИЯ ОТ КЛИЕНТА --- #}
             <fieldset style="border: 1px solid var(--border-color); padding: 24px; border-radius: var(--border-radius-md); height: fit-content;">
-                <legend style="font-size: 1.25rem; font-weight: 500; padding: 0 10px; margin-left: 10px;">Информация от клиента</legend>
+                <legend style="font-size: 1.25rem; font-weight: 500; padding: 0 10px; margin-left: 10px;">{{ _('client_info') }}</legend>
 
             {% if original %}
             <div class="input-group">
-                <label>Клиент</label>
+                <label>{{ _('header_client') }}</label>
                 <div class="input-field readonly-field">
-                    {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
                     <a href="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=original.contact_id) }}" class="link-to-change">{{ original.contact.full_name }} ({{ original.contact.phone }})</a>
                 </div>
             </div>
             {% else %}
             {{ form.contact_id() }}
             <div class="input-group">
-                <label for="contact-search">Поиск клиента (по имени или телефону)</label>
+                <label for="contact-search">{{ _('search_client_placeholder') }}</label>
                 <div style="position: relative;">
-                    {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
-                    <input type="text" id="contact-search" class="input-field" placeholder="Начните вводить..."
+                    <input type="text" id="contact-search" class="input-field" placeholder="..."
                         autocomplete="off" hx-get="{{ request.url_for('admin_htmx_contact_search', locale=request.state.locale) }}"
                         hx-trigger="keyup[target.value.length > 1] changed delay:300ms" hx-target="#search-results"
                         name="q" onkeydown="if(event.keyCode===13){event.preventDefault();}">
@@ -46,12 +41,12 @@
             <div class="error-text">{{ form.contact_id.errors[0] }}</div>
             {% endif %}
             <div id="new-contact-fields" style="display: none; border-top: 1px solid var(--border-color); padding-top: 16px; margin-top: 16px;">
-                <p style="font-weight: 500; margin-bottom: 16px;">Новый клиент</p>
+                <p style="font-weight: 500; margin-bottom: 16px;">{{ _('new_client') }}</p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div class="input-group"><label for="{{ form.new_contact_name.id }}">{{ form.new_contact_name.label.text }}</label>{{ form.new_contact_name(class_='input-field') }}</div>
                     <div class="input-group"><label for="{{ form.new_contact_phone.id }}">{{ form.new_contact_phone.label.text }}</label>{{ form.new_contact_phone(class_='input-field') }}</div>
                 </div>
-                <a href="#" onclick="hideNewContactForm(event)" style="font-size: 0.8rem;">Отмена</a>
+                <a href="#" onclick="hideNewContactForm(event)" style="font-size: 0.8rem;">{{ _('cancel') }}</a>
             </div>
             {% endif %}
             
@@ -75,9 +70,8 @@
             </div>
             </fieldset>
             
-            {# --- ПРАВАЯ КОЛОНКА: ИНФОРМАЦИЯ ОТ МЕНЕДЖЕРА --- #}
             <fieldset style="border: 1px solid var(--border-color); padding: 24px; border-radius: var(--border-radius-md); height: fit-content;">
-                <legend style="font-size: 1.25rem; font-weight: 500; padding: 0 10px; margin-left: 10px;">Информация от менеджера</legend>
+                <legend style="font-size: 1.25rem; font-weight: 500; padding: 0 10px; margin-left: 10px;">{{ _('manager_info') }}</legend>
             <div class="form-row">
                 <div class="input-group">
                     <label for="{{ form.business_type.id }}">{{ form.business_type.label.text }}</label>
@@ -102,17 +96,17 @@
             </div>
             </fieldset>
             
-        </div> <!-- Конец двухколоночного макета -->
+        </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <button type="submit" class="btn btn-primary">{{ _('save') }}</button>
             {% if original %}
-            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
-            <a href="{{ request.url_for('admin_quoterequest_delete', locale=request.state.locale, pk=original.id) }}" class="btn btn-danger">Удалить заявку</a>
+            <a href="{{ request.url_for('admin_quoterequest_delete', locale=request.state.locale, pk=original.id) }}" class="btn btn-danger">{{ _('delete_request') }}</a>
             {% endif %}
         </div>
     </form>
 </div>
+
 
 <script>
     const contactIdInput = document.getElementById('contact_id');

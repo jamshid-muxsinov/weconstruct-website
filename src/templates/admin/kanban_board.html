@@ -6,10 +6,9 @@
 {% block content %}
 <div x-data>
     <div class="page-header">
-        <h1>Воронка продаж</h1>
+        <h1>{{ _('sales_funnel') }}</h1>
         <div class="page-header-actions">
             <form class="filter-form" 
-                  {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
                   hx-get="{{ request.url_for('admin_htmx_kanban_content', locale=request.state.locale) }}"
                   hx-target="#kanban-board-container" 
                   hx-swap="innerHTML" 
@@ -19,13 +18,12 @@
                         onchange="this.form.requestSubmit()">
                     <span class="slider"></span>
                 </label>
-                <span>Показать архивные</span>
+                <span>{{ _('show_archived') }}</span>
             </form>
 
-            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
             <a href="{{ request.url_for('admin_quoterequest_add', locale=request.state.locale) }}" class="btn btn-primary">
                 <i class='bx bx-plus'></i>
-                Новая заявка
+                {{ _('new_request') }}
             </a>
         </div>
     </div>
@@ -35,7 +33,7 @@
         <div class="search-box" style="flex: 1; min-width: 250px;">
             <input type="text" 
                    x-model.debounce.300ms="$store.kanbanManager.searchQuery"
-                   placeholder="Поиск по имени, телефону или ID..."
+                   placeholder="{{ _('search_placeholder') }}"
                    class="input-field"
                    style="margin: 0;">
         </div>
@@ -45,7 +43,7 @@
                     @click="$store.kanbanManager.activeFilters.assignee = ($store.kanbanManager.activeFilters.assignee === 'me' ? null : 'me')"
                     :class="{'filter-chip': true, 'active': $store.kanbanManager.activeFilters.assignee === 'me'}">
                 <i class='bx bx-user'></i>
-                Мои задачи
+                {{ _('my_tasks') }}
             </button>
             
             <button type="button"
@@ -53,47 +51,45 @@
                     x-show="$store.kanbanManager.searchQuery || $store.kanbanManager.activeFilters.assignee"
                     class="btn btn-sm btn-secondary">
                 <i class='bx bx-x'></i>
-                Очистить
+                {{ _('clear') }}
             </button>
         </div>
     </div>
 
     <!-- Bulk Actions Bar -->
     <div class="bulk-actions-bar" x-show="$store.kanbanManager.selectedCards.size > 0" x-transition>
-        <span x-text="`Выбрано: ${$store.kanbanManager.selectedCards.size}`" style="font-weight: 500;"></span>
+        <span x-text="`{{ _('selected_cards_count', count='') }}${$store.kanbanManager.selectedCards.size}`" style="font-weight: 500;"></span>
         
         <select @change="$store.kanbanManager.bulkAssign($event.target.value); $event.target.value = ''" class="select-field" style="min-width: 150px;">
-            <option value="">Назначить...</option>
+            <option value="">{{ _('assign_to') }}</option>
             {% for user in staff_users %}
             <option value="{{ user.id }}">{{ user.username }}</option>
             {% endfor %}
         </select>
         
         <select @change="$store.kanbanManager.bulkUpdateStatus($event.target.value); $event.target.value = ''" class="select-field" style="min-width: 120px;">
-            <option value="">Статус...</option>
+            <option value="">{{ _('status_placeholder') }}</option>
             {% for status in QuoteRequest.StatusEnum %}
               <option value="{{ status.value }}">{{ get_status_display(status) }}</option>
             {% endfor %}
         </select>
         
-        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
         <a :href="'{{ url_for('api_export_requests', locale=request.state.locale) }}?card_ids=' + $store.kanbanManager.selectedIds.join(',')" 
            class="btn btn-sm btn-secondary">
-           <i class='bx bx-download'></i> Экспорт
+           <i class='bx bx-download'></i> {{ _('export') }}
         </a>
         
-        <button @click="$store.kanbanManager.clearSelection()" class="btn-icon btn-icon-danger" title="Отменить выбор">
+        <button @click="$store.kanbanManager.clearSelection()" class="btn-icon btn-icon-danger" title="{{ _('cancel_selection') }}">
             <i class='bx bx-x'></i>
         </button>
     </div>
 
     <div id="kanban-board-container" 
-         {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Добавлена локаль --- #}
          hx-get="{{ request.url_for('admin_htmx_kanban_content', locale=request.state.locale) }}?show_archived={{ show_archived }}"
          hx-trigger="load, updateKanban from:body"
          hx-swap="innerHTML">
         <div class="modal-loading-placeholder" style="padding: 100px 0;">
-            <i class='bx bx-loader-alt bx-spin'></i><span>Загрузка канбан-доски...</span>
+            <i class='bx bx-loader-alt bx-spin'></i><span>{{ _('loading_kanban') }}</span>
         </div>
     </div>
 </div>

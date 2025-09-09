@@ -4,20 +4,19 @@
 
 {% block content %}
 <div class="page-header">
-    <h1>{{ title }}: {{ original }}</h1>
+    <h1>{{ _('delete_confirmation_title', entity=_(meta.verbose_name)) }}: {{ original }}</h1>
 </div>
 
 <div class="card form-container">
-    <p style="margin-bottom: 24px; font-size: 1.1rem;">Вы уверены, что хотите удалить "{{ original }}"? Это действие необратимо.</p>
+    <p style="margin-bottom: 24px; font-size: 1.1rem;">{{ _('delete_confirmation_text', item=original) }}</p>
 
     <form hx-post="{{ request.url }}" 
           hx-target="body" 
           hx-push-url="true">
         <div class="form-actions">
-            <button type="submit" class="btn btn-danger">Да, я уверен</button>
-            <a href="{{ back_url }}" class="btn btn-secondary">Отмена</a>
+            <button type="submit" class="btn btn-danger">{{ _('confirm_delete') }}</button>
+            <a href="{{ back_url }}" class="btn btn-secondary">{{ _('cancel') }}</a>
         </div>
     </form>
-    {# --- КОНЕЦ ИЗМЕНЕНИЯ --- #}
 </div>
 {% endblock %}
