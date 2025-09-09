@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 import re
 import pytz
 from pathlib import Path
-import jinja2  # Убедитесь, что этот импорт есть
+import jinja2
 
 from .translations import TRANSLATIONS
 
@@ -17,16 +17,10 @@ templates = Jinja2Templates(directory=TEMPLATE_DIR, extensions=['jinja2.ext.do']
 
 translation_cache = TTLCache(maxsize=2000, ttl=3600)
 
-# --- ИСПОЛЬЗУЕМ ПРАВИЛЬНЫЙ ДЕКОРАТОР @jinja2.pass_context ---
 @jinja2.pass_context
 def translate_ui(context: dict, key: str, **kwargs) -> str:
-    """
-    Переводит строку интерфейса по ключу.
-    Использует 'request' из контекста.
-    """
     request = context.get('request')
     if not request:
-        # Запасной вариант, если request отсутствует в контексте
         return key
 
     locale = getattr(request.state, 'locale', 'ru')
@@ -42,10 +36,10 @@ def translate_ui(context: dict, key: str, **kwargs) -> str:
     
     return translation
 
-# Регистрируем функцию СРАЗУ, чтобы избежать проблем с импортом
-templates.env.globals['_'] = translate_ui
+# --- УДАЛИТЕ ИЛИ ЗАКОММЕНТИРУЙТЕ СЛЕДУЮЩУЮ СТРОКУ ---
+# templates.env.globals['_'] = translate_ui
 
-# Остальной код файла без изменений
+# Остальной код без изменений
 STATUS_DISPLAY_MAP = {
     'ru': {
         'imported': 'Импортировано', 'qualification': 'Квалификация', 'contacted': 'Контакт установлен',
@@ -57,10 +51,12 @@ STATUS_DISPLAY_MAP = {
     }
 }
 
+
 def get_status_display(status, locale: str = 'ru'):
     if locale not in STATUS_DISPLAY_MAP: locale = 'ru'
     status_key = getattr(status, 'value', str(status))
     return STATUS_DISPLAY_MAP.get(locale, {}).get(status_key, STATUS_DISPLAY_MAP.get('ru', {}).get(status_key, status_key.replace('_', ' ').capitalize()))
+
 
 def format_phone(value: str) -> str:
     if not value: return "—"
