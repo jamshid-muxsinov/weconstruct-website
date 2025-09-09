@@ -4,32 +4,32 @@
 
 {% block content %}
 <div class="page-header">
-    <h1>Управление приглашениями</h1>
+    <h1>{{ _('invites_title') }}</h1>
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: flex-start;">
     <div class="card">
-        <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Создать приглашение</h2>
+        <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">{{ _('create_invite') }}</h2>
         <form method="post" novalidate>
             <div class="input-group">
-                <label for="{{ form.note.id }}">{{ form.note.label.text }}</label>
-                {{ form.note(class_='input-field', placeholder='Например, Иван Иванов') }}
+                <label for="{{ form.note.id }}">{{ _('invite_note') }}</label>
+                {{ form.note(class_='input-field', placeholder=_('invite_note_placeholder')) }}
                 {% if form.note.errors %}
                 <div style="color: var(--status-red); font-size: 0.8rem; margin-top: 4px;">{{ form.note.errors[0] }}</div>
                 {% endif %}
             </div>
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Сгенерировать ссылку</button>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">{{ _('generate_link') }}</button>
         </form>
     </div>
     <div class="card">
-        <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">История приглашений</h2>
+        <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">{{ _('invites_history') }}</h2>
         <div class="table-wrapper">
             <table class="styled-table">
                 <thead>
                     <tr>
-                        <th>Заметка</th>
-                        <th>Статус</th>
-                        <th>Ссылка-приглашение</th>
+                        <th>{{ _('invite_note') }}</th>
+                        <th>{{ _('status') }}</th>
+                        <th>{{ _('invite_link') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -38,15 +38,15 @@
                         <td>{{ invite.note }}</td>
                         <td>
                             {% if invite.is_used %}
-                                <span class="status-badge status-cancelled">Использовано</span>
+                                <span class="status-badge status-cancelled">{{ _('invite_status_used') }}</span>
                             {% else %}
-                                <span class="status-badge status-completed">Активно</span>
+                                <span class="status-badge status-completed">{{ _('invite_status_active') }}</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if not invite.is_used %}
                             <input type="text" class="input-field" value="{{ request.url_for('admin_register') }}?invite={{ invite.code }}" readonly
-                                   onclick="this.select(); document.execCommand('copy'); notyf.success('Ссылка скопирована!');"
+                                   onclick="this.select(); document.execCommand('copy'); notyf.success('{{ _('link_copied') }}');"
                                    style="cursor: pointer;">
                             {% else %}
                             -
@@ -55,7 +55,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="3" class="empty-list-placeholder">Вы еще не создали ни одного приглашения.</td>
+                        <td colspan="3" class="empty-list-placeholder">{{ _('no_invites_yet') }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

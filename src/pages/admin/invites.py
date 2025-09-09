@@ -1,3 +1,5 @@
+# src/pages/admin/invites.py
+
 import wtforms
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -29,7 +31,7 @@ async def invites_page_post(request: Request, context: dict = Depends(get_common
     if form.validate():
         await user_service.create_invite(db, form.note.data, context["user"].id)
         response = RedirectResponse(request.url_for("admin_invites", locale=request.state.locale), status_code=303)
-        return set_hx_trigger_header(response, "Приглашение успешно создано!")
+        return set_hx_trigger_header(response, "invite_created_success", request)
     invites = (await db.execute(select(RegistrationInvite).order_by(RegistrationInvite.created_at.desc()))).scalars().all()
     context.update({"title": "Управление приглашениями", "invites": invites, "form": form, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/invites.html", context)

@@ -4,41 +4,41 @@
 
 {% block content %}
 <div class="page-header">
-    <h1>Профиль менеджера: {{ profile_user.username }}</h1>
+    <h1>{{ _('manager_profile_title', username=profile_user.username) }}</h1>
 </div>
 
-<h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Сводка производительности (за 30 дней)</h2>
+<h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">{{ _('performance_summary') }}</h2>
 <div
     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px;">
 
     <div class="card" style="padding: 16px; text-align: center;">
         <i class='bx bx-check-double' style="font-size: 2rem; color: var(--status-green); margin-bottom: 8px;"></i>
         <h3 style="font-size: 2rem; font-weight: 600;">{{ stats.requests_completed }}</h3>
-        <p style="color: var(--text-secondary);">Заявок закрыто</p>
+        <p style="color: var(--text-secondary);">{{ _('requests_closed') }}</p>
     </div>
 
     <div class="card" style="padding: 16px; text-align: center;">
         <i class='bx bx-rocket' style="font-size: 2rem; color: var(--status-blue); margin-bottom: 8px;"></i>
         <h3 style="font-size: 2rem; font-weight: 600;">{{ stats.requests_in_progress }}</h3>
-        <p style="color: var(--text-secondary);">Взято в работу</p>
+        <p style="color: var(--text-secondary);">{{ _('requests_in_progress') }}</p>
     </div>
 
     <div class="card" style="padding: 16px; text-align: center;">
         <i class='bx bx-line-chart' style="font-size: 2rem; color: var(--accent-primary); margin-bottom: 8px;"></i>
         <h3 style="font-size: 2rem; font-weight: 600;">{{ stats.conversion_rate }}%</h3>
-        <p style="color: var(--text-secondary);">Конверсия</p>
+        <p style="color: var(--text-secondary);">{{ _('conversion') }}</p>
     </div>
 
     <div class="card" style="padding: 16px; text-align: center;">
         <i class='bx bxs-check-square' style="font-size: 2rem; color: var(--status-yellow); margin-bottom: 8px;"></i>
         <h3 style="font-size: 2rem; font-weight: 600;">{{ stats.tasks_completed }}</h3>
-        <p style="color: var(--text-secondary);">Задач выполнено</p>
+        <p style="color: var(--text-secondary);">{{ _('tasks_completed') }}</p>
     </div>
 
 </div>
 
 <div class="card">
-    <h3 style="margin-bottom: 16px; font-size: 1.1rem;">Последние действия менеджера</h3>
+    <h3 style="margin-bottom: 16px; font-size: 1.1rem;">{{ _('manager_recent_activity') }}</h3>
     {% if feed %}
     <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
         {% for log in feed %}
@@ -48,15 +48,13 @@
             <div style="flex-grow: 1;">
                 <p>
                     Изменил(а) статус заявки
-                    <a href="{{ request.url_for('admin_quoterequest_change', pk=log.quote_request_id) }}">#{{
+                    <a href="{{ request.url_for('admin_quoterequest_change', locale=request.state.locale, pk=log.quote_request_id) }}">#{{
                         log.quote_request_id }}</a>
                 </p>
                 <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                    <span class="status-badge status-{{ log.old_status.value }}">{{ log.get_old_status_display()
-                        }}</span>
+                    <span class="status-badge status-{{ log.old_status.value }}">{{ get_status_display(log.old_status, request.state.locale) }}</span>
                     <i class='bx bx-right-arrow-alt'></i>
-                    <span class="status-badge status-{{ log.new_status.value }}">{{ log.get_new_status_display()
-                        }}</span>
+                    <span class="status-badge status-{{ log.new_status.value }}">{{ get_status_display(log.new_status, request.state.locale) }}</span>
                 </div>
             </div>
             <small style="color: var(--text-secondary);">{{ log.timestamp.strftime('%d.%m.%Y') }}</small>
@@ -64,7 +62,7 @@
         {% endfor %}
     </ul>
     {% else %}
-    <p class="empty-list-placeholder">Нет записей о действиях этого менеджера.</p>
+    <p class="empty-list-placeholder">{{ _('no_manager_activity_log') }}</p>
     {% endif %}
 </div>
 {% endblock %}

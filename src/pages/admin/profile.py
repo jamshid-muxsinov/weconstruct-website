@@ -1,3 +1,4 @@
+
 import json
 from urllib.parse import quote
 from fastapi import APIRouter, Depends, Request, HTTPException
@@ -62,9 +63,10 @@ async def post_my_profile_page(
             new_password=form.new_password.data
         )
         if success:
-            redirect_url = request.url_for("admin_profile")
+            redirect_url = request.url_for("admin_profile", locale=request.state.locale)
             response = RedirectResponse(redirect_url, status_code=303)
-            return set_hx_trigger_header(response, "Пароль успешно изменен!")
+            # --- ИЗМЕНЕНИЕ: Используем ключ перевода ---
+            return set_hx_trigger_header(response, "password_changed_success", request)
         else:
             form.old_password.errors.append("Неверный текущий пароль.")
     

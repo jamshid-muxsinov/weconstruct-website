@@ -1,7 +1,5 @@
 # src/pages/translations.py
 
-# Словарь для всех строк интерфейса.
-# Ключ - это идентификатор строки, а значение - словарь с переводами.
 TRANSLATIONS = {
     # Общие слова
     'save': {'ru': 'Сохранить', 'uz': 'Saqlash'},
@@ -20,6 +18,7 @@ TRANSLATIONS = {
     'back_to_list': {'ru': 'К списку', 'uz': 'Roʻyxatga qaytish'},
     'lang_ru': {'ru': 'Русский', 'uz': 'Rus tili'},
     'lang_uz': {'ru': 'O\'zbekcha', 'uz': 'Oʻzbek tili'},
+    'loading': {'ru': 'Загрузка...', 'uz': 'Yuklanmoqda...'},
 
     # Шаблон base.html (меню и шапка)
     'admin_panel': {'ru': 'Панель управления', 'uz': 'Boshqaruv paneli'},
@@ -35,7 +34,9 @@ TRANSLATIONS = {
     'hello_user': {'ru': 'Привет, {username}!', 'uz': 'Salom, {username}!'},
     'profile': {'ru': 'Профиль', 'uz': 'Profil'},
     'notifications': {'ru': 'Уведомления', 'uz': 'Bildirishnomalar'},
-    
+    'no_notifications': {'ru': 'Новых уведомлений нет.', 'uz': 'Yangi bildirishnomalar yoʻq.'},
+    'mark_all_as_read': {'ru': 'Пометить все как прочитанные', 'uz': 'Barchasini oʻqilgan deb belgilash'},
+
     # Страница Канбан
     'sales_funnel': {'ru': 'Воронка продаж', 'uz': 'Sotuv voronkasi'},
     'show_archived': {'ru': 'Показать архивные', 'uz': 'Arxivdagilarni koʻrsatish'},
@@ -48,7 +49,7 @@ TRANSLATIONS = {
     'loading_kanban': {'ru': 'Загрузка канбан-доски...', 'uz': 'Kanban-doska yuklanmoqda...'},
     'export_selected': {'ru': 'Экспорт выбранных', 'uz': 'Tanlanganlarni eksport qilish'},
 
-    # CRUD (Списки и формы)
+    # CRUD
     'list_requests': {'ru': 'Заявки', 'uz': 'Arizalar'},
     'request_single': {'ru': 'Заявка', 'uz': 'Ariza'},
     'list_products': {'ru': 'Товары', 'uz': 'Mahsulotlar'},
@@ -63,8 +64,14 @@ TRANSLATIONS = {
     'page_title_stats': {'ru': 'Статистика и Обзор', 'uz': 'Statistika va Sharh'},
     'back_to_request_list': {'ru': 'К списку заявок', 'uz': 'Arizalar roʻyxatiga'},
     'general_settings': {'ru': 'Общие настройки', 'uz': 'Umumiy sozlamalar'},
+    'export_all': {'ru': 'Экспорт всех', 'uz': 'Barchasini eksport qilish'},
+    'date_from': {'ru': 'Дата от', 'uz': 'Sana (dan)'},
+    'date_to': {'ru': 'Дата до', 'uz': 'Sana (gacha)'},
+    'period_start': {'ru': 'Начало периода', 'uz': 'Davr boshi'},
+    'period_end': {'ru': 'Конец периода', 'uz': 'Davr oxiri'},
+    'reset_filters': {'ru': 'Сбросить все фильтры', 'uz': 'Barcha filtrlarni tiklash'},
 
-    # Заголовки таблиц и списков
+    # Заголовки таблиц
     'header_client': {'ru': 'Клиент', 'uz': 'Mijoz'},
     'header_phone': {'ru': 'Телефон', 'uz': 'Telefon'},
     'header_business_type': {'ru': 'Тип бизнеса', 'uz': 'Biznes turi'},
@@ -76,7 +83,7 @@ TRANSLATIONS = {
     'header_price_from': {'ru': 'Цена от', 'uz': 'Narx (dan)'},
     'header_is_active': {'ru': 'Активен', 'uz': 'Aktiv'},
     'no_records_found': {'ru': 'Записей не найдено.', 'uz': 'Yozuvlar topilmadi.'},
-    
+
     # Формы
     'client_info': {'ru': 'Информация от клиента', 'uz': 'Mijozdan maʼlumot'},
     'manager_info': {'ru': 'Информация от менеджера', 'uz': 'Menejerdan maʼlumot'},
@@ -91,7 +98,101 @@ TRANSLATIONS = {
     'delete_confirmation_title': {'ru': 'Удалить {entity}', 'uz': '{entity} oʻchirilsinmi'},
     'delete_confirmation_text': {'ru': 'Вы уверены, что хотите удалить "{item}"? Это действие необратимо.', 'uz': '"{item}"ni oʻchirishni xohlaysizmi? Bu amalni bekor qilib boʻlmaydi.'},
     'confirm_delete': {'ru': 'Да, я уверен', 'uz': 'Ha, aminman'},
+    'add_new_category': {'ru': 'Добавить новую категорию', 'uz': 'Yangi kategoriya qoʻshish'},
+    'category_name': {'ru': 'Название категории', 'uz': 'Kategoriya nomi'},
+    'add_category_modal_title': {'ru': 'Добавить категорию', 'uz': 'Kategoriya qoʻshish'},
+    'add_category_modal_desc': {'ru': 'Вы можете быстро добавить новую категорию, не покидая страницу товара.', 'uz': 'Mahsulot sahifasidan chiqmasdan yangi kategoriya qoʻshishingiz mumkin.'},
 
+    # Страница профиля
+    'my_profile_title': {'ru': 'Мой профиль: {username}', 'uz': 'Mening profilim: {username}'},
+    'manager_profile_title': {'ru': 'Профиль менеджера: {username}', 'uz': 'Menejer profili: {username}'},
+    'performance_summary': {'ru': 'Сводка производительности (за 30 дней)', 'uz': 'Ish faoliyati xulosasi (oxirgi 30 kun)'},
+    'requests_closed': {'ru': 'Заявок закрыто', 'uz': 'Yopilgan arizalar'},
+    'requests_in_progress': {'ru': 'Взято в работу', 'uz': 'Ishga olingan'},
+    'conversion': {'ru': 'Конверсия', 'uz': 'Konversiya'},
+    'tasks_completed': {'ru': 'Задач выполнено', 'uz': 'Bajarilgan vazifalar'},
+    'my_recent_activity': {'ru': 'Мои последние действия', 'uz': 'Mening oxirgi harakatlarim'},
+    'manager_recent_activity': {'ru': 'Последние действия менеджера', 'uz': 'Menejerning oxirgi harakatlari'},
+    'no_activity_log': {'ru': 'Пока нет записей о ваших действиях.', 'uz': 'Sizning harakatlaringiz haqida yozuvlar yoʻq.'},
+    'no_manager_activity_log': {'ru': 'Нет записей о действиях этого менеджера.', 'uz': 'Ushbu menejerning harakatlari haqida yozuvlar yoʻq.'},
+    'change_password': {'ru': 'Смена пароля', 'uz': 'Parolni oʻzgartirish'},
+    'current_password': {'ru': 'Текущий пароль', 'uz': 'Joriy parol'},
+    'new_password': {'ru': 'Новый пароль', 'uz': 'Yangi parol'},
+    'confirm_new_password': {'ru': 'Повторите новый пароль', 'uz': 'Yangi parolni takrorlang'},
+    'save_new_password': {'ru': 'Сохранить новый пароль', 'uz': 'Yangi parolni saqlash'},
+
+    # Страница импорта
+    'import_from_sheets': {'ru': 'Импорт из Google Sheets', 'uz': 'Google Sheetsdan import qilish'},
+    'run_import': {'ru': 'Запуск импорта', 'uz': 'Importni boshlash'},
+    'sheet_url': {'ru': 'URL таблицы Google Sheets', 'uz': 'Google Sheets jadvali URL manzili'},
+    'sheet_url_desc': {'ru': 'Скопируйте URL вашей таблицы целиком из браузера.', 'uz': 'Brauzerdan jadvalingizning toʻliq URL manzilini koʻchiring.'},
+    'start_import_button': {'ru': 'Запустить импорт', 'uz': 'Importni boshlash'},
+    'deduplication': {'ru': 'Очистка дубликатов', 'uz': 'Dublikatlarni tozalash'},
+    'deduplication_desc': {'ru': 'Объединяет контакты с одинаковыми номерами и удаляет лишние. <strong>Сначала используйте диагностику, чтобы проверить, что будет удалено.</strong>', 'uz': 'Bir xil raqamli kontaktlarni birlashtiradi va ortiqchalarini oʻchiradi. <strong>Oʻchiriladigan narsalarni tekshirish uchun avval diagnostikadan foydalaning.</strong>'},
+    'find_duplicates_button': {'ru': '1. Найти потенциальные дубликаты (Диагностика)', 'uz': '1. Potensial dublikatlarni topish (Diagnostika)'},
+    'merge_duplicates_button': {'ru': '2. Объединить найденные дубликаты', 'uz': '2. Topilgan dublikatlarni birlashtirish'},
+    'confirm_merge': {'ru': 'Вы уверены, что хотите запустить слияние дубликатов? Это действие необратимо.', 'uz': 'Dublikatlarni birlashtirishni ishga tushirishni xohlaysizmi? Bu amalni bekor qilib boʻlmaydi.'},
+    'import_result': {'ru': 'Результат импорта', 'uz': 'Import natijasi'},
+    'import_success': {'ru': 'Успешно', 'uz': 'Muvaffaqiyatli'},
+    'import_error': {'ru': 'Ошибка', 'uz': 'Xatolik'},
+    'import_how_it_works': {'ru': 'Как это работает?', 'uz': 'Bu qanday ishlaydi?'},
+    'import_instructions': {
+        'ru': """
+            <ol style="list-style: decimal; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; color: var(--text-secondary);">
+                <li>Убедитесь, что ваша Google-таблица <strong>общедоступна для просмотра по ссылке</strong>. Без этого импорт не сработает.</li>
+                <li>Вставьте полную ссылку на вашу таблицу. Система автоматически извлечет ID таблицы и ID листа (gid).</li>
+                <li><strong>Важно:</strong> Система ожидает, что данные будут в определенных колонках:
+                    <ul style="list-style-type: disc; padding-left: 20px; margin-top: 8px;">
+                        <li><b>Дата:</b> 2-я колонка (B)</li>
+                        <li><b>Тип бизнеса:</b> 14-я колонка (N)</li>
+                        <li><b>Имя клиента:</b> 16-я колонка (P)</li>
+                        <li><b>Телефон:</b> 17-я колонка (Q)</li>
+                    </ul>
+                </li>
+                <li>Система поддерживает разные форматы дат, включая <code>8.13.25</code> и <code>2025-08-22T11:31:06-05:00</code>.</li>
+                <li><strong>Защита от дублей:</strong> Если заявка с таким же номером телефона и сообщением уже есть, она будет пропущена.</li>
+            </ol>
+        """,
+        'uz': """
+            <ol style="list-style: decimal; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; color: var(--text-secondary);">
+                <li>Google-jadvalingiz <strong>havola orqali koʻrish uchun ochiq</strong> ekanligiga ishonch hosil qiling. Aks holda import ishlamaydi.</li>
+                <li>Jadvalingizga toʻliq havolani joylashtiring. Tizim avtomatik ravishda jadval ID va varaq ID (gid) sini oladi.</li>
+                <li><strong>Muhim:</strong> Tizim maʼlumotlar maʼlum ustunlarda boʻlishini kutadi:
+                    <ul style="list-style-type: disc; padding-left: 20px; margin-top: 8px;">
+                        <li><b>Sana:</b> 2-ustun (B)</li>
+                        <li><b>Biznes turi:</b> 14-ustun (N)</li>
+                        <li><b>Mijoz ismi:</b> 16-ustun (P)</li>
+                        <li><b>Telefon:</b> 17-ustun (Q)</li>
+                    </ul>
+                </li>
+                <li>Tizim turli sana formatlarini qoʻllab-quvvatlaydi, jumladan <code>8.13.25</code> va <code>2025-08-22T11:31:06-05:00</code>.</li>
+                <li><strong>Dublikatlardan himoya:</strong> Agar bir xil telefon raqami va xabar bilan ariza mavjud boʻlsa, u oʻtkazib yuboriladi.</li>
+            </ol>
+        """
+    },
+
+    # Страница приглашений
+    'invites_title': {'ru': 'Управление приглашениями', 'uz': 'Taklifnomalarni boshqarish'},
+    'create_invite': {'ru': 'Создать приглашение', 'uz': 'Taklifnoma yaratish'},
+    'invite_note': {'ru': 'Заметка (для кого это приглашение)', 'uz': 'Eslatma (bu taklifnoma kim uchun)'},
+    'invite_note_placeholder': {'ru': 'Например, Иван Иванов', 'uz': 'Masalan, Ivan Ivanov'},
+    'generate_link': {'ru': 'Сгенерировать ссылку', 'uz': 'Havolani yaratish'},
+    'invites_history': {'ru': 'История приглашений', 'uz': 'Taklifnomalar tarixi'},
+    'invite_status_active': {'ru': 'Активно', 'uz': 'Faol'},
+    'invite_status_used': {'ru': 'Использовано', 'uz': 'Foydalanilgan'},
+    'invite_link': {'ru': 'Ссылка-приглашение', 'uz': 'Taklifnoma havolasi'},
+    'no_invites_yet': {'ru': 'Вы еще не создали ни одного приглашения.', 'uz': 'Siz hali birorta ham taklifnoma yaratmadingiz.'},
+    'link_copied': {'ru': 'Ссылка скопирована!', 'uz': 'Havola nusxalandi!'},
+    
     # Сообщения
     'contact_updated_success': {'ru': 'Данные клиента успешно обновлены!', 'uz': 'Mijoz maʼlumotlari muvaffaqiyatli yangilandi!'},
+    'product_saved_success': {'ru': 'Товар успешно сохранен!', 'uz': 'Mahsulot muvaffaqiyatli saqlandi!'},
+    'product_deleted_success': {'ru': 'Товар удален', 'uz': 'Mahsulot oʻchirildi'},
+    'category_saved_success': {'ru': 'Категория сохранена!', 'uz': 'Kategoriya saqlandi!'},
+    'category_deleted_success': {'ru': 'Категория удалена', 'uz': 'Kategoriya oʻchirildi'},
+    'request_created_success': {'ru': 'Заявка успешно создана!', 'uz': 'Ariza muvaffaqiyatli yaratildi!'},
+    'request_saved_success': {'ru': 'Заявка успешно сохранена!', 'uz': 'Ariza muvaffaqiyatli saqlandi!'},
+    'request_deleted_success': {'ru': 'Заявка удалена', 'uz': 'Ariza oʻchirildi'},
+    'invite_created_success': {'ru': 'Приглашение успешно создано!', 'uz': 'Taklifnoma muvaffaqiyatli yaratildi!'},
+    'password_changed_success': {'ru': 'Пароль успешно изменен!', 'uz': 'Parol muvaffaqiyatli oʻzgartirildi!'},
 }

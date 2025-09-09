@@ -1,21 +1,21 @@
 <div class="modal-header">
-    <h2><i class='bx bxs-plus-circle'></i> Добавить категорию</h2>
+    <h2><i class='bx bxs-plus-circle'></i> {{ _('add_category_modal_title') }}</h2>
     <button class="modal-close">&times;</button>
 </div>
 <div class="modal-body">
-    <p style="color: var(--text-secondary); margin-bottom: 16px;">Вы можете быстро добавить новую категорию, не покидая страницу товара.</p>
-    <form hx-post="{{ request.url_for('admin_htmx_add_category') }}"
+    <p style="color: var(--text-secondary); margin-bottom: 16px;">{{ _('add_category_modal_desc') }}</p>
+    <form hx-post="{{ request.url_for('admin_htmx_add_category', locale=request.state.locale) }}"
           hx-target="#category_id"
           hx-swap="outerHTML"
           hx-trigger="submit"
           hx-on::after-request="this.closest('.modal-overlay').classList.remove('show')">
         
         <div class="input-group">
-            <label for="modal-category-name">Название категории:</label>
+            <label for="modal-category-name">{{ _('category_name') }}:</label>
             <input type="text" id="modal-category-name" name="name" class="input-field" required>
         </div>
         <div class="form-actions" style="border: none; padding: 0; margin-top: 15px;">
-            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <button type="submit" class="btn btn-primary">{{ _('save') }}</button>
         </div>
     </form>
 </div>

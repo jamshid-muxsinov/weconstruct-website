@@ -4,42 +4,42 @@
 
 {% block content %}
 <div class="page-header">
-    <h1>Мой профиль: {{ profile_user.username }}</h1>
+    <h1>{{ _('my_profile_title', username=profile_user.username) }}</h1>
 </div>
 
-<h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Сводка производительности (за 30 дней)</h2>
+<h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">{{ _('performance_summary') }}</h2>
 <div
     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px;">
 
     <div class="card" style="padding: 16px; text-align: center;">
         <i class='bx bx-check-double' style="font-size: 2rem; color: var(--status-green); margin-bottom: 8px;"></i>
         <h3 style="font-size: 2rem; font-weight: 600;">{{ stats.requests_completed }}</h3>
-        <p style="color: var(--text-secondary);">Заявок закрыто</p>
+        <p style="color: var(--text-secondary);">{{ _('requests_closed') }}</p>
     </div>
 
     <div class="card" style="padding: 16px; text-align: center;">
         <i class='bx bx-rocket' style="font-size: 2rem; color: var(--status-blue); margin-bottom: 8px;"></i>
         <h3 style="font-size: 2rem; font-weight: 600;">{{ stats.requests_in_progress }}</h3>
-        <p style="color: var(--text-secondary);">Взято в работу</p>
+        <p style="color: var(--text-secondary);">{{ _('requests_in_progress') }}</p>
     </div>
 
     <div class="card" style="padding: 16px; text-align: center;">
         <i class='bx bx-line-chart' style="font-size: 2rem; color: var(--accent-primary); margin-bottom: 8px;"></i>
         <h3 style="font-size: 2rem; font-weight: 600;">{{ stats.conversion_rate }}%</h3>
-        <p style="color: var(--text-secondary);">Конверсия</p>
+        <p style="color: var(--text-secondary);">{{ _('conversion') }}</p>
     </div>
 
     <div class="card" style="padding: 16px; text-align: center;">
         <i class='bx bxs-check-square' style="font-size: 2rem; color: var(--status-yellow); margin-bottom: 8px;"></i>
         <h3 style="font-size: 2rem; font-weight: 600;">{{ stats.tasks_completed }}</h3>
-        <p style="color: var(--text-secondary);">Задач выполнено</p>
+        <p style="color: var(--text-secondary);">{{ _('tasks_completed') }}</p>
     </div>
 
 </div>
 
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: flex-start;">
     <div class="card">
-        <h3 style="margin-bottom: 16px; font-size: 1.1rem;">Мои последние действия</h3>
+        <h3 style="margin-bottom: 16px; font-size: 1.1rem;">{{ _('my_recent_activity') }}</h3>
         {% if feed %}
         <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
             {% for log in feed %}
@@ -49,15 +49,13 @@
                 <div style="flex-grow: 1;">
                     <p>
                         Вы изменили статус заявки
-                        <a href="{{ request.url_for('admin_quoterequest_change', pk=log.quote_request_id) }}">#{{
+                        <a href="{{ request.url_for('admin_quoterequest_change', locale=request.state.locale, pk=log.quote_request_id) }}">#{{
                             log.quote_request_id }}</a>
                     </p>
                     <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                        <span class="status-badge status-{{ log.old_status.value }}">{{ log.get_old_status_display()
-                            }}</span>
+                        <span class="status-badge status-{{ log.old_status.value }}">{{ get_status_display(log.old_status, request.state.locale) }}</span>
                         <i class='bx bx-right-arrow-alt'></i>
-                        <span class="status-badge status-{{ log.new_status.value }}">{{ log.get_new_status_display()
-                            }}</span>
+                        <span class="status-badge status-{{ log.new_status.value }}">{{ get_status_display(log.new_status, request.state.locale) }}</span>
                     </div>
                 </div>
                 <small style="color: var(--text-secondary);">{{ log.timestamp | localtime }}</small>
@@ -65,16 +63,21 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="empty-list-placeholder">Пока нет записей о ваших действиях.</p>
+        <p class="empty-list-placeholder">{{ _('no_activity_log') }}</p>
         {% endif %}
     </div>
 
     <div class="card">
-        <h3 style="margin-bottom: 16px; font-size: 1.1rem;">Смена пароля</h3>
-        <form method="post" action="{{ request.url_for('admin_profile_post') }}" novalidate>
+        <h3 style="margin-bottom: 16px; font-size: 1.1rem;">{{ _('change_password') }}</h3>
+        <form method="post" action="{{ request.url_for('admin_profile_post', locale=request.state.locale) }}" novalidate>
             {% for field in form %}
             <div class="input-group">
-                <label for="{{ field.id }}">{{ field.label.text }}</label>
+                <label for="{{ field.id }}">
+                    {% if field.name == 'old_password' %}{{ _('current_password') }}
+                    {% elif field.name == 'new_password' %}{{ _('new_password') }}
+                    {% elif field.name == 'confirm_password' %}{{ _('confirm_new_password') }}
+                    {% else %}{{ field.label.text }}{% endif %}
+                </label>
                 {{ field(class_='input-field', type='password') }}
                 {% if field.errors %}
                 <div class="error-text" style="color: var(--status-red); font-size: 0.8rem; margin-top: 4px;">{{
@@ -82,7 +85,7 @@
                 {% endif %}
             </div>
             {% endfor %}
-            <button type="submit" class="btn btn-secondary">Сохранить новый пароль</button>
+            <button type="submit" class="btn btn-secondary">{{ _('save_new_password') }}</button>
         </form>
     </div>
 </div>

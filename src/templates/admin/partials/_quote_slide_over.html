@@ -1,24 +1,23 @@
 <div class="slide-over-header">
-    <h2>Заявка #{{ req.id }}</h2>
+    <h2>{{ _('request_single') }} #{{ req.id }}</h2>
     <button class="slide-over-close"><i class='bx bx-x'></i></button>
 </div>
 <div class="slide-over-body" style="display: grid; grid-template-columns: 3fr 2fr; gap: 32px;">
     
     <div>
-        <h3 class="slide-over-section-title">Информация о клиенте</h3>
+        <h3 class="slide-over-section-title">{{ _('client_info') }}</h3>
         <div class="detail-item">
-            <strong>Имя</strong>
-            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
+            <strong>{{ _('header_client') }}</strong>
             <span><a href="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=req.contact_id) }}" class="link-to-change">{{ req.contact.full_name }}</a></span>
         </div>
         <div class="detail-item">
-            <strong>Телефон</strong>
+            <strong>{{ _('header_phone') }}</strong>
             <span>{{ req.contact.phone | format_phone }}</span>
         </div>
 
         <h3 class="slide-over-section-title">Детали заявки</h3>
         <div class="detail-item">
-            <strong>Товар</strong>
+            <strong>{{ _('product_single') }}</strong>
             <span>{{ req.product.name if req.product else "Общая заявка" }}</span>
         </div>
         <div class="detail-item">
@@ -27,8 +26,8 @@
         </div>
 
         {% if req.business_type or req.dimensions or req.investment_details or req.conclusion or req.additional_info %}
-        <h3 class="slide-over-section-title">Сведения от менеджера</h3>
-        {% if req.business_type %}<div class="detail-item"><strong>Тип бизнеса</strong><span>{{ req.business_type }}</span></div>{% endif %}
+        <h3 class="slide-over-section-title">{{ _('manager_info') }}</h3>
+        {% if req.business_type %}<div class="detail-item"><strong>{{ _('header_business_type') }}</strong><span>{{ req.business_type }}</span></div>{% endif %}
         {% if req.dimensions %}<div class="detail-item"><strong>Размеры</strong><span>{{ req.dimensions }}</span></div>{% endif %}
         {% if req.investment_details %}<div class="detail-item"><strong>Бюджет/Детали</strong><span class="detail-item-message">{{ req.investment_details }}</span></div>{% endif %}
         {% if req.conclusion %}<div class="detail-item"><strong>Выводы</strong><span class="detail-item-message">{{ req.conclusion }}</span></div>{% endif %}
@@ -36,7 +35,6 @@
         {% endif %}
         
         <h3 class="slide-over-section-title">Управление</h3>
-        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
         <form hx-post="{{ request.url_for('admin_api_quote_assign', locale=request.state.locale, pk=req.id) }}" hx-trigger="submit" style="margin-bottom: 20px;">
             <div class="input-group" style="margin: 0;">
                 <label for="assignee-select" style="margin-bottom: 10px; font-weight: 600; color: var(--text-secondary);">Назначить исполнителя</label>
@@ -53,9 +51,8 @@
         </form>
         
         <div>
-            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
             <a href="{{ request.url_for('admin_quoterequest_change', locale=request.state.locale, pk=req.id) }}" class="btn btn-secondary btn-full">
-                <i class='bx bx-edit-alt'></i> Полное редактирование
+                <i class='bx bx-edit-alt'></i> {{ _('edit') }}
             </a>
         </div>
     </div>
@@ -65,7 +62,6 @@
         <div class="task-list-container">
             {% include 'admin/partials/_task_list_partial.html' %}
         </div>
-        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
         <form class="quick-task-form" style="margin-top: 20px;"
               hx-post="{{ request.url_for('admin_htmx_add_task_to_quote', locale=request.state.locale, pk=req.id) }}"
               hx-target=".task-list"
@@ -74,7 +70,7 @@
             <input type='text' name='title' class="input-field" placeholder='Название новой задачи...' required>
             <div style="display: flex; gap: 12px; margin-top: 12px;">
                 {{ task_form.assigned_to_id(class_='select-field', style='flex-grow: 1;')|safe }}
-                <button type="submit" class="btn btn-primary">Добавить</button>
+                <button type="submit" class="btn btn-primary">{{ _('add') }}</button>
             </div>
         </form>
     </div>

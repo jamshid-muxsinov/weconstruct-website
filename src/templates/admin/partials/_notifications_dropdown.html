@@ -2,12 +2,12 @@
 
 <div id="notifications-list">
     <div class="notification-header">
-        <span style="font-weight: 600;">Уведомления</span>
+        <span style="font-weight: 600;">{{ _('notifications') }}</span>
         {% if notifications %}
         <button class="btn-link"
-                hx-post="{{ request.url_for('admin_api_notifications_mark_read') }}"
+                hx-post="{{ request.url_for('admin_api_notifications_mark_read', locale=request.state.locale) }}"
                 hx-indicator="this"
-                title="Пометить все как прочитанные">
+                title="{{ _('mark_all_as_read') }}">
             <i class='bx bx-check-double'></i>
         </button>
         {% endif %}
@@ -21,13 +21,13 @@
                     <div class="notification-icon"><i class='bx bxs-bell'></i></div>
                     <div class="notification-content">
                         <p class="notification-message">{{ n.message }}</p>
-                        <small class="notification-time">{{ n.created_at.strftime('%d %b, %H:%M') }}</small>
+                        <small class="notification-time">{{ n.created_at | localtime }}</small>
                     </div>
                 </a>
             </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p class="empty-notification-placeholder">Новых уведомлений нет.</p>
+        <p class="empty-notification-placeholder">{{ _('no_notifications') }}</p>
     {% endif %}
 </div>
