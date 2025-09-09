@@ -41,25 +41,23 @@ STATUS_DISPLAY_MAP = {
     }
 }
 
-def translate_ui(request: Request, key: str, **kwargs) -> str:
+@templates.env.contextfunction
+def translate_ui(context: dict, key: str, **kwargs) -> str:
     """
     Переводит строку интерфейса по ключу.
-    Поддерживает форматирование (например, для 'Привет, {username}!').
+    Использует 'request' из контекста.
     """
+    request = context['request'] # Извлекаем request из контекста
     locale = getattr(request.state, 'locale', 'ru')
     
-    # Получаем словарь для конкретного ключа, например {'ru': '...', 'uz': '...'}
     translation_dict = TRANSLATIONS.get(key, {})
-    
-    # Выбираем перевод для текущей локали, если его нет - берем русский как запасной
     translation = translation_dict.get(locale, TRANSLATIONS.get(key, {}).get('ru', key))
     
-    # Если в переводе есть плейсхолдеры, форматируем строку
     if kwargs:
         try:
             return translation.format(**kwargs)
         except KeyError:
-            return translation # Возвращаем без форматирования, если ключи не совпали
+            return translation
     
     return translation
 
