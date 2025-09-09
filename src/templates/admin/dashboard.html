@@ -4,12 +4,10 @@
 
 {% block content %}
 <div class="page-header">
-    {# --- ИЗМЕНЕНИЕ: Используем ключ для заголовка --- #}
     <h1>{{ _('page_title_stats') }}</h1>
 </div>
 
-{# --- ИЗМЕНЕНИЕ: Используем ключ --- #}
-<h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 24px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">{{ _('sales_funnel') }} (за все время)</h2>
+<h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 24px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">{{ _('sales_funnel') }}</h2>
 <div class="dashboard-stats">
     {% for item in sales_funnel %}
     <div class="stats-card">
@@ -37,28 +35,28 @@
 
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px; align-items: flex-start;">
     <div class="card">
-        <h3 style="margin-bottom: 20px; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">Лучшие менеджеры (за 30 дней)</h3>
+        <h3 style="margin-bottom: 20px; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">{{ _('top_managers_title') }}</h3>
         <div class="table-wrapper">
             <table class="styled-table">
                 <thead>
                     <tr>
                         <th style="width: 50px;">#</th>
-                        <th>Менеджер</th>
-                        <th style="text-align: right;">Закрыто заявок</th>
+                        <th>{{ _('manager_col') }}</th>
+                        <th style="text-align: right;">{{ _('requests_closed_col') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user, count in top_managers %}
                     <tr>
                         <td data-label="#"><span class="rank-badge rank-{{ loop.index }}">{{ loop.index }}</span></td>
-                        <td data-label="Менеджер">
+                        <td data-label="{{ _('manager_col') }}">
                             <a href="{{ request.url_for('admin_user_profile', locale=request.state.locale, pk=user.id) }}" class="link-to-change">{{ user.username }}</a>
                         </td>
-                        <td data-label="Закрыто заявок" style="text-align: right; font-weight: 700; font-size: 1.2rem; color: var(--accent-primary-solid);">{{ count }}</td>
+                        <td data-label="{{ _('requests_closed_col') }}" style="text-align: right; font-weight: 700; font-size: 1.2rem; color: var(--accent-primary-solid);">{{ count }}</td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="3" class="empty-list-placeholder">Нет данных для построения рейтинга.</td>
+                        <td colspan="3" class="empty-list-placeholder">{{ _('no_rating_data') }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -72,7 +70,6 @@
 </div>
 
 <div class="card" style="margin-top: 32px;">
-    {# --- ИЗМЕНЕНИЕ: Используем ключ --- #}
     <h3 style="margin-bottom: 20px; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">{{ _('my_tasks') }}</h3>
     {% if my_tasks %}
     <ul style="display: flex; flex-direction: column; gap: 16px; list-style: none; padding: 0; margin: 0;">
@@ -83,7 +80,7 @@
                 <div>
                     <p style="margin: 0; font-weight: 600; color: var(--text-primary);">{{ task.title }}</p>
                     {% if task.contact %}
-                    <small style="color: var(--text-secondary); font-size: 0.85rem;">Клиент: {{ task.contact.full_name }}</small>
+                    <small style="color: var(--text-secondary); font-size: 0.85rem;">{{ _('header_client') }}: {{ task.contact.full_name }}</small>
                     {% endif %}
                 </div>
                 {% if task.due_date %}

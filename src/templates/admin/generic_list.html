@@ -4,21 +4,18 @@
 
 {% block content %}
 <div class="page-header">
-    {# --- ИЗМЕНЕНИЕ: Переводим заголовок через ключ --- #}
     <h1>{{ _(meta.verbose_name_plural) }}</h1>
     <div class="page-header-actions">
         {% if meta.model_name == 'quoterequest' %}
-            {# --- ИЗМЕНЕНИЕ: Добавлена локаль и перевод --- #}
             <a href="{{ request.url_for('admin_quoterequest_export', locale=request.state.locale) }}" class="btn btn-secondary">
-                <i class='bx bx-export'></i> <span>{{ _('export') }}</span>
+                <i class='bx bx-export'></i> <span>{{ _('export_all') }}</span>
             </a>
             <button id="export-selected-btn" class="btn btn-secondary" disabled>
                 <i class='bx bxs-file-export'></i>
-                <span id="export-btn-text">{{ _('export') }} {{ _('selected') }}</span>
+                <span id="export-btn-text">{{ _('export_selected') }}</span>
             </button>
         {% endif %}
         {% if meta.add_url_name %}
-        {# --- ИЗМЕНЕНИЕ: Добавлена локаль и перевод --- #}
         <a href="{{ request.url_for(meta.add_url_name, locale=request.state.locale) }}" class="btn btn-primary" hx-get="{{ request.url_for(meta.add_url_name, locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
             <i class='bx bx-plus'></i> <span>{{ _('add_button', entity=_(meta.verbose_name)) }}</span>
         </a>
@@ -35,24 +32,22 @@
 
         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 16px; align-items: flex-end;">
             <div class="input-group" style="margin: 0;">
-                {# --- ИЗМЕНЕНИЕ: Перевод --- #}
                 <label>{{ _('search') }}</label>
                 <input type="search" name="q" class="input-field" placeholder="..." value="{{ request.query_params.get('q', '') }}" autocomplete="off">
             </div>
             {% if meta.model_name == 'quoterequest' %}
             <div class="input-group" style="margin: 0;">
-                <label for="date_from">Дата от</label>
-                <input type="text" id="date_from" name="date_from" class="input-field datepicker" placeholder="Начало периода" value="{{ request.query_params.get('date_from', '') }}">
+                <label for="date_from">{{ _('date_from') }}</label>
+                <input type="text" id="date_from" name="date_from" class="input-field datepicker" placeholder="{{ _('period_start') }}" value="{{ request.query_params.get('date_from', '') }}">
             </div>
             <div class="input-group" style="margin: 0;">
-                <label for="date_to">Дата до</label>
-                <input type="text" id="date_to" name="date_to" class="input-field datepicker" placeholder="Конец периода" value="{{ request.query_params.get('date_to', '') }}">
+                <label for="date_to">{{ _('date_to') }}</label>
+                <input type="text" id="date_to" name="date_to" class="input-field datepicker" placeholder="{{ _('period_end') }}" value="{{ request.query_params.get('date_to', '') }}">
             </div>
             {% endif %}
             <div style="display: flex; gap: 8px;">
-                {# --- ИЗМЕНЕНИЕ: Перевод --- #}
                 <button type="submit" class="btn btn-primary"><i class='bx bx-filter-alt'></i> {{ _('apply') }}</button>
-                <a href="{{ request.url.path }}" class="btn btn-secondary" title="{{ _('clear') }}" hx-get="{{ request.url.path }}" hx-target="#main-content" hx-push-url="true"><i class='bx bx-x'></i></a>
+                <a href="{{ request.url.path }}" class="btn btn-secondary" title="{{ _('reset_filters') }}" hx-get="{{ request.url.path }}" hx-target="#main-content" hx-push-url="true"><i class='bx bx-x'></i></a>
             </div>
         </div>
     </form>

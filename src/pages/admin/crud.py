@@ -60,42 +60,42 @@ class Meta:
     def __str__(self): return self.verbose_name_plural
 
 class ProductForm(wtforms.Form):
-    name_ru = wtforms.StringField('Название (RU)', validators=[wtforms.validators.DataRequired()])
-    short_description_ru = wtforms.TextAreaField('Краткое описание (RU)', render_kw={"rows": 3})
-    full_description_ru = wtforms.TextAreaField('Полное описание (RU)', render_kw={"rows": 10})
-    dimensions_ru = wtforms.StringField('Размеры (RU)')
-    materials_ru = wtforms.TextAreaField('Материалы (RU)', render_kw={"rows": 6}, description="Каждый материал с новой строки")
-    name_uz = wtforms.StringField('Название (UZ)')
-    short_description_uz = wtforms.TextAreaField('Краткое описание (UZ)', render_kw={"rows": 3})
-    full_description_uz = wtforms.TextAreaField('Полное описание (UZ)', render_kw={"rows": 10})
-    dimensions_uz = wtforms.StringField("O'lchamlari (UZ)")
-    materials_uz = wtforms.TextAreaField("Materiallar (UZ)", render_kw={"rows": 6}, description="Har bir material yangi qatordan")
-    price_min = wtforms.DecimalField('Цена за м² от (сум)', places=0, validators=[wtforms.validators.Optional()])
-    price_max = wtforms.DecimalField('Цена за м² до (сум)', places=0, validators=[wtforms.validators.Optional()])
-    category_id = wtforms.SelectField('Категория', coerce=int, validators=[wtforms.validators.DataRequired()])
-    is_active = wtforms.BooleanField('Активен', default=True, description="Виден на сайте")
-    main_image = wtforms.FileField('Основное изображение')
-    images = wtforms.MultipleFileField('Дополнительные изображения')
+    name_ru = wtforms.StringField('form_field_name_ru', validators=[wtforms.validators.DataRequired()])
+    short_description_ru = wtforms.TextAreaField('form_field_short_desc_ru', render_kw={"rows": 3})
+    full_description_ru = wtforms.TextAreaField('form_field_full_desc_ru', render_kw={"rows": 10})
+    dimensions_ru = wtforms.StringField('form_field_dimensions_ru')
+    materials_ru = wtforms.TextAreaField('form_field_materials_ru', render_kw={"rows": 6}, description="form_materials_desc_ru")
+    name_uz = wtforms.StringField('form_field_name_uz')
+    short_description_uz = wtforms.TextAreaField('form_field_short_desc_uz', render_kw={"rows": 3})
+    full_description_uz = wtforms.TextAreaField('form_field_full_desc_uz', render_kw={"rows": 10})
+    dimensions_uz = wtforms.StringField("form_field_dimensions_uz")
+    materials_uz = wtforms.TextAreaField("form_field_materials_uz", render_kw={"rows": 6}, description="form_materials_desc_uz")
+    price_min = wtforms.DecimalField('form_field_price_min', places=0, validators=[wtforms.validators.Optional()])
+    price_max = wtforms.DecimalField('form_field_price_max', places=0, validators=[wtforms.validators.Optional()])
+    category_id = wtforms.SelectField('form_field_category', coerce=int, validators=[wtforms.validators.DataRequired()])
+    is_active = wtforms.BooleanField('form_field_is_active', default=True, description="form_is_active_desc")
+    main_image = wtforms.FileField('form_field_main_image')
+    images = wtforms.MultipleFileField('form_field_extra_images')
 
 class CategoryForm(wtforms.Form):
-    name_ru = wtforms.StringField('Название (RU)', validators=[wtforms.validators.DataRequired()])
-    description_ru = wtforms.TextAreaField('Описание (RU)', render_kw={"rows": 4})
-    name_uz = wtforms.StringField('Название (UZ)')
-    description_uz = wtforms.TextAreaField('Описание (UZ)', render_kw={"rows": 4})
+    name_ru = wtforms.StringField('form_field_name_ru', validators=[wtforms.validators.DataRequired()])
+    description_ru = wtforms.TextAreaField('form_field_desc_ru', render_kw={"rows": 4})
+    name_uz = wtforms.StringField('form_field_name_uz')
+    description_uz = wtforms.TextAreaField('form_field_desc_uz', render_kw={"rows": 4})
 
 class QuoteRequestForm(wtforms.Form):
-    contact_id = wtforms.HiddenField('Контакт', validators=[wtforms.validators.Optional()])
-    new_contact_name = wtforms.StringField('Имя и Фамилия нового клиента', validators=[wtforms.validators.Optional()])
-    new_contact_phone = wtforms.StringField('Телефон нового клиента', validators=[wtforms.validators.Optional()])
-    product_id = wtforms.SelectField('Товар (необязательно)', coerce=int, validators=[wtforms.validators.Optional()])
-    message = wtforms.TextAreaField('Сообщение клиента', render_kw={"rows": 4})
-    status = wtforms.SelectField('Статус', choices=[(s.value, s.name.replace('_', ' ').capitalize()) for s in QuoteRequest.StatusEnum], default=QuoteRequest.StatusEnum.IMPORTED.value)
-    assigned_to_id = wtforms.SelectField('Ответственный', coerce=int, validators=[wtforms.validators.Optional()])
-    business_type = wtforms.StringField('Тип бизнеса клиента', validators=[wtforms.validators.Optional()])
-    dimensions = wtforms.StringField('Предполагаемые размеры объекта', validators=[wtforms.validators.Optional()])
-    investment_details = wtforms.TextAreaField('Бюджет и детали (Sarmoysi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
-    conclusion = wtforms.TextAreaField('Выводы менеджера (Xulosasi)', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
-    additional_info = wtforms.TextAreaField('Дополнительные сведения', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
+    contact_id = wtforms.HiddenField('form_field_contact', validators=[wtforms.validators.Optional()])
+    new_contact_name = wtforms.StringField('form_field_new_contact_name', validators=[wtforms.validators.Optional()])
+    new_contact_phone = wtforms.StringField('form_field_new_contact_phone', validators=[wtforms.validators.Optional()])
+    product_id = wtforms.SelectField('form_field_product', coerce=int, validators=[wtforms.validators.Optional()])
+    message = wtforms.TextAreaField('form_field_message', render_kw={"rows": 4})
+    status = wtforms.SelectField('form_field_status', choices=[(s.value, s.name.replace('_', ' ').capitalize()) for s in QuoteRequest.StatusEnum], default=QuoteRequest.StatusEnum.IMPORTED.value)
+    assigned_to_id = wtforms.SelectField('form_field_assignee', coerce=int, validators=[wtforms.validators.Optional()])
+    business_type = wtforms.StringField('form_field_business_type', validators=[wtforms.validators.Optional()])
+    dimensions = wtforms.StringField('form_field_dimensions', validators=[wtforms.validators.Optional()])
+    investment_details = wtforms.TextAreaField('form_field_investment', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
+    conclusion = wtforms.TextAreaField('form_field_conclusion', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
+    additional_info = wtforms.TextAreaField('form_field_additional_info', render_kw={"rows": 4}, validators=[wtforms.validators.Optional()])
     
     def validate(self, extra_validators=None):
         rv = super().validate(extra_validators)
@@ -264,14 +264,16 @@ async def quoterequest_list(request: Request, page: int = Query(1, ge=1), size: 
     context.update({"meta": QUOTEREQUEST_META, "page": page_obj, "list_display": QUOTEREQUEST_META.list_display, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/generic_list.html", context)
 
-async def populate_request_form_choices(db: AsyncSession, form: QuoteRequestForm):
+async def populate_request_form_choices(db: AsyncSession, request: Request, form: QuoteRequestForm):
+    _ = templates.env.globals['_']
     products = (await db.execute(select(Product).order_by(Product.name_ru))).scalars().all()
-    form.product_id.choices = [(0, '--- Общая заявка ---')] + [(p.id, p.name_ru) for p in products]
+    form.product_id.choices = [(0, _({'request': request}, 'general_request_option'))] + [(p.id, p.name_ru) for p in products]
+    
     staff_users_result = await db.execute(
         select(User).where(User.is_staff == True).order_by(User.username)
     )
     staff_users = staff_users_result.scalars().all()
-    form.assigned_to_id.choices = [(0, '--- Не назначен ---')] + [(u.id, u.username) for u in staff_users]
+    form.assigned_to_id.choices = [(0, _({'request': request}, 'unassigned_option'))] + [(u.id, u.username) for u in staff_users]
 
 @router.get("/product/", response_class=HTMLResponse, name="admin_product_list")
 async def product_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
@@ -366,7 +368,7 @@ async def category_delete(request: Request, pk: int, context: dict = Depends(get
 @router.get("/quoterequest/add/", response_class=HTMLResponse, name="admin_quoterequest_add")
 async def quoterequest_form_get_add(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     form = QUOTEREQUEST_META.form_class()
-    await populate_request_form_choices(db, form)
+    await populate_request_form_choices(db, request, form)
     _ = templates.env.globals['_']
     title = f"{_({'request': request}, 'adding')}: {_({'request': request}, 'request_single')}"
     context.update({"meta": QUOTEREQUEST_META, "original": None, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers}); 
@@ -374,7 +376,8 @@ async def quoterequest_form_get_add(request: Request, context: dict = Depends(ge
 
 @router.post("/quoterequest/add/", response_class=HTMLResponse)
 async def quoterequest_form_post_add(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    form_data = await request.form(); form = QUOTEREQUEST_META.form_class(form_data); await populate_request_form_choices(db, form)
+    form_data = await request.form(); form = QUOTEREQUEST_META.form_class(form_data);
+    await populate_request_form_choices(db, request, form)
     if form.validate():
         contact_id = int(form.contact_id.data) if form.contact_id.data else None; new_quote_request = None
         if not contact_id:
@@ -394,7 +397,8 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
 async def quoterequest_change_form_get(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)]);
     if not quote: raise HTTPException(404)
-    form = QUOTEREQUEST_META.form_class(obj=quote); form.contact_id.data = quote.contact_id; await populate_request_form_choices(db, form);
+    form = QUOTEREQUEST_META.form_class(obj=quote); form.contact_id.data = quote.contact_id;
+    await populate_request_form_choices(db, request, form)
     _ = templates.env.globals['_']
     title = f"{_({'request': request}, 'editing')}: {_({'request': request}, 'request_single')} #{pk}"
     context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers}); 
@@ -404,7 +408,8 @@ async def quoterequest_change_form_get(request: Request, pk: int, context: dict 
 async def quoterequest_change_form_post(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)]);
     if not quote: raise HTTPException(404)
-    form_data = await request.form(); form = QUOTEREQUEST_META.form_class(form_data, obj=quote); await populate_request_form_choices(db, form)
+    form_data = await request.form(); form = QUOTEREQUEST_META.form_class(form_data, obj=quote);
+    await populate_request_form_choices(db, request, form)
     if form.validate():
         quote.product_id = form.product_id.data if form.product_id.data else None; quote.message = form.message.data; quote.status = form.status.data; quote.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None; quote.business_type = form.business_type.data; quote.dimensions = form.dimensions.data; quote.investment_details = form.investment_details.data; quote.conclusion = form.conclusion.data; quote.additional_info = form.additional_info.data; db.add(quote); await db.commit(); response = RedirectResponse(request.url_for(QUOTEREQUEST_META.change_url_name, locale=request.state.locale, pk=pk), status_code=303);
         return set_hx_trigger_header(response, "request_saved_success", request)

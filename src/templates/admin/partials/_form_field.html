@@ -2,12 +2,12 @@
 {% if field.name == 'price_min' %}
 <div class="form-row">
     <div class="input-group">
-        <label for="{{ form.price_min.id }}">{{ form.price_min.label.text }}</label>
+        <label for="{{ form.price_min.id }}">{{ _(form.price_min.label.text) }}</label>
         <input type="number" name="{{ form.price_min.name }}" id="{{ form.price_min.id }}" class="input-field" value="{{ form.price_min.data if form.price_min.data is not none else '' }}">
         {% if form.price_min.errors %}<div class="error-text">{{ form.price_min.errors[0] }}</div>{% endif %}
     </div>
     <div class="input-group">
-        <label for="{{ form.price_max.id }}">{{ form.price_max.label.text }}</label>
+        <label for="{{ form.price_max.id }}">{{ _(form.price_max.label.text) }}</label>
         <input type="number" name="{{ form.price_max.name }}" id="{{ form.price_max.id }}" class="input-field" value="{{ form.price_max.data if form.price_max.data is not none else '' }}">
         {% if form.price_max.errors %}<div class="error-text">{{ form.price_max.errors[0] }}</div>{% endif %}
     </div>
@@ -16,13 +16,13 @@
 {# This field is rendered along with price_min, so we do nothing here #}
 {% else %}
 <div class="input-group">
-    <label for="{{ field.id }}">{{ field.label.text }}</label>
+    <label for="{{ field.id }}">{{ _(field.label.text) }}</label>
 
     {% if field.type == 'SelectField' %}
         <div style="display: flex; gap: 10px; align-items: center;">
             {{ field(class_='select-field', style='flex-grow: 1;') }}
             {% if field.name == 'category_id' %}
-            <button type="button" class="btn btn-secondary" hx-get="{{ request.url_for('admin_htmx_category_add_modal') }}" hx-target="#modal-body-content" hx-trigger="click" title="Добавить новую категорию">
+            <button type="button" class="btn btn-secondary" hx-get="{{ request.url_for('admin_htmx_category_add_modal', locale=request.state.locale) }}" hx-target="#modal-body-content" hx-trigger="click" title="{{ _('add_new_category') }}">
                 <i class='bx bx-plus'></i>
             </button>
             {% endif %}
@@ -32,7 +32,7 @@
     {% elif field.type == 'BooleanField' %}
         <div style="display: flex; align-items: center; gap: 10px; padding-top: 8px;">
             {{ field(style='width: 18px; height: 18px;') }}
-            <span>{{ field.description }}</span>
+            <span>{{ _(field.description) }}</span>
         </div>
     {% elif field.name == 'main_image' %}
         {% if original and original.main_image %}
@@ -52,7 +52,7 @@
                 <button type="button" class="btn-icon btn-icon-danger" style="position:absolute; top:-5px; right:-5px; width:24px; height:24px; font-size:1rem;"
                     hx-delete="{{ request.url_for('admin_htmx_delete_product_image', pk=img.id) }}"
                     hx-target="#gallery-item-{{ img.id }}" hx-swap="outerHTML"
-                    hx-confirm="Вы уверены, что хотите удалить это изображение?">&times;</button>
+                    hx-confirm="{{ _('delete_confirmation_text', item='это изображение') }}">&times;</button>
             </div>
             {% endfor %}
         </div>
@@ -61,7 +61,7 @@
         {{ field(class_='input-field') }}
     {% endif %}
 
-    {% if field.description and field.type != 'BooleanField' %}<small class="form-field-description">{{ field.description }}</small>{% endif %}
+    {% if field.description and field.type != 'BooleanField' %}<small class="form-field-description">{{ _(field.description) }}</small>{% endif %}
     {% if field.errors %}<div class="error-text">{{ field.errors[0] }}</div>{% endif %}
 </div>
 {% endif %}
