@@ -28,14 +28,6 @@ async def get_common_context(
     
     unread_count = await get_unread_notifications_count(db, user.id)
     
-    def translate_with_context(key: str, **kwargs):
-        translator = templates.env.globals.get('_')
-        if translator:
-            return translator({'request': request}, key, **kwargs)
-        return key # Fallback
-    
-    request.state._ = translate_with_context
-
     return {
         "request": request,
         "user": user,

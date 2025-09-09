@@ -27,18 +27,17 @@ from src.core.middleware import CacheMiddleware, RateLimitMiddleware
 from src.core.cache_utils import schedule_cache_cleanup, warm_up_cache
 from src.pages.jinja_config import templates, configure_jinja_templates
 
-# --- БАЗОВАЯ НАСТРОЙКА ---
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 log = logging.getLogger(__name__)
 settings = get_settings()
+
+configure_jinja_templates(templates)
 
 BASE_DIR = FilePath("/app")
 
 # --- ОБЩИЕ ОБРАБОТЧИКИ СОБЫТИЙ ---
 async def on_startup():
     log.info("Application startup...")
-    configure_jinja_templates(templates)
-    
     await check_db_connection()
     log.info("Creating first superuser if necessary...")
     async with async_session_factory() as session:
