@@ -85,11 +85,13 @@
                         {% set query_params = dict(request.query_params) %}
                 
                         {% set path_params_ru = request.path_params.copy() %}
-                        {% set _ = path_params_ru.update({'locale': 'ru'}) %}
+                        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Переменная _ заменена на __ --- #}
+                        {% set __ = path_params_ru.update({'locale': 'ru'}) %}
                         <a href="{{ request.url_for(route_name, **path_params_ru) }}{% if query_params %}?{{ urlencode(query_params) }}{% endif %}" class="lang-link {% if request.state.locale == 'ru' %}active{% endif %}">RU</a>
                 
                         {% set path_params_uz = request.path_params.copy() %}
-                        {% set _ = path_params_uz.update({'locale': 'uz'}) %}
+                        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Переменная _ заменена на __ --- #}
+                        {% set __ = path_params_uz.update({'locale': 'uz'}) %}
                         <a href="{{ request.url_for(route_name, **path_params_uz) }}{% if query_params %}?{{ urlencode(query_params) }}{% endif %}" class="lang-link {% if request.state.locale == 'uz' %}active{% endif %}">UZ</a>
                     {% endif %}
                 </div>
