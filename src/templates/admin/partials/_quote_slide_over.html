@@ -8,11 +8,11 @@
         <h3 class="slide-over-section-title">Информация о клиенте</h3>
         <div class="detail-item">
             <strong>Имя</strong>
-            <span><a href="{{ request.url_for('admin_contact_detail', pk=req.contact_id) }}" class="link-to-change">{{ req.contact.full_name }}</a></span>
+            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
+            <span><a href="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=req.contact_id) }}" class="link-to-change">{{ req.contact.full_name }}</a></span>
         </div>
         <div class="detail-item">
             <strong>Телефон</strong>
-            {# --- ИЗМЕНЕНИЕ ЗДЕСЬ --- #}
             <span>{{ req.contact.phone | format_phone }}</span>
         </div>
 
@@ -36,7 +36,8 @@
         {% endif %}
         
         <h3 class="slide-over-section-title">Управление</h3>
-        <form hx-post="{{ request.url_for('admin_api_quote_assign', pk=req.id) }}" hx-trigger="submit" style="margin-bottom: 20px;">
+        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
+        <form hx-post="{{ request.url_for('admin_api_quote_assign', locale=request.state.locale, pk=req.id) }}" hx-trigger="submit" style="margin-bottom: 20px;">
             <div class="input-group" style="margin: 0;">
                 <label for="assignee-select" style="margin-bottom: 10px; font-weight: 600; color: var(--text-secondary);">Назначить исполнителя</label>
                 <div style="display: flex; gap: 12px;">
@@ -52,7 +53,8 @@
         </form>
         
         <div>
-            <a href="{{ request.url_for('admin_quoterequest_change', pk=req.id) }}" class="btn btn-secondary btn-full">
+            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
+            <a href="{{ request.url_for('admin_quoterequest_change', locale=request.state.locale, pk=req.id) }}" class="btn btn-secondary btn-full">
                 <i class='bx bx-edit-alt'></i> Полное редактирование
             </a>
         </div>
@@ -63,8 +65,9 @@
         <div class="task-list-container">
             {% include 'admin/partials/_task_list_partial.html' %}
         </div>
+        {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
         <form class="quick-task-form" style="margin-top: 20px;"
-              hx-post="{{ request.url_for('admin_htmx_add_task_to_quote', pk=req.id) }}"
+              hx-post="{{ request.url_for('admin_htmx_add_task_to_quote', locale=request.state.locale, pk=req.id) }}"
               hx-target=".task-list"
               hx-swap="innerHTML"
               hx-on::after-request="this.reset()">

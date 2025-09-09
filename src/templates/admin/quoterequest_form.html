@@ -5,7 +5,8 @@
 {% block content %}
 <div class="page-header">
     <h1>{{ title }}</h1>
-    <a href="{{ request.url_for(meta.list_url_name) }}" class="btn btn-secondary">
+    {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
+    <a href="{{ request.url_for(meta.list_url_name, locale=request.state.locale) }}" class="btn btn-secondary">
         <i class='bx bx-arrow-back'></i> К списку заявок
     </a>
 </div>
@@ -24,7 +25,8 @@
             <div class="input-group">
                 <label>Клиент</label>
                 <div class="input-field readonly-field">
-                    <a href="{{ request.url_for('admin_contact_detail', pk=original.contact_id) }}" class="link-to-change">{{ original.contact.full_name }} ({{ original.contact.phone }})</a>
+                    {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
+                    <a href="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=original.contact_id) }}" class="link-to-change">{{ original.contact.full_name }} ({{ original.contact.phone }})</a>
                 </div>
             </div>
             {% else %}
@@ -32,8 +34,9 @@
             <div class="input-group">
                 <label for="contact-search">Поиск клиента (по имени или телефону)</label>
                 <div style="position: relative;">
+                    {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
                     <input type="text" id="contact-search" class="input-field" placeholder="Начните вводить..."
-                        autocomplete="off" hx-get="{{ request.url_for('admin_htmx_contact_search') }}"
+                        autocomplete="off" hx-get="{{ request.url_for('admin_htmx_contact_search', locale=request.state.locale) }}"
                         hx-trigger="keyup[target.value.length > 1] changed delay:300ms" hx-target="#search-results"
                         name="q" onkeydown="if(event.keyCode===13){event.preventDefault();}">
                     <div id="search-results" class="search-results-container"></div>
@@ -104,7 +107,8 @@
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Сохранить</button>
             {% if original %}
-            <a href="{{ request.url_for('admin_quoterequest_delete', pk=original.id) }}" class="btn btn-danger">Удалить заявку</a>
+            {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- #}
+            <a href="{{ request.url_for('admin_quoterequest_delete', locale=request.state.locale, pk=original.id) }}" class="btn btn-danger">Удалить заявку</a>
             {% endif %}
         </div>
     </form>
