@@ -18,23 +18,17 @@ settings = get_settings()
 
 class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
     async def __call__(self, request: Request) -> Optional[str]:
-        # Сначала ищем в заголовке Authorization (стандартный способ)
         authorization: str = request.headers.get("Authorization")
         
-        # --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-        # Добавляем проверку, что заголовок вообще существует
         if authorization:
             scheme, _, param = authorization.partition(" ")
             if scheme.lower() == "bearer":
                 return param
         
-        # Если в заголовке нет, ищем в cookie
         token = request.cookies.get("access_token")
         if token:
             return token
         
-        # Если токена нет нигде, возвращаем None.
-        # Дальнейшую обработку возьмет на себя get_current_user.
         return None
 
 oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl="/admin/login/token", auto_error=False)
@@ -49,16 +43,20 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
+# --- ГЛАВНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+# Теперь `request` передается как зависимость, и `get_current_user` будет иметь к нему доступ.
 async def get_current_user(
+    request: Request, # <-- request теперь является зависимостью
     db: AsyncSession = Depends(get_db_session), 
     token: Optional[str] = Depends(oauth2_scheme)
 ) -> User:
-    # Теперь, если пользователь не аутентифицирован, он будет корректно перенаправлен на страницу входа.
     credentials_exception = HTTPException(
         status_code=status.HTTP_303_SEE_OTHER,
         detail="Not authenticated",
-        headers={"Location": request.url_for("admin_login")},
+        # Теперь `request.url_for` будет работать корректно
+        headers={"Location": str(request.url_for("admin_login"))},
     )
+    
     if token is None:
         raise credentials_exception
     
@@ -101,36 +99,3 @@ async def get_current_superuser(current_user: User = Depends(get_current_active_
             detail="Доступ запрещен. Требуются права администратора."
         )
     return current_user
-
-from fastapi import Request
-async def get_current_user(
-    request: Request, 
-    db: AsyncSession = Depends(get_db_session), 
-    token: Optional[str] = Depends(oauth2_scheme)
-) -> User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_303_SEE_OTHER,
-        detail="Not authenticated",
-        headers={"Location": request.url_for("admin_login")},
-    )
-    if token is None:
-        raise credentials_exception
-    
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-        
-        exp = payload.get("exp")
-        if exp is None or datetime.now(timezone.utc).timestamp() > exp:
-            raise credentials_exception
-            
-        token_data = TokenData(username=username)
-    except JWTError:
-        raise credentials_exception
-        
-    user = await get_user_by_username(db, username=token_data.username)
-    if user is None:
-        raise credentials_exception
-    return user
