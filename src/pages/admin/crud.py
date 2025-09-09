@@ -1,3 +1,5 @@
+# src/pages/admin/crud.py
+
 import os
 import uuid
 import json
@@ -30,6 +32,17 @@ from sqlalchemy.dialects import postgresql
 
 router = APIRouter()
 log = logging.getLogger(__name__)
+
+def set_hx_trigger_header(response: Response, message_key: str, request: Request, type: str = "success"):
+    """
+    Устанавливает заголовок HX-Trigger с переведенным сообщением для Notyf.
+    """
+    translator = templates.env.globals.get('_')
+    # Переводим сообщение, используя контекст запроса для определения локали
+    message = translator({'request': request}, message_key) if translator else message_key
+    payload = json.dumps({"show-toast": {"message": message, "type": type}})
+    response.headers["HX-Trigger"] = quote(payload)
+    return response
 
 class Meta:
     def __init__(self, model, list_display, form_class=None, verbose_name=None, verbose_name_plural=None):
@@ -105,7 +118,7 @@ Contact.__str__ = lambda self: self.full_name
 PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], ProductForm, "product_single", "list_products")
 CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "category_single", "list_categories")
 QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'business_type', 'created_at', 'status', 'assigned_to'], QuoteRequestForm, "request_single", "list_requests")
-CONTACT_META = Meta(Contact, ['full_name', 'phone', 'email'], None, "contact_single", "list_contacts")
+CONTACT_META = Meta(Contact, ['full_name', 'phone', 'email'], None, "client_single", "list_contacts")
 
 CONTACT_META.change_url_name = "admin_contact_detail"
 
@@ -137,11 +150,6 @@ async def quoterequest_export(request: Request, ids: Optional[str] = None, db: A
     BOM = b'\xef\xbb\xbf'
     content_bytes = BOM + output.getvalue().encode('utf-8')
     return StreamingResponse(iter([content_bytes]), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=weconstruct_requests_{datetime.now().strftime('%Y-%m-%d')}.csv"})
-
-def set_hx_trigger_header(response: Response, message: str, type: str = "success"):
-    payload = json.dumps({"show-toast": {"message": message, "type": type}})
-    response.headers["HX-Trigger"] = quote(payload)
-    return response
 
 async def handle_list_view(
     db: AsyncSession,
@@ -230,6 +238,7 @@ async def handle_list_view(
     # Создаем и возвращаем страницу
     params = Params(page=page, size=size)
     return create_page(items, total, params)
+
 @router.get("/contact/", response_class=HTMLResponse, name="admin_contact_list")
 async def contact_list(
     request: Request, 
@@ -258,11 +267,10 @@ async def quoterequest_list(request: Request, page: int = Query(1, ge=1), size: 
 async def populate_request_form_choices(db: AsyncSession, form: QuoteRequestForm):
     products = (await db.execute(select(Product).order_by(Product.name_ru))).scalars().all()
     form.product_id.choices = [(0, '--- Общая заявка ---')] + [(p.id, p.name_ru) for p in products]
-    staff_users = (await db.execute(select(User).where(User.is_staff == True).order_by(User.username))).scalars().all()
-    staff_users_query = select(User).where(
-        User.is_staff == True, 
-        User.is_superuser == False
-    ).order_by(User.username)
+    staff_users_result = await db.execute(
+        select(User).where(User.is_staff == True).order_by(User.username)
+    )
+    staff_users = staff_users_result.scalars().all()
     form.assigned_to_id.choices = [(0, '--- Не назначен ---')] + [(u.id, u.username) for u in staff_users]
 
 @router.get("/product/", response_class=HTMLResponse, name="admin_product_list")
@@ -279,6 +287,7 @@ async def product_form_get(request: Request, pk: Optional[int] = None, context: 
         if not instance: raise HTTPException(404)
     else: instance = None
     form = PRODUCT_META.form_class(obj=instance); cats = (await db.execute(select(Category).order_by(Category.name_ru))).scalars().all(); form.category_id.choices = [(c.id, c.name_ru) for c in cats]; context.update({"meta": PRODUCT_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/generic_form.html", context)
+
 @router.post("/product/add/", response_class=HTMLResponse)
 @router.post("/product/{pk}/change/", response_class=HTMLResponse)
 async def product_form_post(request: Request, pk: Optional[int] = None, main_image: UploadFile = File(None), images: List[UploadFile] = File([]), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
@@ -304,26 +313,32 @@ async def product_form_post(request: Request, pk: Optional[int] = None, main_ima
                 file_path_relative = f"products/{uuid.uuid4()}_{image_file.filename}"; full_file_path = products_media_dir / file_path_relative.split('/')[-1]
                 with open(full_file_path, "wb") as buffer: buffer.write(await image_file.read())
                 new_image = ProductImage(product_id=instance.id, image=file_path_relative); db.add(new_image)
-        await db.commit(); await db.refresh(instance); response = RedirectResponse(request.url_for(PRODUCT_META.change_url_name, pk=instance.id), status_code=303); return set_hx_trigger_header(response, "Товар успешно сохранен!")
+        await db.commit(); await db.refresh(instance); response = RedirectResponse(request.url_for(PRODUCT_META.change_url_name, locale=request.state.locale, pk=instance.id), status_code=303);
+        return set_hx_trigger_header(response, "product_saved_success", request)
     context.update({"meta": PRODUCT_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/generic_form.html", context, status_code=422)
+
 @router.get("/product/{pk}/delete/", response_class=HTMLResponse, name="admin_product_delete")
 @router.post("/product/{pk}/delete/", response_class=HTMLResponse)
 async def product_delete(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     product = await db.get(Product, pk);
     if not product: raise HTTPException(404)
     if request.method == "POST":
-        await db.delete(product); await db.commit(); response = RedirectResponse(url=request.url_for(PRODUCT_META.list_url_name), status_code=303); return set_hx_trigger_header(response, "Товар удален", "error")
-    context.update({"meta": PRODUCT_META, "original": product, "back_url": request.url_for(PRODUCT_META.change_url_name, pk=pk), "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/delete_confirmation.html", context)
+        await db.delete(product); await db.commit(); response = RedirectResponse(url=request.url_for(PRODUCT_META.list_url_name, locale=request.state.locale), status_code=303);
+        return set_hx_trigger_header(response, "product_deleted_success", request, "error")
+    context.update({"meta": PRODUCT_META, "original": product, "back_url": request.url_for(PRODUCT_META.change_url_name, locale=request.state.locale, pk=pk), "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/delete_confirmation.html", context)
+
 @router.get("/category/", response_class=HTMLResponse, name="admin_category_list")
 async def category_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     page_obj = await handle_list_view(db, CATEGORY_META, page=page, size=size, search_query=q); context.update({"meta": CATEGORY_META, "page": page_obj, "list_display": ['name_ru', 'description_ru'], "search_query": q, "htmx_request": "HX-Request" in request.headers});
     return templates.TemplateResponse("admin/generic_list.html", context)
+
 @router.get("/category/add/", response_class=HTMLResponse, name="admin_category_add")
 @router.get("/category/{pk}/change/", response_class=HTMLResponse, name="admin_category_change")
 async def category_form_get(request: Request, pk: Optional[int] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     instance = await db.get(Category, pk) if pk else None;
     if pk and not instance: raise HTTPException(404)
     form = CATEGORY_META.form_class(obj=instance); context.update({"meta": CATEGORY_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/generic_form.html", context)
+
 @router.post("/category/add/", response_class=HTMLResponse)
 @router.post("/category/{pk}/change/", response_class=HTMLResponse)
 async def category_form_post(request: Request, pk: Optional[int] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
@@ -331,8 +346,10 @@ async def category_form_post(request: Request, pk: Optional[int] = None, context
     if pk and not instance: raise HTTPException(404)
     form_data = await request.form(); form = CATEGORY_META.form_class(form_data, obj=instance)
     if form.validate():
-        instance = instance or Category(); form.populate_obj(instance); instance.slug = slugify(instance.name_ru); db.add(instance); await db.commit(); await db.refresh(instance); response = RedirectResponse(request.url_for(CATEGORY_META.change_url_name, pk=instance.id), status_code=303); return set_hx_trigger_header(response, "Категория сохранена!")
+        instance = instance or Category(); form.populate_obj(instance); instance.slug = slugify(instance.name_ru); db.add(instance); await db.commit(); await db.refresh(instance); response = RedirectResponse(request.url_for(CATEGORY_META.change_url_name, locale=request.state.locale, pk=instance.id), status_code=303);
+        return set_hx_trigger_header(response, "category_saved_success", request)
     context.update({"meta": CATEGORY_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/generic_form.html", context)
+
 @router.get("/category/{pk}/delete/", response_class=HTMLResponse, name="admin_category_delete")
 @router.post("/category/{pk}/delete/", response_class=HTMLResponse)
 async def category_delete(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
@@ -340,13 +357,21 @@ async def category_delete(request: Request, pk: int, context: dict = Depends(get
     if not category: raise HTTPException(404)
     if request.method == "POST":
         try:
-            await db.delete(category); await db.commit(); response = RedirectResponse(url=request.url_for(CATEGORY_META.list_url_name), status_code=303); return set_hx_trigger_header(response, "Категория удалена", "error")
+            await db.delete(category); await db.commit(); response = RedirectResponse(url=request.url_for(CATEGORY_META.list_url_name, locale=request.state.locale), status_code=303);
+            return set_hx_trigger_header(response, "category_deleted_success", request, "error")
         except IntegrityError:
             await db.rollback(); context.update({"error_message": "Нельзя удалить категорию, к которой привязаны товары. Сначала измените категорию у этих товаров или удалите их."}); return templates.TemplateResponse("admin/500.html", context, status_code=500)
-    context.update({"meta": CATEGORY_META, "original": category, "back_url": request.url_for(CATEGORY_META.change_url_name, pk=pk), "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/delete_confirmation.html", context)
+    context.update({"meta": CATEGORY_META, "original": category, "back_url": request.url_for(CATEGORY_META.change_url_name, locale=request.state.locale, pk=pk), "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/delete_confirmation.html", context)
+
 @router.get("/quoterequest/add/", response_class=HTMLResponse, name="admin_quoterequest_add")
 async def quoterequest_form_get_add(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    form = QUOTEREQUEST_META.form_class(); await populate_request_form_choices(db, form); context.update({"meta": QUOTEREQUEST_META, "original": None, "form": form, "title": "Добавить заявку", "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/quoterequest_form.html", context)
+    form = QUOTEREQUEST_META.form_class()
+    await populate_request_form_choices(db, form)
+    _ = templates.env.globals['_']
+    title = f"{_({'request': request}, 'adding')}: {_({'request': request}, 'request_single')}"
+    context.update({"meta": QUOTEREQUEST_META, "original": None, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers}); 
+    return templates.TemplateResponse("admin/quoterequest_form.html", context)
+
 @router.post("/quoterequest/add/", response_class=HTMLResponse)
 async def quoterequest_form_post_add(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     form_data = await request.form(); form = QUOTEREQUEST_META.form_class(form_data); await populate_request_form_choices(db, form)
@@ -358,21 +383,36 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
         if new_quote_request:
             new_quote_request.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None; new_quote_request.business_type = form.business_type.data; new_quote_request.dimensions = form.dimensions.data; new_quote_request.investment_details = form.investment_details.data; new_quote_request.conclusion = form.conclusion.data; new_quote_request.additional_info = form.additional_info.data; db.add(new_quote_request); await db.flush()
             if not contact_id: await shop_service._notify_managers(db, new_quote_request, contact.full_name)
-        await db.commit(); response = RedirectResponse(request.url_for(QUOTEREQUEST_META.list_url_name), status_code=303); return set_hx_trigger_header(response, "Заявка успешно создана!")
-    context.update({"meta": QUOTEREQUEST_META, "original": None, "form": form, "title": "Добавить заявку", "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
+        await db.commit(); response = RedirectResponse(request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale), status_code=303);
+        return set_hx_trigger_header(response, "request_created_success", request)
+    _ = templates.env.globals['_']
+    title = f"{_({'request': request}, 'adding')}: {_({'request': request}, 'request_single')}"
+    context.update({"meta": QUOTEREQUEST_META, "original": None, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers}); 
+    return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
+
 @router.get("/quoterequest/{pk}/change/", response_class=HTMLResponse, name="admin_quoterequest_change")
 async def quoterequest_change_form_get(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)]);
     if not quote: raise HTTPException(404)
-    form = QUOTEREQUEST_META.form_class(obj=quote); form.contact_id.data = quote.contact_id; await populate_request_form_choices(db, form); context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": f"Редактирование заявки #{pk}", "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/quoterequest_form.html", context)
+    form = QUOTEREQUEST_META.form_class(obj=quote); form.contact_id.data = quote.contact_id; await populate_request_form_choices(db, form);
+    _ = templates.env.globals['_']
+    title = f"{_({'request': request}, 'editing')}: {_({'request': request}, 'request_single')} #{pk}"
+    context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers}); 
+    return templates.TemplateResponse("admin/quoterequest_form.html", context)
+
 @router.post("/quoterequest/{pk}/change/", response_class=HTMLResponse)
 async def quoterequest_change_form_post(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)]);
     if not quote: raise HTTPException(404)
     form_data = await request.form(); form = QUOTEREQUEST_META.form_class(form_data, obj=quote); await populate_request_form_choices(db, form)
     if form.validate():
-        quote.product_id = form.product_id.data if form.product_id.data else None; quote.message = form.message.data; quote.status = form.status.data; quote.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None; quote.business_type = form.business_type.data; quote.dimensions = form.dimensions.data; quote.investment_details = form.investment_details.data; quote.conclusion = form.conclusion.data; quote.additional_info = form.additional_info.data; db.add(quote); await db.commit(); response = RedirectResponse(request.url_for(QUOTEREQUEST_META.change_url_name, pk=pk), status_code=303); return set_hx_trigger_header(response, "Заявка успешно сохранена!")
-    context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": f"Редактирование заявки #{pk}", "htmx_request": "HX-Request" in request.headers}); return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
+        quote.product_id = form.product_id.data if form.product_id.data else None; quote.message = form.message.data; quote.status = form.status.data; quote.assigned_to_id = form.assigned_to_id.data if form.assigned_to_id.data else None; quote.business_type = form.business_type.data; quote.dimensions = form.dimensions.data; quote.investment_details = form.investment_details.data; quote.conclusion = form.conclusion.data; quote.additional_info = form.additional_info.data; db.add(quote); await db.commit(); response = RedirectResponse(request.url_for(QUOTEREQUEST_META.change_url_name, locale=request.state.locale, pk=pk), status_code=303);
+        return set_hx_trigger_header(response, "request_saved_success", request)
+    _ = templates.env.globals['_']
+    title = f"{_({'request': request}, 'editing')}: {_({'request': request}, 'request_single')} #{pk}"
+    context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers}); 
+    return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
+
 @router.get("/quoterequest/{pk}/delete/", response_class=HTMLResponse, name="admin_quoterequest_delete")
 @router.post("/quoterequest/{pk}/delete/", response_class=Response)
 async def quoterequest_delete(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
@@ -381,9 +421,6 @@ async def quoterequest_delete(request: Request, pk: int, context: dict = Depends
     
     if request.method == "POST":
         try:
-            # <<< НАЧАЛО ИЗМЕНЕНИЯ: Архивируем лид перед удалением >>>
-            # Находим связанный лид в реестре и помечаем его как ARCHIVED.
-            # Это предотвратит его повторный импорт.
             archive_lead_stmt = (
                 update(GoogleSheetLead)
                 .where(GoogleSheetLead.quote_request_id == pk)
@@ -396,8 +433,10 @@ async def quoterequest_delete(request: Request, pk: int, context: dict = Depends
             await db.commit()
             
             response = Response(status_code=200, content="Заявка удалена")
-            redirect_url = request.url_for(QUOTEREQUEST_META.list_url_name)
-            trigger_payload = {"show-toast": {"message": "Заявка удалена", "type": "error"}, "updateKanban": True, "new-quote-request": True}
+            redirect_url = request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale)
+            _ = templates.env.globals['_']
+            message = _({'request': request}, "request_deleted_success")
+            trigger_payload = {"show-toast": {"message": message, "type": "error"}, "updateKanban": True, "new-quote-request": True}
             response.headers["HX-Redirect"] = str(redirect_url)
             response.headers["HX-Trigger"] = json.dumps(trigger_payload)
             return response
@@ -406,6 +445,8 @@ async def quoterequest_delete(request: Request, pk: int, context: dict = Depends
             context.update({"error_message": "Не удалось удалить заявку из-за связанных записей."})
             return templates.TemplateResponse("admin/500.html", context, status_code=500)
             
-    back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name))
-    context.update({"meta": QUOTEREQUEST_META, "original": quote_req, "title": f"Удалить {QUOTEREQUEST_META.verbose_name}", "back_url": back_url, "htmx_request": "HX-Request" in request.headers})
+    back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale))
+    _ = templates.env.globals['_']
+    title = f"{_({'request': request}, 'delete')}: {_({'request': request}, 'request_single')}"
+    context.update({"meta": QUOTEREQUEST_META, "original": quote_req, "title": title, "back_url": back_url, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
