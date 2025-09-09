@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 import re
 import pytz
 from pathlib import Path
-import jinja2  # <<< --- ШАГ 1: ДОБАВЬТЕ ЭТОТ ИМПОРТ
+import jinja2 # Убедитесь, что этот импорт есть
 
 from .translations import TRANSLATIONS
 
@@ -17,8 +17,9 @@ templates = Jinja2Templates(directory=TEMPLATE_DIR, extensions=['jinja2.ext.do']
 
 translation_cache = TTLCache(maxsize=2000, ttl=3600)
 
-# <<< --- ШАГ 2: ИЗМЕНИТЕ ДЕКОРАТОР ---
-@jinja2.contextfunction
+# --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+# Используем правильный декоратор @jinja2.pass_context
+@jinja2.pass_context
 def translate_ui(context: dict, key: str, **kwargs) -> str:
     """
     Переводит строку интерфейса по ключу.
@@ -37,6 +38,8 @@ def translate_ui(context: dict, key: str, **kwargs) -> str:
             return translation
     
     return translation
+# --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+
 
 STATUS_DISPLAY_MAP = {
     'ru': {
