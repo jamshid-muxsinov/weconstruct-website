@@ -1,3 +1,5 @@
+# src/pages/admin/contact.py
+
 import json
 from urllib.parse import quote
 from fastapi import APIRouter, Depends, HTTPException, Request, Form
@@ -11,16 +13,19 @@ from src.services import crm_service
 from .dependencies import get_common_context
 
 from sqlalchemy.exc import IntegrityError
-from src.models import Contact
+from src.models.shop_models import Contact # Убедитесь, что модель импортирована
 
 router = APIRouter()
 
+# --- ИЗМЕНЕНИЕ: Замена статических строк на ключи перевода ---
 class ContactForm(wtforms.Form):
-    name = wtforms.StringField('Имя', validators=[wtforms.validators.DataRequired()])
-    last_name = wtforms.StringField('Фамилия')
-    phone = wtforms.StringField('Телефон')
+    name = wtforms.StringField('form_field_name', validators=[wtforms.validators.DataRequired()])
+    last_name = wtforms.StringField('form_field_last_name')
+    phone = wtforms.StringField('form_field_phone')
 
-def set_hx_trigger_header(response: RedirectResponse, message_key: str, request: Request, type: str = "success"):
+def set_hx_trigger_header(response: Response, message_key: str, request: Request, type: str = "success"):
+    translator = templates.env.globals.get('_')
+    message = translator({'request': request}, message_key) if translator else message_key
     payload = json.dumps({"show-toast": {"message": message, "type": type}})
     response.headers["HX-Trigger"] = quote(payload)
     return response
@@ -63,7 +68,6 @@ async def post_contact_detail_page(
 
         redirect_url = request.url_for("admin_contact_detail", locale=request.state.locale, pk=pk)
         response = RedirectResponse(redirect_url, status_code=303)
-        # --- ИСПРАВЛЕНИЕ: Передаем request в функцию ---
         return set_hx_trigger_header(response, "contact_updated_success", request)
     
     contact_data = await crm_service.get_contact_360_view(db, pk)
@@ -75,7 +79,6 @@ async def post_contact_detail_page(
     })
     return templates.TemplateResponse("admin/contact_detail.html", context, status_code=422)
 
-# Остальная часть файла остается без изменений
 @router.post("/contact/{pk}/add-note", response_class=HTMLResponse, name="admin_contact_add_note")
 async def htmx_add_note(
     pk: int,
@@ -132,6 +135,7 @@ async def contact_delete(
     contact = await db.get(Contact, pk)
     if not contact: 
         raise HTTPException(404)
+    _ = templates.env.globals['_']
 
     if request.method == "POST":
         try:
@@ -150,9 +154,11 @@ async def contact_delete(
             return templates.TemplateResponse("admin/500.html", context, status_code=400)
 
     back_url = request.url_for("admin_contact_detail", locale=request.state.locale, pk=pk)
+    title = f"{_({'request': request}, 'delete_confirmation_title', entity=_(CONTACT_META.verbose_name))}"
+
     context.update({
         "original": contact, 
-        "title": f"Удалить контакт: {contact.full_name}", 
+        "title": title, 
         "back_url": back_url
     })
     return templates.TemplateResponse("admin/delete_confirmation.html", context)

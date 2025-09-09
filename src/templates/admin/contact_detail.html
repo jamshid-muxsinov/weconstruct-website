@@ -10,10 +10,11 @@
 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: flex-start;">
     <div class="card">
         <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">{{ _('contact_info') }}</h2>
-        <form method="post" action="{{ request.url_for('post_contact_detail_page', locale=request.state.locale, pk=contact.id) }}" novalidate>
+        <form method="post" action="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=contact.id) }}" novalidate>
             {% for field in form %}
             <div class="input-group">
-                <label for="{{ field.id }}">{{ field.label.text }}</label>
+                {# --- ИЗМЕНЕНИЕ: Добавлен вызов функции перевода для label --- #}
+                <label for="{{ field.id }}">{{ _(field.label.text) }}</label>
                 {{ field(class_='input-field') }}
                 {% if field.errors %}<div class="error-text">{{ field.errors[0] }}</div>{% endif %}
             </div>

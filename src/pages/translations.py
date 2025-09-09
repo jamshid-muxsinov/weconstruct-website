@@ -52,6 +52,9 @@ TRANSLATIONS = {
     'loading_kanban': {'ru': 'Загрузка канбан-доски...', 'uz': 'Kanban-doska yuklanmoqda...'},
     'export_selected': {'ru': 'Экспорт выбранных', 'uz': 'Tanlanganlarni eksport qilish'},
 
+    'pagination_back': {'ru': 'Назад', 'uz': 'Orqaga'},
+    'pagination_forward': {'ru': 'Вперед', 'uz': 'Oldinga'},
+
     # Статусы заявок
     'status_imported': {'ru': 'Импортировано', 'uz': 'Import qilindi'},
     'status_qualification': {'ru': 'Квалификация', 'uz': 'Saralash'},
