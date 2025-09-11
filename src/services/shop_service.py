@@ -25,7 +25,7 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
     # Проверяем, не добавляли ли мы уже контакт с таким номером в этой же "пачке" данных
     sync_session: Session = db.sync_session
     for obj in sync_session.new:
-        if isinstance(obj, Contact):
+        if isinstance(obj, Contact) and obj.phone:
             existing_phone_normalized = "".join(filter(str.isdigit, obj.phone))[-9:]
             if existing_phone_normalized == search_phone_normalized:
                 # Если нашли - возвращаем его и не идем в базу

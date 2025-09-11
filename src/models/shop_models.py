@@ -33,10 +33,12 @@ class User(Base):
 class Contact(Base):
     __tablename__ = 'shop_contact'
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), comment="Имя клиента")
-    last_name: Mapped[Optional[str]] = mapped_column(String(100), comment="Фамилия клиента")
+    # ИЗМЕНЕНО: Увеличена длина полей для имени и фамилии
+    name: Mapped[str] = mapped_column(String(150), comment="Имя клиента")
+    last_name: Mapped[Optional[str]] = mapped_column(String(150), comment="Фамилия клиента")
     
-    phone: Mapped[str] = mapped_column(String(20), unique=True)
+    # ИЗМЕНЕНО: Увеличена длина поля для телефона
+    phone: Mapped[str] = mapped_column(String(50), unique=True)
     email: Mapped[Optional[str]] = mapped_column(String(100))
     company: Mapped[Optional[str]] = mapped_column(String(150))
     notes: Mapped[Optional[str]] = mapped_column(Text, comment="Старые заметки")
@@ -153,7 +155,16 @@ class Product(Base):
 
     area: Mapped[int] = mapped_column(Integer, default=0)
     
-    status: Mapped[StatusEnum] = mapped_column(EnumType(StatusEnum, name="product_status_enum"), default=StatusEnum.IN_STOCK)
+    # ИСПРАВЛЕНИЕ: Добавлен параметр native_enum=False для надежности
+    status: Mapped[StatusEnum] = mapped_column(
+        EnumType(
+            StatusEnum, 
+            name="product_status_enum",
+            native_enum=False, 
+            values_callable=lambda obj: [e.value for e in obj]
+        ), 
+        default=StatusEnum.IN_STOCK
+    )
     
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -281,6 +292,7 @@ class StatusChangeLog(Base):
     user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("auth_user.id", ondelete="SET NULL"))
     user: Mapped[Optional["User"]] = relationship(back_populates="status_logs")
 
+    # ИСПРАВЛЕНИЕ: Добавлен параметр native_enum=False
     old_status: Mapped[QuoteRequest.StatusEnum] = mapped_column(EnumType(QuoteRequest.StatusEnum, name="quoterequest_status_enum", native_enum=False, values_callable=lambda obj: [e.value for e in obj]))
     new_status: Mapped[QuoteRequest.StatusEnum] = mapped_column(EnumType(QuoteRequest.StatusEnum, name="quoterequest_status_enum", native_enum=False, values_callable=lambda obj: [e.value for e in obj]))
     
@@ -309,7 +321,17 @@ class GoogleSheetLead(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     sheet_row_id: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     spreadsheet_id: Mapped[str] = mapped_column(String(100), index=True)
-    status: Mapped[StatusEnum] = mapped_column(EnumType(StatusEnum, name="googlesheetlead_status_enum", native_enum=False), default=StatusEnum.PENDING, index=True)
+    
+    status: Mapped[StatusEnum] = mapped_column(
+        EnumType(
+            StatusEnum, 
+            name="googlesheetlead_status_enum", 
+            native_enum=False
+        ), 
+        default=StatusEnum.PENDING, 
+        index=True
+    )
+
     quote_request_id: Mapped[Optional[int]] = mapped_column(ForeignKey("shop_quoterequest.id", ondelete="SET NULL"), unique=True)
     quote_request: Mapped[Optional["QuoteRequest"]] = relationship(back_populates="google_sheet_lead")
     raw_data: Mapped[Optional[dict]] = mapped_column(JSON)
