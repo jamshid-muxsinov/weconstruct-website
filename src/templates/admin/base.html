@@ -80,6 +80,9 @@
                 
                 {% if request.scope.get('route') %}
                 {% set route_name = request.scope.route.name %}
+
+                {% set path_params = request.path_params.copy() %}
+
                 {% set query_params = dict(request.query_params) %}
 
                 <div class="lang-switcher-container" id="lang-switcher">
@@ -90,7 +93,8 @@
                     </button>
                     <div class="lang-switcher-menu" role="menu">
                         
-                        {% set path_params_ru = request.path_params.copy() %}
+                        {# --- Ссылка на Русский язык --- #}
+                        {% set path_params_ru = path_params.copy() %}
                         {% set __ = path_params_ru.update({'locale': 'ru'}) %}
                         <a href="{{ request.url_for(route_name, **path_params_ru) }}{% if query_params %}?{{ urlencode(query_params) }}{% endif %}" 
                         class="lang-option {% if request.state.locale == 'ru' %}active{% endif %}" role="menuitem">
@@ -98,7 +102,8 @@
                             <i class='bx bx-check'></i>
                         </a>
                         
-                        {% set path_params_uz = request.path_params.copy() %}
+                        {# --- Ссылка на Узбекский язык --- #}
+                        {% set path_params_uz = path_params.copy() %}
                         {% set __ = path_params_uz.update({'locale': 'uz'}) %}
                         <a href="{{ request.url_for(route_name, **path_params_uz) }}{% if query_params %}?{{ urlencode(query_params) }}{% endif %}" 
                         class="lang-option {% if request.state.locale == 'uz' %}active{% endif %}" role="menuitem">
