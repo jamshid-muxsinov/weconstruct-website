@@ -95,8 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
-    // *** НАЧАЛО ИЗМЕНЕНИЙ: Функция для обновления активной ссылки ***
     function updateActiveNavLink(path) {
         const navContainer = document.getElementById('sidebar-nav');
         if (!navContainer) return;

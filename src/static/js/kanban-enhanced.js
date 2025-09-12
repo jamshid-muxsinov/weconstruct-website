@@ -55,7 +55,7 @@ document.addEventListener('alpine:init', () => {
 
         bulkAssign(userId) {
             if (!userId || this.selectedCards.size === 0) return;
-            htmx.ajax('POST', '/api/bulk-assign', {
+            htmx.ajax('POST', 'api/bulk-assign', {
                 values: { card_ids: this.selectedIds, user_id: parseInt(userId) },
                 swap: 'none'
             }).then(() => {
@@ -67,7 +67,7 @@ document.addEventListener('alpine:init', () => {
         
         bulkUpdateStatus(status) {
             if (!status || this.selectedCards.size === 0) return;
-             htmx.ajax('POST', '/api/bulk-status', {
+             htmx.ajax('POST', 'api/bulk-status', {
                 values: { card_ids: this.selectedIds, status: status },
                 swap: 'none'
             }).then(() => {
@@ -114,7 +114,7 @@ function initializeKanban() {
                     return;
                 }
                 
-                htmx.ajax('POST', '/api/update-status', {
+                htmx.ajax('POST', 'api/update-status', {
                     values: { card_id: parseInt(cardId), status: newStatus },
                     swap: 'none'
                 }).then(() => {
