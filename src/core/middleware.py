@@ -3,12 +3,29 @@ import json
 import time
 from typing import Callable
 from fastapi import Request, Response
+from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import StreamingResponse
+
+# Убедитесь, что этот импорт правильный для вашей структуры
+from src.pages.jinja_config import templates
 from src.core.cache import cache_manager
 from src.core.config import get_settings
 
 settings = get_settings()
+
+# --- НАШ НОВЫЙ АВТОМАТИЧЕСКИЙ ОБРАБОТЧИК HTMX ---
+class HTMXMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app, templates: Jinja2Templates):
+        super().__init__(app)
+        self.templates = templates
+
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        is_htmx = request.headers.get("HX-Request") == "true"
+        request.state.htmx_request = is_htmx
+        self.templates.env.globals['htmx_request'] = is_htmx
+        response = await call_next(request)
+        return response
 
 class CacheMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, cache_ttl: int = 300):

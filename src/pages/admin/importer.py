@@ -18,7 +18,6 @@ async def get_import_page(
     context: dict = Depends(get_common_context)
 ):
     context["title"] = "Импорт из Google Sheets"
-    context["htmx_request"] = "HX-Request" in request.headers
     return templates.TemplateResponse("admin/importer_page.html", context)
 
 
@@ -29,8 +28,6 @@ async def run_import_from_sheet(
     context: dict = Depends(get_common_context),
     db: AsyncSession = Depends(get_db_session)
 ):
-    # --- И ДОБАВЬТЕ ЭТУ СТРОКУ СЮДА ТОЖЕ ---
-    context["htmx_request"] = "HX-Request" in request.headers
 
     # Извлекаем ID таблицы из URL
     sheet_id_match = re.search(r'/spreadsheets/d/([a-zA-Z0-9-_]+)', sheet_url)

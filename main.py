@@ -23,7 +23,7 @@ from src.pages.admin.router import router as admin_router, unprotected_router as
 from src.pages.shop_pages import router as shop_router, root_router as shop_root_router
 from src.services.user_service import create_first_superuser
 from src.core.cache import init_cache, cleanup_cache
-from src.core.middleware import CacheMiddleware, RateLimitMiddleware
+from src.core.middleware import CacheMiddleware, RateLimitMiddleware, HTMXMiddleware
 from src.core.cache_utils import schedule_cache_cleanup, warm_up_cache
 from src.pages.jinja_config import templates, configure_jinja_templates
 
@@ -64,6 +64,7 @@ def create_admin_app() -> FastAPI:
         fastapi_kwargs.update({"docs_url": None, "redoc_url": None, "openapi_url": None})
 
     app = FastAPI(**fastapi_kwargs, on_startup=[on_startup], on_shutdown=[on_shutdown])
+    app.add_middleware(HTMXMiddleware, templates=templates)
 
     app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
     app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.SECRET_KEY)
