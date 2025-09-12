@@ -255,3 +255,107 @@ body {
    Animations
    ========================================================================== */
 .no-transition * { transition: none !important; animation: none !important; }
+.lang-switcher-container {
+    position: relative;
+}
+
+.lang-switcher-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: var(--radius-lg);
+    background: var(--surface-1);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: var(--transition-medium);
+}
+
+.lang-switcher-btn:hover,
+.lang-switcher-btn[aria-expanded="true"] {
+    background: var(--surface-2);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.lang-switcher-btn .bx-globe {
+    font-size: 1.25rem;
+}
+
+.lang-switcher-btn .current-lang-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.lang-switcher-btn .bx-chevron-down {
+    transition: var(--transition-fast);
+}
+
+.lang-switcher-btn[aria-expanded="true"] .bx-chevron-down {
+    transform: rotate(180deg);
+}
+
+.lang-switcher-menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    z-index: 1050;
+    width: 200px;
+    background: var(--surface-1);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    padding: 8px;
+    overflow: hidden;
+    
+    /* Анимация появления */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: var(--transition-medium);
+}
+
+.lang-switcher-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.lang-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+.lang-option:hover {
+    background: var(--surface-2);
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.lang-option.active {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Скрываем иконку галочки по умолчанию */
+.lang-option .bx-check {
+    display: none;
+    font-size: 1.25rem;
+    color: var(--accent-primary);
+}
+
+/* Показываем галочку только у активного элемента */
+.lang-option.active .bx-check {
+    display: inline-block;
+}

@@ -53,6 +53,32 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.addEventListener('closeSlideOver', () => closePopup(document.getElementById('slide-over-overlay')));
     }
 
+    // --- LANGUAGE SWITCHER LOGIC ---
+    function initLangSwitcher() {
+    const switcher = document.getElementById('lang-switcher');
+    if (!switcher) return;
+
+    const button = switcher.querySelector('.lang-switcher-btn');
+    const menu = switcher.querySelector('.lang-switcher-menu');
+
+    button.addEventListener('click', function (event) {
+        event.stopPropagation();
+        const isExpanded = button.getAttribute('aria-expanded') === 'true';
+        button.setAttribute('aria-expanded', !isExpanded);
+        menu.classList.toggle('show');
+    });
+
+    // Закрываем меню, если клик был вне его
+    document.addEventListener('click', function (e) {
+        if (!switcher.contains(e.target)) {
+            if (button.getAttribute('aria-expanded') === 'true') {
+                button.setAttribute('aria-expanded', 'false');
+                menu.classList.remove('show');
+            }
+        }
+    });
+}
+
     // --- ENHANCED SIDEBAR LOGIC ---
     function initSidebar() {
         const sidebar = document.getElementById('sidebar');
@@ -128,6 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function init() {
         setupHtmx();
         initPopups();
+        initLangSwitcher();
         initSidebar();
     }
     
