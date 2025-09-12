@@ -39,10 +39,26 @@ def configure_jinja_templates(app_templates: Jinja2Templates):
         return translation
 
     @jinja2.pass_context
-    def get_status_display(context: dict, status) -> str:
+    def get_status_display(context: dict, status, locale: str = None) -> str:
+        # Если locale не передан явно, пытаемся получить его из контекста
+        if locale is None:
+            request = context.get('request')
+            if request:
+                locale = getattr(request.state, 'locale', 'ru')
+            else:
+                locale = 'ru' # По умолчанию русский
+
+        # Получаем ключ статуса (например, 'new', 'in_progress')
         status_key = getattr(status, 'value', str(status))
+        
+        # Формируем ключ для словаря переводов (например, 'status_new')
         translation_key = f"status_{status_key}"
-        return translate_ui(context, translation_key)
+
+        # Используем вашу уже существующую логику перевода
+        translation_dict = TRANSLATIONS.get(translation_key, {})
+        translation = translation_dict.get(locale, TRANSLATIONS.get(translation_key, {}).get('ru', status_key))
+
+        return translation
 
     def format_phone(value: str) -> str:
         if not value: return "—"

@@ -26,8 +26,7 @@
             </div>
             <div class="stats-details">
                 <h3>{{ item.count }}</h3>
-                {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Убран лишний аргумент --- #}
-                <p>{{ get_status_display(item.status) }}</p>
+                <p>{{ get_status_display(item.status, request.state.locale) }}</p>
             </div>
         </div>
     </div>
