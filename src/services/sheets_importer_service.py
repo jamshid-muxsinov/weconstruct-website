@@ -65,7 +65,7 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
     export_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid={gid}"
     
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(export_url, timeout=30.0)
         
         response.raise_for_status()
