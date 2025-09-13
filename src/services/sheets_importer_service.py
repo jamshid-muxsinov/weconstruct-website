@@ -82,7 +82,6 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
     if not sheet_row_ids:
         return {"status": "success", "message": "В таблице не найдено строк с ID."}
 
-    # --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: "Жадно" загружаем связанные quote_request ---
     existing_leads_stmt = (
         select(GoogleSheetLead)
         .where(GoogleSheetLead.sheet_row_id.in_(sheet_row_ids))
@@ -112,6 +111,7 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         
         try:
             async with db.begin_nested():
+                # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Обращаемся к элементам списка по индексу row[index] ---
                 client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
                 business_type = (row[2].strip() if len(row) > 2 else "")[:255]
                 phone_1 = row[3].strip() if len(row) > 3 else ""
