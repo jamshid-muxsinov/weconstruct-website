@@ -5,55 +5,53 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload, Session # <<< Добавлен импорт Session
 from sqlalchemy import func # <<< Добавлен импорт func
 from datetime import datetime, timedelta
-
+from sqlalchemy.exc import IntegrityError
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
 
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact:
     """
-    Находит или создает контакт, используя надежный поиск по нормализованному номеру телефона.
-    Эта версия устойчива к дубликатам в рамках одной транзакции.
+    Асинхронно-безопасная версия для поиска или создания контакта.
+    Сначала ищет, а если не находит - пытается создать, обрабатывая возможную ошибку гонки (race condition).
     """
     if not phone or not phone.strip():
+        # Если телефона нет, просто возвращаем не сохраненный объект
         first_name, _, last_name = name.partition(" ")
         return Contact(name=first_name, last_name=last_name or None, phone="N/A")
 
-    # 1. Нормализуем входящий номер телефона до последних 9 цифр
-    search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
-
-    # 2. ПРОВЕРКА В ТЕКУЩЕЙ СЕССИИ (чтобы избежать ошибки дубликата внутри одной транзакции)
-    # Проверяем, не добавляли ли мы уже контакт с таким номером в этой же "пачке" данных
-    sync_session: Session = db.sync_session
-    for obj in sync_session.new:
-        if isinstance(obj, Contact) and obj.phone:
-            existing_phone_normalized = "".join(filter(str.isdigit, obj.phone))[-9:]
-            if existing_phone_normalized == search_phone_normalized:
-                # Если нашли - возвращаем его и не идем в базу
-                return obj
-
-    # 3. ПОИСК В БАЗЕ ДАННЫХ (если в сессии не нашли)
-    # Создаем SQL-выражение для нормализации номера прямо в базе данных
+    # 1. Сначала пытаемся найти контакт
     phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
+    search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
     stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
     contact = (await db.execute(stmt)).scalars().first()
 
-    if not contact:
+    if contact:
+        # Если нашли, обновляем имя, если оно более полное
+        if name and name.strip() and name.lower() != 'без имени':
+            first_name, _, last_name = name.partition(" ")
+            contact.name = first_name
+            contact.last_name = last_name or contact.last_name
+        return contact
+
+    # 2. Если не нашли, пытаемся создать
+    try:
         first_name, _, last_name = name.partition(" ")
-        contact = Contact(
-            phone=phone, # Сохраняем оригинальный формат для отображения
+        new_contact = Contact(
+            phone=phone,
             name=first_name,
             last_name=last_name or None
         )
-        db.add(contact)
-        # Убираем await db.flush() отсюда, чтобы все сохранилось в конце одной транзакцией
-    elif name and name.strip() and name.lower() != 'без имени':
-        # Обновляем имя, если пришел более полный вариант
-        first_name, _, last_name = name.partition(" ")
-        contact.name = first_name
-        contact.last_name = last_name or contact.last_name
+        db.add(new_contact)
+        await db.flush()  # Пытаемся сохранить в БД
+        await db.refresh(new_contact)
+        return new_contact
+    except IntegrityError:
+        # Если произошла ошибка уникальности (кто-то создал контакт между нашим поиском и созданием),
+        # откатываем транзакцию и просто снова ищем этот контакт.
+        await db.rollback()
+        contact = (await db.execute(stmt)).scalars().first()
+        return contact
     
-    return contact
-
 async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, product_id: int = None, source: str = "website") -> QuoteRequest:
     quote = QuoteRequest(
         contact_id=contact_id,
