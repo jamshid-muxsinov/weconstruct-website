@@ -10,18 +10,15 @@ from sqlalchemy.exc import IntegrityError
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
 
-# --- НАЧАЛО: ПОЛНОСТЬЮ ЗАМЕНИТЕ ЭТУ ФУНКЦИЮ ---
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact:
     """
     Асинхронно-безопасная версия для поиска или создания контакта.
     Сначала ищет, а если не находит - пытается создать, обрабатывая возможную ошибку гонки (race condition).
     """
     if not phone or not phone.strip():
-        # Если телефона нет, просто возвращаем не сохраненный объект
         first_name, _, last_name = name.partition(" ")
         return Contact(name=first_name, last_name=last_name or None, phone="N/A")
 
-    # 1. Сначала пытаемся найти контакт
     phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
     search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
     
@@ -30,7 +27,6 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
     contact = result.scalars().first()
 
     if contact:
-        # Если нашли, обновляем имя, если оно более полное
         if name and name.strip() and name.lower() != 'без имени' and not contact.name:
              first_name, _, last_name = name.partition(" ")
              contact.name = first_name
@@ -40,7 +36,6 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
              await db.refresh(contact)
         return contact
 
-    # 2. Если не нашли, пытаемся создать
     try:
         first_name, _, last_name = name.partition(" ")
         new_contact = Contact(
@@ -53,13 +48,9 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
         await db.refresh(new_contact)
         return new_contact
     except IntegrityError:
-        # Если произошла ошибка уникальности (кто-то создал контакт между нашим поиском и созданием),
-        # откатываем транзакцию и просто снова ищем этот контакт.
-        await db.rollback()
         result = await db.execute(stmt)
         contact = result.scalars().first()
         return contact
-# --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
 async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, product_id: int = None, source: str = "website") -> QuoteRequest:
     quote = QuoteRequest(
