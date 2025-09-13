@@ -82,6 +82,7 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
     if not sheet_row_ids:
         return {"status": "success", "message": "В таблице не найдено строк с ID."}
 
+    # --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: "Жадно" загружаем связанные quote_request ---
     existing_leads_stmt = (
         select(GoogleSheetLead)
         .where(GoogleSheetLead.sheet_row_id.in_(sheet_row_ids))
@@ -104,7 +105,8 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         sheet_row_id = row[0].strip()
         processed_count += 1
         
-        if sheet_row_id in existing_leads_map and existing_leads_map[sheet_row_id].status == GoogleSheetLead.StatusEnum.IMPORTED:
+        existing_lead = existing_leads_map.get(sheet_row_id)
+        if existing_lead and existing_lead.status == GoogleSheetLead.StatusEnum.IMPORTED:
             skipped_count += 1
             continue
         
@@ -145,7 +147,7 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
                 quote.business_type = business_type
                 quote.status = crm_status
                 
-                lead_record = existing_leads_map.get(sheet_row_id)
+                lead_record = existing_lead
                 if not lead_record:
                     lead_record = GoogleSheetLead(sheet_row_id=sheet_row_id, spreadsheet_id=spreadsheet_id)
                     db.add(lead_record)
