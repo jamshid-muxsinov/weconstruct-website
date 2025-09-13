@@ -23,6 +23,7 @@ STATUS_MAPPING = {
     'пули ва жойи йук': QuoteRequest.StatusEnum.ARCHIVED,
     'пул керак экан': QuoteRequest.StatusEnum.ARCHIVED,
     'маблаги йук': QuoteRequest.StatusEnum.ARCHIVED,
+    
     'javob berdi': QuoteRequest.StatusEnum.CONTACTED,
     '2ta qo\'ng\'iroq': QuoteRequest.StatusEnum.CONTACTED,
 }
@@ -76,10 +77,7 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         log.error(f"Ошибка доступа к Google Sheets: {e}", exc_info=True)
         return {"status": "error", "message": f"Ошибка доступа к Google Sheets: {e}."}
 
-    # --- НАЧАЛО ИСПРАВЛЕНИЯ ---
-    # Обращаемся к первому элементу (row[0]) и проверяем, что он существует
     sheet_row_ids = [row[0].strip() for i, row in enumerate(all_rows) if i > 0 and row and len(row) > 0 and row[0].strip()]
-    # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
     
     if not sheet_row_ids:
         return {"status": "success", "message": "В таблице не найдено строк с ID."}
@@ -100,14 +98,10 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
     for i, row in enumerate(all_rows[1:]):
         original_row_number = i + 2
         
-        # Пропускаем пустые или некорректные строки
         if not row or len(row) == 0 or not row[0].strip():
             continue
             
-        # --- НАЧАЛО ИСПРАВЛЕНИЯ ---
-        # Обращаемся к первому элементу row[0]
         sheet_row_id = row[0].strip()
-        # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
         processed_count += 1
         
         if sheet_row_id in existing_leads_map and existing_leads_map[sheet_row_id].status == GoogleSheetLead.StatusEnum.IMPORTED:
