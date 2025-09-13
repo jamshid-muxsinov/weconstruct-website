@@ -133,7 +133,7 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
                 if crm_status is None and status_from_sheet_raw:
                     crm_status = QuoteRequest.StatusEnum.IMPORTED
                     message_parts.append(f"Статус из таблицы: {status_from_sheet_raw}")
-                elif crm_status is None and not status_from_sheet_raw:
+                elif crm_status is None:
                     crm_status = QuoteRequest.StatusEnum.IMPORTED
 
                 if business_type: message_parts.append(f"Тип бизнеса: {business_type}")
