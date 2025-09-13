@@ -23,7 +23,6 @@ STATUS_MAPPING = {
     'пули ва жойи йук': QuoteRequest.StatusEnum.ARCHIVED,
     'пул керак экан': QuoteRequest.StatusEnum.ARCHIVED,
     'маблаги йук': QuoteRequest.StatusEnum.ARCHIVED,
-    
     'javob berdi': QuoteRequest.StatusEnum.CONTACTED,
     '2ta qo\'ng\'iroq': QuoteRequest.StatusEnum.CONTACTED,
 }
@@ -45,7 +44,7 @@ def _parse_date(date_str: str) -> datetime | None:
             
     try:
         if 'T' in date_str:
-            iso_date_str = date_str.split('+').split('-0')
+            iso_date_str = date_str.split('+')[0].split('-0')[0]
             return datetime.fromisoformat(iso_date_str)
     except (ValueError, TypeError):
         pass
@@ -77,7 +76,11 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         log.error(f"Ошибка доступа к Google Sheets: {e}", exc_info=True)
         return {"status": "error", "message": f"Ошибка доступа к Google Sheets: {e}."}
 
-    sheet_row_ids = [row.strip() for i, row in enumerate(all_rows) if i > 0 and row and row.strip()]
+    # --- НАЧАЛО ИСПРАВЛЕНИЯ ---
+    # Обращаемся к первому элементу (row[0]) и проверяем, что он существует
+    sheet_row_ids = [row[0].strip() for i, row in enumerate(all_rows) if i > 0 and row and len(row) > 0 and row[0].strip()]
+    # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+    
     if not sheet_row_ids:
         return {"status": "success", "message": "В таблице не найдено строк с ID."}
 
@@ -97,10 +100,14 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
     for i, row in enumerate(all_rows[1:]):
         original_row_number = i + 2
         
-        if not row or not any(field.strip() for field in row) or not row.strip():
+        # Пропускаем пустые или некорректные строки
+        if not row or len(row) == 0 or not row[0].strip():
             continue
             
-        sheet_row_id = row.strip()
+        # --- НАЧАЛО ИСПРАВЛЕНИЯ ---
+        # Обращаемся к первому элементу row[0]
+        sheet_row_id = row[0].strip()
+        # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
         processed_count += 1
         
         if sheet_row_id in existing_leads_map and existing_leads_map[sheet_row_id].status == GoogleSheetLead.StatusEnum.IMPORTED:
@@ -109,13 +116,13 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         
         try:
             async with db.begin_nested():
-                client_name = (row.strip() if len(row) > 1 else "Без имени")[:150]
-                business_type = (row.strip() if len(row) > 2 else "")[:255]
-                phone_1 = row.strip() if len(row) > 3 else ""
-                telegram = (row.strip() if len(row) > 4 else "")[:100]
-                phone_2 = row.strip() if len(row) > 5 else ""
-                status_from_sheet_raw = row.strip() if len(row) > 6 else ""
-                comment = row.strip() if len(row) > 7 else ""
+                client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
+                business_type = (row[2].strip() if len(row) > 2 else "")[:255]
+                phone_1 = row[3].strip() if len(row) > 3 else ""
+                telegram = (row[4].strip() if len(row) > 4 else "")[:100]
+                phone_2 = row[5].strip() if len(row) > 5 else ""
+                status_from_sheet_raw = row[6].strip() if len(row) > 6 else ""
+                comment = row[7].strip() if len(row) > 7 else ""
                 
                 phone_number = _normalize_phone(phone_1 or phone_2)[:50]
                 
