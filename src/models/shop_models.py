@@ -326,7 +326,8 @@ class GoogleSheetLead(Base):
         EnumType(
             StatusEnum, 
             name="googlesheetlead_status_enum", 
-            native_enum=False
+            native_enum=False,
+            values_callable=lambda obj: [e.value for e in obj]
         ), 
         default=StatusEnum.PENDING, 
         index=True
