@@ -7,7 +7,7 @@ import csv
 import io
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update  # <-- ИСПРАВЛЕНИЕ 1: Добавлен импорт 'update'
 from sqlalchemy.orm import selectinload
 
 from src.services.shop_service import _get_or_create_contact, _create_quote_request, _notify_managers
@@ -45,8 +45,12 @@ def _parse_date(date_str: str) -> datetime | None:
             
     try:
         if 'T' in date_str:
-            iso_date_str = date_str.split('+')[0].split('-0')[0]
-            return datetime.fromisoformat(iso_date_str)
+            iso_parts = date_str.split('T')
+            date_part = iso_parts[0]
+            if len(iso_parts) > 1:
+                time_part = iso_parts[1].split('+')[0].split('-')[0].split('.')[0]
+                return datetime.fromisoformat(f"{date_part}T{time_part}")
+            return datetime.fromisoformat(date_part)
     except (ValueError, TypeError):
         pass
 
@@ -67,7 +71,6 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
     try:
         async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(export_url, timeout=30.0)
-        
         response.raise_for_status()
         response.encoding = 'utf-8'
         csv_data = io.StringIO(response.text)
@@ -82,13 +85,9 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
     if not sheet_row_ids:
         return {"status": "success", "message": "В таблице не найдено строк с ID."}
 
-    existing_leads_stmt = (
-        select(GoogleSheetLead)
-        .where(GoogleSheetLead.sheet_row_id.in_(sheet_row_ids))
-        .options(selectinload(GoogleSheetLead.quote_request))
-    )
+    existing_leads_stmt = select(GoogleSheetLead.sheet_row_id, GoogleSheetLead.status).where(GoogleSheetLead.sheet_row_id.in_(sheet_row_ids))
     existing_leads_result = await db.execute(existing_leads_stmt)
-    existing_leads_map = {lead.sheet_row_id: lead for lead in existing_leads_result.scalars().all()}
+    existing_leads_map = {row_id: status for row_id, status in existing_leads_result}
     
     log.info(f"Найдено {len(sheet_row_ids)} лидов в таблице. Из них {len(existing_leads_map)} уже известны системе.")
 
@@ -104,14 +103,13 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         sheet_row_id = row[0].strip()
         processed_count += 1
         
-        existing_lead = existing_leads_map.get(sheet_row_id)
-        if existing_lead and existing_lead.status == GoogleSheetLead.StatusEnum.IMPORTED:
+        existing_status = existing_leads_map.get(sheet_row_id)
+        if existing_status == GoogleSheetLead.StatusEnum.IMPORTED:
             skipped_count += 1
             continue
         
         try:
             async with db.begin_nested():
-                # --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Обращаемся к элементам списка по индексу row[index] ---
                 client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
                 business_type = (row[2].strip() if len(row) > 2 else "")[:255]
                 phone_1 = row[3].strip() if len(row) > 3 else ""
@@ -147,16 +145,33 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
                 quote.business_type = business_type
                 quote.status = crm_status
                 
-                lead_record = existing_lead
-                if not lead_record:
-                    lead_record = GoogleSheetLead(sheet_row_id=sheet_row_id, spreadsheet_id=spreadsheet_id)
+                await db.flush() # Flush to get quote.id
+
+                # --- ИСПРАВЛЕНИЕ 2: Логика обновления/создания GoogleSheetLead ---
+                if not existing_status:
+                    lead_record = GoogleSheetLead(
+                        sheet_row_id=sheet_row_id, 
+                        spreadsheet_id=spreadsheet_id,
+                        status=GoogleSheetLead.StatusEnum.IMPORTED,
+                        processed_at=datetime.utcnow(),
+                        raw_data=row,
+                        quote_request_id=quote.id,
+                        processing_notes=f"Создана заявка #{quote.id} со статусом '{crm_status.value}'"
+                    )
                     db.add(lead_record)
-                
-                lead_record.status = GoogleSheetLead.StatusEnum.IMPORTED
-                lead_record.processed_at = datetime.utcnow()
-                lead_record.quote_request_id = quote.id
-                lead_record.raw_data = row
-                lead_record.processing_notes = f"Создана заявка #{quote.id} со статусом '{crm_status.value}'"
+                else:
+                    update_stmt = (
+                        update(GoogleSheetLead)
+                        .where(GoogleSheetLead.sheet_row_id == sheet_row_id)
+                        .values(
+                            status=GoogleSheetLead.StatusEnum.IMPORTED,
+                            processed_at=datetime.utcnow(),
+                            raw_data=row,
+                            quote_request_id=quote.id,
+                            processing_notes=f"Обновлено/Создана заявка #{quote.id} со статусом '{crm_status.value}'"
+                         )
+                    )
+                    await db.execute(update_stmt)
                 
                 await _notify_managers(db, quote, contact.full_name)
                 created_count += 1
