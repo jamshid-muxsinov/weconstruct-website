@@ -2,13 +2,15 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload, Session # <<< Добавлен импорт Session
-from sqlalchemy import func # <<< Добавлен импорт func
+from sqlalchemy.orm import selectinload
+from sqlalchemy import func
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
+
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
 
+# --- НАЧАЛО: ПОЛНОСТЬЮ ЗАМЕНИТЕ ЭТУ ФУНКЦИЮ ---
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact:
     """
     Асинхронно-безопасная версия для поиска или создания контакта.
@@ -22,15 +24,20 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
     # 1. Сначала пытаемся найти контакт
     phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
     search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
+    
     stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
-    contact = (await db.execute(stmt)).scalars().first()
+    result = await db.execute(stmt)
+    contact = result.scalars().first()
 
     if contact:
         # Если нашли, обновляем имя, если оно более полное
-        if name and name.strip() and name.lower() != 'без имени':
-            first_name, _, last_name = name.partition(" ")
-            contact.name = first_name
-            contact.last_name = last_name or contact.last_name
+        if name and name.strip() and name.lower() != 'без имени' and not contact.name:
+             first_name, _, last_name = name.partition(" ")
+             contact.name = first_name
+             contact.last_name = last_name or contact.last_name
+             db.add(contact)
+             await db.flush()
+             await db.refresh(contact)
         return contact
 
     # 2. Если не нашли, пытаемся создать
@@ -42,16 +49,18 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
             last_name=last_name or None
         )
         db.add(new_contact)
-        await db.flush()  # Пытаемся сохранить в БД
+        await db.flush()
         await db.refresh(new_contact)
         return new_contact
     except IntegrityError:
         # Если произошла ошибка уникальности (кто-то создал контакт между нашим поиском и созданием),
         # откатываем транзакцию и просто снова ищем этот контакт.
         await db.rollback()
-        contact = (await db.execute(stmt)).scalars().first()
+        result = await db.execute(stmt)
+        contact = result.scalars().first()
         return contact
-    
+# --- КОНЕЦ ИЗМЕНЕНИЯ ---
+
 async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, product_id: int = None, source: str = "website") -> QuoteRequest:
     quote = QuoteRequest(
         contact_id=contact_id,
@@ -69,7 +78,6 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
     
     if not managers: return
 
-    # Используем относительный URL, который будет работать везде
     quote_url = f"/admin/quoterequest/{quote.id}/change/"
     message_text = f"Новая заявка #{quote.id} от {contact_name}"
 
@@ -79,7 +87,6 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
     ]
     db.add_all(notifications)
 
-
 @invalidate_cache("categories_with_products") 
 async def process_quote_request(db: AsyncSession, name: str, phone: str, message: str, product_id: int = None, source: str = "website") -> QuoteRequest | str:
     """
@@ -87,15 +94,14 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
     или строку 'duplicate', если заявка является дубликатом.
     """
     contact = await _get_or_create_contact(db, name, phone)
-    await db.flush() # Здесь flush нужен, чтобы получить contact.id
+    
+    # Убираем flush отсюда, т.к. он теперь внутри _get_or_create_contact
 
-    # Проверка на дубликаты: ищем заявки от этого контакта за последнюю неделю
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     stmt = select(QuoteRequest).where(
         QuoteRequest.contact_id == contact.id,
         QuoteRequest.created_at >= seven_days_ago
     )
-    # Добавим проверку на сообщение, чтобы можно было отправить разные заявки
     if message:
         stmt = stmt.where(QuoteRequest.message == message)
 
