@@ -2,12 +2,13 @@
 
 import logging
 import re
-import requests
+import httpx  # <-- ИЗМЕНЕНИЕ: Используем асинхронную библиотеку
 import csv
 import io
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from src.services.shop_service import _get_or_create_contact, _create_quote_request, _notify_managers
 from src.models.shop_models import QuoteRequest, GoogleSheetLead, Contact 
@@ -15,7 +16,6 @@ from src.models.shop_models import QuoteRequest, GoogleSheetLead, Contact
 log = logging.getLogger(__name__)
 
 # --- СЛОВАРЬ СОПОСТАВЛЕНИЯ СТАТУСОВ ---
-# Дополните его любыми другими статусами из вашей таблицы для более точного импорта.
 STATUS_MAPPING = {
     # Статусы из таблицы (в нижнем регистре) -> Статус в CRM
     'yopildi': QuoteRequest.StatusEnum.ARCHIVED,
@@ -74,7 +74,8 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
     export_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid={gid}"
     
     try:
-        response = requests.get(export_url, timeout=20)
+        async with httpx.AsyncClient() as client:
+            response = await client.get(export_url, timeout=30.0)
         response.raise_for_status()
         response.encoding = 'utf-8'
         csv_data = io.StringIO(response.text)
@@ -84,14 +85,15 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         log.error(f"Ошибка доступа к Google Sheets: {e}", exc_info=True)
         return {"status": "error", "message": f"Ошибка доступа к Google Sheets: {e}."}
 
-    # ID, ISM, BIZNES, Nomer 1, Telegram, Nomer 2, Status, Izoh
-    # 0,  1,   2,      3,        4,        5,        6,      7
-    
     sheet_row_ids = [row[0].strip() for i, row in enumerate(all_rows) if i > 0 and row and row[0].strip()]
     if not sheet_row_ids:
         return {"status": "success", "message": "В таблице не найдено строк с ID."}
 
-    existing_leads_stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id.in_(sheet_row_ids))
+    existing_leads_stmt = (
+        select(GoogleSheetLead)
+        .where(GoogleSheetLead.sheet_row_id.in_(sheet_row_ids))
+        .options(selectinload(GoogleSheetLead.quote_request))
+    )
     existing_leads_result = await db.execute(existing_leads_stmt)
     existing_leads_map = {lead.sheet_row_id: lead for lead in existing_leads_result.scalars().all()}
     
@@ -131,7 +133,6 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
                 contact = await _get_or_create_contact(db, name=client_name, phone=phone_number)
                 await db.flush()
 
-                # --- УЛУЧШЕННАЯ ЛОГИКА СТАТУСОВ И КОММЕНТАРИЕВ ---
                 status_from_sheet_lower = status_from_sheet_raw.lower()
                 crm_status = STATUS_MAPPING.get(status_from_sheet_lower)
                 
@@ -167,7 +168,7 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
 
         except Exception as e:
             error_msg = f"Ошибка в строке {original_row_number} (ID: {sheet_row_id}): {e}"
-            log.error(error_msg, exc_info=False) # exc_info=False, чтобы не загромождать лог
+            log.error(error_msg, exc_info=False)
             errors_log.append(error_msg)
             error_count += 1
             await db.rollback()
@@ -180,4 +181,4 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         message += "\n\nОшибки при импорте:\n- " + "\n- ".join(errors_log)
 
     log.info(message)
-    return {"status": "success", "message": message}
+    return {"status": "success", "message": message}```
