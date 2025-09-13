@@ -39,8 +39,8 @@ async def get_kanban_board(
         "requests_by_status": kanban_data,
         "show_archived": show_archived,
         "htmx_request": "HX-Request" in request.headers,
-        "staff_users": staff_users,                 # <<< ИЗМЕНЕНИЕ: Передаем менеджеров в шаблон
-        "QuoteRequest": QuoteRequest                # <<< ИЗМЕНЕНИЕ: Передаем саму модель в шаблон
+        "staff_users": staff_users,  
+        "QuoteRequest": QuoteRequest,         
     })
     
     return templates.TemplateResponse("admin/kanban_board.html", context)
