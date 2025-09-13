@@ -2,7 +2,7 @@
 
 import logging
 import re
-import httpx  # <-- ИЗМЕНЕНИЕ: Используем асинхронную библиотеку
+import httpx
 import csv
 import io
 from datetime import datetime
@@ -15,9 +15,7 @@ from src.models.shop_models import QuoteRequest, GoogleSheetLead, Contact
 
 log = logging.getLogger(__name__)
 
-# --- СЛОВАРЬ СОПОСТАВЛЕНИЯ СТАТУСОВ ---
 STATUS_MAPPING = {
-    # Статусы из таблицы (в нижнем регистре) -> Статус в CRM
     'yopildi': QuoteRequest.StatusEnum.ARCHIVED,
     'тели учик': QuoteRequest.StatusEnum.ARCHIVED,
     'нархи екмади': QuoteRequest.StatusEnum.ARCHIVED,
@@ -30,9 +28,7 @@ STATUS_MAPPING = {
     '2ta qo\'ng\'iroq': QuoteRequest.StatusEnum.CONTACTED,
 }
 
-
 def _parse_date(date_str: str) -> datetime | None:
-    """Пытается распарсить дату из строки, пробуя несколько популярных форматов."""
     if not date_str or not date_str.strip():
         return None
     date_str = date_str.strip()
@@ -49,7 +45,7 @@ def _parse_date(date_str: str) -> datetime | None:
             
     try:
         if 'T' in date_str:
-            iso_date_str = date_str.split('+')[0].split('-0')[0]
+            iso_date_str = date_str.split('+').split('-0')
             return datetime.fromisoformat(iso_date_str)
     except (ValueError, TypeError):
         pass
@@ -58,7 +54,6 @@ def _parse_date(date_str: str) -> datetime | None:
     return None
 
 def _normalize_phone(phone: str) -> str:
-    """Приводит номер телефона к единому формату +998..."""
     if not phone: return ""
     digits = re.sub(r'\D', '', phone)
     if len(digits) == 12 and digits.startswith('998'): return f"+{digits}"
@@ -66,16 +61,13 @@ def _normalize_phone(phone: str) -> str:
     return phone
 
 async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: int = 0):
-    """
-    Финальная, отказоустойчивая версия для импорта лидов.
-    Обрабатывает каждого лида в отдельной под-транзакции.
-    """
     log.info(f"Запуск импорта из Google Sheet ID: {spreadsheet_id}, GID: {gid}")
     export_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid={gid}"
     
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(export_url, timeout=30.0)
+        
         response.raise_for_status()
         response.encoding = 'utf-8'
         csv_data = io.StringIO(response.text)
@@ -85,7 +77,7 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         log.error(f"Ошибка доступа к Google Sheets: {e}", exc_info=True)
         return {"status": "error", "message": f"Ошибка доступа к Google Sheets: {e}."}
 
-    sheet_row_ids = [row[0].strip() for i, row in enumerate(all_rows) if i > 0 and row and row[0].strip()]
+    sheet_row_ids = [row.strip() for i, row in enumerate(all_rows) if i > 0 and row and row.strip()]
     if not sheet_row_ids:
         return {"status": "success", "message": "В таблице не найдено строк с ID."}
 
@@ -105,10 +97,10 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
     for i, row in enumerate(all_rows[1:]):
         original_row_number = i + 2
         
-        if not row or not any(field.strip() for field in row) or not row[0].strip():
+        if not row or not any(field.strip() for field in row) or not row.strip():
             continue
             
-        sheet_row_id = row[0].strip()
+        sheet_row_id = row.strip()
         processed_count += 1
         
         if sheet_row_id in existing_leads_map and existing_leads_map[sheet_row_id].status == GoogleSheetLead.StatusEnum.IMPORTED:
@@ -117,13 +109,13 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         
         try:
             async with db.begin_nested():
-                client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
-                business_type = (row[2].strip() if len(row) > 2 else "")[:255]
-                phone_1 = row[3].strip() if len(row) > 3 else ""
-                telegram = (row[4].strip() if len(row) > 4 else "")[:100]
-                phone_2 = row[5].strip() if len(row) > 5 else ""
-                status_from_sheet_raw = row[6].strip() if len(row) > 6 else ""
-                comment = row[7].strip() if len(row) > 7 else ""
+                client_name = (row.strip() if len(row) > 1 else "Без имени")[:150]
+                business_type = (row.strip() if len(row) > 2 else "")[:255]
+                phone_1 = row.strip() if len(row) > 3 else ""
+                telegram = (row.strip() if len(row) > 4 else "")[:100]
+                phone_2 = row.strip() if len(row) > 5 else ""
+                status_from_sheet_raw = row.strip() if len(row) > 6 else ""
+                comment = row.strip() if len(row) > 7 else ""
                 
                 phone_number = _normalize_phone(phone_1 or phone_2)[:50]
                 
@@ -181,4 +173,4 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
         message += "\n\nОшибки при импорте:\n- " + "\n- ".join(errors_log)
 
     log.info(message)
-    return {"status": "success", "message": message}```
+    return {"status": "success", "message": message}
