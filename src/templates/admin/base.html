@@ -92,8 +92,6 @@
                         <i class='bx bx-chevron-down'></i>
                     </button>
                     <div class="lang-switcher-menu" role="menu">
-                        
-                        {# --- Ссылка на Русский язык --- #}
                         {% set path_params_ru = path_params.copy() %}
                         {% set __ = path_params_ru.update({'locale': 'ru'}) %}
                         <a href="{{ request.url_for(route_name, **path_params_ru) }}{% if query_params %}?{{ urlencode(query_params) }}{% endif %}" 

@@ -16,6 +16,11 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import Response
 from starlette_wtf import CSRFProtectMiddleware
 
+# --- НАЧАЛО ИЗМЕНЕНИЙ 1: Добавляем нужные импорты ---
+from src.core.middleware import HTMXMiddleware # Убедитесь, что этот middleware тоже импортирован
+from src.services.sheets_importer_service import import_leads_from_sheet 
+# --- КОНЕЦ ИЗМЕНЕНИЙ 1 ---
+
 from src.core.config import get_settings
 from src.core.db import check_db_connection, async_session_factory
 from src.core.security import get_current_active_user
@@ -23,7 +28,7 @@ from src.pages.admin.router import router as admin_router, unprotected_router as
 from src.pages.shop_pages import router as shop_router, root_router as shop_root_router
 from src.services.user_service import create_first_superuser
 from src.core.cache import init_cache, cleanup_cache
-from src.core.middleware import CacheMiddleware, RateLimitMiddleware, HTMXMiddleware
+from src.core.middleware import CacheMiddleware, RateLimitMiddleware
 from src.core.cache_utils import schedule_cache_cleanup, warm_up_cache
 from src.pages.jinja_config import templates, configure_jinja_templates
 
@@ -34,6 +39,29 @@ settings = get_settings()
 configure_jinja_templates(templates)
 
 BASE_DIR = FilePath("/app")
+
+async def scheduled_sheet_import():
+    """Фоновая задача для периодического импорта из Google Sheets."""
+    import asyncio
+    from src.core.db import async_session_factory
+    
+    SPREADSHEET_ID = "16dZ3_sWE1yYUhYmtfpdNlbWDhRrltNNGMtroTmzkNpo" # <-- ВАШ ID
+    GID = 531058438  # <-- ВАШ GID
+    IMPORT_INTERVAL_MINUTES = 15
+    await asyncio.sleep(60) 
+
+    while True:
+        try:
+            log.info(f"[SCHEDULER] Запуск планового импорта из Google Sheets (ID: ...{SPREADSHEET_ID[-5:]})")
+            async with async_session_factory() as session:
+                result = await import_leads_from_sheet(session, spreadsheet_id=SPREADSHEET_ID, gid=GID)
+                log.info(f"[SCHEDULER] Плановый импорт завершен: {result.get('message')}")
+        except Exception as e:
+            log.error(f"[SCHEDULER] Критическая ошибка в плановом импорте: {e}", exc_info=True)
+        
+        log.info(f"[SCHEDULER] Следующий импорт через {IMPORT_INTERVAL_MINUTES} минут.")
+        await asyncio.sleep(IMPORT_INTERVAL_MINUTES * 60)
+
 
 # --- ОБЩИЕ ОБРАБОТЧИКИ СОБЫТИЙ ---
 async def on_startup():
@@ -51,6 +79,11 @@ async def on_startup():
     asyncio.create_task(schedule_cache_cleanup())
     log.info("Cache warm-up and cleanup scheduler started in background.")
 
+    # --- НАЧАЛО ИЗМЕНЕНИЙ 3: Запускаем нашу новую задачу в фоне ---
+    asyncio.create_task(scheduled_sheet_import())
+    log.info("Scheduled Google Sheets importer started in background.")
+    # --- КОНЕЦ ИЗМЕНЕНИЙ 3 ---
+
 
 async def on_shutdown():
     log.info("Application shutdown...")
@@ -64,7 +97,10 @@ def create_admin_app() -> FastAPI:
         fastapi_kwargs.update({"docs_url": None, "redoc_url": None, "openapi_url": None})
 
     app = FastAPI(**fastapi_kwargs, on_startup=[on_startup], on_shutdown=[on_shutdown])
+    
+    # --- НАЧАЛО ИЗМЕНЕНИЙ 4: Регистрируем HTMXMiddleware ---
     app.add_middleware(HTMXMiddleware, templates=templates)
+    # --- КОНЕЦ ИЗМЕНЕНИЙ 4 ---
 
     app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
     app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.SECRET_KEY)
@@ -111,60 +147,49 @@ def create_admin_app() -> FastAPI:
 
 # --- ФАБРИКА ДЛЯ ПРИЛОЖЕНИЯ ОСНОВНОГО САЙТА (weconstruct.uz) ---
 def create_site_app() -> FastAPI:
+    # ... (эта функция остается без изменений) ...
     fastapi_kwargs = {"title": "WeConstruct Website"}
     if not settings.DEBUG:
         fastapi_kwargs.update({"docs_url": None, "redoc_url": None, "openapi_url": None})
-
     app = FastAPI(**fastapi_kwargs, root_path=settings.ROOT_PATH)
-
     app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
     app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.SECRET_KEY)
-
     if settings.CACHE_ENABLED:
         app.add_middleware(CacheMiddleware, cache_ttl=settings.REDIS_TTL)
     app.add_middleware(RateLimitMiddleware, max_requests=100, window_seconds=60)
-
     async def set_locale(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
         if locale not in ["ru", "uz"]: locale = "ru"
         request.state.locale = locale
-
     site_router = APIRouter(prefix="/{locale}", dependencies=[Depends(set_locale)])
     site_router.include_router(shop_root_router)
     site_router.include_router(shop_router, prefix="/shop")
     app.include_router(site_router)
-
     @app.get("/", include_in_schema=False)
     async def root_redirect(request: Request):
         return RedirectResponse(url="/ru")
-
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
-    
     @app.get("/robots.txt", include_in_schema=False)
     async def robots_txt(): return FileResponse(BASE_DIR / "src/static/robots.txt")
-
     @app.get("/sitemap.xml", include_in_schema=False)
     async def get_sitemap(): return FileResponse(BASE_DIR / "src/static/sitemap.xml", media_type="application/xml")
-
     def _ensure_locale(request: Request):
         if not hasattr(request.state, "locale"):
             path_parts = request.url.path.split('/')
             request.state.locale = path_parts[1] if len(path_parts) > 1 and path_parts[1] in ['ru', 'uz'] else 'ru'
-
     @app.exception_handler(404)
     async def not_found_exception_handler(request: Request, exc: Exception):
         _ensure_locale(request)
         context = {"request": request, "error_code": "404", "error_message": "Страница не найдена."}
         return templates.TemplateResponse("shop/error.html", context, status_code=404)
-    
     @app.exception_handler(Exception)
     async def generic_site_exception_handler(request: Request, exc: Exception):
         traceback.print_exc()
         _ensure_locale(request)
         context = {"request": request, "error_code": "500", "error_message": "Внутренняя ошибка сервера."}
         return templates.TemplateResponse("shop/error.html", context, status_code=500)
-
     return app
+
 
 admin_app = create_admin_app()
 site_app = create_site_app()
