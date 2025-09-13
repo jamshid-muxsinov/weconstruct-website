@@ -182,7 +182,6 @@ async def import_leads_from_sheet(db: AsyncSession, spreadsheet_id: str, gid: in
             log.error(error_msg, exc_info=False)
             errors_log.append(error_msg)
             error_count += 1
-            await db.rollback()
 
     await db.commit()
     
