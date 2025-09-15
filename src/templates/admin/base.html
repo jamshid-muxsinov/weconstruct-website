@@ -97,7 +97,6 @@
                             <i class='bx bx-check'></i>
                         </a>
                         
-                        {# --- Ссылка на Узбекский язык --- #}
                         {% set path_params_uz = path_params.copy() %}
                         {% set __ = path_params_uz.update({'locale': 'uz'}) %}
                         <a href="{{ request.url_for(route_name, **path_params_uz) }}{% if query_params %}?{{ urlencode(query_params) }}{% endif %}" 

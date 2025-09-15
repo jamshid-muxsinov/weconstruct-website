@@ -1,27 +1,45 @@
+# src/services/sheets_importer_service.py
+
 import logging
 import re
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 from src.services.shop_service import _get_or_create_contact, _create_quote_request, _notify_managers
 from src.models.shop_models import QuoteRequest, GoogleSheetLead, Contact
 
 log = logging.getLogger(__name__)
 
+
 async def process_single_lead_row(db: AsyncSession, row: list):
     """
-    Обрабатывает одну строку данных, полученную из Google Sheets.
+    Обрабатывает одну строку данных, полученную из Google Sheets через вебхук.
     """
-    if not row or len(row) == 0 or not row[0].strip():
-        log.warning("Получена пустая строка для обработки, пропуск.")
+    if not row or len(row) < 1 or not row[0] or not str(row[0]).strip():
+        log.warning(f"Получена некорректная или пустая строка для обработки, пропуск: {row}")
         return
 
-    sheet_row_id = row[0].strip()
+    sheet_row_id = str(row[0]).strip()
     original_row_number_info = f"(ID: {sheet_row_id})" # Для логов
 
     try:
         # Для каждой строки используем savepoint, чтобы ошибка в одной не влияла на другие.
         async with db.begin_nested():
+            # Проверяем, есть ли уже заявка от такого лида.
+            
+            # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+            # Мы ищем по текстовому полю sheet_row_id, а не по первичному ключу.
+            stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
+            result = await db.execute(stmt)
+            existing_lead = result.scalars().first()
+            # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+
+            if existing_lead:
+                log.info(f"Лид {original_row_number_info} уже существует в базе. Пропуск.")
+                return
+
+            # Парсим данные из строки
             client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
             business_type = (row[2].strip() if len(row) > 2 else "")[:255]
             phone_1 = row[3].strip() if len(row) > 3 else ""
@@ -34,13 +52,6 @@ async def process_single_lead_row(db: AsyncSession, row: list):
 
             if not phone_number:
                 raise ValueError("Не найден или некорректен номер телефона.")
-
-            # Логика "создать, если не существует". Обновление статусов будет идти из CRM.
-            # Проверяем, есть ли уже заявка от такого лида.
-            existing_lead = await db.get(GoogleSheetLead, sheet_row_id)
-            if existing_lead:
-                log.info(f"Лид {original_row_number_info} уже существует. Пропуск.")
-                return
 
             contact = await _get_or_create_contact(db, name=client_name, phone=phone_number)
             await db.flush()
