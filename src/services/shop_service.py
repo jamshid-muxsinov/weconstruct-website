@@ -12,8 +12,7 @@ from src.core.cache import cache_result, invalidate_cache
 
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact:
     """
-    Асинхронно-безопасная версия для поиска или создания контакта,
-    устойчивая к гонке состояний (race condition) в многопроцессорной среде.
+    Асинхронно-безопасная и надежная версия для поиска или создания контакта.
     """
     if not phone or not phone.strip():
         first_name, _, last_name = name.partition(" ")
@@ -23,9 +22,9 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
     search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
     
     stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
+
     result = await db.execute(stmt)
     contact = result.scalars().first()
-
     if contact:
         return contact
 
@@ -38,15 +37,12 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
                 last_name=last_name or None
             )
             db.add(new_contact)
-        
-        await db.flush()
-        result = await db.execute(stmt)
-        return result.scalars().first()
-
     except IntegrityError:
         result = await db.execute(stmt)
         return result.scalars().first()
-    
+    result = await db.execute(stmt)
+    return result.scalars().first()
+
 async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, product_id: int = None, source: str = "website") -> QuoteRequest:
     quote = QuoteRequest(
         contact_id=contact_id,

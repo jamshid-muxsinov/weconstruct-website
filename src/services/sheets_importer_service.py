@@ -5,6 +5,7 @@ import re
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.exc import IntegrityError
 
 from src.services.shop_service import _get_or_create_contact, _create_quote_request, _notify_managers
 from src.models.shop_models import QuoteRequest, GoogleSheetLead, Contact
@@ -13,9 +14,6 @@ log = logging.getLogger(__name__)
 
 
 async def process_single_lead_row(db: AsyncSession, row: list):
-    """
-    Обрабатывает одну строку данных, полученную из Google Sheets через вебхук.
-    """
     if not row or len(row) < 1 or not row[0] or not str(row[0]).strip():
         log.warning(f"Получена некорректная или пустая строка для обработки, пропуск: {row}")
         return
@@ -25,7 +23,6 @@ async def process_single_lead_row(db: AsyncSession, row: list):
 
     try:
         async with db.begin_nested():
-            # Проверяем, существует ли уже лид с таким ID
             stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
             result = await db.execute(stmt)
             existing_lead = result.scalars().first()
@@ -34,7 +31,6 @@ async def process_single_lead_row(db: AsyncSession, row: list):
                 log.info(f"Лид {original_row_number_info} уже существует в базе. Пропуск.")
                 return
 
-            # --- ИСПРАВЛЕНИЕ: Читаем данные из правильных колонок ---
             client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
             business_type = (row[2].strip() if len(row) > 2 else "")[:255]
             phone_1 = (row[3].strip() if len(row) > 3 else "")
@@ -42,7 +38,6 @@ async def process_single_lead_row(db: AsyncSession, row: list):
             phone_2 = (row[5].strip() if len(row) > 5 else "")
             status_from_sheet_raw = (row[6].strip() if len(row) > 6 else "")
             comment = (row[7].strip() if len(row) > 7 else "")
-            # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
             phone_number = _normalize_phone(phone_1 or phone_2)[:50]
 
@@ -50,6 +45,12 @@ async def process_single_lead_row(db: AsyncSession, row: list):
                 raise ValueError("Не найден или некорректен номер телефона.")
 
             contact = await _get_or_create_contact(db, name=client_name, phone=phone_number)
+            
+            # --- ГЛАВНОЕ ИСПРАВЛЕНИЕ: ПРОВЕРКА, ЧТО КОНТАКТ БЫЛ СОЗДАН ---
+            if not contact:
+                # Это может произойти в редких случаях гонки состояний
+                raise Exception("Не удалось создать или найти контакт.")
+            
             await db.flush()
 
             message_parts = []
@@ -80,9 +81,12 @@ async def process_single_lead_row(db: AsyncSession, row: list):
 
         await db.commit()
 
-    except Exception as e:
-        log.error(f"Ошибка при обработке строки {original_row_number_info}: {e}", exc_info=False)
+    except IntegrityError as e:
         await db.rollback()
+        log.error(f"Ошибка целостности данных при обработке строки {original_row_number_info}: {e}", exc_info=False)
+    except Exception as e:
+        await db.rollback()
+        log.error(f"Непредвиденная ошибка при обработке строки {original_row_number_info}: {e}", exc_info=False)
 
 
 def _normalize_phone(phone: str) -> str:
