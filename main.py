@@ -15,16 +15,15 @@ from pathlib import Path as FilePath
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import Response
 from starlette_wtf import CSRFProtectMiddleware
-
-# --- НАЧАЛО ИЗМЕНЕНИЙ 1: Добавляем нужные импорты ---
-from src.core.middleware import HTMXMiddleware # Убедитесь, что этот middleware тоже импортирован
-from src.services.sheets_importer_service import import_leads_from_sheet 
-# --- КОНЕЦ ИЗМЕНЕНИЙ 1 ---
+ 
+from src.core.middleware import HTMXMiddleware
+from src.services.sheets_importer_service import import_leads_from_sheet
+from src.pages.admin.router import router as admin_router, unprotected_router as admin_unprotected_router
+from src.pages.admin.api import router as api_router  
 
 from src.core.config import get_settings
 from src.core.db import check_db_connection, async_session_factory
 from src.core.security import get_current_active_user
-from src.pages.admin.router import router as admin_router, unprotected_router as admin_unprotected_router
 from src.pages.shop_pages import router as shop_router, root_router as shop_root_router
 from src.services.user_service import create_first_superuser
 from src.core.cache import init_cache, cleanup_cache
@@ -79,10 +78,8 @@ async def on_startup():
     asyncio.create_task(schedule_cache_cleanup())
     log.info("Cache warm-up and cleanup scheduler started in background.")
 
-    # --- НАЧАЛО ИЗМЕНЕНИЙ 3: Запускаем нашу новую задачу в фоне ---
     asyncio.create_task(scheduled_sheet_import())
     log.info("Scheduled Google Sheets importer started in background.")
-    # --- КОНЕЦ ИЗМЕНЕНИЙ 3 ---
 
 
 async def on_shutdown():
@@ -98,10 +95,7 @@ def create_admin_app() -> FastAPI:
 
     app = FastAPI(**fastapi_kwargs, on_startup=[on_startup], on_shutdown=[on_shutdown])
     
-    # --- НАЧАЛО ИЗМЕНЕНИЙ 4: Регистрируем HTMXMiddleware ---
     app.add_middleware(HTMXMiddleware, templates=templates)
-    # --- КОНЕЦ ИЗМЕНЕНИЙ 4 ---
-
     app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
     app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.SECRET_KEY)
     app.add_middleware(RateLimitMiddleware, max_requests=200, window_seconds=60)
@@ -121,8 +115,14 @@ def create_admin_app() -> FastAPI:
     admin_router_with_locale.include_router(admin_router)
 
     app.include_router(admin_unprotected_router) 
+    
     app.include_router(
         admin_router_with_locale,
+        dependencies=[Depends(get_current_active_user)]
+    )
+    
+    app.include_router(
+        api_router, 
         dependencies=[Depends(get_current_active_user)]
     )
     
@@ -147,7 +147,6 @@ def create_admin_app() -> FastAPI:
 
 # --- ФАБРИКА ДЛЯ ПРИЛОЖЕНИЯ ОСНОВНОГО САЙТА (weconstruct.uz) ---
 def create_site_app() -> FastAPI:
-    # ... (эта функция остается без изменений) ...
     fastapi_kwargs = {"title": "WeConstruct Website"}
     if not settings.DEBUG:
         fastapi_kwargs.update({"docs_url": None, "redoc_url": None, "openapi_url": None})

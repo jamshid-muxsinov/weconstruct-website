@@ -8,11 +8,12 @@ from . import kanban
 from . import crud
 from . import contact
 from . import profile
-from . import htmx
+from . import htmx 
 from . import api
 from . import importer
 from . import invites
 from src.core.security import get_current_superuser
+
 router = APIRouter()
 unprotected_router = APIRouter()
 
@@ -38,7 +39,6 @@ router.include_router(
     dependencies=[Depends(get_current_superuser)]
 )
 router.include_router(htmx.router)
-router.include_router(api.router)
 router.include_router(
     invites.router,
     dependencies=[Depends(get_current_superuser)]
