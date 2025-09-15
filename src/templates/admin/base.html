@@ -57,10 +57,7 @@
                 <hr class="menu-divider">
                 <a href="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" class="nav-link {% if 'product' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-package nav-icon'></i><span class="nav-text">{{ _('sidebar_products') }}</span> </a>
                 <a href="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" class="nav-link {% if 'category' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-component nav-icon'></i><span class="nav-text">{{ _('sidebar_categories') }}</span> </a>
-                <a href="{{ request.url_for('admin_import_page', locale=request.state.locale) }}" class="nav-link {% if request.url.path.endswith('/import') %} active {% endif %}" hx-get="{{ request.url_for('admin_import_page', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
-                    <i class='bx bx-import nav-icon'></i>
-                    <span class="nav-text">{{ _('sidebar_import') }}</span>
-                </a>
+                
                 <a href="{{ request.url_for('admin_invites', locale=request.state.locale) }}" class="nav-link {% if request.url.path.endswith('/invites') or request.url.path.endswith('/invites/') %} active {% endif %}" hx-get="{{ request.url_for('admin_invites', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
                     <i class='bx bxs-paper-plane nav-icon'></i>
                     <span class="nav-text">{{ _('sidebar_invites') }}</span>
