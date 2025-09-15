@@ -1,3 +1,5 @@
+# src/pages/admin/api.py
+
 import json
 from typing import List
 from pydantic import BaseModel
@@ -13,7 +15,6 @@ from src.services import crm_service
 
 router = APIRouter(prefix="/api", tags=["Admin API"])
 
-# --- СТАРЫЕ МАРШРУТЫ, КОТОРЫЕ УЖЕ БЫЛИ В ЭТОМ ФАЙЛЕ ---
 
 @router.post("/quoterequests/update-status", name="admin_api_update_request_status")
 async def update_request_status(
@@ -70,9 +71,6 @@ async def mark_notifications_as_read(
     response.headers["HX-Trigger"] = json.dumps({"notifications-read": True})
     return response
 
-
-# --- НАЧАЛО НОВЫХ МАРШРУТОВ ДЛЯ КАНБАНА ---
-
 class BulkAssignRequest(BaseModel):
     card_ids: List[int]
     user_id: int
@@ -87,15 +85,15 @@ class CardStatusRequest(BaseModel):
 
 @router.post("/bulk-assign", name="api_bulk_assign")
 async def bulk_assign_requests(
-    bulk_data: BulkAssignRequest,
+    card_ids: List[int] = Form(...),
+    user_id: int = Form(...),
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):
     """Массовое назначение заявок пользователю"""
     updated_count = await crm_service.bulk_assign_requests(
-        db, bulk_data.card_ids, bulk_data.user_id, current_user.id
+        db, card_ids, user_id, current_user.id
     )
-    # Возвращаем 204 No Content, чтобы HTMX просто выполнил триггер
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
     response.headers["HX-Trigger"] = "updateKanban"
     return response
@@ -103,13 +101,14 @@ async def bulk_assign_requests(
 
 @router.post("/bulk-status", name="api_bulk_status")
 async def bulk_update_status(
-    bulk_data: BulkStatusRequest,
+    card_ids: List[int] = Form(...),
+    status: str = Form(...),
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):
     """Массовое обновление статуса заявок"""
     updated_count = await crm_service.bulk_update_status(
-        db, bulk_data.card_ids, bulk_data.status, current_user.id
+        db, card_ids, status, current_user.id
     )
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
     response.headers["HX-Trigger"] = "updateKanban"
@@ -118,8 +117,8 @@ async def bulk_update_status(
 
 @router.post("/update-status", name="api_update_single_status")
 async def update_single_card_status(
-    card_id: int = Form(...),  # <-- Теперь читает поле 'card_id' из формы
-    status: str = Form(...),   # <-- Теперь читает поле 'status' из формы
+    card_id: int = Form(...),
+    status: str = Form(...),
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):

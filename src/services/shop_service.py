@@ -12,8 +12,8 @@ from src.core.cache import cache_result, invalidate_cache
 
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact:
     """
-    Асинхронно-безопасная версия для поиска или создания контакта.
-    Сначала ищет, а если не находит - пытается создать, обрабатывая возможную ошибку гонки (race condition).
+    Асинхронно-безопасная версия для поиска или создания контакта,
+    устойчивая к гонке состояний (race condition) в многопроцессорной среде.
     """
     if not phone or not phone.strip():
         first_name, _, last_name = name.partition(" ")
@@ -27,31 +27,26 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
     contact = result.scalars().first()
 
     if contact:
-        if name and name.strip() and name.lower() != 'без имени' and not contact.name:
-             first_name, _, last_name = name.partition(" ")
-             contact.name = first_name
-             contact.last_name = last_name or contact.last_name
-             db.add(contact)
-             await db.flush()
-             await db.refresh(contact)
         return contact
 
     try:
-        first_name, _, last_name = name.partition(" ")
-        new_contact = Contact(
-            phone=phone,
-            name=first_name,
-            last_name=last_name or None
-        )
-        db.add(new_contact)
+        async with db.begin_nested():
+            first_name, _, last_name = name.partition(" ")
+            new_contact = Contact(
+                phone=phone,
+                name=first_name,
+                last_name=last_name or None
+            )
+            db.add(new_contact)
+        
         await db.flush()
-        await db.refresh(new_contact)
-        return new_contact
+        result = await db.execute(stmt)
+        return result.scalars().first()
+
     except IntegrityError:
         result = await db.execute(stmt)
-        contact = result.scalars().first()
-        return contact
-
+        return result.scalars().first()
+    
 async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, product_id: int = None, source: str = "website") -> QuoteRequest:
     quote = QuoteRequest(
         contact_id=contact_id,
