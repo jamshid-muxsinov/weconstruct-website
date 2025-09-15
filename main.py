@@ -17,7 +17,6 @@ from starlette.responses import Response
 from starlette_wtf import CSRFProtectMiddleware
  
 from src.core.middleware import HTMXMiddleware
-from src.services.sheets_importer_service import import_leads_from_sheet
 from src.pages.admin.router import router as admin_router, unprotected_router as admin_unprotected_router
 from src.pages.admin.api import router as api_router  
 
@@ -39,29 +38,6 @@ settings = get_settings()
 configure_jinja_templates(templates)
 
 BASE_DIR = FilePath("/app")
-
-async def scheduled_sheet_import():
-    """Фоновая задача для периодического импорта из Google Sheets."""
-    import asyncio
-    from src.core.db import async_session_factory
-    
-    SPREADSHEET_ID = "16dZ3_sWE1yYUhYmtfpdNlbWDhRrltNNGMtroTmzkNpo" # <-- ВАШ ID
-    GID = 531058438  # <-- ВАШ GID
-    IMPORT_INTERVAL_MINUTES = 15
-    await asyncio.sleep(60) 
-
-    while True:
-        try:
-            log.info(f"[SCHEDULER] Запуск планового импорта из Google Sheets (ID: ...{SPREADSHEET_ID[-5:]})")
-            async with async_session_factory() as session:
-                result = await import_leads_from_sheet(session, spreadsheet_id=SPREADSHEET_ID, gid=GID)
-                log.info(f"[SCHEDULER] Плановый импорт завершен: {result.get('message')}")
-        except Exception as e:
-            log.error(f"[SCHEDULER] Критическая ошибка в плановом импорте: {e}", exc_info=True)
-        
-        log.info(f"[SCHEDULER] Следующий импорт через {IMPORT_INTERVAL_MINUTES} минут.")
-        await asyncio.sleep(IMPORT_INTERVAL_MINUTES * 60)
-
 
 async def on_startup():
     log.info("Application startup...")
