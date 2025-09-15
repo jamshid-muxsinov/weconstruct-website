@@ -74,9 +74,9 @@
             {% endfor %}
         </select>
                 
-        <a :href="'{{ url_for('api_export_requests', locale=request.state.locale) }}?card_ids=' + $store.kanbanManager.selectedIds.join(',')" 
-           class="btn btn-sm btn-secondary">
-           <i class='bx bx-download'></i> {{ _('export') }}
+        <a :href="'{{ url_for('api_export_requests') }}?card_ids=' + $store.kanbanManager.selectedIds.join(',')" 
+            class="btn btn-sm btn-secondary">
+            <i class='bx bx-download'></i> {{ _('export') }}
         </a>
         
         <button @click="$store.kanbanManager.clearSelection()" class="btn-icon btn-icon-danger" title="{{ _('cancel_selection') }}">
