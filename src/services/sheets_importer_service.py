@@ -12,6 +12,22 @@ from src.models.shop_models import QuoteRequest, GoogleSheetLead, Contact
 
 log = logging.getLogger(__name__)
 
+# --- ВОЗВРАЩАЕМ НАШ СЛОВАРЬ СТАТУСОВ ---
+STATUS_MAPPING = {
+    # Ключи в нижнем регистре для надежного сравнения
+    'yopildi': QuoteRequest.StatusEnum.CLOSED,
+    'javob berdi': QuoteRequest.StatusEnum.CONTACTED,
+    "2ta qo'ng'iroq": QuoteRequest.StatusEnum.CONTACTED,
+    'тели учик': QuoteRequest.StatusEnum.ARCHIVED,
+    'нархи екмади': QuoteRequest.StatusEnum.ARCHIVED,
+    'бино курилган': QuoteRequest.StatusEnum.ARCHIVED,
+    'пули ва жойи йук': QuoteRequest.StatusEnum.ARCHIVED,
+    'пул керак экан': QuoteRequest.StatusEnum.ARCHIVED,
+    'маблаги йук': QuoteRequest.StatusEnum.ARCHIVED,
+    # Добавьте сюда другие статусы по необходимости
+}
+# --- КОНЕЦ БЛОКА ---
+
 
 async def process_single_lead_row(db: AsyncSession, row: list):
     """
@@ -25,56 +41,75 @@ async def process_single_lead_row(db: AsyncSession, row: list):
     original_row_number_info = f"(ID: {sheet_row_id})"
 
     try:
-        stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
-        result = await db.execute(stmt)
-        existing_lead = result.scalars().first()
+        async with db.begin_nested():
+            stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
+            result = await db.execute(stmt)
+            existing_lead = result.scalars().first()
 
-        if existing_lead:
-            log.info(f"Лид {original_row_number_info} уже существует в базе. Пропуск.")
-            return
+            if existing_lead:
+                log.info(f"Лид {original_row_number_info} уже существует в базе. Пропуск.")
+                return
 
-        client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
-        business_type = (row[2].strip() if len(row) > 2 else "")[:255]
-        phone_1 = (row[3].strip() if len(row) > 3 else "")
-        telegram = (row[4].strip() if len(row) > 4 else "")[:100]
-        phone_2 = (row[5].strip() if len(row) > 5 else "")
-        status_from_sheet_raw = (row[6].strip() if len(row) > 6 else "")
-        comment = (row[7].strip() if len(row) > 7 else "")
+            client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
+            business_type = (row[2].strip() if len(row) > 2 else "")[:255]
+            phone_1 = (row[3].strip() if len(row) > 3 else "")
+            telegram = (row[4].strip() if len(row) > 4 else "")[:100]
+            phone_2 = (row[5].strip() if len(row) > 5 else "")
+            status_from_sheet_raw = (row[6].strip() if len(row) > 6 else "")
+            comment = (row[7].strip() if len(row) > 7 else "")
 
-        phone_number = _normalize_phone(phone_1 or phone_2)[:50]
+            phone_number = _normalize_phone(phone_1 or phone_2)[:50]
 
-        if not phone_number:
-            raise ValueError("Не найден или некорректен номер телефона.")
+            if not phone_number:
+                raise ValueError("Не найден или некорректен номер телефона.")
 
-        contact = await _get_or_create_contact(db, name=client_name, phone=phone_number)
-        
-        message_parts = []
-        if status_from_sheet_raw: message_parts.append(f"Статус из таблицы: {status_from_sheet_raw}")
-        if business_type: message_parts.append(f"Тип бизнеса: {business_type}")
-        if telegram: message_parts.append(f"Telegram: {telegram}")
-        if comment: message_parts.append(f"Комментарий из таблицы: {comment}")
-        message_for_crm = "\n".join(message_parts)
+            contact = await _get_or_create_contact(db, name=client_name, phone=phone_number)
+            
+            if not contact:
+                raise Exception("Не удалось создать или найти контакт.")
+            
+            await db.flush()
 
-        quote = await _create_quote_request(db, contact.id, message_for_crm, source="contact_form")
-        quote.business_type = business_type
-        quote.status = QuoteRequest.StatusEnum.IMPORTED
-        
-        new_lead_entry = GoogleSheetLead(
-            sheet_row_id=sheet_row_id, 
-            spreadsheet_id="16dZ3_sWE1yYUhYmtfpdNlbWDhRrltNNGMtroTmzkNpo",
-            status=GoogleSheetLead.StatusEnum.IMPORTED,
-            processed_at=datetime.utcnow(),
-            quote_request_id=quote.id,
-            raw_data=row
-        )
-        db.add(new_lead_entry)
-        
-        await _notify_managers(db, quote, contact.full_name)
-        
-        await db.commit() # Сохраняем все изменения одним коммитом
-        
-        log.info(f"Создана новая заявка #{quote.id} для лида {original_row_number_info}")
+            message_parts = []
+            if status_from_sheet_raw: message_parts.append(f"Статус из таблицы: {status_from_sheet_raw}")
+            if business_type: message_parts.append(f"Тип бизнеса: {business_type}")
+            if telegram: message_parts.append(f"Telegram: {telegram}")
+            if comment: message_parts.append(f"Комментарий из таблицы: {comment}")
+            message_for_crm = "\n".join(message_parts)
 
+            quote = await _create_quote_request(db, contact.id, message_for_crm, source="contact_form")
+            quote.business_type = business_type
+            
+            # --- ВОЗВРАЩАЕМ ЛОГИКУ ОПРЕДЕЛЕНИЯ СТАТУСА ---
+            status_from_sheet_lower = status_from_sheet_raw.lower()
+            crm_status = STATUS_MAPPING.get(status_from_sheet_lower)
+            
+            # Если статус из таблицы распознан, присваиваем его.
+            # Если нет - ставим по умолчанию 'IMPORTED'.
+            quote.status = crm_status if crm_status else QuoteRequest.StatusEnum.IMPORTED
+            # --- КОНЕЦ БЛОКА ---
+            
+            await db.flush()
+
+            new_lead_entry = GoogleSheetLead(
+                sheet_row_id=sheet_row_id, 
+                spreadsheet_id="16dZ3_sWE1yYUhYmtfpdNlbWDhRrltNNGMtroTmzkNpo",
+                status=GoogleSheetLead.StatusEnum.IMPORTED,
+                processed_at=datetime.utcnow(),
+                quote_request_id=quote.id,
+                raw_data=row
+            )
+            db.add(new_lead_entry)
+            
+            await _notify_managers(db, quote, contact.full_name)
+            
+            await db.commit()
+            
+            log.info(f"Создана новая заявка #{quote.id} для лида {original_row_number_info} со статусом '{quote.status.value}'")
+
+    except IntegrityError as e:
+        await db.rollback()
+        log.error(f"Ошибка целостности данных при обработке строки {original_row_number_info}: {e}", exc_info=False)
     except Exception as e:
         await db.rollback()
         log.error(f"Непредвиденная ошибка при обработке строки {original_row_number_info}: {e}", exc_info=False)
