@@ -10,24 +10,24 @@ from sqlalchemy.exc import IntegrityError
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
 
-async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact:
+async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact | None:
     """
     Асинхронно-безопасная и надежная версия для поиска или создания контакта.
     """
     if not phone or not phone.strip():
-        first_name, _, last_name = name.partition(" ")
-        return Contact(name=first_name, last_name=last_name or None, phone="N/A")
+        return None 
 
     phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
     search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
     
     stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
-
+    
     result = await db.execute(stmt)
     contact = result.scalars().first()
     if contact:
         return contact
 
+    # Если не нашли, пытаемся создать
     try:
         async with db.begin_nested():
             first_name, _, last_name = name.partition(" ")
@@ -40,6 +40,7 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
     except IntegrityError:
         result = await db.execute(stmt)
         return result.scalars().first()
+
     result = await db.execute(stmt)
     return result.scalars().first()
 
