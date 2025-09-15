@@ -5,7 +5,7 @@
         <span style="font-weight: 600;">{{ _('notifications') }}</span>
         {% if notifications %}
         <button class="btn-link"
-                hx-post="{{ request.url_for('admin_api_notifications_mark_read', locale=request.state.locale) }}"
+                hx-post="{{ request.url_for('admin_api_notifications_mark_read') }}"
                 hx-indicator="this"
                 title="{{ _('mark_all_as_read') }}">
             <i class='bx bx-check-double'></i>
