@@ -14,6 +14,9 @@ log = logging.getLogger(__name__)
 
 
 async def process_single_lead_row(db: AsyncSession, row: list):
+    """
+    Обрабатывает одну строку данных, полученную из Google Sheets через вебхук.
+    """
     if not row or len(row) < 1 or not row[0] or not str(row[0]).strip():
         log.warning(f"Получена некорректная или пустая строка для обработки, пропуск: {row}")
         return
@@ -31,6 +34,16 @@ async def process_single_lead_row(db: AsyncSession, row: list):
                 log.info(f"Лид {original_row_number_info} уже существует в базе. Пропуск.")
                 return
 
+            # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ ИНДЕКСОВ КОЛОНОК ---
+            # A -> row[0] - ID
+            # B -> row[1] - Имя
+            # C -> row[2] - Бизнес
+            # D -> row[3] - Номер 1
+            # E -> row[4] - Telegram
+            # F -> row[5] - Номер 2
+            # G -> row[6] - Статус
+            # H -> row[7] - Комментарий
+            
             client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
             business_type = (row[2].strip() if len(row) > 2 else "")[:255]
             phone_1 = (row[3].strip() if len(row) > 3 else "")
@@ -46,9 +59,7 @@ async def process_single_lead_row(db: AsyncSession, row: list):
 
             contact = await _get_or_create_contact(db, name=client_name, phone=phone_number)
             
-            # --- ГЛАВНОЕ ИСПРАВЛЕНИЕ: ПРОВЕРКА, ЧТО КОНТАКТ БЫЛ СОЗДАН ---
             if not contact:
-                # Это может произойти в редких случаях гонки состояний
                 raise Exception("Не удалось создать или найти контакт.")
             
             await db.flush()
