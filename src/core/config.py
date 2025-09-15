@@ -9,6 +9,9 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
 
+    GOOGLE_CREDENTIALS_FILE: Optional[str] = None
+    GOOGLE_SHEET_WEBHOOK_SECRET: Optional[str] = None
+    
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 43200

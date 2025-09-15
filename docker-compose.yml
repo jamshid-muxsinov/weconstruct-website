@@ -39,17 +39,15 @@ services:
   
   admin:
     build: .
-    # <<< ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ >>>
-    # 1. Меняем рабочую директорию на /app/src
-    # 2. Указываем путь к приложению как 'main:admin_app'
     command: gunicorn --chdir /app/src -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:admin_app
     environment:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
-      # PYTHONPATH оставляем
+      - GOOGLE_CREDENTIALS_FILE=/app/credentials.json
     volumes:
       - .:/app
       - media_volume:/app/media
+      - ./credentials.json:/app/credentials.json:ro
     depends_on:
       - db
       - redis

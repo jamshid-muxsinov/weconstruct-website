@@ -30,6 +30,7 @@ from src.core.cache import init_cache, cleanup_cache
 from src.core.middleware import CacheMiddleware, RateLimitMiddleware
 from src.core.cache_utils import schedule_cache_cleanup, warm_up_cache
 from src.pages.jinja_config import templates, configure_jinja_templates
+from src.pages.admin.webhooks import router as webhooks_router
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 log = logging.getLogger(__name__)
@@ -62,7 +63,6 @@ async def scheduled_sheet_import():
         await asyncio.sleep(IMPORT_INTERVAL_MINUTES * 60)
 
 
-# --- ОБЩИЕ ОБРАБОТЧИКИ СОБЫТИЙ ---
 async def on_startup():
     log.info("Application startup...")
     await check_db_connection()
@@ -77,10 +77,6 @@ async def on_startup():
     asyncio.create_task(warm_up_cache())
     asyncio.create_task(schedule_cache_cleanup())
     log.info("Cache warm-up and cleanup scheduler started in background.")
-
-    asyncio.create_task(scheduled_sheet_import())
-    log.info("Scheduled Google Sheets importer started in background.")
-
 
 async def on_shutdown():
     log.info("Application shutdown...")
@@ -116,6 +112,7 @@ def create_admin_app() -> FastAPI:
 
     app.include_router(admin_unprotected_router) 
     
+    app.include_router(webhooks_router)
     app.include_router(
         admin_router_with_locale,
         dependencies=[Depends(get_current_active_user)]
