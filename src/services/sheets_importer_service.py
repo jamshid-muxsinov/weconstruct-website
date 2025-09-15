@@ -21,32 +21,28 @@ async def process_single_lead_row(db: AsyncSession, row: list):
         return
 
     sheet_row_id = str(row[0]).strip()
-    original_row_number_info = f"(ID: {sheet_row_id})" # Для логов
+    original_row_number_info = f"(ID: {sheet_row_id})"
 
     try:
-        # Для каждой строки используем savepoint, чтобы ошибка в одной не влияла на другие.
         async with db.begin_nested():
-            # Проверяем, есть ли уже заявка от такого лида.
-            
-            # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-            # Мы ищем по текстовому полю sheet_row_id, а не по первичному ключу.
+            # Проверяем, существует ли уже лид с таким ID
             stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
             result = await db.execute(stmt)
             existing_lead = result.scalars().first()
-            # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
             if existing_lead:
                 log.info(f"Лид {original_row_number_info} уже существует в базе. Пропуск.")
                 return
 
-            # Парсим данные из строки
+            # --- ИСПРАВЛЕНИЕ: Читаем данные из правильных колонок ---
             client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
             business_type = (row[2].strip() if len(row) > 2 else "")[:255]
-            phone_1 = row[3].strip() if len(row) > 3 else ""
+            phone_1 = (row[3].strip() if len(row) > 3 else "")
             telegram = (row[4].strip() if len(row) > 4 else "")[:100]
-            phone_2 = row[5].strip() if len(row) > 5 else ""
-            status_from_sheet_raw = row[6].strip() if len(row) > 6 else ""
-            comment = row[7].strip() if len(row) > 7 else ""
+            phone_2 = (row[5].strip() if len(row) > 5 else "")
+            status_from_sheet_raw = (row[6].strip() if len(row) > 6 else "")
+            comment = (row[7].strip() if len(row) > 7 else "")
+            # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
 
             phone_number = _normalize_phone(phone_1 or phone_2)[:50]
 
@@ -69,10 +65,9 @@ async def process_single_lead_row(db: AsyncSession, row: list):
             
             await db.flush()
 
-            # Создаем запись о лиде, чтобы не дублировать его в будущем
             new_lead_entry = GoogleSheetLead(
                 sheet_row_id=sheet_row_id, 
-                spreadsheet_id="16dZ3_sWE1yYUhYmtfpdNlbWDhRrltNNGMtroTmzkNpo", # Ваш ID таблицы
+                spreadsheet_id="16dZ3_sWE1yYUhYmtfpdNlbWDhRrltNNGMtroTmzkNpo",
                 status=GoogleSheetLead.StatusEnum.IMPORTED,
                 processed_at=datetime.utcnow(),
                 quote_request_id=quote.id,
@@ -83,12 +78,11 @@ async def process_single_lead_row(db: AsyncSession, row: list):
             await _notify_managers(db, quote, contact.full_name)
             log.info(f"Создана новая заявка #{quote.id} для лида {original_row_number_info}")
 
-        # Сохраняем изменения для этой конкретной строки
         await db.commit()
 
     except Exception as e:
         log.error(f"Ошибка при обработке строки {original_row_number_info}: {e}", exc_info=False)
-        await db.rollback() # Откатываем транзакцию в случае любой ошибки
+        await db.rollback()
 
 
 def _normalize_phone(phone: str) -> str:
