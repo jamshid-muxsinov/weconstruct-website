@@ -11,6 +11,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
 
+class UserRole(str, enum.Enum):
+    MANAGER = "manager"
+    SEO = "seo"
+    ADMIN = "admin"
+
 class User(Base):
     __tablename__ = "auth_user"
     
@@ -23,6 +28,13 @@ class User(Base):
     is_staff: Mapped[bool] = mapped_column(Boolean, default=False)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
+    role: Mapped[UserRole] = mapped_column(
+        EnumType(UserRole, name="user_role_enum", native_enum=False),
+        default=UserRole.MANAGER,
+        server_default=UserRole.MANAGER.value,
+        nullable=False
+    )
+
     tasks: Mapped[List["Task"]] = relationship(back_populates="assigned_to")
     assigned_requests: Mapped[List["QuoteRequest"]] = relationship(back_populates="assigned_to")
     notifications: Mapped[List["Notification"]] = relationship(back_populates="user")

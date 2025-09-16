@@ -470,6 +470,7 @@ async def quoterequest_delete(request: Request, pk: int, context: dict = Depends
             
     back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale))
     _ = templates.env.globals['_']
-    title = f"{_({'request': request}, 'delete_confirmation_title', entity=_(QUOTEREQUEST_META.verbose_name))}"
+    translated_entity_name = _({'request': request}, QUOTEREQUEST_META.verbose_name)
+    title = _({'request': request}, 'delete_confirmation_title', entity=translated_entity_name)
     context.update({"meta": QUOTEREQUEST_META, "original": quote_req, "title": title, "back_url": back_url, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
