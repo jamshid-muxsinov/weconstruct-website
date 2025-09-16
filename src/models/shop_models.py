@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
 
+# --- ГЛАВНОЕ ИЗМЕНЕНИЕ: Все значения Enum в нижнем регистре ---
 class UserRole(str, enum.Enum):
     MANAGER = "manager"
     SEO = "seo"
@@ -45,11 +46,9 @@ class User(Base):
 class Contact(Base):
     __tablename__ = 'shop_contact'
     id: Mapped[int] = mapped_column(primary_key=True)
-    # ИЗМЕНЕНО: Увеличена длина полей для имени и фамилии
     name: Mapped[str] = mapped_column(String(150), comment="Имя клиента")
     last_name: Mapped[Optional[str]] = mapped_column(String(150), comment="Фамилия клиента")
     
-    # ИЗМЕНЕНО: Увеличена длина поля для телефона
     phone: Mapped[str] = mapped_column(String(50), unique=True)
     email: Mapped[Optional[str]] = mapped_column(String(100))
     company: Mapped[Optional[str]] = mapped_column(String(150))
@@ -167,7 +166,6 @@ class Product(Base):
 
     area: Mapped[int] = mapped_column(Integer, default=0)
     
-    # ИСПРАВЛЕНИЕ: Добавлен параметр native_enum=False для надежности
     status: Mapped[StatusEnum] = mapped_column(
         EnumType(
             StatusEnum, 
@@ -304,7 +302,6 @@ class StatusChangeLog(Base):
     user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("auth_user.id", ondelete="SET NULL"))
     user: Mapped[Optional["User"]] = relationship(back_populates="status_logs")
 
-    # ИСПРАВЛЕНИЕ: Добавлен параметр native_enum=False
     old_status: Mapped[QuoteRequest.StatusEnum] = mapped_column(EnumType(QuoteRequest.StatusEnum, name="quoterequest_status_enum", native_enum=False, values_callable=lambda obj: [e.value for e in obj]))
     new_status: Mapped[QuoteRequest.StatusEnum] = mapped_column(EnumType(QuoteRequest.StatusEnum, name="quoterequest_status_enum", native_enum=False, values_callable=lambda obj: [e.value for e in obj]))
     
