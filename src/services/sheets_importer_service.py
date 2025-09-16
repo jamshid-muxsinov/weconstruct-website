@@ -13,9 +13,9 @@ from src.models.shop_models import QuoteRequest, GoogleSheetLead, Contact
 log = logging.getLogger(__name__)
 
 STATUS_MAPPING = {
+    'yopildi': QuoteRequest.StatusEnum.ARCHIVED,
     'javob berdi': QuoteRequest.StatusEnum.CONTACTED,
     "2ta qo'ng'iroq": QuoteRequest.StatusEnum.CONTACTED,
-    'yopildi': QuoteRequest.StatusEnum.ARCHIVED, 
     'тели учик': QuoteRequest.StatusEnum.ARCHIVED,
     'нархи екмади': QuoteRequest.StatusEnum.ARCHIVED,
     'бино курилган': QuoteRequest.StatusEnum.ARCHIVED,
@@ -26,11 +26,6 @@ STATUS_MAPPING = {
     'пул топиб берадиган хомий кк экан': QuoteRequest.StatusEnum.ARCHIVED,
     'нарх киммат экан': QuoteRequest.StatusEnum.ARCHIVED,
     'текин дизайн ва лойиха кк экан': QuoteRequest.StatusEnum.ARCHIVED,
-
-    'антенаси йук': QuoteRequest.StatusEnum.QUALIFICATION,
-    'банд': QuoteRequest.StatusEnum.QUALIFICATION,
-    '13/30 тел килм кк': QuoteRequest.StatusEnum.QUALIFICATION,
-    'узлари тел киладилар': QuoteRequest.StatusEnum.QUALIFICATION,
 }
 
 async def process_single_lead_row(db: AsyncSession, row: list):
@@ -45,6 +40,7 @@ async def process_single_lead_row(db: AsyncSession, row: list):
     original_row_number_info = f"(ID: {sheet_row_id})"
 
     try:
+        # Эта транзакция гарантирует, что вся операция будет атомарной
         async with db.begin_nested():
             stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
             result = await db.execute(stmt)
@@ -55,6 +51,13 @@ async def process_single_lead_row(db: AsyncSession, row: list):
                 return
 
             client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
+
+            # --- ФИНАЛЬНАЯ ЗАЩИТА: Игнорируем авто-лиды из Facebook ---
+            if client_name.startswith(("IMG_", "2025-", "+998")) or client_name.lower() in ["a", "x", "y", "r"]:
+                log.info(f"Обнаружен технический или неполный лид (ID: {sheet_row_id}, Имя: {client_name}). Пропуск.")
+                return
+            # --- КОНЕЦ ЗАЩИТЫ ---
+
             business_type = (row[2].strip() if len(row) > 2 else "")[:255]
             phone_1 = (row[3].strip() if len(row) > 3 else "")
             telegram = (row[4].strip() if len(row) > 4 else "")[:100]
@@ -63,10 +66,6 @@ async def process_single_lead_row(db: AsyncSession, row: list):
             comment = (row[7].strip() if len(row) > 7 else "")
 
             phone_number = _normalize_phone(phone_1 or phone_2)[:50]
-
-            if client_name.startswith("IMG_"):
-                log.info(f"Обнаружен технический лид (ID: {sheet_row_id}). Пропуск.")
-                return
 
             if not phone_number:
                 raise ValueError("Не найден или некорректен номер телефона.")
@@ -88,14 +87,9 @@ async def process_single_lead_row(db: AsyncSession, row: list):
             quote = await _create_quote_request(db, contact.id, message_for_crm, source="contact_form")
             quote.business_type = business_type
             
-            # --- ВОЗВРАЩАЕМ ЛОГИКУ ОПРЕДЕЛЕНИЯ СТАТУСА ---
             status_from_sheet_lower = status_from_sheet_raw.lower()
             crm_status = STATUS_MAPPING.get(status_from_sheet_lower)
-            
-            # Если статус из таблицы распознан, присваиваем его.
-            # Если нет - ставим по умолчанию 'IMPORTED'.
             quote.status = crm_status if crm_status else QuoteRequest.StatusEnum.IMPORTED
-            # --- КОНЕЦ БЛОКА ---
             
             await db.flush()
 
@@ -110,10 +104,10 @@ async def process_single_lead_row(db: AsyncSession, row: list):
             db.add(new_lead_entry)
             
             await _notify_managers(db, quote, contact.full_name)
-            
-            await db.commit()
-            
-            log.info(f"Создана новая заявка #{quote.id} для лида {original_row_number_info} со статусом '{quote.status.value}'")
+        
+        await db.commit()
+        
+        log.info(f"Создана новая заявка #{quote.id} для лида {original_row_number_info} со статусом '{quote.status.value}'")
 
     except IntegrityError as e:
         await db.rollback()
