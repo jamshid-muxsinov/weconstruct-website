@@ -19,7 +19,7 @@ services:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
     volumes:
-      - .:/app  # <-- ВОЗВРАЩАЕМ ЭТУ ВАЖНУЮ СТРОКУ
+      - .:/app
       - media_volume:/app/media
     depends_on:
       - db
@@ -41,7 +41,7 @@ services:
       - TZ=Asia/Tashkent
       - GOOGLE_CREDENTIALS_FILE=/app/credentials.json
     volumes:
-      - .:/app  # <-- И ЭТУ ТОЖЕ
+      - .:/app
       - media_volume:/app/media
       - ./credentials.json:/app/credentials.json:ro
     depends_on:
@@ -50,7 +50,11 @@ services:
     env_file: .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/ru/admin/login"] # Исправленный healthcheck
+      test: ["CMD", "curl", "-f", "http://localhost:8000/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
       
   nginx:
     image: nginx:latest
