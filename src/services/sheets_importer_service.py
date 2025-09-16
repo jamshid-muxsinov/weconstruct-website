@@ -30,7 +30,8 @@ STATUS_MAPPING = {
 
 async def process_single_lead_row(db: AsyncSession, row: list):
     """
-    Обрабатывает одну строку данных, полученную из Google Sheets через вебхук.
+    Обрабатывает одну строку данных, полученную из Google Sheets через вебхук,
+    используя вложенные транзакции для изоляции ошибок.
     """
     if not row or len(row) < 1 or not row[0] or not str(row[0]).strip():
         log.warning(f"Получена некорректная или пустая строка для обработки, пропуск: {row}")
@@ -40,23 +41,23 @@ async def process_single_lead_row(db: AsyncSession, row: list):
     original_row_number_info = f"(ID: {sheet_row_id})"
 
     try:
-        # Эта транзакция гарантирует, что вся операция будет атомарной
+        # Эта вложенная транзакция (savepoint) позволит нам откатить
+        # только одну неудачную операцию, не закрывая всю сессию.
         async with db.begin_nested():
             stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
             result = await db.execute(stmt)
             existing_lead = result.scalars().first()
 
             if existing_lead:
+                # Этот лог теперь будет 'info', так как это не ошибка
                 log.info(f"Лид {original_row_number_info} уже существует в базе. Пропуск.")
                 return
 
             client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
 
-            # --- ФИНАЛЬНАЯ ЗАЩИТА: Игнорируем авто-лиды из Facebook ---
             if client_name.startswith(("IMG_", "2025-", "+998")) or client_name.lower() in ["a", "x", "y", "r"]:
                 log.info(f"Обнаружен технический или неполный лид (ID: {sheet_row_id}, Имя: {client_name}). Пропуск.")
                 return
-            # --- КОНЕЦ ЗАЩИТЫ ---
 
             business_type = (row[2].strip() if len(row) > 2 else "")[:255]
             phone_1 = (row[3].strip() if len(row) > 3 else "")
@@ -105,17 +106,12 @@ async def process_single_lead_row(db: AsyncSession, row: list):
             
             await _notify_managers(db, quote, contact.full_name)
         
-        await db.commit()
-        
-        log.info(f"Создана новая заявка #{quote.id} для лида {original_row_number_info} со статусом '{quote.status.value}'")
+        # Коммит всей сессии происходит в самом конце, в файле webhooks.py
+        log.info(f"Успешно подготовлена к сохранению заявка #{quote.id} для лида {original_row_number_info} со статусом '{quote.status.value}'")
 
-    except IntegrityError as e:
-        await db.rollback()
-        log.error(f"Ошибка целостности данных при обработке строки {original_row_number_info}: {e}", exc_info=False)
     except Exception as e:
-        await db.rollback()
-        log.error(f"Непредвиденная ошибка при обработке строки {original_row_number_info}: {e}", exc_info=False)
-
+        # Откат здесь не нужен, так как `begin_nested` сделает это автоматически при выходе из блока.
+        log.error(f"Ошибка при обработке строки {original_row_number_info}: {e}", exc_info=False)
 
 def _normalize_phone(phone: str) -> str:
     if not phone: return ""
