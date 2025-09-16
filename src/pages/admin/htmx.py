@@ -1,24 +1,19 @@
+# src/pages/admin/htmx.py
+
 import json
-import asyncio
-from datetime import datetime, timezone # Добавьте импорт timezone
 from urllib.parse import quote
-from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, Query
+from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import or_, func, desc
 from sqlalchemy.orm import selectinload, joinedload
 from slugify import slugify
 import wtforms
-from wtforms.fields import StringField, SelectField
-import os
-from sse_starlette.sse import EventSourceResponse
 
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
 from src.core.security import get_current_active_user
-from src.core.cache import cache_manager
-from src.models.shop_models import User, QuoteRequest, Task, StatusChangeLog, Category, Contact, Notification, ProductImage
+from src.models.shop_models import User, QuoteRequest, Task, Category, Contact, Notification, ProductImage
 from src.services import crm_service
 from src.schemas.crm_schemas import TaskCreate
 from .dependencies import get_common_context
@@ -34,11 +29,9 @@ NO_CACHE_HEADERS = {
 }
 
 class TaskForm(wtforms.Form):
-    title = StringField('Title')
-    assigned_to_id = SelectField('Assigned To', coerce=int)
+    title = wtforms.StringField('Title')
+    assigned_to_id = wtforms.SelectField('Assigned To', coerce=int)
 
-
-# Остальной код в этом файле остается без изменений
 @router.get("/quoterequest-modal/{pk}", response_class=HTMLResponse, name="admin_htmx_quoterequest_modal")
 async def get_quote_request_modal(
     pk: int,
@@ -59,10 +52,7 @@ async def get_quote_request_modal(
         quote_request = (await db.execute(stmt)).scalars().first()
         if not quote_request:
             return HTMLResponse("Заявка не найдена", status_code=404)
-        staff_users_query = select(User).where(
-            User.is_staff == True,
-            User.is_superuser == False
-        )
+        
         staff_users = (await db.execute(select(User).where(User.is_staff == True))).scalars().all()
         form = TaskForm()
         form.assigned_to_id.choices = [(user.id, user.username) for user in staff_users]
@@ -79,7 +69,7 @@ async def get_quote_request_modal(
             headers=NO_CACHE_HEADERS
         )
     except Exception as e:
-        print(f"Error in get_quote_request_modal: {e}")
+        log.error(f"Error in get_quote_request_modal: {e}", exc_info=True)
         return HTMLResponse("Ошибка загрузки данных", status_code=500)
 
 @router.post("/quoterequest/{pk}/add-task", response_class=HTMLResponse, name="admin_htmx_add_task_to_quote")
@@ -98,13 +88,14 @@ async def add_task_to_quote(
     context = {"request": request, "tasks": sorted(updated_tasks, key=lambda t: (t.completed, -t.id))}
     return templates.TemplateResponse("admin/partials/_task_list_partial.html", context)
 
+# --- НАЧАЛО ИЗМЕНЕНИЯ: Передаем весь объект current_user в сервис ---
 @router.post("/task/{pk}/toggle", response_class=HTMLResponse, name="admin_htmx_toggle_task")
 async def toggle_task(
     pk: int, request: Request,
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):
-    task = await crm_service.toggle_task_completion(db, pk, current_user.id)
+    task = await crm_service.toggle_task_completion(db, pk, current_user)
     if not task: 
         raise HTTPException(status_code=404, detail="Task not found or permission denied")
 
@@ -121,6 +112,7 @@ async def toggle_task(
     trigger_payload = json.dumps({"show-toast": {"message": "Статус задачи изменен"}})
     response.headers["HX-Trigger"] = quote(trigger_payload)
     return response
+# --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
 @router.get("/category-add-modal/", response_class=HTMLResponse, name="admin_htmx_category_add_modal")
 async def get_category_add_modal(request: Request):
@@ -161,7 +153,6 @@ async def get_kanban_content(
 
 @router.get("/keyboard-shortcuts", response_class=HTMLResponse, name="admin_htmx_keyboard_shortcuts")
 async def get_keyboard_shortcuts_modal(request: Request):
-    """Display keyboard shortcuts help modal"""
     return templates.TemplateResponse("admin/partials/_keyboard_shortcuts_modal.html", {"request": request})
 
 @router.get("/quote-slide-over/{pk}", response_class=HTMLResponse, name="admin_htmx_quote_slide_over")
@@ -261,10 +252,10 @@ async def htmx_delete_product_image(pk: int, db: AsyncSession = Depends(get_db_s
     if image:
         try:
             file_to_delete = Path("media") / image.image
-            if os.path.exists(file_to_delete):
-                os.remove(file_to_delete)
+            if file_to_delete.exists():
+                file_to_delete.unlink()
         except OSError as e:
-            print(f"Error deleting file {image.image}: {e}")
+            log.error(f"Error deleting file {image.image}: {e}")
             
         await db.delete(image)
         await db.commit()

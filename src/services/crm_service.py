@@ -11,18 +11,14 @@ from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
-# --- ДОБАВЛЕНЫ НОВЫЕ ИМПОРТЫ ДЛЯ ИНТЕГРАЦИИ ---
 from src.services import google_sheets_service
 from src.models.shop_models import (
     QuoteRequest, Task, StatusChangeLog, Contact, ContactNote, User, GoogleSheetLead
 )
-# --- КОНЕЦ НОВЫХ ИМПОРТОВ ---
-
 from src.schemas.crm_schemas import QuoteRequestStatusUpdate, TaskCreate
 
 log = logging.getLogger(__name__)
 
-# Создаем пул потоков для выполнения блокирующих задач (как работа с Google API) в фоне
 executor = ThreadPoolExecutor()
 
 
@@ -46,7 +42,6 @@ async def get_latest_quote_request(db: AsyncSession) -> QuoteRequest | None:
     return result.scalars().first()
 
 async def get_dashboard_data(db: AsyncSession, user_id: int):
-    # Optimized query for tasks with better indexing
     my_tasks_stmt = (
         select(Task)
         .where(Task.assigned_to_id == user_id, Task.completed == False)
@@ -57,7 +52,6 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
     my_tasks_result = await db.execute(my_tasks_stmt)
     my_tasks = my_tasks_result.scalars().all()
     
-    # Optimized funnel query with better grouping
     funnel_stmt = (
         select(QuoteRequest.status, func.count(QuoteRequest.id))
         .group_by(QuoteRequest.status)
@@ -73,7 +67,6 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
             "status": status_enum
         })
 
-    # Optimized query for new requests with better joins
     new_req_stmt = (
         select(QuoteRequest)
         .where(
@@ -90,7 +83,6 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
     new_req_result = await db.execute(new_req_stmt)
     new_unassigned_requests = new_req_result.scalars().unique().all()
     
-    # Optimized activity log query
     activity_log_stmt = (
         select(StatusChangeLog)
         .order_by(StatusChangeLog.timestamp.desc())
@@ -107,9 +99,6 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
     }
 
 async def get_kanban_data(db: AsyncSession, show_archived: bool = False):
-    """
-    Получает данные для канбан-доски.
-    """
     archived_statuses = [
         QuoteRequest.StatusEnum.CLOSED,
         QuoteRequest.StatusEnum.ARCHIVED,
@@ -153,7 +142,7 @@ async def update_quote_request_status(db: AsyncSession, update_data: QuoteReques
     try:
         req = await db.get(
             QuoteRequest, 
-            update_data.id,
+            update_data.id, 
             options=[selectinload(QuoteRequest.google_sheet_lead)]
         )
         if not req:
@@ -177,8 +166,7 @@ async def update_quote_request_status(db: AsyncSession, update_data: QuoteReques
         db.add(log_entry)
         await db.commit()
         await db.refresh(req)
-        
-        # Запускаем обновление Google Sheets в фоновом потоке
+
         if req.google_sheet_lead and req.google_sheet_lead.sheet_row_id:
             new_status_display = req.status.value.replace('_', ' ').capitalize()
             loop = asyncio.get_running_loop()
@@ -188,7 +176,7 @@ async def update_quote_request_status(db: AsyncSession, update_data: QuoteReques
                 req.google_sheet_lead.sheet_row_id, 
                 new_status_display
             )
-        
+            
         return req
     except Exception as e:
         await db.rollback()
@@ -227,7 +215,6 @@ async def assign_quote_request_to_user(db: AsyncSession, quote_id: int, user_id:
     await db.commit()
     await db.refresh(req)
     
-    # Запускаем обновление, только если статус действительно изменился
     if status_changed and req.google_sheet_lead and req.google_sheet_lead.sheet_row_id:
         new_status_display = req.status.value.replace('_', ' ').capitalize()
         loop = asyncio.get_running_loop()
@@ -240,15 +227,30 @@ async def assign_quote_request_to_user(db: AsyncSession, quote_id: int, user_id:
         
     return req
 
-async def toggle_task_completion(db: AsyncSession, task_id: int, user_id: int):
+# --- НАЧАЛО ИЗМЕНЕНИЯ: Функция теперь принимает user и проверяет права ---
+async def toggle_task_completion(db: AsyncSession, task_id: int, current_user: User):
+    """
+    Переключает статус выполнения задачи с проверкой прав доступа.
+    Суперпользователь может менять любые задачи, обычный пользователь - только свои.
+    """
     task = await db.get(Task, task_id)
-    if not task or task.assigned_to_id != user_id:
+    if not task:
+        return None  # Задача вообще не найдена
+
+    # Проверяем права доступа
+    is_owner = (task.assigned_to_id == current_user.id)
+    
+    if not current_user.is_superuser and not is_owner:
+        # Если пользователь НЕ суперюзер И НЕ владелец задачи -> отказ
         return None
+
+    # Если проверки пройдены, меняем статус
     task.completed = not task.completed
     db.add(task)
     await db.commit()
     await db.refresh(task)
     return task
+# --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
 async def create_task_for_quote(db: AsyncSession, task_data: TaskCreate):
     try:
@@ -266,10 +268,11 @@ async def create_task_for_quote(db: AsyncSession, task_data: TaskCreate):
         await db.commit()
         await db.refresh(new_task)
         
+        # Возвращаем все задачи для заявки, СРАЗУ подгружая связанных пользователей
         tasks_stmt = (
             select(Task)
             .where(Task.quote_request_id == task_data.quote_request_id)
-            .options(selectinload(Task.assigned_to)) 
+            .options(selectinload(Task.assigned_to))
             .order_by(Task.completed, Task.created_at.desc())
         )
         tasks_result = await db.execute(tasks_stmt)
@@ -286,8 +289,6 @@ async def get_user_performance_stats(db: AsyncSession, user_id: int):
     """
     thirty_days_ago_naive = to_naive_datetime(datetime.now(timezone.utc) - timedelta(days=30))
     
-    # --- ИСПРАВЛЕНИЕ 1: Считаем "Заявок закрыто" по логам, как и раньше ---
-    # Это правильно, так как показывает, кто именно закрыл сделку.
     closed_stmt = select(func.count(func.distinct(StatusChangeLog.quote_request_id))).where(
         StatusChangeLog.user_id == user_id,
         StatusChangeLog.new_status == QuoteRequest.StatusEnum.CLOSED,
@@ -295,8 +296,6 @@ async def get_user_performance_stats(db: AsyncSession, user_id: int):
     )
     closed_count = (await db.execute(closed_stmt)).scalar_one_or_none() or 0
     
-    # --- ИСПРАВЛЕНИЕ 2: Считаем "Взято в работу" по текущему назначению ---
-    # Мы считаем все заявки, которые сейчас назначены на этого пользователя и не находятся в конечных статусах.
     active_statuses = [
         QuoteRequest.StatusEnum.QUALIFICATION,
         QuoteRequest.StatusEnum.CONTACTED,
@@ -309,7 +308,6 @@ async def get_user_performance_stats(db: AsyncSession, user_id: int):
     )
     in_progress_count = (await db.execute(in_progress_stmt)).scalar_one_or_none() or 0
 
-    # --- ИСПРАВЛЕНИЕ 3: Считаем "Задач выполнено" за все время ---
     tasks_stmt = select(func.count(Task.id)).where(
         Task.assigned_to_id == user_id,
         Task.completed == True
@@ -319,10 +317,10 @@ async def get_user_performance_stats(db: AsyncSession, user_id: int):
     return {
         "requests_completed": closed_count,
         "requests_in_progress": in_progress_count,
-        # Конверсию больше не считаем, но оставляем ключ, чтобы ничего не сломалось
         "conversion_rate": 0, 
         "tasks_completed": tasks_completed_count
     }
+
 
 async def get_user_activity_feed(db: AsyncSession, user_id: int, limit: int = 10):
     stmt = select(StatusChangeLog).where(
@@ -442,7 +440,6 @@ async def bulk_assign_requests(db: AsyncSession, card_ids: list[int], user_id: i
         raise
 
 async def bulk_update_status(db: AsyncSession, card_ids: list[int], status: str, current_user_id: int) -> int:
-    """Массовое обновление статуса и запуск обновления Google Sheets."""
     try:
         status_enum = QuoteRequest.StatusEnum(status)
         
@@ -490,7 +487,6 @@ async def bulk_update_status(db: AsyncSession, card_ids: list[int], status: str,
         raise
 
 async def update_single_card_status(db: AsyncSession, card_id: int, status: str, current_user_id: int):
-    """Обновляет статус одной карточки и запускает обновление Google Sheets."""
     try:
         status_enum = QuoteRequest.StatusEnum(status)
         
