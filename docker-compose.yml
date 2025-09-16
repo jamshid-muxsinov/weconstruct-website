@@ -14,7 +14,7 @@ services:
 
   site:
     build: .
-    # --- ИСПРАВЛЕННАЯ КОМАНДА ---
+    working_dir: /app  # <--- ЖЕЛЕЗНОЕ РЕШЕНИЕ (1)
     command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 src.main:site_app
     environment:
       - FORWARDED_ALLOW_IPS=*
@@ -35,7 +35,7 @@ services:
   
   admin:
     build: .
-    # --- ИСПРАВЛЕННАЯ КОМАНДА ---
+    working_dir: /app  # <--- ЖЕЛЕЗНОЕ РЕШЕНИЕ (2)
     command: gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 src.main:admin_app
     environment:
       - FORWARDED_ALLOW_IPS=*
