@@ -269,6 +269,7 @@ async def create_task_for_quote(db: AsyncSession, task_data: TaskCreate):
         tasks_stmt = (
             select(Task)
             .where(Task.quote_request_id == task_data.quote_request_id)
+            .options(selectinload(Task.assigned_to)) 
             .order_by(Task.completed, Task.created_at.desc())
         )
         tasks_result = await db.execute(tasks_stmt)

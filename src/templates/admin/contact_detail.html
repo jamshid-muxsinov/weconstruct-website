@@ -13,7 +13,6 @@
         <form method="post" action="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=contact.id) }}" novalidate>
             {% for field in form %}
             <div class="input-group">
-                {# --- ИЗМЕНЕНИЕ: Добавлен вызов функции перевода для label --- #}
                 <label for="{{ field.id }}">{{ _(field.label.text) }}</label>
                 {{ field(class_='input-field') }}
                 {% if field.errors %}<div class="error-text">{{ field.errors[0] }}</div>{% endif %}

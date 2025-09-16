@@ -35,7 +35,7 @@
         {% endif %}
         
         <h3 class="slide-over-section-title">{{ _('management_title') }}</h3>
-        <form hx-post="{{ request.url_for('admin_api_quote_assign',  pk=req.id) }}" hx-trigger="submit" style="margin-bottom: 20px;">
+        <form hx-post="{{ request.url_for('admin_api_quote_assign',      pk=req.id) }}" hx-trigger="submit" style="margin-bottom: 20px;">
             <div class="input-group" style="margin: 0;">
                 <label for="assignee-select" style="margin-bottom: 10px; font-weight: 600; color: var(--text-secondary);">{{ _('assign_executor') }}</label>
                 <div style="display: flex; gap: 12px;">
