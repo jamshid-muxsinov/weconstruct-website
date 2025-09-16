@@ -2196,3 +2196,35 @@ select {
     font-size: var(--font-size-sm);
     line-height: 1.5;
 }
+
+/* ============================================== */
+/* ===== УЛУЧШЕНИЯ ФУТЕРА ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ ===== */
+/* ============================================== */
+
+@media (max-width: 768px) {
+
+  .footer__brand,
+  .footer__nav {
+    text-align: center;
+  }
+
+  .footer__logo,
+  .footer__socials {
+    justify-content: center; 
+  }
+
+  .footer__contact {
+    justify-content: center; 
+  }
+
+  .footer__contact span {
+    word-break: break-all; 
+    text-align: left;
+  }
+
+  .footer__social-link {
+    width: 44px; 
+    height: 44px;
+    font-size: 1.2rem; 
+  }
+}
