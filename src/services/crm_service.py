@@ -279,24 +279,36 @@ async def create_task_for_quote(db: AsyncSession, task_data: TaskCreate):
         raise
 
 async def get_user_performance_stats(db: AsyncSession, user_id: int):
+    """
+    Считает статистику производительности для пользователя на основе
+    реального состояния заявок, а не только логов.
+    """
     thirty_days_ago_naive = to_naive_datetime(datetime.now(timezone.utc) - timedelta(days=30))
     
-    completed_stmt = select(func.count(func.distinct(StatusChangeLog.quote_request_id))).where(
+    # --- ИСПРАВЛЕНИЕ 1: Считаем "Заявок закрыто" по логам, как и раньше ---
+    # Это правильно, так как показывает, кто именно закрыл сделку.
+    closed_stmt = select(func.count(func.distinct(StatusChangeLog.quote_request_id))).where(
         StatusChangeLog.user_id == user_id,
         StatusChangeLog.new_status == QuoteRequest.StatusEnum.CLOSED,
         StatusChangeLog.timestamp >= thirty_days_ago_naive
     )
-    completed_count = (await db.execute(completed_stmt)).scalar_one_or_none() or 0
+    closed_count = (await db.execute(closed_stmt)).scalar_one_or_none() or 0
     
-    in_progress_stmt = select(func.count(func.distinct(StatusChangeLog.quote_request_id))).where(
-        StatusChangeLog.user_id == user_id,
-        StatusChangeLog.new_status == QuoteRequest.StatusEnum.QUALIFICATION,
-        StatusChangeLog.timestamp >= thirty_days_ago_naive
+    # --- ИСПРАВЛЕНИЕ 2: Считаем "Взято в работу" по текущему назначению ---
+    # Мы считаем все заявки, которые сейчас назначены на этого пользователя и не находятся в конечных статусах.
+    active_statuses = [
+        QuoteRequest.StatusEnum.QUALIFICATION,
+        QuoteRequest.StatusEnum.CONTACTED,
+        QuoteRequest.StatusEnum.PROPOSAL,
+        QuoteRequest.StatusEnum.NEGOTIATION,
+    ]
+    in_progress_stmt = select(func.count(QuoteRequest.id)).where(
+        QuoteRequest.assigned_to_id == user_id,
+        QuoteRequest.status.in_(active_statuses)
     )
     in_progress_count = (await db.execute(in_progress_stmt)).scalar_one_or_none() or 0
 
-    conversion_rate = (completed_count / in_progress_count * 100) if in_progress_count > 0 else 0
-    
+    # --- ИСПРАВЛЕНИЕ 3: Считаем "Задач выполнено" за все время ---
     tasks_stmt = select(func.count(Task.id)).where(
         Task.assigned_to_id == user_id,
         Task.completed == True
@@ -304,9 +316,10 @@ async def get_user_performance_stats(db: AsyncSession, user_id: int):
     tasks_completed_count = (await db.execute(tasks_stmt)).scalar_one_or_none() or 0
 
     return {
-        "requests_completed": completed_count,
+        "requests_completed": closed_count,
         "requests_in_progress": in_progress_count,
-        "conversion_rate": round(conversion_rate, 1),
+        # Конверсию больше не считаем, но оставляем ключ, чтобы ничего не сломалось
+        "conversion_rate": 0, 
         "tasks_completed": tasks_completed_count
     }
 
