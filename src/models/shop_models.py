@@ -12,9 +12,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models.base import Base
 
 class UserRole(str, enum.Enum):
-    MANAGER = "MANAGER"
-    SEO = "SEO"
-    ADMIN = "ADMIN"
+    MANAGER = "manager"
+    SEO = "seo"
+    ADMIN = "admin"
 
 class User(Base):
     __tablename__ = "auth_user"
