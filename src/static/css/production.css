@@ -2316,18 +2316,18 @@ select {
   /* Основной контейнер */
   .modal-content {
     padding: var(--space-4);
-    max-height: 90vh; /* Чуть больше места */
+    max-height: 90vh;
   }
 
   /* Сетка: все элементы в одну колонку */
   .modal-grid {
     grid-template-columns: 1fr;
-    gap: var(--space-5); /* Увеличим отступ между галереей и инфо */
+    gap: var(--space-5);
   }
 
   /* --- Галерея --- */
   .modal-gallery__main {
-    aspect-ratio: 16 / 10; /* Пропорции для главного изображения */
+    aspect-ratio: 16 / 10;
     max-height: 300px;
     border-radius: var(--radius-lg);
   }
@@ -2346,12 +2346,12 @@ select {
 
   /* --- Информационный блок --- */
   .modal-info-scrollable {
-    padding-right: 5px; /* Небольшой отступ для скроллбара */
+    padding-right: 5px;
   }
 
   /* Заголовок и цена */
   .modal-title {
-    font-size: var(--font-size-2xl); /* Немного крупнее */
+    font-size: var(--font-size-2xl);
     font-weight: 700;
     line-height: 1.2;
     padding-bottom: var(--space-3);
@@ -2360,7 +2360,6 @@ select {
   }
 
   .modal-title::after {
-    /* На мобильных убираем линию под заголовком, есть рамка */
     display: none;
   }
   
@@ -2377,7 +2376,7 @@ select {
     border-radius: var(--radius-lg);
     padding: var(--space-3);
     margin-bottom: 0;
-    border-left: 3px solid var(--primary-light);
+    border-left: 3px solid var(--secondary);
   }
   
   .spec-title {
@@ -2388,7 +2387,7 @@ select {
   }
   
   .spec-title i {
-    display: none; /* Скрываем иконки, чтобы не перегружать интерфейс */
+    display: none;
   }
   
   .spec-value, .spec-list {
@@ -2409,7 +2408,7 @@ select {
     padding-left: 0;
   }
   .spec-list li::before {
-    display: none; /* Убираем точки, т.к. список и так понятен */
+    display: none;
   }
 
   /* Описание и заметка */
@@ -2428,7 +2427,7 @@ select {
 
   /* Форма */
   #modal-form-wrapper {
-    margin-top: auto; /* Прижимает форму к низу */
+    margin-top: auto;
     padding-top: var(--space-4);
     border-top: 1px solid var(--gray-200);
   }
