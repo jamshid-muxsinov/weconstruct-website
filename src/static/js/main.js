@@ -18,18 +18,31 @@ document.addEventListener("DOMContentLoaded", () => {
   // Глобальный обработчик событий HTMX
   document.body.addEventListener('htmx:afterSwap', function(event) {
     // 1. Инициализация GLightbox после загрузки модального окна
-    // Эта функция найдет все ссылки с классом .lightbox и объединит их в галерею
     initLightbox();
 
-    // 2. Логика закрытия модалки после успешной отправки формы
-    const target = event.detail.target;
-    if (target.querySelector('.quote-success')) {
+    // 2. Блокируем скролл фона, если появился оверлей
+    if (event.detail.target.querySelector('.modal-overlay')) {
+      document.body.classList.add('body-no-scroll');
+    }
+
+    // 3. Логика закрытия модалки после успешной отправки формы
+    if (event.detail.target.querySelector('.quote-success')) {
       setTimeout(() => {
         const modal = document.querySelector('.modal-overlay');
         if (modal) {
           modal.remove();
+          // При удалении модалки, возвращаем скролл
+          document.body.classList.remove('body-no-scroll');
         }
       }, 3000);
+    }
+  });
+
+  // Добавляем слушатель на удаление модалки для возврата скролла
+  // (на случай, если пользователь закроет ее крестиком или кликом по фону)
+  document.body.addEventListener('htmx:beforeCleanupElement', function(event) {
+    if (event.detail.elt.classList.contains('modal-overlay')) {
+      document.body.classList.remove('body-no-scroll');
     }
   });
 });
