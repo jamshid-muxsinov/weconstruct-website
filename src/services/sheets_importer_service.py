@@ -13,16 +13,24 @@ from src.models.shop_models import QuoteRequest, GoogleSheetLead, Contact
 log = logging.getLogger(__name__)
 
 STATUS_MAPPING = {
-    'yopildi': QuoteRequest.StatusEnum.CLOSED,
     'javob berdi': QuoteRequest.StatusEnum.CONTACTED,
     "2ta qo'ng'iroq": QuoteRequest.StatusEnum.CONTACTED,
+    'yopildi': QuoteRequest.StatusEnum.ARCHIVED, 
     'тели учик': QuoteRequest.StatusEnum.ARCHIVED,
     'нархи екмади': QuoteRequest.StatusEnum.ARCHIVED,
     'бино курилган': QuoteRequest.StatusEnum.ARCHIVED,
     'пули ва жойи йук': QuoteRequest.StatusEnum.ARCHIVED,
     'пул керак экан': QuoteRequest.StatusEnum.ARCHIVED,
     'маблаги йук': QuoteRequest.StatusEnum.ARCHIVED,
-    
+    'хужжатини турилаб берадигани кк': QuoteRequest.StatusEnum.ARCHIVED,
+    'пул топиб берадиган хомий кк экан': QuoteRequest.StatusEnum.ARCHIVED,
+    'нарх киммат экан': QuoteRequest.StatusEnum.ARCHIVED,
+    'текин дизайн ва лойиха кк экан': QuoteRequest.StatusEnum.ARCHIVED,
+
+    'антенаси йук': QuoteRequest.StatusEnum.QUALIFICATION,
+    'банд': QuoteRequest.StatusEnum.QUALIFICATION,
+    '13/30 тел килм кк': QuoteRequest.StatusEnum.QUALIFICATION,
+    'узлари тел киладилар': QuoteRequest.StatusEnum.QUALIFICATION,
 }
 
 async def process_single_lead_row(db: AsyncSession, row: list):
