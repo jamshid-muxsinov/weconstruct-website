@@ -14,11 +14,12 @@ services:
 
   site:
     build: .
-    command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 src.main:site_app
+    # --- ВОЗВРАЩАЕМ КОМАНДУ К ПРОВЕРЕННОМУ ВИДУ ---
+    command: gunicorn --chdir /app/src -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:site_app
     environment:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
-      - PYTHONPATH=/app  # <--- ДОБАВЛЕНО ЗДЕСЬ
+      # PYTHONPATH больше не нужен
     volumes:
       - media_volume:/app/media
     depends_on:
@@ -35,12 +36,13 @@ services:
   
   admin:
     build: .
-    command: gunicorn -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 src.main:admin_app
+    # --- ВОЗВРАЩАЕМ КОМАНДУ К ПРОВЕРЕННОМУ ВИДУ ---
+    command: gunicorn --chdir /app/src -w 2 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:admin_app
     environment:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
       - GOOGLE_CREDENTIALS_FILE=/app/credentials.json
-      - PYTHONPATH=/app  # <--- И ЗДЕСЬ
+      # PYTHONPATH больше не нужен
     volumes:
       - media_volume:/app/media
       - ./credentials.json:/app/credentials.json:ro
