@@ -12,9 +12,7 @@ from src.models.shop_models import QuoteRequest, GoogleSheetLead, Contact
 
 log = logging.getLogger(__name__)
 
-# --- ВОЗВРАЩАЕМ НАШ СЛОВАРЬ СТАТУСОВ ---
 STATUS_MAPPING = {
-    # Ключи в нижнем регистре для надежного сравнения
     'yopildi': QuoteRequest.StatusEnum.CLOSED,
     'javob berdi': QuoteRequest.StatusEnum.CONTACTED,
     "2ta qo'ng'iroq": QuoteRequest.StatusEnum.CONTACTED,
@@ -24,10 +22,8 @@ STATUS_MAPPING = {
     'пули ва жойи йук': QuoteRequest.StatusEnum.ARCHIVED,
     'пул керак экан': QuoteRequest.StatusEnum.ARCHIVED,
     'маблаги йук': QuoteRequest.StatusEnum.ARCHIVED,
-    # Добавьте сюда другие статусы по необходимости
+    
 }
-# --- КОНЕЦ БЛОКА ---
-
 
 async def process_single_lead_row(db: AsyncSession, row: list):
     """
@@ -59,6 +55,10 @@ async def process_single_lead_row(db: AsyncSession, row: list):
             comment = (row[7].strip() if len(row) > 7 else "")
 
             phone_number = _normalize_phone(phone_1 or phone_2)[:50]
+
+            if client_name.startswith("IMG_"):
+                log.info(f"Обнаружен технический лид (ID: {sheet_row_id}). Пропуск.")
+                return
 
             if not phone_number:
                 raise ValueError("Не найден или некорректен номер телефона.")
