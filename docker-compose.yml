@@ -19,7 +19,7 @@ services:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
     volumes:
-      - .:/app
+      # - .:/app
       - media_volume:/app/media
     depends_on:
       - db
@@ -41,7 +41,7 @@ services:
       - TZ=Asia/Tashkent
       - GOOGLE_CREDENTIALS_FILE=/app/credentials.json
     volumes:
-      - .:/app
+      # - .:/app
       - media_volume:/app/media
       - ./credentials.json:/app/credentials.json:ro
     depends_on:
