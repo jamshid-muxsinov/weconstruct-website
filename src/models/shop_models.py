@@ -11,16 +11,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
 
-
-# --- НОВЫЙ КЛАСС ДЛЯ ПРИНУДИТЕЛЬНОГО ПРИВЕДЕНИЯ К НИЖНЕМУ РЕГИСТРУ ---
-class LowerCaseEnum(types.TypeDecorator):
-    impl = types.Enum
-    
-    def process_result_value(self, value, dialect):
-        if value is not None:
-            return value.lower()
-        return value
-
 # --- ИСПОЛЬЗУЕМ НОВЫЙ КЛАСС ---
 class UserRole(str, enum.Enum):
     MANAGER = "manager"
@@ -40,11 +30,16 @@ class User(Base):
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     role: Mapped[UserRole] = mapped_column(
-        LowerCaseEnum(UserRole, name="user_role_enum", native_enum=False), # <-- ИЗМЕНЕНИЕ ЗДЕСЬ
+        EnumType(
+            UserRole,
+            name="user_role_enum",
+            native_enum=False,
+            values_callable=lambda obj: [e.value for e in obj]
+        ),
         default=UserRole.MANAGER,
         server_default=UserRole.MANAGER.value,
         nullable=False
-    )   
+    )
 
     tasks: Mapped[List["Task"]] = relationship(back_populates="assigned_to")
     assigned_requests: Mapped[List["QuoteRequest"]] = relationship(back_populates="assigned_to")

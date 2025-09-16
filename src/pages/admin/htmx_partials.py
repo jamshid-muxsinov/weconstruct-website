@@ -83,7 +83,7 @@ async def toggle_task_htmx(
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):
-    task = await crm_service.toggle_task_completion(db, pk, current_user.id)
+    task = await crm_service.toggle_task_completion(db, pk, current_user)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found or permission denied")
     
