@@ -12,9 +12,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models.base import Base
 
 class UserRole(str, enum.Enum):
-    MANAGER = "manager"
-    SEO = "seo"
-    ADMIN = "admin"
+    MANAGER = "MANAGER"
+    SEO = "SEO"
+    ADMIN = "ADMIN"
 
 class User(Base):
     __tablename__ = "auth_user"
@@ -33,7 +33,7 @@ class User(Base):
         default=UserRole.MANAGER,
         server_default=UserRole.MANAGER.value,
         nullable=False
-    )
+    )   
 
     tasks: Mapped[List["Task"]] = relationship(back_populates="assigned_to")
     assigned_requests: Mapped[List["QuoteRequest"]] = relationship(back_populates="assigned_to")

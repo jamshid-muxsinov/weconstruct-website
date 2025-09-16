@@ -12,7 +12,7 @@ from . import htmx
 from . import api
 from . import importer
 from . import invites
-from src.core.security import get_current_superuser
+from src.core.security import get_current_superuser, get_current_seo_user
 
 router = APIRouter()
 unprotected_router = APIRouter()
@@ -28,19 +28,21 @@ async def admin_root_redirect(request: Request):
 
 router.include_router(dashboard.router)
 router.include_router(kanban.router)
+router.include_router(contact.router)
+router.include_router(profile.router)
+router.include_router(htmx.router)
+
+router.include_router(
+    invites.router,
+    dependencies=[Depends(get_current_seo_user)]
+)
+
 router.include_router(
     crud.router, 
     dependencies=[Depends(get_current_superuser)]
 )
-router.include_router(contact.router)
-router.include_router(profile.router)
 router.include_router(
     importer.router,
-    dependencies=[Depends(get_current_superuser)]
-)
-router.include_router(htmx.router)
-router.include_router(
-    invites.router,
     dependencies=[Depends(get_current_superuser)]
 )
 

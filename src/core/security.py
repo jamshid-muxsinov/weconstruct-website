@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import get_settings
 from src.core.db import get_db_session
-from src.models.shop_models import User
+from src.models.shop_models import User, UserRole
 from src.services.user_service import get_user_by_username
 from src.schemas.user_schemas import TokenData
 
@@ -85,18 +85,23 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-async def get_current_staff_user(current_user: User = Depends(get_current_active_user)) -> User:
+def get_current_staff_user(current_user: User = Depends(get_current_active_user)) -> User:
+    """Проверяет, что пользователь - минимум Менеджер."""
     if not current_user.is_staff:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
-            detail="Insufficient permissions. Staff access required."
+            detail="Доступ запрещен. Требуются права сотрудника."
         )
     return current_user
 
-async def get_current_superuser(current_user: User = Depends(get_current_active_user)) -> User:
-    if not current_user.is_superuser:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, 
-            detail="Доступ запрещен. Требуются права администратора."
-        )
+def get_current_seo_user(current_user: User = Depends(get_current_active_user)) -> User:
+    """Проверяет, что пользователь - SEO или Админ."""
+    if current_user.role not in [UserRole.SEO, UserRole.ADMIN]:
+        raise HTTPException(...)
+    return current_user
+
+def get_current_superuser(current_user: User = Depends(get_current_active_user)) -> User:
+    """Проверяет, что пользователь - Суперпользователь (Админ)."""
+    if not current_user.is_superuser and current_user.role != UserRole.ADMIN:
+        raise HTTPException(...)
     return current_user
