@@ -129,26 +129,3 @@ async def update_single_card_status(
     if not req:
         raise HTTPException(status_code=404, detail="QuoteRequest not found")
     return {"status": "ok"}
-
-
-@router.get("/export-requests", name="api_export_requests")
-async def export_requests(
-    card_ids: str = None,
-    db: AsyncSession = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Экспорт выбранных заявок в CSV"""
-    ids = []
-    if card_ids:
-        try:
-            ids = [int(id_str) for id_str in card_ids.split(',')]
-        except (ValueError, TypeError):
-            pass
-    
-    csv_content = await crm_service.export_requests_csv(db, ids)
-    
-    return Response(
-        content=csv_content,
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=quote_requests.csv"}
-    )

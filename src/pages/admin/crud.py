@@ -24,6 +24,7 @@ from .dependencies import get_common_context
 from sqlalchemy.exc import IntegrityError
 from fastapi_pagination import Params, Page
 from fastapi_pagination.api import create_page
+from src.services import crm_service
 
 router = APIRouter()
 log = logging.getLogger(__name__)
@@ -408,3 +409,25 @@ async def quoterequest_delete(request: Request, pk: int, context: dict = Depends
 
     context.update({"meta": QUOTEREQUEST_META, "original": quote_req, "title": title, "back_url": back_url, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
+
+@router.get("/quoterequest/export", name="admin_quoterequest_export")
+async def export_requests(
+    card_ids: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Экспорт выбранных заявок в CSV"""
+    ids = []
+    if card_ids:
+        try:
+            ids = [int(id_str) for id_str in card_ids.split(',')]
+        except (ValueError, TypeError):
+            pass
+    
+    csv_content = await crm_service.export_requests_csv(db, ids)
+    
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=quote_requests.csv"}
+    )

@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from slugify import slugify
+from src.core import db
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
 from src.core.security import get_current_active_user
