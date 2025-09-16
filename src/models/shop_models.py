@@ -5,13 +5,23 @@ from typing import List, Optional
 
 from sqlalchemy import (
     String, Text, Boolean, DateTime, func, DECIMAL,
-    ForeignKey, Integer, UUID, Enum as EnumType, JSON
+    ForeignKey, Integer, UUID, Enum as EnumType, JSON, types
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
 
-# --- ГЛАВНОЕ ИЗМЕНЕНИЕ: Все значения Enum в нижнем регистре ---
+
+# --- НОВЫЙ КЛАСС ДЛЯ ПРИНУДИТЕЛЬНОГО ПРИВЕДЕНИЯ К НИЖНЕМУ РЕГИСТРУ ---
+class LowerCaseEnum(types.TypeDecorator):
+    impl = types.Enum
+    
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            return value.lower()
+        return value
+
+# --- ИСПОЛЬЗУЕМ НОВЫЙ КЛАСС ---
 class UserRole(str, enum.Enum):
     MANAGER = "manager"
     SEO = "seo"
@@ -30,7 +40,7 @@ class User(Base):
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     role: Mapped[UserRole] = mapped_column(
-        EnumType(UserRole, name="user_role_enum", native_enum=False),
+        LowerCaseEnum(UserRole, name="user_role_enum", native_enum=False), # <-- ИЗМЕНЕНИЕ ЗДЕСЬ
         default=UserRole.MANAGER,
         server_default=UserRole.MANAGER.value,
         nullable=False
@@ -42,6 +52,8 @@ class User(Base):
     status_logs: Mapped[List["StatusChangeLog"]] = relationship(back_populates="user")
     invites_sent: Mapped[List["RegistrationInvite"]] = relationship(back_populates="created_by")
     contact_notes: Mapped[List["ContactNote"]] = relationship(back_populates="user")
+
+# ... (остальной код файла остается без изменений) ...
 
 class Contact(Base):
     __tablename__ = 'shop_contact'
