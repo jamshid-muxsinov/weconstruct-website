@@ -33,23 +33,31 @@ async def process_single_lead_row(db: AsyncSession, row: list):
     Обрабатывает одну строку данных, полученную из Google Sheets через вебхук,
     используя вложенные транзакции для изоляции ошибок.
     """
-    if not row or len(row) < 1 or not row[0] or not str(row[0]).strip():
-        log.warning(f"Получена некорректная или пустая строка для обработки, пропуск: {row}")
-        return
+    # =======================================================================
+    # ШАГ 1: Проверка на валидность строки (то, о чем вы просили)
+    # =======================================================================
+    # Проверяем, есть ли в строке вообще данные и есть ли телефон
+    phone_1 = (row[3].strip() if len(row) > 3 else "")
+    phone_2 = (row[5].strip() if len(row) > 5 else "")
+    if not (phone_1 or phone_2):
+        sheet_row_id = str(row[0]).strip() if row and row[0] else "N/A"
+        log.warning(f"Строка с ID: {sheet_row_id} пропущена, так как не содержит номера телефона.")
+        return # Сразу выходим, не вызывая ошибку
+    # =======================================================================
 
     sheet_row_id = str(row[0]).strip()
     original_row_number_info = f"(ID: {sheet_row_id})"
 
     try:
-        # Эта вложенная транзакция (savepoint) позволит нам откатить
-        # только одну неудачную операцию, не закрывая всю сессию.
+        # =======================================================================
+        # ШАГ 2: Изоляция ошибок с помощью вложенной транзакции
+        # =======================================================================
         async with db.begin_nested():
             stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
             result = await db.execute(stmt)
             existing_lead = result.scalars().first()
 
             if existing_lead:
-                # Этот лог теперь будет 'info', так как это не ошибка
                 log.info(f"Лид {original_row_number_info} уже существует в базе. Пропуск.")
                 return
 
@@ -60,16 +68,15 @@ async def process_single_lead_row(db: AsyncSession, row: list):
                 return
 
             business_type = (row[2].strip() if len(row) > 2 else "")[:255]
-            phone_1 = (row[3].strip() if len(row) > 3 else "")
             telegram = (row[4].strip() if len(row) > 4 else "")[:100]
-            phone_2 = (row[5].strip() if len(row) > 5 else "")
             status_from_sheet_raw = (row[6].strip() if len(row) > 6 else "")
             comment = (row[7].strip() if len(row) > 7 else "")
 
             phone_number = _normalize_phone(phone_1 or phone_2)[:50]
-
-            if not phone_number:
-                raise ValueError("Не найден или некорректен номер телефона.")
+            
+            # Эта проверка больше не нужна, так как мы сделали ее в самом начале
+            # if not phone_number:
+            #     raise ValueError("Не найден или некорректен номер телефона.")
 
             contact = await _get_or_create_contact(db, name=client_name, phone=phone_number)
             
@@ -106,13 +113,13 @@ async def process_single_lead_row(db: AsyncSession, row: list):
             
             await _notify_managers(db, quote, contact.full_name)
         
-        # Коммит всей сессии происходит в самом конце, в файле webhooks.py
-        log.info(f"Успешно подготовлена к сохранению заявка #{quote.id} для лида {original_row_number_info} со статусом '{quote.status.value}'")
+        log.info(f"Успешно подготовлена к сохранению заявка для лида {original_row_number_info}")
 
-    except Exception as e:
-        # Откат здесь не нужен, так как `begin_nested` сделает это автоматически при выходе из блока.
+    except (ValueError, IntegrityError) as e:
         log.error(f"Ошибка при обработке строки {original_row_number_info}: {e}", exc_info=False)
-
+    except Exception as e:
+        log.error(f"Непредвиденная ошибка при обработке строки {original_row_number_info}: {e}", exc_info=True)
+        
 def _normalize_phone(phone: str) -> str:
     if not phone: return ""
     digits = re.sub(r'\D', '', phone)
