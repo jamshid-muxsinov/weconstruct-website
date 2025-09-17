@@ -6,51 +6,57 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import func
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
-import logging # --- ИЗМЕНЕНИЕ: Добавлен импорт логгера
+import logging
 
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
 
-log = logging.getLogger(__name__) # --- ИЗМЕНЕНИЕ: Инициализация логгера
+log = logging.getLogger(__name__)
 
-# --- ИЗМЕНЕНИЕ: Полностью переписанная функция для максимальной надежности ---
+# --- ИЗМЕНЕНИЕ: Железобетонная версия функции get-or-create ---
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact | None:
     """
     Асинхронно-безопасная и надежная версия для поиска или создания контакта,
-    устойчивая к гонке состояний (race condition).
+    устойчивая к гонке состояний (race condition) с использованием SAVEPOINT.
     """
     if not phone or not phone.strip():
         return None
 
+    # Нормализуем номер для консистентного поиска
     phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
     search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
     
-    # 1. Сначала пытаемся найти существующий контакт
+    # 1. Сначала пытаемся найти контакт. Это решит 99% случаев без блокировок.
     stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
     result = await db.execute(stmt)
     contact = result.scalars().first()
     if contact:
         return contact
         
-    # 2. Если не нашли, пытаемся создать новый.
+    # 2. Если не нашли, пытаемся создать его внутри вложенной транзакции (SAVEPOINT).
     try:
-        first_name, _, last_name = name.partition(" ")
-        new_contact = Contact(
-            phone=phone,
-            name=first_name,
-            last_name=last_name or None
-        )
-        db.add(new_contact)
-        await db.flush() # Отправляем запрос в БД, чтобы поймать IntegrityError
+        async with db.begin_nested(): # Создает SAVEPOINT
+            first_name, _, last_name = name.partition(" ")
+            new_contact = Contact(
+                phone=phone,
+                name=first_name,
+                last_name=last_name or None
+            )
+            db.add(new_contact)
+            # При успешном выходе из блока 'with' SAVEPOINT будет закоммичен в основную транзакцию.
+        
         await db.refresh(new_contact)
         return new_contact
+        
     except IntegrityError:
-        # 3. Если поймали ошибку (гонка состояний), откатываем flush
-        # и просто снова ищем контакт - теперь он точно будет в базе.
+        # 3. Если произошла гонка состояний, 'begin_nested' автоматически откатит SAVEPOINT.
+        # Основная транзакция останется рабочей.
+        # Теперь мы можем безопасно и гарантированно найти контакт,
+        # который только что создал параллельный процесс.
         log.warning(f"Handled race condition for phone {phone}. Re-fetching contact.")
-        await db.rollback() # Важно откатить неудачную операцию flush
         result = await db.execute(stmt)
-        return result.scalars().first()
+        contact = result.scalars().first()
+        return contact
     
 async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, product_id: int = None, source: str = "website") -> QuoteRequest:
     quote = QuoteRequest(
@@ -83,7 +89,7 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
 async def process_quote_request(db: AsyncSession, name: str, phone: str, message: str, product_id: int = None, source: str = "website") -> QuoteRequest | str:
     contact = await _get_or_create_contact(db, name, phone)
     if not contact:
-        return "invalid_contact" # Не удалось создать контакт
+        return "invalid_contact"
 
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     stmt = select(QuoteRequest).where(
