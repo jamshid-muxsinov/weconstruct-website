@@ -28,7 +28,31 @@ STATUS_MAPPING = {
     'текин дизайн ва лойиха кк экан': QuoteRequest.StatusEnum.ARCHIVED,
 }
 
-# --- ИЗМЕНЕНИЕ: Функция теперь принимает 'session' и возвращает bool ---
+
+# --- НОВАЯ, УЛУЧШЕННАЯ ФУНКЦИЯ ОЧИСТКИ ТЕЛЕФОНА ---
+def _normalize_phone(phone: str) -> str:
+    """
+    Агрессивно очищает и нормализует номер телефона, извлекая первый валидный номер.
+    """
+    if not phone:
+        return ""
+    
+    # Заменяем распространенные разделители на пробелы
+    cleaned_str = re.sub(r'[,;/\n\t]', ' ', phone)
+    
+    # Находим все последовательности из 9-12 цифр
+    possible_numbers = re.findall(r'\d{9,12}', cleaned_str.replace(" ", ""))
+
+    for num_str in possible_numbers:
+        if len(num_str) == 12 and num_str.startswith('998'):
+            return f"+{num_str}"
+        if len(num_str) == 9:
+            return f"+998{num_str}"
+            
+    # Если не нашли ничего похожего, возвращаем пустую строку, чтобы избежать ошибок
+    return ""
+
+
 async def process_single_lead_row(session: AsyncSession, row: list) -> bool:
     """
     Обрабатывает одну строку данных в рамках полностью изолированной сессии.
@@ -36,16 +60,19 @@ async def process_single_lead_row(session: AsyncSession, row: list) -> bool:
     """
     phone_1 = (row[3].strip() if len(row) > 3 else "")
     phone_2 = (row[5].strip() if len(row) > 5 else "")
-    if not (phone_1 or phone_2):
+    
+    # --- ИЗМЕНЕНИЕ: Используем новую функцию очистки ---
+    phone_number = _normalize_phone(phone_1 or phone_2)
+    
+    if not phone_number:
         sheet_row_id = str(row[0]).strip() if row and row[0] else "N/A"
-        log.warning(f"Строка с ID: {sheet_row_id} пропущена, так как не содержит номера телефона.")
+        log.warning(f"Строка с ID: {sheet_row_id} пропущена, так как не удалось извлечь корректный номер телефона из '{phone_1 or phone_2}'.")
         return False
 
     sheet_row_id = str(row[0]).strip()
     original_row_number_info = f"(ID: {sheet_row_id})"
 
     try:
-        # --- ИЗМЕНЕНИЕ: Используем простую транзакцию, т.к. сессия одноразовая ---
         async with session.begin():
             stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
             result = await session.execute(stmt)
@@ -53,7 +80,7 @@ async def process_single_lead_row(session: AsyncSession, row: list) -> bool:
 
             if existing_lead:
                 log.info(f"Лид {original_row_number_info} уже существует в базе. Пропуск.")
-                return True # Считаем это успехом, т.к. обработка не нужна
+                return True 
 
             client_name = (row[1].strip() if len(row) > 1 else "Без имени")[:150]
 
@@ -65,10 +92,10 @@ async def process_single_lead_row(session: AsyncSession, row: list) -> bool:
             telegram = (row[4].strip() if len(row) > 4 else "")[:100]
             status_from_sheet_raw = (row[6].strip() if len(row) > 6 else "")
             comment = (row[7].strip() if len(row) > 7 else "")
-            phone_number = _normalize_phone(phone_1 or phone_2)[:50]
-
+            
             contact = await _get_or_create_contact(session, name=client_name, phone=phone_number)
             if not contact:
+                # Эта ошибка теперь будет возникать только в действительно исключительных случаях
                 raise Exception("Не удалось создать или найти контакт.")
             
             message_parts = []
@@ -100,13 +127,5 @@ async def process_single_lead_row(session: AsyncSession, row: list) -> bool:
         return True
 
     except Exception as e:
-        # session.begin() автоматически сделает rollback при выходе из блока с ошибкой
         log.error(f"Ошибка при обработке строки {original_row_number_info}: {e}", exc_info=False)
         return False
-
-def _normalize_phone(phone: str) -> str:
-    if not phone: return ""
-    digits = re.sub(r'\D', '', phone)
-    if len(digits) == 12 and digits.startswith('998'): return f"+{digits}"
-    if len(digits) == 9: return f"+998{digits}"
-    return phone

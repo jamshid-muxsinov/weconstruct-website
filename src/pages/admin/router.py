@@ -8,7 +8,7 @@ from . import kanban
 from . import crud
 from . import contact
 from . import profile
-from . import htmx 
+from . import htmx  # htmx все еще импортируется
 from . import api
 from . import importer
 from . import invites
@@ -16,13 +16,12 @@ from src.core.security import get_current_superuser, get_current_seo_user
 
 router = APIRouter()
 unprotected_router = APIRouter()
+# --- ИЗМЕНЕНИЕ: Создаем отдельную переменную для htmx_router ---
+htmx_router = htmx.router 
 
 
 @router.get("/", include_in_schema=False, name="admin_root")
 async def admin_root_redirect(request: Request):
-    """
-    Перенаправляет с / на /dashboard.
-    """
     dashboard_url = request.url_for('admin_dashboard', locale='ru')
     return RedirectResponse(url=dashboard_url)
 
@@ -30,7 +29,6 @@ router.include_router(dashboard.router)
 router.include_router(kanban.router)
 router.include_router(contact.router)
 router.include_router(profile.router)
-router.include_router(htmx.router)
 
 router.include_router(
     invites.router,
