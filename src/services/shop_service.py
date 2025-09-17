@@ -4,7 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func
-from sqlalchemy.dialects.postgresql import insert as pg_insert # --- ИЗМЕНЕНИЕ: Импортируем insert
+# --- ИЗМЕНЕНИЕ: Импортируем специальную команду INSERT для PostgreSQL ---
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 import logging
@@ -24,7 +25,11 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
         return None
 
     first_name, _, last_name = name.partition(" ")
-
+    
+    # 1. Готовим операцию UPSERT (INSERT ... ON CONFLICT DO NOTHING)
+    # Это атомарная операция на уровне БД. Она либо вставит новую запись,
+    # либо ничего не сделает, если контакт с таким телефоном уже есть.
+    # Она никогда не вызовет ошибку IntegrityError из-за дубликата.
     insert_stmt = pg_insert(Contact).values(
         phone=phone,
         name=first_name,
@@ -35,7 +40,7 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
     await db.execute(insert_stmt)
 
     # 2. Теперь, после того как мы гарантировали, что контакт существует,
-    # мы просто находим его.
+    # мы просто и абсолютно надежно находим его.
     phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
     search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
     
@@ -55,7 +60,7 @@ async def _create_quote_request(db: AsyncSession, contact_id: int, message: str,
         status=QuoteRequest.StatusEnum.IMPORTED
     )
     db.add(quote)
-    await db.flush()
+    await db.flush() # Получаем ID для связи
     return quote
 
 async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: str):
@@ -92,6 +97,7 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
     if recent_requests:
         return "duplicate"
     
+    # Оборачиваем создание заявки и уведомлений в одну транзакцию
     async with db.begin():
         quote = await _create_quote_request(db, contact.id, message, product_id, source)
         await _notify_managers(db, quote, contact.full_name)

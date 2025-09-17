@@ -6,10 +6,12 @@ from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+# --- ИЗМЕНЕНИЕ: Добавляем or_ и func ---
+from sqlalchemy import or_, func
 from sqlalchemy.orm import selectinload, joinedload
 from slugify import slugify
 import wtforms
-import logging # --- Добавьте импорт логгера
+import logging
 
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
@@ -20,7 +22,7 @@ from src.schemas.crm_schemas import TaskCreate
 from .dependencies import get_common_context
 from pathlib import Path
 
-log = logging.getLogger(__name__) # --- Инициализируйте логгер
+log = logging.getLogger(__name__)
 MEDIA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "media"
 router = APIRouter(prefix="/htmx", tags=["Admin HTMX"])
 
