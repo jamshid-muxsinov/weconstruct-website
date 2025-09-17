@@ -1,3 +1,4 @@
+{# src/templates/admin/generic_list.html #}
 {% if not htmx_request %}
     {% extends "admin/base.html" %}
 {% endif %}
@@ -15,6 +16,8 @@
                 <span id="export-btn-text">{{ _('export_selected') }}</span>
             </button>
         {% endif %}
+
+        {# --- ИЗМЕНЕНИЕ: Добавляем проверку, существует ли add_url_name --- #}
         {% if meta.add_url_name %}
         <a href="{{ request.url_for(meta.add_url_name, locale=request.state.locale) }}" class="btn btn-primary" hx-get="{{ request.url_for(meta.add_url_name, locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
             <i class='bx bx-plus'></i> <span>{{ _('add_button', entity=_(meta.verbose_name)) }}</span>
