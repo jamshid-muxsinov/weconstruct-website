@@ -8,17 +8,17 @@ from . import kanban
 from . import crud
 from . import contact
 from . import profile
-from . import htmx  # htmx все еще импортируется
+from . import htmx 
 from . import api
 from . import importer
 from . import invites
+# --- ИЗМЕНЕНИЕ: импортируем новый роутер ---
+from . import users 
 from src.core.security import get_current_superuser, get_current_seo_user
 
 router = APIRouter()
 unprotected_router = APIRouter()
-# --- ИЗМЕНЕНИЕ: Создаем отдельную переменную для htmx_router ---
-htmx_router = htmx.router 
-
+htmx_router = htmx.router
 
 @router.get("/", include_in_schema=False, name="admin_root")
 async def admin_root_redirect(request: Request):
@@ -41,6 +41,10 @@ router.include_router(
 )
 router.include_router(
     importer.router,
+    dependencies=[Depends(get_current_superuser)]
+)
+router.include_router(
+    users.router,
     dependencies=[Depends(get_current_superuser)]
 )
 

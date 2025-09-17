@@ -39,7 +39,7 @@ TRANSLATIONS = {
     'notifications': {'ru': 'Уведомления', 'uz': 'Bildirishnomalar'},
     'no_notifications': {'ru': 'Новых уведомлений нет.', 'uz': 'Yangi bildirishnomalar yoʻq.'},
     'mark_all_as_read': {'ru': 'Пометить все как прочитанные', 'uz': 'Barchasini oʻqilgan deb belgilash'},
-
+    'sidebar_users': {'ru': 'Пользователи', 'uz': 'Foydalanuvchilar'},
     # Страница Канбан
     'sales_funnel': {'ru': 'Воронка продаж', 'uz': 'Sotuv voronkasi'},
     'show_archived': {'ru': 'Показать архивные', 'uz': 'Arxivdagilarni koʻrsatish'},
@@ -54,7 +54,7 @@ TRANSLATIONS = {
 
     'pagination_back': {'ru': 'Назад', 'uz': 'Orqaga'},
     'pagination_forward': {'ru': 'Вперед', 'uz': 'Oldinga'},
-
+     
     # Статусы заявок
     'status_imported': {'ru': 'Импортировано', 'uz': 'Import qilindi'},
     'status_qualification': {'ru': 'Квалификация', 'uz': 'Saralash'},

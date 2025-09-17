@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import get_settings
 from src.core.db import get_db_session
+# --- ИЗМЕНЕНИЕ: импортируем UserRole ---
 from src.models.shop_models import User, UserRole
 from src.services.user_service import get_user_by_username
 from src.schemas.user_schemas import TokenData
@@ -20,13 +21,11 @@ class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
     async def __call__(self, request: Request) -> Optional[str]:
         authorization: str = request.headers.get("Authorization")
         
-        # Проверяем, что заголовок существует, перед тем как его парсить
         if authorization:
             scheme, _, param = authorization.partition(" ")
             if scheme.lower() == "bearer":
                 return param
         
-        # Если в заголовке нет, ищем в cookie
         token = request.cookies.get("access_token")
         if token:
             return token
@@ -45,16 +44,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-# --- ЕДИНСТВЕННАЯ И ПРАВИЛЬНАЯ ВЕРСИЯ ЭТОЙ ФУНКЦИИ ---
 async def get_current_user(
-    request: Request, # <-- `request` теперь является зависимостью
+    request: Request,
     db: AsyncSession = Depends(get_db_session), 
     token: Optional[str] = Depends(oauth2_scheme)
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_303_SEE_OTHER,
         detail="Not authenticated",
-        # Теперь `request.url_for` будет работать, так как `request` доступен
         headers={"Location": str(request.url_for("admin_login"))},
     )
     
@@ -86,7 +83,6 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 def get_current_staff_user(current_user: User = Depends(get_current_active_user)) -> User:
-    """Проверяет, что пользователь - минимум Менеджер."""
     if not current_user.is_staff:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
@@ -94,14 +90,22 @@ def get_current_staff_user(current_user: User = Depends(get_current_active_user)
         )
     return current_user
 
+# --- ИЗМЕНЕНИЕ: Новые функции для проверки ролей ---
 def get_current_seo_user(current_user: User = Depends(get_current_active_user)) -> User:
     """Проверяет, что пользователь - SEO или Админ."""
     if current_user.role not in [UserRole.SEO, UserRole.ADMIN]:
-        raise HTTPException(...)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Доступ разрешен только для SEO и Администраторов."
+        )
     return current_user
 
 def get_current_superuser(current_user: User = Depends(get_current_active_user)) -> User:
     """Проверяет, что пользователь - Суперпользователь (Админ)."""
+    # Теперь мы проверяем и флаг is_superuser, и роль ADMIN для надежности
     if not current_user.is_superuser and current_user.role != UserRole.ADMIN:
-        raise HTTPException(...)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Доступ разрешен только для Администраторов."
+        )
     return current_user
