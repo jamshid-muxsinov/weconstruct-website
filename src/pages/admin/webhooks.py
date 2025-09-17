@@ -1,5 +1,3 @@
-# src/pages/admin/webhooks.py
-
 import logging
 from typing import List
 from fastapi import APIRouter, Depends, Request, Header, HTTPException, status

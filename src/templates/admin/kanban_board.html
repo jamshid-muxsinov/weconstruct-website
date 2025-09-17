@@ -74,7 +74,7 @@
             {% endfor %}
         </select>
                 
-        <a :href="'/api/export-requests?card_ids=' + $store.kanbanManager.selectedIds.join(',')"
+        <a :href="`{{ request.url_for('admin_quoterequest_export', locale=request.state.locale) }}?card_ids=${$store.kanbanManager.selectedIds.join(',')}`"
             class="btn btn-sm btn-secondary">
             <i class='bx bx-download'></i> {{ _('export') }}
         </a>
