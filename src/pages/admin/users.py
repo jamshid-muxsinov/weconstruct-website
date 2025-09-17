@@ -51,9 +51,12 @@ async def user_list(
         "meta": USER_META,
         "page": PageMock(users),
         "list_display": USER_META.list_display,
-        "htmx_request": "HX-Request" in request.headers
     })
-    return templates.TemplateResponse("admin/generic_list.html", context)
+    
+    is_htmx = "HX-Request" in request.headers
+    template_name = "admin/partials/_generic_list_content.html" if is_htmx else "admin/generic_list.html"
+    return templates.TemplateResponse(template_name, context)
+
 
 
 @router.get("/users/{pk}/change/", response_class=HTMLResponse, name="admin_user_change")

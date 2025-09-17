@@ -178,20 +178,29 @@ async def populate_request_form_choices(db: AsyncSession, request: Request, form
 @router.get("/contact/", response_class=HTMLResponse, name="admin_contact_list")
 async def contact_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     page_obj = await handle_list_view(db, CONTACT_META, page=page, size=size, search_query=q)
-    context.update({"meta": CONTACT_META, "page": page_obj, "list_display": CONTACT_META.list_display, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/generic_list.html", context)
+    context.update({"meta": CONTACT_META, "page": page_obj, "list_display": CONTACT_META.list_display})
+    
+    is_htmx = "HX-Request" in request.headers
+    template_name = "admin/partials/_generic_list_content.html" if is_htmx else "admin/generic_list.html"
+    return templates.TemplateResponse(template_name, context)
 
 @router.get("/quoterequest/", response_class=HTMLResponse, name="admin_quoterequest_list")
 async def quoterequest_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), sort: Optional[str] = Query(None), date_from: Optional[str] = Query(None), date_to: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     page_obj = await handle_list_view(db, QUOTEREQUEST_META, page=page, size=size, search_query=q, sort=sort, date_from=date_from, date_to=date_to)
-    context.update({"meta": QUOTEREQUEST_META, "page": page_obj, "list_display": QUOTEREQUEST_META.list_display, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/generic_list.html", context)
+    context.update({"meta": QUOTEREQUEST_META, "page": page_obj, "list_display": QUOTEREQUEST_META.list_display})
+
+    is_htmx = "HX-Request" in request.headers
+    template_name = "admin/partials/_generic_list_content.html" if is_htmx else "admin/generic_list.html"
+    return templates.TemplateResponse(template_name, context)
 
 @router.get("/product/", response_class=HTMLResponse, name="admin_product_list")
 async def product_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     page_obj = await handle_list_view(db, PRODUCT_META, page=page, size=size, search_query=q)
-    context.update({"meta": PRODUCT_META, "page": page_obj, "list_display": PRODUCT_META.list_display, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/generic_list.html", context)
+    context.update({"meta": PRODUCT_META, "page": page_obj, "list_display": PRODUCT_META.list_display})
+    
+    is_htmx = "HX-Request" in request.headers
+    template_name = "admin/partials/_generic_list_content.html" if is_htmx else "admin/generic_list.html"
+    return templates.TemplateResponse(template_name, context)
     
 @router.get("/product/add/", response_class=HTMLResponse, name="admin_product_add")
 @router.get("/product/{pk}/change/", response_class=HTMLResponse, name="admin_product_change")
@@ -260,8 +269,11 @@ async def product_delete(request: Request, pk: int, context: dict = Depends(get_
 @router.get("/category/", response_class=HTMLResponse, name="admin_category_list")
 async def category_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     page_obj = await handle_list_view(db, CATEGORY_META, page=page, size=size, search_query=q)
-    context.update({"meta": CATEGORY_META, "page": page_obj, "list_display": ['name_ru', 'description_ru'], "search_query": q, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/generic_list.html", context)
+    context.update({"meta": CATEGORY_META, "page": page_obj, "list_display": ['name_ru', 'description_ru'], "search_query": q})
+    
+    is_htmx = "HX-Request" in request.headers
+    template_name = "admin/partials/_generic_list_content.html" if is_htmx else "admin/generic_list.html"
+    return templates.TemplateResponse(template_name, context)
 
 @router.get("/category/add/", response_class=HTMLResponse, name="admin_category_add")
 @router.get("/category/{pk}/change/", response_class=HTMLResponse, name="admin_category_change")

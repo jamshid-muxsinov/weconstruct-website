@@ -1,3 +1,4 @@
+{# src/templates/admin/partials/_generic_list_content.html #}
 {% from "admin/partials/pagination.html" import render_pagination %}
 
 <div class="table-wrapper">
@@ -81,7 +82,6 @@
                                 {{ t_get(request, value, 'name') }}
 
                             {% elif field_name == 'status' and hasattr(item, 'status') %}
-                                {# --- ИСПРАВЛЕНИЕ ЗДЕСЬ: Убран лишний аргумент --- #}
                                 <span class="status-badge status-{{ item.status.value }}">{{ get_status_display(item.status) }}</span>
                             
                             {% elif field_name == 'created_at' %}

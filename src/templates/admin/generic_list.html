@@ -11,13 +11,7 @@
             <a href="{{ request.url_for('admin_quoterequest_export', locale=request.state.locale) }}" class="btn btn-secondary">
                 <i class='bx bx-export'></i> <span>{{ _('export_all') }}</span>
             </a>
-            <button id="export-selected-btn" class="btn btn-secondary" disabled>
-                <i class='bx bxs-file-export'></i>
-                <span id="export-btn-text">{{ _('export_selected') }}</span>
-            </button>
         {% endif %}
-
-        {# --- ИЗМЕНЕНИЕ: Добавляем проверку, существует ли add_url_name --- #}
         {% if meta.add_url_name %}
         <a href="{{ request.url_for(meta.add_url_name, locale=request.state.locale) }}" class="btn btn-primary" hx-get="{{ request.url_for(meta.add_url_name, locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
             <i class='bx bx-plus'></i> <span>{{ _('add_button', entity=_(meta.verbose_name)) }}</span>
@@ -27,10 +21,11 @@
 </div>
 
 <div class="card" style="margin-bottom: 24px;">
+    {# --- ИЗМЕНЕНИЕ: Форма теперь будет обновлять только блок #list-content-wrapper --- #}
     <form id="filters-form"
           hx-get="{{ request.url.path }}" 
-          hx-target="#main-content"
-          hx-trigger="submit, change from:.datepicker, keyup changed delay:300ms from:input[type='search']"
+          hx-target="#list-content-wrapper" 
+          hx-trigger="keyup changed delay:300ms from:input[type='search'], change"
           hx-push-url="true">
 
         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 16px; align-items: flex-end;">
@@ -56,7 +51,10 @@
     </form>
 </div>
 
-{% include "admin/partials/_generic_list_content.html" %}
+{# --- ИЗМЕНЕНИЕ: Создаем контейнер, который будет получать обновления от HTMX --- #}
+<div id="list-content-wrapper">
+    {% include "admin/partials/_generic_list_content.html" %}
+</div>
 
 <script>
     function initializeDatepickers() {

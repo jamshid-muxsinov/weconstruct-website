@@ -1,6 +1,6 @@
 {% macro render_pagination(page_obj, endpoint_name, request) %}
 {% set total_pages = (page_obj.total + page_obj.size - 1) // page_obj.size %}
-{% if page_obj and total_pages > 1 %}
+{% if page_obj and page_obj.total > page_obj.size %}
 <div class="card" style="margin-top: 24px; padding: 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
     <div>
         Страница {{ page_obj.page }} из {{ total_pages }}. Всего: {{ page_obj.total }}
@@ -14,9 +14,8 @@
             <a href="{{ request.url_for(endpoint_name, locale=request.state.locale) }}?{{ urlencode(prev_params) }}"
             class="btn btn-secondary"
             hx-get="{{ request.url_for(endpoint_name, locale=request.state.locale) }}?{{ urlencode(prev_params) }}"
-            hx-target="#main-content"
+            hx-target="#list-content-wrapper"
             hx-push-url="true">
-                {# --- ИЗМЕНЕНИЕ: Добавлен перевод --- #}
                 <i class='bx bx-chevron-left'></i> {{ _('pagination_back') }}
             </a>
         {% endif %}
@@ -28,9 +27,8 @@
             <a href="{{ request.url_for(endpoint_name, locale=request.state.locale) }}?{{ urlencode(next_params) }}"
             class="btn btn-secondary"
             hx-get="{{ request.url_for(endpoint_name, locale=request.state.locale) }}?{{ urlencode(next_params) }}"
-            hx-target="#main-content"
+            hx-target="#list-content-wrapper"
             hx-push-url="true">
-                {# --- ИЗМЕНЕНИЕ: Добавлен перевод --- #}
                 {{ _('pagination_forward') }} <i class='bx bx-chevron-right'></i>
             </a>
         {% endif %}
