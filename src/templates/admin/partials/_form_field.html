@@ -46,8 +46,10 @@
         <input type="file" name="{{ field.name }}" id="{{ field.id }}" class="input-field" multiple>
         {% if original and original.images %}
         <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;">
+            {# --- НАЧАЛО ИЗМЕНЕНИЯ --- #}
             {% for img in original.images %}
             <div id="gallery-item-{{ img.id }}" style="position:relative;">
+                {# Здесь мы используем url_for для генерации правильного пути к файлу #}
                 <img src="{{ url_for('media', path=img.image) }}" alt="Image" loading="lazy" style="width:100px; height:100px; object-fit:cover; border-radius:var(--border-radius-md);">
                 <button type="button" class="btn-icon btn-icon-danger" style="position:absolute; top:-5px; right:-5px; width:24px; height:24px; font-size:1rem;"
                     hx-delete="{{ request.url_for('admin_htmx_delete_product_image', locale=request.state.locale, pk=img.id) }}"
@@ -55,6 +57,7 @@
                     hx-confirm="{{ _('delete_confirmation_text', item='это изображение') }}">&times;</button>
             </div>
             {% endfor %}
+            {# --- КОНЕЦ ИЗМЕНЕНИЯ --- #}
         </div>
         {% endif %}
     {% else %}
