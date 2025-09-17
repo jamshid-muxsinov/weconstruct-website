@@ -45,7 +45,7 @@ async def process_single_lead_row(db: AsyncSession, row: list):
     original_row_number_info = f"(ID: {sheet_row_id})"
 
     try:
-        # Вложенная транзакция для изоляции ошибок
+        # Вложенная транзакция (savepoint) для изоляции ошибок
         async with db.begin_nested():
             stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
             result = await db.execute(stmt)
@@ -65,7 +65,6 @@ async def process_single_lead_row(db: AsyncSession, row: list):
             telegram = (row[4].strip() if len(row) > 4 else "")[:100]
             status_from_sheet_raw = (row[6].strip() if len(row) > 6 else "")
             comment = (row[7].strip() if len(row) > 7 else "")
-
             phone_number = _normalize_phone(phone_1 or phone_2)[:50]
 
             contact = await _get_or_create_contact(db, name=client_name, phone=phone_number)
@@ -101,10 +100,8 @@ async def process_single_lead_row(db: AsyncSession, row: list):
         
         log.info(f"Успешно подготовлена к сохранению заявка для лида {original_row_number_info}")
 
-    except (ValueError, IntegrityError) as e:
-        log.error(f"Ошибка при обработке строки {original_row_number_info}: {e}", exc_info=False)
     except Exception as e:
-        log.error(f"Непредвиденная ошибка при обработке строки {original_row_number_info}: {e}", exc_info=True)
+        log.error(f"Ошибка при обработке строки {original_row_number_info}: {e}", exc_info=False)
 
 def _normalize_phone(phone: str) -> str:
     if not phone: return ""
