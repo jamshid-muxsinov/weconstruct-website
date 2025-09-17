@@ -35,7 +35,8 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
         
     # 2. Если не нашли, пытаемся создать его внутри вложенной транзакции (SAVEPOINT).
     try:
-        async with db.begin_nested(): # Создает SAVEPOINT
+        # Эта конструкция создает SAVEPOINT
+        async with db.begin_nested(): 
             first_name, _, last_name = name.partition(" ")
             new_contact = Contact(
                 phone=phone,
@@ -43,14 +44,14 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
                 last_name=last_name or None
             )
             db.add(new_contact)
-            # При успешном выходе из блока 'with' SAVEPOINT будет закоммичен в основную транзакцию.
         
+        # Если блок выше завершился без ошибок, SAVEPOINT автоматически подтверждается.
         await db.refresh(new_contact)
         return new_contact
         
     except IntegrityError:
         # 3. Если произошла гонка состояний, 'begin_nested' автоматически откатит SAVEPOINT.
-        # Основная транзакция останется рабочей.
+        # Основная транзакция останется рабочей и не будет закрыта.
         # Теперь мы можем безопасно и гарантированно найти контакт,
         # который только что создал параллельный процесс.
         log.warning(f"Handled race condition for phone {phone}. Re-fetching contact.")
@@ -67,7 +68,7 @@ async def _create_quote_request(db: AsyncSession, contact_id: int, message: str,
         status=QuoteRequest.StatusEnum.IMPORTED
     )
     db.add(quote)
-    await db.flush()
+    await db.flush() # Получаем ID для связи
     return quote
 
 async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: str):
@@ -104,6 +105,7 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
     if recent_requests:
         return "duplicate"
     
+    # Оборачиваем создание заявки и уведомлений в одну транзакцию
     async with db.begin():
         quote = await _create_quote_request(db, contact.id, message, product_id, source)
         await _notify_managers(db, quote, contact.full_name)
