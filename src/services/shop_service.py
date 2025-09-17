@@ -6,42 +6,51 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import func
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
+import logging # --- ИЗМЕНЕНИЕ: Добавлен импорт логгера
 
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
 
+log = logging.getLogger(__name__) # --- ИЗМЕНЕНИЕ: Инициализация логгера
+
+# --- ИЗМЕНЕНИЕ: Полностью переписанная функция для максимальной надежности ---
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact | None:
     """
-    Асинхронно-безопасная версия для поиска или создания контакта.
-    Сначала ищет, и только потом пытается создать, чтобы минимизировать IntegrityError.
+    Асинхронно-безопасная и надежная версия для поиска или создания контакта,
+    устойчивая к гонке состояний (race condition).
     """
     if not phone or not phone.strip():
         return None
 
-    # 1. Сначала пытаемся найти существующий контакт
     phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
     search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
-    stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
     
+    # 1. Сначала пытаемся найти существующий контакт
+    stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
     result = await db.execute(stmt)
     contact = result.scalars().first()
-    
     if contact:
         return contact
-
-    # 2. Если не нашли, создаем новый.
-    # IntegrityError все еще возможен из-за race condition, но будет редким.
-    # Он будет обработан вызывающей функцией (process_single_lead_row).
-    first_name, _, last_name = name.partition(" ")
-    new_contact = Contact(
-        phone=phone,
-        name=first_name,
-        last_name=last_name or None
-    )
-    db.add(new_contact)
-    await db.flush() # Нужно для получения ID и проверки на ошибки
-    await db.refresh(new_contact)
-    return new_contact
+        
+    # 2. Если не нашли, пытаемся создать новый.
+    try:
+        first_name, _, last_name = name.partition(" ")
+        new_contact = Contact(
+            phone=phone,
+            name=first_name,
+            last_name=last_name or None
+        )
+        db.add(new_contact)
+        await db.flush() # Отправляем запрос в БД, чтобы поймать IntegrityError
+        await db.refresh(new_contact)
+        return new_contact
+    except IntegrityError:
+        # 3. Если поймали ошибку (гонка состояний), откатываем flush
+        # и просто снова ищем контакт - теперь он точно будет в базе.
+        log.warning(f"Handled race condition for phone {phone}. Re-fetching contact.")
+        await db.rollback() # Важно откатить неудачную операцию flush
+        result = await db.execute(stmt)
+        return result.scalars().first()
     
 async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, product_id: int = None, source: str = "website") -> QuoteRequest:
     quote = QuoteRequest(
@@ -52,7 +61,7 @@ async def _create_quote_request(db: AsyncSession, contact_id: int, message: str,
         status=QuoteRequest.StatusEnum.IMPORTED
     )
     db.add(quote)
-    await db.flush() # Нужно для получения ID заявки
+    await db.flush()
     return quote
 
 async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: str):
@@ -61,7 +70,6 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
     
     if not managers: return
 
-    # URL теперь без домена, т.к. это внутренний путь
     quote_url = f"/ru/quoterequest/{quote.id}/change/"
     message_text = f"Новая заявка #{quote.id} от {contact_name}"
 
@@ -73,12 +81,10 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
 
 @invalidate_cache("categories_with_products") 
 async def process_quote_request(db: AsyncSession, name: str, phone: str, message: str, product_id: int = None, source: str = "website") -> QuoteRequest | str:
-    """
-    Обрабатывает заявку. Возвращает объект QuoteRequest в случае успеха
-    или строку 'duplicate', если заявка является дубликатом.
-    """
     contact = await _get_or_create_contact(db, name, phone)
-    
+    if not contact:
+        return "invalid_contact" # Не удалось создать контакт
+
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     stmt = select(QuoteRequest).where(
         QuoteRequest.contact_id == contact.id,
@@ -91,13 +97,12 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
     
     if recent_requests:
         return "duplicate"
-
+    
     async with db.begin():
         quote = await _create_quote_request(db, contact.id, message, product_id, source)
         await _notify_managers(db, quote, contact.full_name)
     
     await db.refresh(quote) 
-
     return quote
 
 @cache_result("categories_with_products", ttl=1800)  
