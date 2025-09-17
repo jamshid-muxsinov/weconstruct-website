@@ -5,8 +5,8 @@ import wtforms
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
-
-from sqlalchemy import func, desc, update, and_, delete
+# --- ИЗМЕНЕНИЕ: Добавляем String в импорты ---
+from sqlalchemy import func, desc, update, and_, delete, or_, String
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
@@ -98,7 +98,7 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
         "activity_log": activity_log,
     }
 
-async def get_kanban_data(db: AsyncSession, show_archived: bool = False):
+async def get_kanban_data(db: AsyncSession, show_archived: bool = False, search_query: str = None, assignee_id: int = None):
     archived_statuses = [
         QuoteRequest.StatusEnum.CLOSED,
         QuoteRequest.StatusEnum.ARCHIVED,
@@ -116,6 +116,19 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False):
     
     if not show_archived:
         stmt = stmt.where(QuoteRequest.status.notin_(archived_statuses))
+
+    if search_query:
+        search_like = f"%{search_query.lower()}%"
+        stmt = stmt.join(QuoteRequest.contact).where(
+            or_(
+                func.lower(func.concat(Contact.name, ' ', Contact.last_name)).like(search_like),
+                Contact.phone.like(search_like),
+                QuoteRequest.id.cast(String).like(search_like)
+            )
+        )
+    
+    if assignee_id:
+        stmt = stmt.where(QuoteRequest.assigned_to_id == assignee_id)
         
     requests_result = await db.execute(stmt)
     all_requests = requests_result.scalars().unique().all()
@@ -227,7 +240,6 @@ async def assign_quote_request_to_user(db: AsyncSession, quote_id: int, user_id:
         
     return req
 
-# --- НАЧАЛО ИЗМЕНЕНИЯ: Функция теперь принимает user и проверяет права ---
 async def toggle_task_completion(db: AsyncSession, task_id: int, current_user: User):
     """
     Переключает статус выполнения задачи с проверкой прав доступа.
@@ -235,22 +247,18 @@ async def toggle_task_completion(db: AsyncSession, task_id: int, current_user: U
     """
     task = await db.get(Task, task_id)
     if not task:
-        return None  # Задача вообще не найдена
+        return None
 
-    # Проверяем права доступа
     is_owner = (task.assigned_to_id == current_user.id)
     
     if not current_user.is_superuser and not is_owner:
-        # Если пользователь НЕ суперюзер И НЕ владелец задачи -> отказ
         return None
 
-    # Если проверки пройдены, меняем статус
     task.completed = not task.completed
     db.add(task)
     await db.commit()
     await db.refresh(task)
     return task
-# --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
 async def create_task_for_quote(db: AsyncSession, task_data: TaskCreate):
     try:
@@ -268,7 +276,6 @@ async def create_task_for_quote(db: AsyncSession, task_data: TaskCreate):
         await db.commit()
         await db.refresh(new_task)
         
-        # Возвращаем все задачи для заявки, СРАЗУ подгружая связанных пользователей
         tasks_stmt = (
             select(Task)
             .where(Task.quote_request_id == task_data.quote_request_id)

@@ -8,19 +8,7 @@
     <div class="page-header">
         <h1>{{ _('sales_funnel') }}</h1>
         <div class="page-header-actions">
-            <form class="filter-form" 
-                  hx-get="{{ request.url_for('admin_htmx_kanban_content', locale=request.state.locale) }}"
-                  hx-target="#kanban-board-container" 
-                  hx-swap="innerHTML" 
-                  hx-push-url="true">
-                <label class="switch">
-                    <input type="checkbox" name="show_archived" value="true" {% if show_archived %}checked{% endif %}
-                        onchange="this.form.requestSubmit()">
-                    <span class="slider"></span>
-                </label>
-                <span>{{ _('show_archived') }}</span>
-            </form>
-
+            {# --- Эта форма теперь будет частью основной формы фильтров --- #}
             <a href="{{ request.url_for('admin_quoterequest_add', locale=request.state.locale) }}" class="btn btn-primary">
                 <i class='bx bx-plus'></i>
                 {{ _('new_request') }}
@@ -28,35 +16,35 @@
         </div>
     </div>
 
-    <!-- Advanced Search and Filters -->
-    <div class="advanced-filters">
+    <!-- ИЗМЕНЕНИЕ: Вся фильтрация теперь в одной форме с HTMX-атрибутами -->
+    <form class="advanced-filters" 
+          id="kanban-filters"
+          hx-get="{{ request.url_for('admin_htmx_kanban_content', locale=request.state.locale) }}"
+          hx-target="#kanban-board-container" 
+          hx-trigger="keyup changed delay:300ms from:input[type='search'], change"
+          hx-push-url="true">
+
         <div class="search-box" style="flex: 1; min-width: 250px;">
-            <input type="text" 
-                   x-model.debounce.300ms="$store.kanbanManager.searchQuery"
-                   placeholder="{{ _('search_placeholder') }}"
-                   class="input-field"
-                   style="margin: 0;">
+            <input type="search" name="q" placeholder="{{ _('search_placeholder') }}" class="input-field" style="margin: 0;">
         </div>
         
         <div class="filter-chips" style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button type="button" 
-                    @click="$store.kanbanManager.activeFilters.assignee = ($store.kanbanManager.activeFilters.assignee === 'me' ? null : 'me')"
-                    :class="{'filter-chip': true, 'active': $store.kanbanManager.activeFilters.assignee === 'me'}">
+            <label class="filter-chip" :class="{'active': $el.querySelector('input').checked}">
+                <input type="checkbox" name="assignee" value="me" class="hidden-checkbox">
                 <i class='bx bx-user'></i>
                 {{ _('my_tasks') }}
-            </button>
+            </label>
             
-            <button type="button"
-                    @click="$store.kanbanManager.searchQuery = ''; $store.kanbanManager.activeFilters.assignee = null"
-                    x-show="$store.kanbanManager.searchQuery || $store.kanbanManager.activeFilters.assignee"
-                    class="btn btn-sm btn-secondary">
-                <i class='bx bx-x'></i>
-                {{ _('clear') }}
-            </button>
+            <label class="switch">
+                <input type="checkbox" name="show_archived" value="true" {% if show_archived %}checked{% endif %}>
+                <span class="slider"></span>
+            </label>
+            <span>{{ _('show_archived') }}</span>
         </div>
-    </div>
+    </form>
 
-    <!-- Bulk Actions Bar -->
+
+    <!-- Панель массовых действий (остается без изменений) -->
     <div class="bulk-actions-bar" x-show="$store.kanbanManager.selectedCards.size > 0" x-transition>
         <span x-text="`{{ _('selected_cards_count', count='') }}${$store.kanbanManager.selectedCards.size}`" style="font-weight: 500;"></span>
         

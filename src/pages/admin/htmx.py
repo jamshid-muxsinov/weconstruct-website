@@ -2,11 +2,10 @@
 
 import json
 from urllib.parse import quote
-from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response
+from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-# --- ИЗМЕНЕНИЕ: Добавляем or_ и func ---
 from sqlalchemy import or_, func
 from sqlalchemy.orm import selectinload, joinedload
 from slugify import slugify
@@ -21,6 +20,7 @@ from src.services import crm_service
 from src.schemas.crm_schemas import TaskCreate
 from .dependencies import get_common_context
 from pathlib import Path
+
 
 log = logging.getLogger(__name__)
 MEDIA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "media"
@@ -139,13 +139,21 @@ async def add_category_htmx(request: Request, name: str = Form(...), db: AsyncSe
 async def get_kanban_content(
     request: Request,
     show_archived: bool = False,
-    db: AsyncSession = Depends(get_db_session)
+    q: str = Query(None),
+    assignee: str = Query(None), # Принимаем как строку
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_active_user) # Нужен для фильтра "мои"
 ):
     if not request.headers.get("hx-request"):
         kanban_url = request.url_for('admin_kanban_board', locale=request.state.locale)
         return RedirectResponse(f"{kanban_url}?show_archived={show_archived}")
 
-    kanban_data = await crm_service.get_kanban_data(db, show_archived)
+    assignee_id = None
+    if assignee == 'me':
+        assignee_id = current_user.id
+        
+    kanban_data = await crm_service.get_kanban_data(db, show_archived, search_query=q, assignee_id=assignee_id)
+    
     context = {
         "request": request,
         "requests_by_status": kanban_data,
