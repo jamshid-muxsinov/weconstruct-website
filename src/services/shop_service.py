@@ -32,12 +32,11 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
         name=first_name,
         last_name=last_name or None
     ).on_conflict_do_nothing(
-        index_elements=['phone']  # Убедитесь, что у вас есть UNIQUE-индекс на поле 'phone'
+        index_elements=['phone']
     )
     await db.execute(insert_stmt)
 
     # 2. Теперь, когда мы гарантированно имеем запись в базе, просто находим ее.
-    # Этот запрос всегда будет успешным.
     stmt = select(Contact).where(Contact.phone == phone)
     result = await db.execute(stmt)
     contact = result.scalars().first()

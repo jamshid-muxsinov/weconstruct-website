@@ -24,7 +24,12 @@ class UserForm(wtforms.Form):
     is_superuser = wtforms.BooleanField('Суперпользователь (Администратор)')
 
 User.__str__ = lambda self: self.username
+
+# --- ИЗМЕНЕНИЕ: Убираем add_url_name, так как у нас нет роута для добавления пользователя вручную ---
+# Старый код: USER_META = Meta(User, ['username', 'role', 'is_staff', 'is_active'], UserForm, "Пользователь", "Пользователи")
+# Новый код:
 USER_META = Meta(User, ['username', 'role', 'is_staff', 'is_active'], UserForm, "Пользователь", "Пользователи")
+USER_META.add_url_name = None # Явно указываем, что кнопки "Добавить" быть не должно
 
 @router.get("/users/", response_class=HTMLResponse, name="admin_user_list")
 async def user_list(
@@ -35,7 +40,7 @@ async def user_list(
     users = (await db.execute(select(User).order_by(User.id))).scalars().all()
     context.update({
         "meta": USER_META,
-        "page": {"items": users}, # Упрощенная пагинация для пользователей
+        "page": {"items": users},
         "list_display": USER_META.list_display,
         "htmx_request": "HX-Request" in request.headers
     })
