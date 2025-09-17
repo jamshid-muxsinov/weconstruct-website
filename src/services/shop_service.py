@@ -10,7 +10,6 @@ from sqlalchemy.exc import IntegrityError
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
 
-# --- НАЧАЛО: ПОЛНОСТЬЮ ЗАМЕНИТЕ ЭТУ ФУНКЦИЮ НА НОВУЮ ВЕРСИЮ ---
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact | None:
     """
     Асинхронно-безопасная и надежная версия для поиска или создания контакта,
@@ -19,18 +18,14 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
     if not phone or not phone.strip():
         return None
 
-    # Подготавливаем запрос для поиска контакта один раз
     phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
     search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
     stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
 
-    # 1. Сначала пытаемся найти контакт
     result = await db.execute(stmt)
     contact = result.scalars().first()
     if contact:
         return contact
-
-    # 2. Если контакт не найден, пытаемся его создать
     try:
         first_name, _, last_name = name.partition(" ")
         new_contact = Contact(
@@ -39,19 +34,13 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
             last_name=last_name or None
         )
         db.add(new_contact)
-        await db.flush()  # Пытаемся "зарезервировать" место в транзакции
-        await db.refresh(new_contact) # Получаем ID и другие поля из базы
+        await db.flush()
+        await db.refresh(new_contact)
         return new_contact
     except IntegrityError:
-        # 3. Если произошла ошибка (другой процесс создал контакт на долю секунды раньше),
-        # откатываем сессию, чтобы очистить ее от "сломанного" объекта.
-        await db.rollback()
-        
-        # 4. Теперь мы на 100% уверены, что контакт существует. Делаем финальный, надежный поиск.
         result = await db.execute(stmt)
         return result.scalars().first()
-# --- КОНЕЦ ИЗМЕНЕНИЯ ---
-
+    
 async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, product_id: int = None, source: str = "website") -> QuoteRequest:
     quote = QuoteRequest(
         contact_id=contact_id,
