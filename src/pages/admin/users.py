@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.exc import IntegrityError
 import wtforms
 
 from src.pages.jinja_config import templates
@@ -24,9 +25,11 @@ class UserForm(wtforms.Form):
     is_superuser = wtforms.BooleanField('Суперпользователь (Администратор)')
 
 User.__str__ = lambda self: self.username
+
 USER_META = Meta(User, ['username', 'role', 'is_staff', 'is_active'], UserForm, "Пользователь", "Пользователи")
-# Явно указываем, что у модели User нет страницы добавления
-USER_META.add_url_name = None
+
+USER_META.add_url_name = None 
+
 
 @router.get("/users/", response_class=HTMLResponse, name="admin_user_list")
 async def user_list(
@@ -36,8 +39,6 @@ async def user_list(
 ):
     users = (await db.execute(select(User).order_by(User.id))).scalars().all()
     
-    # --- ИЗМЕНЕНИЕ: Создаем простой объект-заглушку для пагинации ---
-    # Это решает ошибку TypeError, так как теперь у page есть атрибут .items
     class PageMock:
         def __init__(self, items):
             self.items = items
@@ -48,7 +49,7 @@ async def user_list(
 
     context.update({
         "meta": USER_META,
-        "page": PageMock(users), # Используем наш мок-объект
+        "page": PageMock(users),
         "list_display": USER_META.list_display,
         "htmx_request": "HX-Request" in request.headers
     })
@@ -106,3 +107,47 @@ async def user_change_post(
         "title": f"Редактирование: {user.username}"
     })
     return templates.TemplateResponse("admin/generic_form.html", context, status_code=422)
+
+
+# --- НАЧАЛО ИЗМЕНЕНИЯ: Добавляем недостающий роут для удаления ---
+@router.get("/users/{pk}/delete/", response_class=HTMLResponse, name="admin_user_delete")
+@router.post("/users/{pk}/delete/", response_class=HTMLResponse)
+async def user_delete(
+    pk: int,
+    request: Request,
+    context: dict = Depends(get_common_context),
+    db: AsyncSession = Depends(get_db_session)
+):
+    user_to_delete = await db.get(User, pk)
+    if not user_to_delete:
+        raise HTTPException(404)
+
+    # Нельзя удалить самого себя
+    if context["user"].id == user_to_delete.id:
+        context["error_message"] = "Вы не можете удалить свой собственный профиль."
+        return templates.TemplateResponse("admin/500.html", context, status_code=400)
+
+    if request.method == "POST":
+        try:
+            await db.delete(user_to_delete)
+            await db.commit()
+            redirect_url = request.url_for(USER_META.list_url_name, locale=request.state.locale)
+            response = RedirectResponse(redirect_url, status_code=303)
+            return set_hx_trigger_header(response, f"Пользователь '{user_to_delete.username}' удален.", request, type="error")
+        except IntegrityError:
+            await db.rollback()
+            context["error_message"] = "Нельзя удалить пользователя, к которому привязаны заявки, задачи или другие объекты."
+            return templates.TemplateResponse("admin/500.html", context, status_code=400)
+
+    # Для GET запроса показываем страницу подтверждения
+    _ = templates.env.globals['_']
+    title = _({'request': request}, 'delete_confirmation_title', entity=f"пользователя '{user_to_delete.username}'")
+    
+    context.update({
+        "meta": USER_META,
+        "original": user_to_delete,
+        "title": title,
+        "back_url": request.url_for(USER_META.change_url_name, locale=request.state.locale, pk=pk)
+    })
+    return templates.TemplateResponse("admin/delete_confirmation.html", context)
+# --- КОНЕЦ ИЗМЕНЕНИЯ ---
