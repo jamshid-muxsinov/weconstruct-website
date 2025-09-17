@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func
-# --- ИЗМЕНЕНИЕ: Импортируем специальную команду INSERT для PostgreSQL ---
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
@@ -15,38 +14,32 @@ from src.core.cache import cache_result, invalidate_cache
 
 log = logging.getLogger(__name__)
 
-# --- ИЗМЕНЕНИЕ: Железобетонная версия функции get-or-create с использованием UPSERT ---
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact | None:
     """
-    Асинхронно-безопасная и надежная версия для поиска или создания контакта,
-    устойчивая к гонке состояний (race condition) с использованием INSERT ... ON CONFLICT.
+    Атомарная и надежная версия для поиска или создания контакта с использованием
+    специфичной для PostgreSQL команды INSERT ... ON CONFLICT.
     """
-    if not phone or not phone.strip():
+    if not phone:
         return None
 
     first_name, _, last_name = name.partition(" ")
     
     # 1. Готовим операцию UPSERT (INSERT ... ON CONFLICT DO NOTHING)
-    # Это атомарная операция на уровне БД. Она либо вставит новую запись,
-    # либо ничего не сделает, если контакт с таким телефоном уже есть.
-    # Она никогда не вызовет ошибку IntegrityError из-за дубликата.
+    # Эта команда либо вставит новую запись, либо ничего не сделает, если
+    # контакт с таким телефоном уже существует. Она никогда не вызовет ошибку.
     insert_stmt = pg_insert(Contact).values(
         phone=phone,
         name=first_name,
         last_name=last_name or None
     ).on_conflict_do_nothing(
-        index_elements=['phone']
+        index_elements=['phone']  # Убедитесь, что у вас есть UNIQUE-индекс на поле 'phone'
     )
     await db.execute(insert_stmt)
 
-    # 2. Теперь, после того как мы гарантировали, что контакт существует,
-    # мы просто и абсолютно надежно находим его.
-    phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
-    search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
-    
-    select_stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
-    
-    result = await db.execute(select_stmt)
+    # 2. Теперь, когда мы гарантированно имеем запись в базе, просто находим ее.
+    # Этот запрос всегда будет успешным.
+    stmt = select(Contact).where(Contact.phone == phone)
+    result = await db.execute(stmt)
     contact = result.scalars().first()
     
     return contact
@@ -60,7 +53,7 @@ async def _create_quote_request(db: AsyncSession, contact_id: int, message: str,
         status=QuoteRequest.StatusEnum.IMPORTED
     )
     db.add(quote)
-    await db.flush() # Получаем ID для связи
+    await db.flush()
     return quote
 
 async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: str):
@@ -97,7 +90,6 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
     if recent_requests:
         return "duplicate"
     
-    # Оборачиваем создание заявки и уведомлений в одну транзакцию
     async with db.begin():
         quote = await _create_quote_request(db, contact.id, message, product_id, source)
         await _notify_managers(db, quote, contact.full_name)

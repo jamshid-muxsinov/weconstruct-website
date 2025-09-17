@@ -29,27 +29,29 @@ STATUS_MAPPING = {
 }
 
 
-# --- НОВАЯ, УЛУЧШЕННАЯ ФУНКЦИЯ ОЧИСТКИ ТЕЛЕФОНА ---
-def _normalize_phone(phone: str) -> str:
+# --- НОВАЯ, ЖЕЛЕЗОБЕТОННАЯ ФУНКЦИЯ ОЧИСТКИ ТЕЛЕФОНА ---
+def _normalize_phone(phone_string: str) -> str:
     """
     Агрессивно очищает и нормализует номер телефона, извлекая первый валидный номер.
+    Справляется с разными форматами, включая российские номера.
     """
-    if not phone:
+    if not phone_string:
         return ""
-    
-    # Заменяем распространенные разделители на пробелы
-    cleaned_str = re.sub(r'[,;/\n\t]', ' ', phone)
-    
-    # Находим все последовательности из 9-12 цифр
-    possible_numbers = re.findall(r'\d{9,12}', cleaned_str.replace(" ", ""))
 
-    for num_str in possible_numbers:
-        if len(num_str) == 12 and num_str.startswith('998'):
-            return f"+{num_str}"
-        if len(num_str) == 9:
-            return f"+998{num_str}"
-            
-    # Если не нашли ничего похожего, возвращаем пустую строку, чтобы избежать ошибок
+    # Удаляем все, что не является цифрой
+    digits = re.sub(r'\D', '', phone_string)
+
+    # 1. Ищем узбекский номер (9 цифр), возможно, он в конце длинной строки
+    match = re.search(r'(?<!\d)(998)?(\d{9})$', digits)
+    if match:
+        return "+998" + match.group(2)
+
+    # 2. Ищем российский номер (10 цифр после 7 или 8)
+    match = re.search(r'(7|8)(\d{10})$', digits)
+    if match:
+        return "+7" + match.group(2)
+        
+    # Если ничего не подошло, возвращаем пустую строку
     return ""
 
 
@@ -95,8 +97,7 @@ async def process_single_lead_row(session: AsyncSession, row: list) -> bool:
             
             contact = await _get_or_create_contact(session, name=client_name, phone=phone_number)
             if not contact:
-                # Эта ошибка теперь будет возникать только в действительно исключительных случаях
-                raise Exception("Не удалось создать или найти контакт.")
+                raise Exception("Не удалось создать или найти контакт после UPSERT. Это не должно происходить.")
             
             message_parts = []
             if status_from_sheet_raw: message_parts.append(f"Статус из таблицы: {status_from_sheet_raw}")
