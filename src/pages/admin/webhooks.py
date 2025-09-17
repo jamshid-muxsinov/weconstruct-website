@@ -15,7 +15,6 @@ settings = get_settings()
 router = APIRouter(prefix="/api/webhooks", tags=["Webhooks"])
 
 class NewLeadPayload(BaseModel):
-    # Google Apps Script будет присылать нам массив строк, где каждая строка - это массив ячеек
     rows: List[List[str]]
 
 @router.post("/new-lead", status_code=status.HTTP_202_ACCEPTED)

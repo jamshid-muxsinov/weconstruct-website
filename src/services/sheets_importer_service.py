@@ -33,25 +33,19 @@ async def process_single_lead_row(db: AsyncSession, row: list):
     Обрабатывает одну строку данных, полученную из Google Sheets через вебхук,
     используя вложенные транзакции для изоляции ошибок.
     """
-    # =======================================================================
-    # ШАГ 1: Проверка на валидность строки (то, о чем вы просили)
-    # =======================================================================
-    # Проверяем, есть ли в строке вообще данные и есть ли телефон
+    # Сначала проверяем, есть ли в строке вообще телефон
     phone_1 = (row[3].strip() if len(row) > 3 else "")
     phone_2 = (row[5].strip() if len(row) > 5 else "")
     if not (phone_1 or phone_2):
         sheet_row_id = str(row[0]).strip() if row and row[0] else "N/A"
         log.warning(f"Строка с ID: {sheet_row_id} пропущена, так как не содержит номера телефона.")
-        return # Сразу выходим, не вызывая ошибку
-    # =======================================================================
+        return
 
     sheet_row_id = str(row[0]).strip()
     original_row_number_info = f"(ID: {sheet_row_id})"
 
     try:
-        # =======================================================================
-        # ШАГ 2: Изоляция ошибок с помощью вложенной транзакции
-        # =======================================================================
+        # Вложенная транзакция для изоляции ошибок
         async with db.begin_nested():
             stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
             result = await db.execute(stmt)
@@ -73,16 +67,10 @@ async def process_single_lead_row(db: AsyncSession, row: list):
             comment = (row[7].strip() if len(row) > 7 else "")
 
             phone_number = _normalize_phone(phone_1 or phone_2)[:50]
-            
-            # Эта проверка больше не нужна, так как мы сделали ее в самом начале
-            # if not phone_number:
-            #     raise ValueError("Не найден или некорректен номер телефона.")
 
             contact = await _get_or_create_contact(db, name=client_name, phone=phone_number)
-            
             if not contact:
                 raise Exception("Не удалось создать или найти контакт.")
-            
             await db.flush()
 
             message_parts = []
@@ -98,7 +86,6 @@ async def process_single_lead_row(db: AsyncSession, row: list):
             status_from_sheet_lower = status_from_sheet_raw.lower()
             crm_status = STATUS_MAPPING.get(status_from_sheet_lower)
             quote.status = crm_status if crm_status else QuoteRequest.StatusEnum.IMPORTED
-            
             await db.flush()
 
             new_lead_entry = GoogleSheetLead(
@@ -110,7 +97,6 @@ async def process_single_lead_row(db: AsyncSession, row: list):
                 raw_data=row
             )
             db.add(new_lead_entry)
-            
             await _notify_managers(db, quote, contact.full_name)
         
         log.info(f"Успешно подготовлена к сохранению заявка для лида {original_row_number_info}")
@@ -119,7 +105,7 @@ async def process_single_lead_row(db: AsyncSession, row: list):
         log.error(f"Ошибка при обработке строки {original_row_number_info}: {e}", exc_info=False)
     except Exception as e:
         log.error(f"Непредвиденная ошибка при обработке строки {original_row_number_info}: {e}", exc_info=True)
-        
+
 def _normalize_phone(phone: str) -> str:
     if not phone: return ""
     digits = re.sub(r'\D', '', phone)

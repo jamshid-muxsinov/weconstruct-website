@@ -94,7 +94,6 @@ def create_admin_app() -> FastAPI:
         dependencies=[Depends(get_current_active_user)]
     )
     
-    api_router.name = "admin_api"
     app.include_router(
         api_router, 
         dependencies=[Depends(get_current_active_user)]

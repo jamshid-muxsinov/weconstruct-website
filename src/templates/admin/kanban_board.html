@@ -74,7 +74,7 @@
             {% endfor %}
         </select>
                 
-        <a :href="'{{ url_for('admin_api:api_export_requests') }}?card_ids=' + $store.kanbanManager.selectedIds.join(',')" 
+        <a :href="'/api/export-requests?card_ids=' + $store.kanbanManager.selectedIds.join(',')"
             class="btn btn-sm btn-secondary">
             <i class='bx bx-download'></i> {{ _('export') }}
         </a>
