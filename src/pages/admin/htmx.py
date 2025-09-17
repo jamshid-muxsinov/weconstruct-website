@@ -9,6 +9,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload, joinedload
 from slugify import slugify
 import wtforms
+import logging # --- Добавьте импорт логгера
 
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
@@ -19,6 +20,7 @@ from src.schemas.crm_schemas import TaskCreate
 from .dependencies import get_common_context
 from pathlib import Path
 
+log = logging.getLogger(__name__) # --- Инициализируйте логгер
 MEDIA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "media"
 router = APIRouter(prefix="/htmx", tags=["Admin HTMX"])
 
@@ -88,7 +90,6 @@ async def add_task_to_quote(
     context = {"request": request, "tasks": sorted(updated_tasks, key=lambda t: (t.completed, -t.id))}
     return templates.TemplateResponse("admin/partials/_task_list_partial.html", context)
 
-# --- НАЧАЛО ИЗМЕНЕНИЯ: Передаем весь объект current_user в сервис ---
 @router.post("/task/{pk}/toggle", response_class=HTMLResponse, name="admin_htmx_toggle_task")
 async def toggle_task(
     pk: int, request: Request,
@@ -112,7 +113,6 @@ async def toggle_task(
     trigger_payload = json.dumps({"show-toast": {"message": "Статус задачи изменен"}})
     response.headers["HX-Trigger"] = quote(trigger_payload)
     return response
-# --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
 @router.get("/category-add-modal/", response_class=HTMLResponse, name="admin_htmx_category_add_modal")
 async def get_category_add_modal(request: Request):
@@ -140,7 +140,7 @@ async def get_kanban_content(
     db: AsyncSession = Depends(get_db_session)
 ):
     if not request.headers.get("hx-request"):
-        kanban_url = request.url_for('admin_kanban_board')
+        kanban_url = request.url_for('admin_kanban_board', locale=request.state.locale)
         return RedirectResponse(f"{kanban_url}?show_archived={show_archived}")
 
     kanban_data = await crm_service.get_kanban_data(db, show_archived)

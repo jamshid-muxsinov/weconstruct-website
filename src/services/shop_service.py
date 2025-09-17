@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func
+from sqlalchemy.dialects.postgresql import insert as pg_insert # --- ИЗМЕНЕНИЕ: Импортируем insert
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 import logging
@@ -13,51 +14,37 @@ from src.core.cache import cache_result, invalidate_cache
 
 log = logging.getLogger(__name__)
 
-# --- ИЗМЕНЕНИЕ: Железобетонная версия функции get-or-create ---
+# --- ИЗМЕНЕНИЕ: Железобетонная версия функции get-or-create с использованием UPSERT ---
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact | None:
     """
     Асинхронно-безопасная и надежная версия для поиска или создания контакта,
-    устойчивая к гонке состояний (race condition) с использованием SAVEPOINT.
+    устойчивая к гонке состояний (race condition) с использованием INSERT ... ON CONFLICT.
     """
     if not phone or not phone.strip():
         return None
 
-    # Нормализуем номер для консистентного поиска
+    first_name, _, last_name = name.partition(" ")
+
+    insert_stmt = pg_insert(Contact).values(
+        phone=phone,
+        name=first_name,
+        last_name=last_name or None
+    ).on_conflict_do_nothing(
+        index_elements=['phone']
+    )
+    await db.execute(insert_stmt)
+
+    # 2. Теперь, после того как мы гарантировали, что контакт существует,
+    # мы просто находим его.
     phone_normalized_in_db = func.substr(func.regexp_replace(Contact.phone, r'\D', '', 'g'), -9)
     search_phone_normalized = "".join(filter(str.isdigit, phone))[-9:]
     
-    # 1. Сначала пытаемся найти контакт. Это решит 99% случаев без блокировок.
-    stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
-    result = await db.execute(stmt)
+    select_stmt = select(Contact).where(phone_normalized_in_db == search_phone_normalized)
+    
+    result = await db.execute(select_stmt)
     contact = result.scalars().first()
-    if contact:
-        return contact
-        
-    # 2. Если не нашли, пытаемся создать его внутри вложенной транзакции (SAVEPOINT).
-    try:
-        # Эта конструкция создает SAVEPOINT
-        async with db.begin_nested(): 
-            first_name, _, last_name = name.partition(" ")
-            new_contact = Contact(
-                phone=phone,
-                name=first_name,
-                last_name=last_name or None
-            )
-            db.add(new_contact)
-        
-        # Если блок выше завершился без ошибок, SAVEPOINT автоматически подтверждается.
-        await db.refresh(new_contact)
-        return new_contact
-        
-    except IntegrityError:
-        # 3. Если произошла гонка состояний, 'begin_nested' автоматически откатит SAVEPOINT.
-        # Основная транзакция останется рабочей и не будет закрыта.
-        # Теперь мы можем безопасно и гарантированно найти контакт,
-        # который только что создал параллельный процесс.
-        log.warning(f"Handled race condition for phone {phone}. Re-fetching contact.")
-        result = await db.execute(stmt)
-        contact = result.scalars().first()
-        return contact
+    
+    return contact
     
 async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, product_id: int = None, source: str = "website") -> QuoteRequest:
     quote = QuoteRequest(
@@ -68,7 +55,7 @@ async def _create_quote_request(db: AsyncSession, contact_id: int, message: str,
         status=QuoteRequest.StatusEnum.IMPORTED
     )
     db.add(quote)
-    await db.flush() # Получаем ID для связи
+    await db.flush()
     return quote
 
 async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: str):
@@ -105,7 +92,6 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
     if recent_requests:
         return "duplicate"
     
-    # Оборачиваем создание заявки и уведомлений в одну транзакцию
     async with db.begin():
         quote = await _create_quote_request(db, contact.id, message, product_id, source)
         await _notify_managers(db, quote, contact.full_name)
