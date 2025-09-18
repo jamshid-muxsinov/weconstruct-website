@@ -2,6 +2,8 @@
 
 import logging
 import gspread
+# --- ИЗМЕНЕНИЕ: Добавляем импорт 'os' для проверки файлов ---
+import os
 from google.oauth2.service_account import Credentials
 from src.core.config import get_settings
 
@@ -20,16 +22,26 @@ STATUS_COLUMN = 7
 
 def get_gspread_client() -> gspread.Client | None:
     """Аутентифицируется и возвращает клиент gspread."""
-    if not settings.GOOGLE_CREDENTIALS_FILE:
-        log.warning("Путь к файлу ключей GOOGLE_CREDENTIALS_FILE не указан.")
+    credentials_path = settings.GOOGLE_CREDENTIALS_FILE
+    
+    # --- ИЗМЕНЕНИЕ: Добавляем надежные проверки перед чтением файла ---
+    if not credentials_path:
+        log.warning("Путь к файлу ключей GOOGLE_CREDENTIALS_FILE не указан в .env файле.")
         return None
+
+    if not os.path.exists(credentials_path):
+        log.error(f"Файл ключей не найден по пути: {credentials_path}. Убедитесь, что файл существует и правильно смонтирован в Docker.")
+        return None
+
+    if not os.path.isfile(credentials_path):
+        log.error(f"Ошибка: Путь '{credentials_path}' указывает на папку, а не на файл. Проверьте ваш Docker-монтирование.")
+        return None
+    # --- КОНЕЦ ИЗМЕНЕНИЙ ---
+
     try:
-        creds = Credentials.from_service_account_file(settings.GOOGLE_CREDENTIALS_FILE, scopes=SCOPES)
+        creds = Credentials.from_service_account_file(credentials_path, scopes=SCOPES)
         client = gspread.authorize(creds)
         return client
-    except FileNotFoundError:
-        log.error(f"Файл ключей не найден: {settings.GOOGLE_CREDENTIALS_FILE}")
-        return None
     except Exception as e:
         log.error(f"Ошибка аутентификации в Google Sheets: {e}", exc_info=True)
         return None
