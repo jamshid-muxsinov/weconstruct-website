@@ -26,10 +26,10 @@ class UserForm(wtforms.Form):
 
 User.__str__ = lambda self: self.username
 
+
 USER_META = Meta(User, ['username', 'role', 'is_staff', 'is_active'], UserForm, "Пользователь", "Пользователи")
-
-USER_META.add_url_name = None 
-
+USER_META.add_url_name = None
+USER_META.delete_url_name = None 
 
 @router.get("/users/", response_class=HTMLResponse, name="admin_user_list")
 async def user_list(

@@ -16,6 +16,7 @@ from slugify import slugify
 import wtforms
 from typing import Optional, List
 from datetime import datetime
+
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
 from src.models.shop_models import User, Product, Category, GoogleSheetLead, QuoteRequest, Contact, ProductImage
@@ -26,7 +27,11 @@ from fastapi_pagination import Params, Page
 from fastapi_pagination.api import create_page
 from src.services import crm_service
 
-router = APIRouter()
+# --- ИЗМЕНЕНИЕ: Создаем отдельные роутеры для каждой группы маршрутов ---
+# Это позволит нам назначать разные права доступа в главном файле router.py
+product_router = APIRouter()
+category_router = APIRouter()
+quoterequest_router = APIRouter()
 log = logging.getLogger(__name__)
 
 def set_hx_trigger_header(response: Response, message_key: str, request: Request, type: str = "success"):
@@ -111,7 +116,6 @@ PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], 
 CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "category_single", "list_categories")
 QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'business_type', 'created_at', 'status', 'assigned_to'], QuoteRequestForm, "request_single", "list_requests")
 CONTACT_META = Meta(Contact, ['full_name', 'phone', 'email'], None, "client_single", "list_contacts")
-
 CONTACT_META.change_url_name = "admin_contact_detail"
 
 async def handle_list_view(
@@ -175,35 +179,142 @@ async def populate_request_form_choices(db: AsyncSession, request: Request, form
 
 # --- VIEWS (LIST, ADD/CHANGE, DELETE) ---
 
-@router.get("/contact/", response_class=HTMLResponse, name="admin_contact_list")
-async def contact_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    page_obj = await handle_list_view(db, CONTACT_META, page=page, size=size, search_query=q)
-    context.update({"meta": CONTACT_META, "page": page_obj, "list_display": CONTACT_META.list_display})
-    
-    is_htmx = "HX-Request" in request.headers
-    template_name = "admin/partials/_generic_list_content.html" if is_htmx else "admin/generic_list.html"
-    return templates.TemplateResponse(template_name, context)
-
-@router.get("/quoterequest/", response_class=HTMLResponse, name="admin_quoterequest_list")
+# --- QuoteRequest Routes ---
+@quoterequest_router.get("/", response_class=HTMLResponse, name="admin_quoterequest_list")
 async def quoterequest_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), sort: Optional[str] = Query(None), date_from: Optional[str] = Query(None), date_to: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     page_obj = await handle_list_view(db, QUOTEREQUEST_META, page=page, size=size, search_query=q, sort=sort, date_from=date_from, date_to=date_to)
     context.update({"meta": QUOTEREQUEST_META, "page": page_obj, "list_display": QUOTEREQUEST_META.list_display})
-
     is_htmx = "HX-Request" in request.headers
     template_name = "admin/partials/_generic_list_content.html" if is_htmx else "admin/generic_list.html"
     return templates.TemplateResponse(template_name, context)
 
-@router.get("/product/", response_class=HTMLResponse, name="admin_product_list")
+@quoterequest_router.get("/add/", response_class=HTMLResponse, name="admin_quoterequest_add")
+async def quoterequest_form_get_add(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
+    form = QUOTEREQUEST_META.form_class()
+    await populate_request_form_choices(db, request, form)
+    _ = templates.env.globals['_']
+    title = f"{_({'request': request}, 'adding')}: {_({'request': request}, 'request_single')}"
+    context.update({"meta": QUOTEREQUEST_META, "original": None, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
+    return templates.TemplateResponse("admin/quoterequest_form.html", context)
+
+@quoterequest_router.post("/add/", response_class=HTMLResponse)
+async def quoterequest_form_post_add(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
+    form_data = await request.form()
+    form = QUOTEREQUEST_META.form_class(form_data)
+    await populate_request_form_choices(db, request, form)
+    if form.validate():
+        from src.services.shop_service import _get_or_create_contact
+        contact_id = int(form.contact_id.data) if form.contact_id.data else None
+        if not contact_id:
+            contact = await _get_or_create_contact(db, form.new_contact_name.data, form.new_contact_phone.data)
+            contact_id = contact.id
+        quote = QuoteRequest(contact_id=contact_id)
+        form.populate_obj(quote)
+        db.add(quote)
+        await db.commit()
+        response = RedirectResponse(request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale), status_code=303)
+        return set_hx_trigger_header(response, "request_created_success", request)
+    _ = templates.env.globals['_']
+    title = f"{_({'request': request}, 'adding')}: {_({'request': request}, 'request_single')}"
+    context.update({"meta": QUOTEREQUEST_META, "original": None, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
+    return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
+
+@quoterequest_router.get("/{pk}/change/", response_class=HTMLResponse, name="admin_quoterequest_change")
+async def quoterequest_change_form_get(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
+    quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)])
+    if not quote: raise HTTPException(404)
+    form = QUOTEREQUEST_META.form_class(obj=quote)
+    form.contact_id.data = quote.contact_id
+    await populate_request_form_choices(db, request, form)
+    _ = templates.env.globals['_']
+    title = f"{_({'request': request}, 'editing')}: {_({'request': request}, 'request_single')} #{pk}"
+    context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
+    return templates.TemplateResponse("admin/quoterequest_form.html", context)
+
+@quoterequest_router.post("/{pk}/change/", response_class=HTMLResponse)
+async def quoterequest_change_form_post(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
+    quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)])
+    if not quote: raise HTTPException(404)
+    form_data = await request.form()
+    form = QUOTEREQUEST_META.form_class(form_data, obj=quote)
+    await populate_request_form_choices(db, request, form)
+    if form.validate():
+        form.populate_obj(quote)
+        db.add(quote)
+        await db.commit()
+        response = RedirectResponse(request.url_for(QUOTEREQUEST_META.change_url_name, locale=request.state.locale, pk=pk), status_code=303)
+        return set_hx_trigger_header(response, "request_saved_success", request)
+    _ = templates.env.globals['_']
+    title = f"{_({'request': request}, 'editing')}: {_({'request': request}, 'request_single')} #{pk}"
+    context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
+    return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
+
+@quoterequest_router.get("/{pk}/delete/", response_class=HTMLResponse, name="admin_quoterequest_delete")
+@quoterequest_router.post("/{pk}/delete/", response_class=Response)
+async def quoterequest_delete(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
+    quote_req = await db.get(QuoteRequest, pk, options=[selectinload(QuoteRequest.tasks)])
+    if not quote_req: raise HTTPException(404, detail="QuoteRequest not found")
+    
+    _ = templates.env.globals['_']
+
+    if request.method == "POST":
+        try:
+            await db.execute(update(GoogleSheetLead).where(GoogleSheetLead.quote_request_id == pk).values(status=GoogleSheetLead.StatusEnum.ARCHIVED))
+            await db.delete(quote_req)
+            await db.commit()
+            
+            response = Response(status_code=200)
+            redirect_url = request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale)
+            message = _({'request': request}, "request_deleted_success")
+            trigger_payload = {"show-toast": {"message": message, "type": "error"}, "updateKanban": True}
+            response.headers["HX-Redirect"] = str(redirect_url)
+            response.headers["HX-Trigger"] = json.dumps(trigger_payload)
+            return response
+        except IntegrityError:
+            await db.rollback()
+            context.update({"error_message": "Не удалось удалить заявку."})
+            return templates.TemplateResponse("admin/500.html", context, status_code=500)
+            
+    back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale))
+    
+    translated_entity_name = _({'request': request}, QUOTEREQUEST_META.verbose_name)
+    title = _({'request': request}, 'delete_confirmation_title', entity=translated_entity_name)
+
+    context.update({"meta": QUOTEREQUEST_META, "original": quote_req, "title": title, "back_url": back_url, "htmx_request": "HX-Request" in request.headers})
+    return templates.TemplateResponse("admin/delete_confirmation.html", context)
+
+@quoterequest_router.get("/export", name="admin_quoterequest_export")
+async def export_requests(
+    card_ids: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db_session),
+    current_user: User = Depends(get_current_active_user)
+):
+    ids = []
+    if card_ids:
+        try:
+            ids = [int(id_str) for id_str in card_ids.split(',')]
+        except (ValueError, TypeError):
+            pass
+    
+    csv_content = await crm_service.export_requests_csv(db, ids)
+    
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=quote_requests.csv"}
+    )
+
+# --- Product Routes ---
+@product_router.get("/", response_class=HTMLResponse, name="admin_product_list")
 async def product_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     page_obj = await handle_list_view(db, PRODUCT_META, page=page, size=size, search_query=q)
     context.update({"meta": PRODUCT_META, "page": page_obj, "list_display": PRODUCT_META.list_display})
-    
     is_htmx = "HX-Request" in request.headers
     template_name = "admin/partials/_generic_list_content.html" if is_htmx else "admin/generic_list.html"
     return templates.TemplateResponse(template_name, context)
-    
-@router.get("/product/add/", response_class=HTMLResponse, name="admin_product_add")
-@router.get("/product/{pk}/change/", response_class=HTMLResponse, name="admin_product_change")
+
+@product_router.get("/add/", response_class=HTMLResponse, name="admin_product_add")
+@product_router.get("/{pk}/change/", response_class=HTMLResponse, name="admin_product_change")
 async def product_form_get(request: Request, pk: Optional[int] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     instance = await db.get(Product, pk, options=[selectinload(Product.images)]) if pk else None
     if pk and not instance: raise HTTPException(404)
@@ -213,8 +324,8 @@ async def product_form_get(request: Request, pk: Optional[int] = None, context: 
     context.update({"meta": PRODUCT_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/generic_form.html", context)
 
-@router.post("/product/add/", response_class=HTMLResponse)
-@router.post("/product/{pk}/change/", response_class=HTMLResponse)
+@product_router.post("/add/", response_class=HTMLResponse)
+@product_router.post("/{pk}/change/", response_class=HTMLResponse)
 async def product_form_post(request: Request, pk: Optional[int] = None, main_image: UploadFile = File(None), images: List[UploadFile] = File([]), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     instance = await db.get(Product, pk, options=[selectinload(Product.images)]) if pk else None
     if pk and not instance: raise HTTPException(404)
@@ -248,8 +359,8 @@ async def product_form_post(request: Request, pk: Optional[int] = None, main_ima
     context.update({"meta": PRODUCT_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/generic_form.html", context, status_code=422)
 
-@router.get("/product/{pk}/delete/", response_class=HTMLResponse, name="admin_product_delete")
-@router.post("/product/{pk}/delete/", response_class=HTMLResponse)
+@product_router.get("/{pk}/delete/", response_class=HTMLResponse, name="admin_product_delete")
+@product_router.post("/{pk}/delete/", response_class=HTMLResponse)
 async def product_delete(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     product = await db.get(Product, pk)
     if not product: raise HTTPException(404)
@@ -266,17 +377,17 @@ async def product_delete(request: Request, pk: int, context: dict = Depends(get_
     context.update({"meta": PRODUCT_META, "original": product, "title": title, "back_url": request.url_for(PRODUCT_META.change_url_name, locale=request.state.locale, pk=pk), "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
 
-@router.get("/category/", response_class=HTMLResponse, name="admin_category_list")
+# --- Category Routes ---
+@category_router.get("/", response_class=HTMLResponse, name="admin_category_list")
 async def category_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     page_obj = await handle_list_view(db, CATEGORY_META, page=page, size=size, search_query=q)
     context.update({"meta": CATEGORY_META, "page": page_obj, "list_display": ['name_ru', 'description_ru'], "search_query": q})
-    
     is_htmx = "HX-Request" in request.headers
     template_name = "admin/partials/_generic_list_content.html" if is_htmx else "admin/generic_list.html"
     return templates.TemplateResponse(template_name, context)
 
-@router.get("/category/add/", response_class=HTMLResponse, name="admin_category_add")
-@router.get("/category/{pk}/change/", response_class=HTMLResponse, name="admin_category_change")
+@category_router.get("/add/", response_class=HTMLResponse, name="admin_category_add")
+@category_router.get("/{pk}/change/", response_class=HTMLResponse, name="admin_category_change")
 async def category_form_get(request: Request, pk: Optional[int] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     instance = await db.get(Category, pk) if pk else None
     if pk and not instance: raise HTTPException(404)
@@ -284,8 +395,8 @@ async def category_form_get(request: Request, pk: Optional[int] = None, context:
     context.update({"meta": CATEGORY_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/generic_form.html", context)
 
-@router.post("/category/add/", response_class=HTMLResponse)
-@router.post("/category/{pk}/change/", response_class=HTMLResponse)
+@category_router.post("/add/", response_class=HTMLResponse)
+@category_router.post("/{pk}/change/", response_class=HTMLResponse)
 async def category_form_post(request: Request, pk: Optional[int] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     instance = await db.get(Category, pk) if pk else None
     if pk and not instance: raise HTTPException(404)
@@ -302,8 +413,8 @@ async def category_form_post(request: Request, pk: Optional[int] = None, context
     context.update({"meta": CATEGORY_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/generic_form.html", context)
 
-@router.get("/category/{pk}/delete/", response_class=HTMLResponse, name="admin_category_delete")
-@router.post("/category/{pk}/delete/", response_class=HTMLResponse)
+@category_router.get("/{pk}/delete/", response_class=HTMLResponse, name="admin_category_delete")
+@category_router.post("/{pk}/delete/", response_class=HTMLResponse)
 async def category_delete(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     category = await db.get(Category, pk)
     if not category: raise HTTPException(404)
@@ -324,122 +435,3 @@ async def category_delete(request: Request, pk: int, context: dict = Depends(get
     
     context.update({"meta": CATEGORY_META, "original": category, "title": title, "back_url": request.url_for(CATEGORY_META.change_url_name, locale=request.state.locale, pk=pk), "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
-
-@router.get("/quoterequest/add/", response_class=HTMLResponse, name="admin_quoterequest_add")
-async def quoterequest_form_get_add(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    form = QUOTEREQUEST_META.form_class()
-    await populate_request_form_choices(db, request, form)
-    _ = templates.env.globals['_']
-    title = f"{_({'request': request}, 'adding')}: {_({'request': request}, 'request_single')}"
-    context.update({"meta": QUOTEREQUEST_META, "original": None, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/quoterequest_form.html", context)
-
-@router.post("/quoterequest/add/", response_class=HTMLResponse)
-async def quoterequest_form_post_add(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    form_data = await request.form()
-    form = QUOTEREQUEST_META.form_class(form_data)
-    await populate_request_form_choices(db, request, form)
-    if form.validate():
-        from src.services.shop_service import _get_or_create_contact
-        contact_id = int(form.contact_id.data) if form.contact_id.data else None
-        if not contact_id:
-            contact = await _get_or_create_contact(db, form.new_contact_name.data, form.new_contact_phone.data)
-            contact_id = contact.id
-        quote = QuoteRequest(contact_id=contact_id)
-        form.populate_obj(quote)
-        db.add(quote)
-        await db.commit()
-        response = RedirectResponse(request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale), status_code=303)
-        return set_hx_trigger_header(response, "request_created_success", request)
-    _ = templates.env.globals['_']
-    title = f"{_({'request': request}, 'adding')}: {_({'request': request}, 'request_single')}"
-    context.update({"meta": QUOTEREQUEST_META, "original": None, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
-
-@router.get("/quoterequest/{pk}/change/", response_class=HTMLResponse, name="admin_quoterequest_change")
-async def quoterequest_change_form_get(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)])
-    if not quote: raise HTTPException(404)
-    form = QUOTEREQUEST_META.form_class(obj=quote)
-    form.contact_id.data = quote.contact_id
-    await populate_request_form_choices(db, request, form)
-    _ = templates.env.globals['_']
-    title = f"{_({'request': request}, 'editing')}: {_({'request': request}, 'request_single')} #{pk}"
-    context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/quoterequest_form.html", context)
-
-@router.post("/quoterequest/{pk}/change/", response_class=HTMLResponse)
-async def quoterequest_change_form_post(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)])
-    if not quote: raise HTTPException(404)
-    form_data = await request.form()
-    form = QUOTEREQUEST_META.form_class(form_data, obj=quote)
-    await populate_request_form_choices(db, request, form)
-    if form.validate():
-        form.populate_obj(quote)
-        db.add(quote)
-        await db.commit()
-        response = RedirectResponse(request.url_for(QUOTEREQUEST_META.change_url_name, locale=request.state.locale, pk=pk), status_code=303)
-        return set_hx_trigger_header(response, "request_saved_success", request)
-    _ = templates.env.globals['_']
-    title = f"{_({'request': request}, 'editing')}: {_({'request': request}, 'request_single')} #{pk}"
-    context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
-
-@router.get("/quoterequest/{pk}/delete/", response_class=HTMLResponse, name="admin_quoterequest_delete")
-@router.post("/quoterequest/{pk}/delete/", response_class=Response)
-async def quoterequest_delete(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    quote_req = await db.get(QuoteRequest, pk, options=[selectinload(QuoteRequest.tasks)])
-    if not quote_req: raise HTTPException(404, detail="QuoteRequest not found")
-    
-    _ = templates.env.globals['_']
-
-    if request.method == "POST":
-        try:
-            await db.execute(update(GoogleSheetLead).where(GoogleSheetLead.quote_request_id == pk).values(status=GoogleSheetLead.StatusEnum.ARCHIVED))
-            await db.delete(quote_req)
-            await db.commit()
-            
-            response = Response(status_code=200)
-            redirect_url = request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale)
-            message = _({'request': request}, "request_deleted_success")
-            trigger_payload = {"show-toast": {"message": message, "type": "error"}, "updateKanban": True}
-            response.headers["HX-Redirect"] = str(redirect_url)
-            response.headers["HX-Trigger"] = json.dumps(trigger_payload)
-            return response
-        except IntegrityError:
-            await db.rollback()
-            context.update({"error_message": "Не удалось удалить заявку."})
-            return templates.TemplateResponse("admin/500.html", context, status_code=500)
-            
-    back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale))
-    
-    # --- ИСПРАВЛЕННЫЙ ВЫЗОВ ПЕРЕВОДА ---
-    translated_entity_name = _({'request': request}, QUOTEREQUEST_META.verbose_name)
-    title = _({'request': request}, 'delete_confirmation_title', entity=translated_entity_name)
-    # --- КОНЕЦ ИСПРАВЛЕНИЯ ---
-
-    context.update({"meta": QUOTEREQUEST_META, "original": quote_req, "title": title, "back_url": back_url, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/delete_confirmation.html", context)
-
-@router.get("/quoterequest/export", name="admin_quoterequest_export")
-async def export_requests(
-    card_ids: Optional[str] = Query(None),
-    db: AsyncSession = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Экспорт выбранных заявок в CSV"""
-    ids = []
-    if card_ids:
-        try:
-            ids = [int(id_str) for id_str in card_ids.split(',')]
-        except (ValueError, TypeError):
-            pass
-    
-    csv_content = await crm_service.export_requests_csv(db, ids)
-    
-    return Response(
-        content=csv_content,
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=quote_requests.csv"}
-    )
