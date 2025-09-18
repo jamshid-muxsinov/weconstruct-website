@@ -214,6 +214,8 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
         form.populate_obj(quote)
         if quote.product_id == 0:
             quote.product_id = None
+        if quote.assigned_to_id == 0:
+            quote.assigned_to_id = None
         db.add(quote)
         await db.commit()
         response = RedirectResponse(request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale), status_code=303)
@@ -246,6 +248,8 @@ async def quoterequest_change_form_post(request: Request, pk: int, context: dict
         form.populate_obj(quote)
         if quote.product_id == 0:
             quote.product_id = None
+        if quote.assigned_to_id == 0:
+            quote.assigned_to_id = None
         db.add(quote)
         await db.commit()
         response = RedirectResponse(request.url_for(QUOTEREQUEST_META.change_url_name, locale=request.state.locale, pk=pk), status_code=303)
