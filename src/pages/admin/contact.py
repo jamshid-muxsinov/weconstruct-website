@@ -2,7 +2,9 @@
 
 import json
 from urllib.parse import quote
-from fastapi import APIRouter, Depends, HTTPException, Request, Form
+# --- ИЗМЕНЕНИЕ: Добавляем Query и Optional ---
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 import wtforms
@@ -13,7 +15,9 @@ from src.services import crm_service
 from .dependencies import get_common_context
 
 from sqlalchemy.exc import IntegrityError
-from src.models.shop_models import Contact # Убедитесь, что модель импортирована
+from src.models.shop_models import Contact
+# --- ИЗМЕНЕНИЕ: Импортируем handle_list_view и CONTACT_META из crud.py ---
+from .crud import handle_list_view, CONTACT_META
 
 router = APIRouter()
 
@@ -123,6 +127,26 @@ async def htmx_pin_note(
     })
     response.headers["HX-Trigger"] = quote(trigger_payload)
     return response
+
+@router.get("/", response_class=HTMLResponse, name="admin_contact_list")
+async def contact_list(
+    request: Request, 
+    page: int = Query(1, ge=1), 
+    size: int = Query(20, ge=1, le=100), 
+    q: Optional[str] = Query(None), 
+    context: dict = Depends(get_common_context), 
+    db: AsyncSession = Depends(get_db_session)
+):
+    page_obj = await handle_list_view(db, CONTACT_META, page=page, size=size, search_query=q)
+    context.update({
+        "meta": CONTACT_META, 
+        "page": page_obj, 
+        "list_display": CONTACT_META.list_display,
+    })
+    
+    is_htmx = "HX-Request" in request.headers
+    template_name = "admin/partials/_generic_list_content.html" if is_htmx else "admin/generic_list.html"
+    return templates.TemplateResponse(template_name, context)
 
 @router.get("/contact/{pk}/delete/", response_class=HTMLResponse, name="admin_contact_delete")
 @router.post("/contact/{pk}/delete/", response_class=HTMLResponse)

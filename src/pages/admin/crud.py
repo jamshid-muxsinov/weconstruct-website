@@ -116,6 +116,8 @@ PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], 
 CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "category_single", "list_categories")
 QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'business_type', 'created_at', 'status', 'assigned_to'], QuoteRequestForm, "request_single", "list_requests")
 CONTACT_META = Meta(Contact, ['full_name', 'phone', 'email'], None, "client_single", "list_contacts")
+CONTACT_META.add_url_name = None 
+CONTACT_META.delete_url_name = "admin_contact_delete"
 CONTACT_META.change_url_name = "admin_contact_detail"
 
 async def handle_list_view(

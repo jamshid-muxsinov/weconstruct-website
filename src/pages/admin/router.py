@@ -6,12 +6,11 @@ from . import auth
 from . import dashboard
 from . import kanban
 from . import crud
-from . import contact
+from . import contact # Убедитесь, что этот импорт есть
 from . import profile
 from . import htmx 
 from . import api
 from . import importer
-# --- ИЗМЕНЕНИЕ: Возвращаем импорт 'invites' ---
 from . import invites
 from . import users 
 from src.core.security import get_current_superuser, get_current_seo_user, get_current_staff_user
@@ -23,6 +22,7 @@ htmx_router = htmx.router
 # Роутер для страниц, доступных всем сотрудникам (менеджерам)
 staff_crud_router = APIRouter(dependencies=[Depends(get_current_staff_user)])
 staff_crud_router.include_router(crud.quoterequest_router, prefix="/quoterequest", tags=["CRUD QuoteRequest"])
+# --- ИЗМЕНЕНИЕ: Правильно подключаем роутер контактов ---
 staff_crud_router.include_router(contact.router, prefix="/contact", tags=["CRUD Contact"])
 
 # Роутер для страниц, доступных только админам
