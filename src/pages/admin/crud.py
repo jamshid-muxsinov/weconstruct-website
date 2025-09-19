@@ -334,38 +334,73 @@ async def product_form_get(request: Request, pk: Optional[int] = None, context: 
     context.update({"meta": PRODUCT_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/generic_form.html", context)
 
+
 @product_router.post("/add/", response_class=HTMLResponse)
 @product_router.post("/{pk}/change/", response_class=HTMLResponse)
-async def product_form_post(request: Request, pk: Optional[int] = None, main_image: UploadFile = File(None), images: List[UploadFile] = File([]), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
+async def product_form_post(
+    request: Request, 
+    pk: Optional[int] = None, 
+    # --- ИЗМЕНЕНИЕ: FastAPI будет передавать файлы как отдельные аргументы ---
+    main_image: UploadFile = File(None), 
+    images: List[UploadFile] = File([]), 
+    context: dict = Depends(get_common_context), 
+    db: AsyncSession = Depends(get_db_session)
+):
     instance = await db.get(Product, pk, options=[selectinload(Product.images)]) if pk else None
     if pk and not instance: raise HTTPException(404)
+    
     form_data = await request.form()
     form = PRODUCT_META.form_class(form_data, obj=instance)
+    
     cats = (await db.execute(select(Category).order_by(Category.name_ru))).scalars().all()
     form.category_id.choices = [(c.id, c.name_ru) for c in cats]
+
+    # --- ИЗМЕНЕНИЕ: Убираем поля для файлов из валидации, так как мы их обрабатываем вручную ---
+    del form.main_image
+    del form.images
+
     if form.validate():
         instance = instance or Product()
+        # Заполняем только текстовые поля
         form.populate_obj(instance)
         instance.slug = slugify(instance.name_ru)
+        
         products_media_dir = Path("media/products")
         products_media_dir.mkdir(parents=True, exist_ok=True)
+        
+        # --- НАЧАЛО БЛОКА РУЧНОЙ ОБРАБОТКИ ФАЙЛОВ ---
+        # 1. Обрабатываем основное изображение
         if main_image and main_image.filename:
-            if instance.main_image:
-                old_file_path = Path("media") / instance.main_image
-                if old_file_path.exists(): old_file_path.unlink()
+            # Удаляем старый файл, если он был
+            if instance.main_image and os.path.exists(Path("media") / instance.main_image):
+                os.remove(Path("media") / instance.main_image)
+            
+            # Сохраняем новый файл
             file_path_relative = f"products/{uuid.uuid4()}_{main_image.filename}"
-            with open(products_media_dir / file_path_relative.split('/')[-1], "wb") as buffer: buffer.write(await main_image.read())
+            with open(products_media_dir / file_path_relative.split('/')[-1], "wb") as buffer:
+                buffer.write(await main_image.read())
             instance.main_image = file_path_relative
+
         db.add(instance)
-        await db.flush()
+        await db.flush() # Получаем ID для нового продукта, чтобы привязать доп. изображения
+
+        # 2. Обрабатываем дополнительные изображения
         for image_file in images:
             if image_file and image_file.filename:
                 file_path_relative = f"products/{uuid.uuid4()}_{image_file.filename}"
-                with open(products_media_dir / file_path_relative.split('/')[-1], "wb") as buffer: buffer.write(await image_file.read())
+                with open(products_media_dir / file_path_relative.split('/')[-1], "wb") as buffer:
+                    buffer.write(await image_file.read())
                 db.add(ProductImage(product_id=instance.id, image=file_path_relative))
+        # --- КОНЕЦ БЛОКА РУЧНОЙ ОБРАБОТКИ ФАЙЛОВ ---
+
         await db.commit()
         response = RedirectResponse(request.url_for(PRODUCT_META.change_url_name, locale=request.state.locale, pk=instance.id), status_code=303)
         return set_hx_trigger_header(response, "product_saved_success", request)
+
+    # В случае ошибки валидации, снова добавляем поля в форму для корректного отображения
+    form.main_image = wtforms.FileField('form_field_main_image')
+    form.images = wtforms.MultipleFileField('form_field_extra_images')
+    
     context.update({"meta": PRODUCT_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/generic_form.html", context, status_code=422)
 
