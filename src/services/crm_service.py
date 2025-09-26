@@ -446,9 +446,9 @@ async def bulk_assign_requests(db: AsyncSession, card_ids: list[int], user_id: i
         log.error(f"Error in bulk assign: {e}", exc_info=True)
         raise
 
-async def bulk_update_status(db: AsyncSession, card_ids: list[int], status: str, current_user_id: int) -> int:
+async def bulk_update_status(db: AsyncSession, card_ids: list[int], new_status: str, current_user_id: int) -> int:
     try:
-        status_enum = QuoteRequest.StatusEnum(status)
+        status_enum = QuoteRequest.StatusEnum(new_status)
         
         requests_to_update_stmt = (
             select(QuoteRequest)
@@ -470,7 +470,7 @@ async def bulk_update_status(db: AsyncSession, card_ids: list[int], status: str,
                     user_id=current_user_id,
                     old_status=current_requests[card_id],
                     new_status=status_enum,
-                    note=f"Bulk status update to {status}"
+                    note=f"Bulk status update to {new_status}"
                 )
                 db.add(log_entry)
         
@@ -493,9 +493,9 @@ async def bulk_update_status(db: AsyncSession, card_ids: list[int], status: str,
         log.error(f"Error in bulk status update: {e}", exc_info=True)
         raise
 
-async def update_single_card_status(db: AsyncSession, card_id: int, status: str, current_user_id: int):
+async def update_single_card_status(db: AsyncSession, card_id: int, new_status: str, current_user_id: int):
     try:
-        status_enum = QuoteRequest.StatusEnum(status)
+        status_enum = QuoteRequest.StatusEnum(new_status)
         
         req = await db.get(
             QuoteRequest, 

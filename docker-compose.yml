@@ -43,7 +43,7 @@ services:
     volumes:
       - .:/app
       - media_volume:/app/media
-      - ./credentials.json:/app/credentials.json:ro
+      - ./config/credentials.json:/app/credentials.json:ro
     depends_on:
       - db
       - redis

@@ -102,13 +102,14 @@ async def bulk_assign_requests(
 @router.post("/bulk-status", name="api_bulk_status")
 async def bulk_update_status(
     card_ids: List[int] = Form(...),
-    status: str = Form(...),
+    # --- ИЗМЕНЕНИЕ: Переименовали 'status' в 'new_status' ---
+    new_status: str = Form(..., alias="status"),
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):
     """Массовое обновление статуса заявок"""
     updated_count = await crm_service.bulk_update_status(
-        db, card_ids, status, current_user.id
+        db, card_ids, new_status, current_user.id
     )
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
     response.headers["HX-Trigger"] = "updateKanban"
@@ -118,13 +119,14 @@ async def bulk_update_status(
 @router.post("/update-status", name="api_update_single_status")
 async def update_single_card_status(
     card_id: int = Form(...),
-    status: str = Form(...),
+    # --- ИЗМЕНЕНИЕ: Переименовали 'status' в 'new_status' ---
+    new_status: str = Form(..., alias="status"),
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):
     """Обновление статуса одной карточки (для Drag & Drop)"""
     req = await crm_service.update_single_card_status(
-        db, card_id, status, current_user.id
+        db, card_id, new_status, current_user.id
     )
     if not req:
         raise HTTPException(status_code=404, detail="QuoteRequest not found")

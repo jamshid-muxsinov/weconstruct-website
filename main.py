@@ -114,6 +114,9 @@ def create_admin_app() -> FastAPI:
     @app.exception_handler(Exception)
     async def generic_admin_exception_handler(request: Request, exc: Exception):
         traceback.print_exc()
+        # --- ИЗМЕНЕНИЕ: Добавляем проверку и установку locale по умолчанию ---
+        if not hasattr(request.state, "locale"):
+            request.state.locale = "ru"
         context = {"request": request, "error_message": "Произошла внутренняя ошибка сервера."}
         return templates.TemplateResponse("admin/500.html", context, status_code=500)
 
