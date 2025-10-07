@@ -19,11 +19,12 @@ from src.models.shop_models import User, QuoteRequest, Task, Category, Contact, 
 from src.services import crm_service
 from src.schemas.crm_schemas import TaskCreate
 from .dependencies import get_common_context
-from pathlib import Path
-
+from pathlib import Path 
 
 log = logging.getLogger(__name__)
-MEDIA_DIR = Path(__file__).resolve().parent.parent.parent.parent / "media"
+
+BASE_DIR = Path("/app")
+
 router = APIRouter(prefix="/htmx", tags=["Admin HTMX"])
 
 NO_CACHE_HEADERS = {
@@ -140,9 +141,9 @@ async def get_kanban_content(
     request: Request,
     show_archived: bool = False,
     q: str = Query(None),
-    assignee: str = Query(None), # Принимаем как строку
+    assignee: str = Query(None), 
     db: AsyncSession = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user) # Нужен для фильтра "мои"
+    current_user: User = Depends(get_current_active_user) 
 ):
     if not request.headers.get("hx-request"):
         kanban_url = request.url_for('admin_kanban_board', locale=request.state.locale)
@@ -253,7 +254,6 @@ async def htmx_get_notifications(
 async def htmx_get_notification_indicator(
     context: dict = Depends(get_common_context)
 ):
-    """Возвращает только HTML для иконки и счетчика уведомлений."""
     return templates.TemplateResponse("admin/partials/_notification_indicator.html", context, headers=NO_CACHE_HEADERS)
 
 @router.delete("/product-image/{pk}/delete/", response_class=Response, name="admin_htmx_delete_product_image")
@@ -261,6 +261,7 @@ async def htmx_delete_product_image(pk: int, db: AsyncSession = Depends(get_db_s
     image = await db.get(ProductImage, pk)
     if image:
         try:
+            # Используем абсолютный путь для надежности
             file_to_delete = BASE_DIR / "media" / image.image
             if file_to_delete.exists():
                 file_to_delete.unlink()
