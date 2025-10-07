@@ -346,6 +346,9 @@ async def product_form_post(
     context: dict = Depends(get_common_context),
     db: AsyncSession = Depends(get_db_session)
 ):
+    # <<< 1. ОПРЕДЕЛЯЕМ АБСОЛЮТНЫЙ ПУТЬ ВНУТРИ КОНТЕЙНЕРА >>>
+    BASE_DIR = Path("/app")
+
     instance = await db.get(Product, pk, options=[selectinload(Product.images)]) if pk else None
     if pk and not instance:
         raise HTTPException(404)
@@ -364,55 +367,55 @@ async def product_form_post(
         form.populate_obj(instance)
         instance.slug = slugify(instance.name_ru)
 
-        products_media_dir = Path("media/products")
+        # <<< 2. ИСПОЛЬЗУЕМ АБСОЛЮТНЫЙ ПУТЬ ДЛЯ СОЗДАНИЯ ПАПКИ >>>
+        products_media_dir = BASE_DIR / "media" / "products"
         products_media_dir.mkdir(parents=True, exist_ok=True)
 
-        # --- НАЧАЛО БЛОКА РУЧНОЙ ОБРАБОТКИ ФАЙЛОВ ---
-
-        # 1. Обрабатываем основное изображение
+        # --- Обработка основного изображения ---
         if main_image and main_image.filename:
-            if instance.main_image and os.path.exists(Path("media") / instance.main_image):
+            if instance.main_image and (BASE_DIR / "media" / instance.main_image).exists():
                 try:
-                    os.remove(Path("media") / instance.main_image)
+                    os.remove(BASE_DIR / "media" / instance.main_image)
                 except OSError as e:
                     log.error(f"Не удалось удалить старый файл: {e}")
 
-            # <<< 2. ОЧИЩАЕМ ИМЯ ФАЙЛА ПЕРЕД СОХРАНЕНИЕМ >>>
-            # Превращаем "3x2.5 coffee-Photoroom.png" в "3x2-5-coffee-photoroom.png"
             safe_filename = slugify(os.path.splitext(main_image.filename)[0]) + os.path.splitext(main_image.filename)[1]
-            file_path_relative = f"products/{uuid.uuid4()}_{safe_filename}"
             
-            with open(products_media_dir / file_path_relative.split('/')[-1], "wb") as buffer:
+            # <<< 3. СОХРАНЯЕМ ФАЙЛ ПО ПОЛНОМУ ПУТИ >>>
+            file_path_relative = f"products/{uuid.uuid4()}_{safe_filename}"
+            full_save_path = products_media_dir / file_path_relative.split('/')[-1]
+            
+            with open(full_save_path, "wb") as buffer:
                 buffer.write(await main_image.read())
             instance.main_image = file_path_relative
 
         db.add(instance)
-        await db.flush()  # Получаем ID для нового продукта
+        await db.flush()
 
-        # 2. Обрабатываем дополнительные изображения
+        # --- Обработка дополнительных изображений ---
         for image_file in images:
             if image_file and image_file.filename:
-                # <<< 3. ОЧИЩАЕМ ИМЯ ФАЙЛА ЗДЕСЬ ТОЖЕ >>>
                 safe_filename = slugify(os.path.splitext(image_file.filename)[0]) + os.path.splitext(image_file.filename)[1]
-                file_path_relative = f"products/{uuid.uuid4()}_{safe_filename}"
                 
-                with open(products_media_dir / file_path_relative.split('/')[-1], "wb") as buffer:
+                # <<< 4. СОХРАНЯЕМ ФАЙЛ ПО ПОЛНОМУ ПУТИ >>>
+                file_path_relative = f"products/{uuid.uuid4()}_{safe_filename}"
+                full_save_path = products_media_dir / file_path_relative.split('/')[-1]
+
+                with open(full_save_path, "wb") as buffer:
                     buffer.write(await image_file.read())
                 db.add(ProductImage(product_id=instance.id, image=file_path_relative))
-        
-        # --- КОНЕЦ БЛОКА РУЧНОЙ ОБРАБОТКИ ФАЙЛОВ ---
 
         await db.commit()
         response = RedirectResponse(request.url_for(PRODUCT_META.change_url_name, locale=request.state.locale, pk=instance.id), status_code=303)
         return set_hx_trigger_header(response, "product_saved_success", request)
 
-    # В случае ошибки валидации, снова добавляем поля в форму для корректного отображения
+    # В случае ошибки валидации
     form.main_image = wtforms.FileField('form_field_main_image')
     form.images = wtforms.MultipleFileField('form_field_extra_images')
 
     context.update({"meta": PRODUCT_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers})
     return templates.TemplateResponse("admin/generic_form.html", context, status_code=422)
-    
+
 @product_router.get("/{pk}/delete/", response_class=HTMLResponse, name="admin_product_delete")
 @product_router.post("/{pk}/delete/", response_class=HTMLResponse)
 async def product_delete(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
