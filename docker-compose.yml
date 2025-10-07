@@ -19,7 +19,9 @@ services:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
     volumes:
-      # <<< ИЗМЕНЕНИЕ 1: Используем прямую привязку папки media >>>
+      # <<< ИСПРАВЛЕНИЕ: Возвращаем монтирование всего проекта >>>
+      - .:/app
+      # И оставляем отдельное монтирование для media
       - ./media:/app/media
     depends_on:
       - db
@@ -41,7 +43,9 @@ services:
       - TZ=Asia/Tashkent
       - GOOGLE_CREDENTIALS_FILE=/app/credentials.json
     volumes:
-      # <<< ИЗМЕНЕНИЕ 2: Используем прямую привязку папки media >>>
+      # <<< ИСПРАВЛЕНИЕ: Возвращаем монтирование всего проекта >>>
+      - .:/app
+      # И оставляем отдельное монтирование для media
       - ./media:/app/media
       - ./config/credentials.json:/app/credentials.json:ro
     depends_on:
@@ -64,10 +68,8 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
-      # <<< ИЗМЕНЕНИЕ 3: Nginx тоже смотрит в ту же папку на сервере >>>
+      # Nginx все так же смотрит в папку media
       - ./media:/app/media:ro
-      # --- ВАЖНО: Убираем монтирование статики, так как она уже в /app ---
-      # - ./src/static:/app/src/static:ro # <-- ЭТА СТРОКА БОЛЬШЕ НЕ НУЖНА
     depends_on:
       site: 
         condition: service_healthy
@@ -75,6 +77,6 @@ services:
         condition: service_healthy
     restart: unless-stopped
     
-# <<< ИЗМЕНЕНИЕ 4: Убираем media_volume, так как он больше не используется >>>
+# <<< ИСПРАВЛЕНИЕ: Убираем пустые тома, так как мы их не используем >>>
 volumes:
   db_data:
