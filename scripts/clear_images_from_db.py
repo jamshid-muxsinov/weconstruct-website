@@ -1,8 +1,7 @@
-# scripts/clear_images_from_db.py
 import asyncio
 import sys
 from pathlib import Path
-from sqlalchemy import update
+from sqlalchemy import update, delete # <<< 1. ДОБАВЛЕН ИМПОРТ delete
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
@@ -14,18 +13,18 @@ async def clear_image_references():
     
     async with async_session_factory() as session:
         async with session.begin():
-            # 1. Удаляем все записи из ProductImage (дополнительные изображения)
-            # Это проще, чем обновлять, так как их все равно нужно будет загружать заново.
-            # await session.execute(delete(ProductImage)) 
-            # Лучше обновим, чтобы не было проблем с внешними ключами
-            stmt_product_image = update(ProductImage).values(image=None)
-            await session.execute(stmt_product_image)
-            print("- Все записи в ProductImage очищены (image=None).")
+            # =============================================================
+            # === ИСПРАВЛЕНИЕ ЗДЕСЬ =======================================
+            # =============================================================
+            # 1. Полностью УДАЛЯЕМ все записи из ProductImage
+            stmt_product_image = delete(ProductImage)
+            result = await session.execute(stmt_product_image)
+            print(f"- Удалено {result.rowcount} записей из таблицы дополнительных изображений (ProductImage).")
 
-            # 2. Обнуляем поле main_image в таблице Product
+            # 2. Обнуляем поле main_image в таблице Product (здесь NULL разрешен)
             stmt_product = update(Product).values(main_image=None)
-            await session.execute(stmt_product)
-            print("- Поля main_image во всех продуктах очищены (main_image=None).")
+            result = await session.execute(stmt_product)
+            print(f"- Очищено {result.rowcount} ссылок на основные изображения в таблице продуктов (Product).")
 
         await session.commit()
     
