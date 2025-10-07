@@ -49,3 +49,5 @@ pytz
 
 gspread
 google-auth-oauthlib
+
+python-slugify
