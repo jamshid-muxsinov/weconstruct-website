@@ -261,7 +261,7 @@ async def htmx_delete_product_image(pk: int, db: AsyncSession = Depends(get_db_s
     image = await db.get(ProductImage, pk)
     if image:
         try:
-            file_to_delete = Path("media") / image.image
+            file_to_delete = BASE_DIR / "media" / image.image
             if file_to_delete.exists():
                 file_to_delete.unlink()
         except OSError as e:
