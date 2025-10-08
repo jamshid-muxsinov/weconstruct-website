@@ -1,7 +1,5 @@
-# src/pages/admin/webhooks.py
-
 import logging
-from typing import List
+from typing import List, Dict, Any
 from fastapi import APIRouter, Request, Header, HTTPException, status
 from pydantic import BaseModel
 
@@ -13,10 +11,18 @@ log = logging.getLogger(__name__)
 settings = get_settings()
 router = APIRouter(prefix="/api/webhooks", tags=["Webhooks"])
 
-class NewLeadPayload(BaseModel):
-    rows: List[List[str]]
+# --- ИЗМЕНЕНИЕ 1: Новая модель для входящих данных ---
+class Lead(BaseModel):
+    sheet_row_id: str
+    client_name: str
+    phone: str
+    business_type: str
+    raw_data: str
 
-@router.post("/new-lead", status_code=status.HTTP_226_IM_USED)
+class NewLeadPayload(BaseModel):
+    leads: List[Lead]
+
+@router.post("/new-lead", status_code=status.HTTP_202_ACCEPTED) # Меняем статус-код на 202
 async def receive_new_lead_from_google(
     payload: NewLeadPayload,
     request: Request,
@@ -26,14 +32,16 @@ async def receive_new_lead_from_google(
         log.warning(f"Попытка доступа к вебхуку с неверным токеном с IP: {request.client.host}")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid secret token.")
 
-    log.info(f"Получено {len(payload.rows)} новых лидов из Google Sheets через вебхук.")
+    log.info(f"Получено {len(payload.leads)} новых лидов из Google Sheets через вебхук.")
     
     processed_count = 0
     skipped_count = 0
 
-    for row_data in payload.rows:
+    # --- ИЗМЕНЕНИЕ 2: Обрабатываем структурированные данные ---
+    for lead_data in payload.leads:
         async with async_session_factory() as session:
-            success = await sheets_importer_service.process_single_lead_row(session, row_data)
+            # Передаем словарь вместо списка
+            success = await sheets_importer_service.process_single_lead_row(session, lead_data.model_dump())
             if success:
                 processed_count += 1
             else:
