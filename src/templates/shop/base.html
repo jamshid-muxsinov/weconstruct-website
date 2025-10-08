@@ -42,64 +42,13 @@
     
     <!-- Critical Preloader CSS -->
     <style>
-      /* Preloader Animations */
-      @keyframes pulse-logo {
-        0%, 100% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.05); opacity: 0.8; }
-      }
-      @keyframes indeterminate-progress {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(200%); }
-      }
-
-      /* Preloader Styles */
-      .preloader {
-        position: fixed;
-        inset: 0;
-        background-color: #ffffff;
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        transition: opacity 0.4s ease-out;
-      }
-      .preloader__logo {
-        width: 120px;
-        height: 120px;
-        color: #07385a;
-        animation: pulse-logo 2s ease-in-out infinite;
-      }
-      .preloader__logo svg {
-        width: 100%;
-        height: 100%;
-      }
-      .preloader__progress {
-        width: 120px;
-        height: 3px;
-        background-color: #e6ebee;
-        margin-top: 24px;
-        border-radius: 3px;
-        overflow: hidden;
-        position: relative;
-      }
-      .preloader__progress-bar {
-        width: 50%;
-        height: 100%;
-        background-color: #07385a;
-        border-radius: 3px;
-        position: absolute;
-        top: 0;
-        left: 0;
-        animation: indeterminate-progress 1.5s linear infinite;
-      }
+      @keyframes pulse-logo{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.05);opacity:.8}}@keyframes indeterminate-progress{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}.preloader{position:fixed;inset:0;background-color:#fff;z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .4s ease-out}.preloader__logo{width:120px;height:120px;color:#07385a;animation:pulse-logo 2s ease-in-out infinite}.preloader__logo svg{width:100%;height:100%}.preloader__progress{width:120px;height:3px;background-color:#e6ebee;margin-top:24px;border-radius:3px;overflow:hidden;position:relative}.preloader__progress-bar{width:50%;height:100%;background-color:#07385a;border-radius:3px;position:absolute;top:0;left:0;animation:indeterminate-progress 1.5s linear infinite}
     </style>
 
     <!-- Styles -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
-    <!-- GLightbox CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <link rel="stylesheet" href="{{ url_for('static', path='css/production.css') }}" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" media="print" onload="this.media='all'">
@@ -114,9 +63,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
-    <!-- GLightbox JS -->
     <script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js" defer></script>
-    <script src="{{ url_for('static', path='js/main.js') }}" defer></script>
+    
+    <!-- !!! ВАШ ФАЙЛ main.js УДАЛЕН ИЗ <head> !!! -->
+
 </head>
 <body x-data="{ mobileMenuOpen: false, pageLoading: true }" @load.window="pageLoading = false" @keydown.escape.window="mobileMenuOpen = false">
 
@@ -288,5 +238,11 @@
 }
 </script>
 {% endblock %}
+
+  <!-- =================================================================== -->
+  <!-- ===== ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: ВАШ СКРИПТ ПЕРЕНЕСЕН СЮДА ===== -->
+  <!-- =================================================================== -->
+  <script src="{{ url_for('static', path='js/main.js') }}" defer></script>
+
 </body>
 </html>
