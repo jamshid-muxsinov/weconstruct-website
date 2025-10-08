@@ -1,5 +1,4 @@
 console.log("ШАГ 3: Запускаем тест GLightbox.");
-
 window.addEventListener('load', () => {
   console.log("ШАГ 3: Событие 'load' сработало.");
   
@@ -15,3 +14,4 @@ window.addEventListener('load', () => {
     console.error("ШАГ 3: КРИТИЧЕСКАЯ ОШИБКА! Произошла ошибка при вызове GLightbox:", e);
   }
 });
+// lsd
