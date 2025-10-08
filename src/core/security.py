@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.config import get_settings
 from src.core.db import get_db_session
-# --- ИЗМЕНЕНИЕ: импортируем UserRole ---
+# --- ИЗМЕНЕНИЕ: импортируем обновленную UserRole ---
 from src.models.shop_models import User, UserRole
 from src.services.user_service import get_user_by_username
 from src.schemas.user_schemas import TokenData
@@ -87,16 +87,6 @@ def get_current_staff_user(current_user: User = Depends(get_current_active_user)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="Доступ запрещен. Требуются права сотрудника."
-        )
-    return current_user
-
-# --- ИЗМЕНЕНИЕ: Новые функции для проверки ролей ---
-def get_current_seo_user(current_user: User = Depends(get_current_active_user)) -> User:
-    """Проверяет, что пользователь - SEO или Админ."""
-    if current_user.role not in [UserRole.SEO, UserRole.ADMIN]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Доступ разрешен только для SEO и Администраторов."
         )
     return current_user
 

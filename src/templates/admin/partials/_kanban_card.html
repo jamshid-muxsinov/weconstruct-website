@@ -24,7 +24,10 @@
         </h4>
         <div style="font-size: 0.75rem; color: var(--text-secondary); background: var(--surface-2); padding: 2px 6px; border-radius: 4px;">#{{ req.id }}</div>
     </div>
-    {% if req.contact and req.contact.phone %}<div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">{{ req.contact.phone|format_phone }}</div>{% endif %}
+    
+    {# --- ИЗМЕНЕНИЕ 1: Отображаем тему вместо телефона --- #}
+    {% if req.subject %}<div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">{{ req.subject }}</div>{% endif %}
+
     {% if req.business_type %}<div style="margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; background: color-mix(in srgb, var(--status-blue) 10%, transparent); color: var(--status-blue); padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600;"><i class='bx bxs-briefcase'></i><span>{{ req.business_type }}</span></div>{% endif %}
     {% if req.contact and req.contact.pinned_note %}<div class="pinned-note" title="Закрепленная заметка: {{ req.contact.pinned_note.note }}"><i class='bx bxs-pin'></i><span>{{ req.contact.pinned_note.note|truncate(50) }}</span></div>{% endif %}
     <div class="card-footer" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border-color);"><span style="font-weight: 500;">{{ req.created_at | localtime }}</span>{% if req.assigned_to %}<div class="assignee" title="Ответственный: {{ req.assigned_to.username }}"><i class='bx bxs-user'></i><span>{{ req.assigned_to.username|truncate(15) }}</span></div>{% endif %}</div>

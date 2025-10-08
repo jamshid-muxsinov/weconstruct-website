@@ -1,25 +1,21 @@
 # src/pages/admin/crud.py
 
-import os
-import uuid
 import json
 import logging
 from fastapi.responses import Response, HTMLResponse, RedirectResponse
 from urllib.parse import quote
-from pathlib import Path
-from fastapi import APIRouter, Request, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Request, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import or_, func, distinct, update
 from sqlalchemy.orm import joinedload, selectinload
-from slugify import slugify
 import wtforms
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
 
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
-from src.models.shop_models import User, Product, Category, GoogleSheetLead, QuoteRequest, Contact, ProductImage
+from src.models.shop_models import User, GoogleSheetLead, QuoteRequest, Contact
 from src.core.security import get_current_active_user
 from .dependencies import get_common_context
 from sqlalchemy.exc import IntegrityError
@@ -27,10 +23,7 @@ from fastapi_pagination import Params, Page
 from fastapi_pagination.api import create_page
 from src.services import crm_service
 
-# --- ИЗМЕНЕНИЕ: Создаем отдельные роутеры для каждой группы маршрутов ---
-# Это позволит нам назначать разные права доступа в главном файле router.py
-product_router = APIRouter()
-category_router = APIRouter()
+# --- Определяем только один роутер для заявок ---
 quoterequest_router = APIRouter()
 log = logging.getLogger(__name__)
 
@@ -56,35 +49,17 @@ class Meta:
         self.delete_url_name = f"admin_{model_name_lower}_delete" if form_class else None
     def __str__(self): return self.verbose_name_plural
 
-class ProductForm(wtforms.Form):
-    name_ru = wtforms.StringField('form_field_name_ru', validators=[wtforms.validators.DataRequired()])
-    short_description_ru = wtforms.TextAreaField('form_field_short_desc_ru', render_kw={"rows": 3})
-    full_description_ru = wtforms.TextAreaField('form_field_full_desc_ru', render_kw={"rows": 10})
-    dimensions_ru = wtforms.StringField('form_field_dimensions_ru')
-    materials_ru = wtforms.TextAreaField('form_field_materials_ru', render_kw={"rows": 6}, description="form_materials_desc_ru")
-    name_uz = wtforms.StringField('form_field_name_uz')
-    short_description_uz = wtforms.TextAreaField('form_field_short_desc_uz', render_kw={"rows": 3})
-    full_description_uz = wtforms.TextAreaField('form_field_full_desc_uz', render_kw={"rows": 10})
-    dimensions_uz = wtforms.StringField("form_field_dimensions_uz")
-    materials_uz = wtforms.TextAreaField("form_field_materials_uz", render_kw={"rows": 6}, description="form_materials_desc_uz")
-    price_min = wtforms.DecimalField('form_field_price_min', places=0, validators=[wtforms.validators.Optional()])
-    price_max = wtforms.DecimalField('form_field_price_max', places=0, validators=[wtforms.validators.Optional()])
-    category_id = wtforms.SelectField('form_field_category', coerce=int, validators=[wtforms.validators.DataRequired()])
-    is_active = wtforms.BooleanField('form_field_is_active', default=True, description="form_is_active_desc")
-    main_image = wtforms.FileField('form_field_main_image')
-    images = wtforms.MultipleFileField('form_field_extra_images')
-
-class CategoryForm(wtforms.Form):
-    name_ru = wtforms.StringField('form_field_name_ru', validators=[wtforms.validators.DataRequired()])
-    description_ru = wtforms.TextAreaField('form_field_desc_ru', render_kw={"rows": 4})
-    name_uz = wtforms.StringField('form_field_name_uz')
-    description_uz = wtforms.TextAreaField('form_field_desc_uz', render_kw={"rows": 4})
-
 class QuoteRequestForm(wtforms.Form):
     contact_id = wtforms.HiddenField('form_field_contact', validators=[wtforms.validators.Optional()])
     new_contact_name = wtforms.StringField('form_field_new_contact_name', validators=[wtforms.validators.Optional()])
     new_contact_phone = wtforms.StringField('form_field_new_contact_phone', validators=[wtforms.validators.Optional()])
-    product_id = wtforms.SelectField('form_field_product', coerce=int, validators=[wtforms.validators.Optional()])
+    
+    subject = wtforms.StringField(
+        'Тема обращения', 
+        validators=[wtforms.validators.DataRequired(message="Укажите тему обращения.")],
+        render_kw={"placeholder": "Например, 'Холодный звонок по базе X'"}
+    )
+    
     message = wtforms.TextAreaField('form_field_message', render_kw={"rows": 4})
     status = wtforms.SelectField('form_field_status', choices=[(s.value, s.name.replace('_', ' ').capitalize()) for s in QuoteRequest.StatusEnum], default=QuoteRequest.StatusEnum.IMPORTED.value)
     assigned_to_id = wtforms.SelectField('form_field_assignee', coerce=int, validators=[wtforms.validators.Optional()])
@@ -107,14 +82,10 @@ class QuoteRequestForm(wtforms.Form):
             return False
         return True
 
-Product.__str__ = lambda self: self.name_ru
-Category.__str__ = lambda self: self.name_ru
 QuoteRequest.__str__ = lambda self: f"Заявка #{self.id}"
 Contact.__str__ = lambda self: self.full_name
 
-PRODUCT_META = Meta(Product, ['name_ru', 'category', 'price_min', 'is_active'], ProductForm, "product_single", "list_products")
-CATEGORY_META = Meta(Category, ['name_ru', 'description_ru'], CategoryForm, "category_single", "list_categories")
-QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'business_type', 'created_at', 'status', 'assigned_to'], QuoteRequestForm, "request_single", "list_requests")
+QUOTEREQUEST_META = Meta(QuoteRequest, ['name', 'phone', 'subject', 'created_at', 'status', 'assigned_to'], QuoteRequestForm, "request_single", "list_requests")
 CONTACT_META = Meta(Contact, ['full_name', 'phone', 'email'], None, "client_single", "list_contacts")
 CONTACT_META.add_url_name = None 
 CONTACT_META.delete_url_name = "admin_contact_delete"
@@ -136,17 +107,20 @@ async def handle_list_view(
     if search_query:
         search_like = f"%{search_query}%"
         if meta.model == QuoteRequest:
-            items_query = items_query.join(Contact).where(or_(func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), Contact.phone.ilike(search_like)))
-            count_query = count_query.join(Contact).where(or_(func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), Contact.phone.ilike(search_like)))
+            items_query = items_query.join(Contact).where(or_(
+                func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), 
+                Contact.phone.ilike(search_like),
+                QuoteRequest.subject.ilike(search_like)
+            ))
+            count_query = count_query.join(Contact).where(or_(
+                func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), 
+                Contact.phone.ilike(search_like),
+                QuoteRequest.subject.ilike(search_like)
+            ))
         elif meta.model == Contact:
             items_query = items_query.where(or_(func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), Contact.phone.ilike(search_like), Contact.name.ilike(search_like)))
             count_query = count_query.where(or_(func.concat(Contact.name, ' ', Contact.last_name).ilike(search_like), Contact.phone.ilike(search_like), Contact.name.ilike(search_like)))
-        else:
-            searchable_field = getattr(meta.model, meta.list_display[0], None)
-            if searchable_field:
-                items_query = items_query.where(searchable_field.ilike(search_like))
-                count_query = count_query.where(searchable_field.ilike(search_like))
-
+        
     if meta.model == QuoteRequest:
         try:
             if date_from:
@@ -160,8 +134,8 @@ async def handle_list_view(
 
     total = (await db.execute(count_query)).scalar_one_or_none() or 0
     
-    if meta.model == Product: items_query = items_query.options(selectinload(Product.category))
-    elif meta.model == QuoteRequest: items_query = items_query.options(selectinload(QuoteRequest.contact), selectinload(QuoteRequest.product), selectinload(QuoteRequest.assigned_to))
+    if meta.model == QuoteRequest: 
+        items_query = items_query.options(selectinload(QuoteRequest.contact), selectinload(QuoteRequest.assigned_to))
 
     order_field = getattr(meta.model, 'id')
     items_query = items_query.order_by(order_field.asc() if sort == 'asc' else order_field.desc())
@@ -173,9 +147,6 @@ async def handle_list_view(
 
 async def populate_request_form_choices(db: AsyncSession, request: Request, form: QuoteRequestForm):
     _ = templates.env.globals['_']
-    products = (await db.execute(select(Product).order_by(Product.name_ru))).scalars().all()
-    form.product_id.choices = [(0, _({'request': request}, 'general_request_option'))] + [(p.id, p.name_ru) for p in products]
-    
     staff_users = (await db.execute(select(User).where(User.is_staff == True).order_by(User.username))).scalars().all()
     form.assigned_to_id.choices = [(0, _({'request': request}, 'unassigned_option'))] + [(u.id, u.username) for u in staff_users]
 
@@ -212,10 +183,10 @@ async def quoterequest_form_post_add(request: Request, context: dict = Depends(g
             contact_id = contact.id
         quote = QuoteRequest(contact_id=contact_id)
         form.populate_obj(quote)
-        if quote.product_id == 0:
-            quote.product_id = None
+
         if quote.assigned_to_id == 0:
             quote.assigned_to_id = None
+            
         db.add(quote)
         await db.commit()
         response = RedirectResponse(request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale), status_code=303)
@@ -246,10 +217,10 @@ async def quoterequest_change_form_post(request: Request, pk: int, context: dict
     await populate_request_form_choices(db, request, form)
     if form.validate():
         form.populate_obj(quote)
-        if quote.product_id == 0:
-            quote.product_id = None
+
         if quote.assigned_to_id == 0:
             quote.assigned_to_id = None
+            
         db.add(quote)
         await db.commit()
         response = RedirectResponse(request.url_for(QUOTEREQUEST_META.change_url_name, locale=request.state.locale, pk=pk), status_code=303)
@@ -313,182 +284,3 @@ async def export_requests(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=quote_requests.csv"}
     )
-
-# --- Product Routes ---
-@product_router.get("/", response_class=HTMLResponse, name="admin_product_list")
-async def product_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    page_obj = await handle_list_view(db, PRODUCT_META, page=page, size=size, search_query=q)
-    context.update({"meta": PRODUCT_META, "page": page_obj, "list_display": PRODUCT_META.list_display})
-    is_htmx = "HX-Request" in request.headers
-    template_name = "admin/partials/_generic_list_content.html" if is_htmx else "admin/generic_list.html"
-    return templates.TemplateResponse(template_name, context)
-
-@product_router.get("/add/", response_class=HTMLResponse, name="admin_product_add")
-@product_router.get("/{pk}/change/", response_class=HTMLResponse, name="admin_product_change")
-async def product_form_get(request: Request, pk: Optional[int] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    instance = await db.get(Product, pk, options=[selectinload(Product.images)]) if pk else None
-    if pk and not instance: raise HTTPException(404)
-    form = PRODUCT_META.form_class(obj=instance)
-    cats = (await db.execute(select(Category).order_by(Category.name_ru))).scalars().all()
-    form.category_id.choices = [(c.id, c.name_ru) for c in cats]
-    context.update({"meta": PRODUCT_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/generic_form.html", context)
-
-
-
-@product_router.post("/add/", response_class=HTMLResponse)
-@product_router.post("/{pk}/change/", response_class=HTMLResponse)
-async def product_form_post(
-    request: Request,
-    pk: Optional[int] = None,
-    main_image: UploadFile = File(None),
-    images: List[UploadFile] = File([]),
-    context: dict = Depends(get_common_context),
-    db: AsyncSession = Depends(get_db_session)
-):
-    # <<< 1. ОПРЕДЕЛЯЕМ АБСОЛЮТНЫЙ ПУТЬ ВНУТРИ КОНТЕЙНЕРА >>>
-    BASE_DIR = Path("/app")
-
-    instance = await db.get(Product, pk, options=[selectinload(Product.images)]) if pk else None
-    if pk and not instance:
-        raise HTTPException(404)
-
-    form_data = await request.form()
-    form = PRODUCT_META.form_class(form_data, obj=instance)
-
-    cats = (await db.execute(select(Category).order_by(Category.name_ru))).scalars().all()
-    form.category_id.choices = [(c.id, c.name_ru) for c in cats]
-
-    del form.main_image
-    del form.images
-
-    if form.validate():
-        instance = instance or Product()
-        form.populate_obj(instance)
-        instance.slug = slugify(instance.name_ru)
-
-        # <<< 2. ИСПОЛЬЗУЕМ АБСОЛЮТНЫЙ ПУТЬ ДЛЯ СОЗДАНИЯ ПАПКИ >>>
-        products_media_dir = BASE_DIR / "media" / "products"
-        products_media_dir.mkdir(parents=True, exist_ok=True)
-
-        # --- Обработка основного изображения ---
-        if main_image and main_image.filename:
-            if instance.main_image and (BASE_DIR / "media" / instance.main_image).exists():
-                try:
-                    os.remove(BASE_DIR / "media" / instance.main_image)
-                except OSError as e:
-                    log.error(f"Не удалось удалить старый файл: {e}")
-
-            safe_filename = slugify(os.path.splitext(main_image.filename)[0]) + os.path.splitext(main_image.filename)[1]
-            
-            # <<< 3. СОХРАНЯЕМ ФАЙЛ ПО ПОЛНОМУ ПУТИ >>>
-            file_path_relative = f"products/{uuid.uuid4()}_{safe_filename}"
-            full_save_path = products_media_dir / file_path_relative.split('/')[-1]
-            
-            with open(full_save_path, "wb") as buffer:
-                buffer.write(await main_image.read())
-            instance.main_image = file_path_relative
-
-        db.add(instance)
-        await db.flush()
-
-        # --- Обработка дополнительных изображений ---
-        for image_file in images:
-            if image_file and image_file.filename:
-                safe_filename = slugify(os.path.splitext(image_file.filename)[0]) + os.path.splitext(image_file.filename)[1]
-                
-                # <<< 4. СОХРАНЯЕМ ФАЙЛ ПО ПОЛНОМУ ПУТИ >>>
-                file_path_relative = f"products/{uuid.uuid4()}_{safe_filename}"
-                full_save_path = products_media_dir / file_path_relative.split('/')[-1]
-
-                with open(full_save_path, "wb") as buffer:
-                    buffer.write(await image_file.read())
-                db.add(ProductImage(product_id=instance.id, image=file_path_relative))
-
-        await db.commit()
-        response = RedirectResponse(request.url_for(PRODUCT_META.change_url_name, locale=request.state.locale, pk=instance.id), status_code=303)
-        return set_hx_trigger_header(response, "product_saved_success", request)
-
-    # В случае ошибки валидации
-    form.main_image = wtforms.FileField('form_field_main_image')
-    form.images = wtforms.MultipleFileField('form_field_extra_images')
-
-    context.update({"meta": PRODUCT_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/generic_form.html", context, status_code=422)
-
-@product_router.get("/{pk}/delete/", response_class=HTMLResponse, name="admin_product_delete")
-@product_router.post("/{pk}/delete/", response_class=HTMLResponse)
-async def product_delete(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    product = await db.get(Product, pk)
-    if not product: raise HTTPException(404)
-    _ = templates.env.globals['_']
-    if request.method == "POST":
-        await db.delete(product)
-        await db.commit()
-        response = RedirectResponse(url=request.url_for(PRODUCT_META.list_url_name, locale=request.state.locale), status_code=303)
-        return set_hx_trigger_header(response, "product_deleted_success", request, "error")
-    
-    translated_entity_name = _({'request': request}, PRODUCT_META.verbose_name)
-    title = _({'request': request}, 'delete_confirmation_title', entity=translated_entity_name)
-    
-    context.update({"meta": PRODUCT_META, "original": product, "title": title, "back_url": request.url_for(PRODUCT_META.change_url_name, locale=request.state.locale, pk=pk), "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/delete_confirmation.html", context)
-
-# --- Category Routes ---
-@category_router.get("/", response_class=HTMLResponse, name="admin_category_list")
-async def category_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    page_obj = await handle_list_view(db, CATEGORY_META, page=page, size=size, search_query=q)
-    context.update({"meta": CATEGORY_META, "page": page_obj, "list_display": ['name_ru', 'description_ru'], "search_query": q})
-    is_htmx = "HX-Request" in request.headers
-    template_name = "admin/partials/_generic_list_content.html" if is_htmx else "admin/generic_list.html"
-    return templates.TemplateResponse(template_name, context)
-
-@category_router.get("/add/", response_class=HTMLResponse, name="admin_category_add")
-@category_router.get("/{pk}/change/", response_class=HTMLResponse, name="admin_category_change")
-async def category_form_get(request: Request, pk: Optional[int] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    instance = await db.get(Category, pk) if pk else None
-    if pk and not instance: raise HTTPException(404)
-    form = CATEGORY_META.form_class(obj=instance)
-    context.update({"meta": CATEGORY_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/generic_form.html", context)
-
-@category_router.post("/add/", response_class=HTMLResponse)
-@category_router.post("/{pk}/change/", response_class=HTMLResponse)
-async def category_form_post(request: Request, pk: Optional[int] = None, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    instance = await db.get(Category, pk) if pk else None
-    if pk and not instance: raise HTTPException(404)
-    form_data = await request.form()
-    form = CATEGORY_META.form_class(form_data, obj=instance)
-    if form.validate():
-        instance = instance or Category()
-        form.populate_obj(instance)
-        instance.slug = slugify(instance.name_ru)
-        db.add(instance)
-        await db.commit()
-        response = RedirectResponse(request.url_for(CATEGORY_META.change_url_name, locale=request.state.locale, pk=instance.id), status_code=303)
-        return set_hx_trigger_header(response, "category_saved_success", request)
-    context.update({"meta": CATEGORY_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/generic_form.html", context)
-
-@category_router.get("/{pk}/delete/", response_class=HTMLResponse, name="admin_category_delete")
-@category_router.post("/{pk}/delete/", response_class=HTMLResponse)
-async def category_delete(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    category = await db.get(Category, pk)
-    if not category: raise HTTPException(404)
-    _ = templates.env.globals['_']
-    if request.method == "POST":
-        try:
-            await db.delete(category)
-            await db.commit()
-            response = RedirectResponse(url=request.url_for(CATEGORY_META.list_url_name, locale=request.state.locale), status_code=303)
-            return set_hx_trigger_header(response, "category_deleted_success", request, "error")
-        except IntegrityError:
-            await db.rollback()
-            context.update({"error_message": "Нельзя удалить категорию, к которой привязаны товары."})
-            return templates.TemplateResponse("admin/500.html", context, status_code=500)
-    
-    translated_entity_name = _({'request': request}, CATEGORY_META.verbose_name)
-    title = _({'request': request}, 'delete_confirmation_title', entity=translated_entity_name)
-    
-    context.update({"meta": CATEGORY_META, "original": category, "title": title, "back_url": request.url_for(CATEGORY_META.change_url_name, locale=request.state.locale, pk=pk), "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/delete_confirmation.html", context)

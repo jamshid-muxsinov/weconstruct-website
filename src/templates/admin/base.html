@@ -51,9 +51,10 @@
                 <a href="{{ request.url_for('admin_kanban_board', locale=request.state.locale) }}" class="nav-link {% if 'kanban' in request.url.path or request.url.path == '/admin/' or request.url.path.endswith('/admin/ru') or request.url.path.endswith('/admin/uz') %}active{% endif %}" hx-get="{{ request.url_for('admin_kanban_board', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-grid-alt nav-icon'></i><span class="nav-text">{{ _('sidebar_kanban') }}</span> </a>
                 <a href="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" class="nav-link {% if 'quoterequest' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bx-list-ul nav-icon'></i><span class="nav-text">{{ _('sidebar_requests') }}</span> </a>
                 <a href="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" class="nav-link {% if 'contact' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-user-detail nav-icon'></i><span class="nav-text">{{ _('sidebar_contacts') }}</span> </a>
-                <a href="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-bar-chart-alt-2 nav-icon'></i><span class="nav-text">{{ _('sidebar_statistics') }}</span> </a>
                 
+                {# --- ИЗМЕНЕНИЕ: Возвращаем все ссылки, но с проверкой прав --- #}
                 {% if user.is_superuser %}
+                <a href="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-bar-chart-alt-2 nav-icon'></i><span class="nav-text">{{ _('sidebar_statistics') }}</span> </a>
                 <hr class="menu-divider">
                 <a href="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" class="nav-link {% if 'product' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-package nav-icon'></i><span class="nav-text">{{ _('sidebar_products') }}</span> </a>
                 <a href="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" class="nav-link {% if 'category' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-component nav-icon'></i><span class="nav-text">{{ _('sidebar_categories') }}</span> </a>
@@ -142,7 +143,9 @@
                         
                         <ul class="profile-menu-list">
                             <li><a href="{{ request.url_for('admin_profile', locale=request.state.locale) }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_profile', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-user-circle'></i><span>{{ _('profile') }}</span></a></li>
+                            {% if user.is_superuser %}
                             <li><a href="{{ request.url_for('admin_invites', locale=request.state.locale) }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_invites', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-paper-plane'></i><span>{{ _('sidebar_invites') }}</span></a></li>
+                            {% endif %}
                             <li><hr class="menu-divider"></li>
                             <li><a href="{{ request.url_for('admin_logout') }}" class="profile-menu-link logout logout-trigger"><i class='bx bx-log-out'></i><span>{{ _('logout') }}</span></a></li>
                         </ul>

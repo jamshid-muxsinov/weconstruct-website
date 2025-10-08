@@ -50,16 +50,20 @@
             </div>
             {% endif %}
             
+            {# --- НАЧАЛО ИЗМЕНЕНИЙ --- #}
             <div class="form-row">
                 <div class="input-group">
-                    <label for="{{ form.product_id.id }}">{{ _(form.product_id.label.text) }}</label>
-                    {{ form.product_id(class_='select-field') }}
+                    <label for="{{ form.subject.id }}">{{ form.subject.label.text }}</label>
+                    {{ form.subject(class_='input-field') }}
+                    {% if form.subject.errors %}<div class="error-text">{{ form.subject.errors[0] }}</div>{% endif %}
                 </div>
                 <div class="input-group">
                     <label for="{{ form.status.id }}">{{ _(form.status.label.text) }}</label>
                     {{ form.status(class_='select-field') }}
                 </div>
             </div>
+            {# --- КОНЕЦ ИЗМЕНЕНИЙ --- #}
+
             <div class="input-group">
                 <label for="{{ form.assigned_to_id.id }}">{{ _(form.assigned_to_id.label.text) }}</label>
                 {{ form.assigned_to_id(class_='select-field') }}

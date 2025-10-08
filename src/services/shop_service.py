@@ -24,9 +24,6 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
 
     first_name, _, last_name = name.partition(" ")
     
-    # 1. Готовим операцию UPSERT (INSERT ... ON CONFLICT DO NOTHING)
-    # Эта команда либо вставит новую запись, либо ничего не сделает, если
-    # контакт с таким телефоном уже существует. Она никогда не вызовет ошибку.
     insert_stmt = pg_insert(Contact).values(
         phone=phone,
         name=first_name,
@@ -36,17 +33,17 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
     )
     await db.execute(insert_stmt)
 
-    # 2. Теперь, когда мы гарантированно имеем запись в базе, просто находим ее.
     stmt = select(Contact).where(Contact.phone == phone)
     result = await db.execute(stmt)
     contact = result.scalars().first()
     
     return contact
     
-async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, product_id: int = None, source: str = "website") -> QuoteRequest:
+# --- ИЗМЕНЕНИЕ 1: Убираем product_id из аргументов ---
+async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, subject: str, source: str = "website") -> QuoteRequest:
     quote = QuoteRequest(
         contact_id=contact_id,
-        product_id=product_id,
+        subject=subject, # Используем новое поле
         message=message,
         source=QuoteRequest.SourceEnum(source),
         status=QuoteRequest.StatusEnum.IMPORTED
@@ -61,6 +58,7 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
     
     if not managers: return
 
+    # --- ИЗМЕНЕНИЕ 2: Ссылка теперь ведет на общую форму редактирования заявки ---
     quote_url = f"/ru/quoterequest/{quote.id}/change/"
     message_text = f"Новая заявка #{quote.id} от {contact_name}"
 
@@ -70,8 +68,9 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
     ]
     db.add_all(notifications)
 
+# --- ИЗМЕНЕНИЕ 3: Обновляем основную функцию обработки заявок ---
 @invalidate_cache("categories_with_products") 
-async def process_quote_request(db: AsyncSession, name: str, phone: str, message: str, product_id: int = None, source: str = "website") -> QuoteRequest | str:
+async def process_quote_request(db: AsyncSession, name: str, phone: str, message: str, subject: Optional[str] = "Заявка с сайта", source: str = "website") -> Union[QuoteRequest, str]:
     contact = await _get_or_create_contact(db, name, phone)
     if not contact:
         return "invalid_contact"
@@ -83,6 +82,8 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
     )
     if message:
         stmt = stmt.where(QuoteRequest.message == message)
+    if subject:
+        stmt = stmt.where(QuoteRequest.subject == subject)
 
     recent_requests = (await db.execute(stmt)).scalars().all()
     
@@ -90,12 +91,14 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
         return "duplicate"
     
     async with db.begin():
-        quote = await _create_quote_request(db, contact.id, message, product_id, source)
+        # Передаем subject вместо product_id
+        quote = await _create_quote_request(db, contact.id, message, subject, source)
         await _notify_managers(db, quote, contact.full_name)
     
     await db.refresh(quote) 
     return quote
 
+# Функции для сайта (get_categories_with_active_products и get_product_for_modal) остаются без изменений
 @cache_result("categories_with_products", ttl=1800)  
 async def get_categories_with_active_products(db: AsyncSession):
     stmt = (

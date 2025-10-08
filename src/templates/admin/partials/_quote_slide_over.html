@@ -16,9 +16,10 @@
         </div>
 
         <h3 class="slide-over-section-title">{{ _('request_details_title') }}</h3>
+        {# --- ИЗМЕНЕНИЕ 2: Заменяем "Товар" на "Тема обращения" --- #}
         <div class="detail-item">
-            <strong>{{ _('product_single') }}</strong>
-            <span>{{ t_get(request, req.product, 'name') if req.product else _('general_request_option') }}</span>
+            <strong>Тема обращения</strong>
+            <span>{{ req.subject or "---" }}</span>
         </div>
         <div class="detail-item">
             <strong>{{ _('form_field_message') }}</strong>
@@ -35,7 +36,7 @@
         {% endif %}
         
         <h3 class="slide-over-section-title">{{ _('management_title') }}</h3>
-        <form hx-post="{{ request.url_for('admin_api_quote_assign',      pk=req.id) }}" hx-trigger="submit" style="margin-bottom: 20px;">
+        <form hx-post="{{ request.url_for('admin_api_quote_assign', pk=req.id) }}" hx-trigger="submit" style="margin-bottom: 20px;">
             <div class="input-group" style="margin: 0;">
                 <label for="assignee-select" style="margin-bottom: 10px; font-weight: 600; color: var(--text-secondary);">{{ _('assign_executor') }}</label>
                 <div style="display: flex; gap: 12px;">

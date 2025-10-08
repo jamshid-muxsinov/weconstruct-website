@@ -5,7 +5,6 @@ import wtforms
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
-# --- ИЗМЕНЕНИЕ: Добавляем String в импорты ---
 from sqlalchemy import func, desc, update, and_, delete, or_, String
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,9 +17,11 @@ from src.models.shop_models import (
 from src.schemas.crm_schemas import QuoteRequestStatusUpdate, TaskCreate
 
 log = logging.getLogger(__name__)
-
 executor = ThreadPoolExecutor()
 
+# Все функции до export_requests_csv остаются без изменений
+
+# ... (код get_latest_quote_request, get_dashboard_data, get_kanban_data, и т.д.)
 
 def to_naive_datetime(dt: datetime) -> datetime:
     """Convert timezone-aware datetime to naive datetime for database compatibility."""
@@ -32,7 +33,6 @@ async def get_latest_quote_request(db: AsyncSession) -> QuoteRequest | None:
         select(QuoteRequest)
         .options(
             joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
-            joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.assigned_to)
         )
         .order_by(QuoteRequest.id.desc())
@@ -74,7 +74,6 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
             QuoteRequest.assigned_to_id.is_(None)
         )
         .options(
-            joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes)
         )
         .order_by(QuoteRequest.created_at.desc())
@@ -108,7 +107,6 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False, search_
         select(QuoteRequest)
         .options(
             joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
-            joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.assigned_to)
         )
         .order_by(QuoteRequest.created_at.desc())
@@ -123,7 +121,8 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False, search_
             or_(
                 func.lower(func.concat(Contact.name, ' ', Contact.last_name)).like(search_like),
                 Contact.phone.like(search_like),
-                QuoteRequest.id.cast(String).like(search_like)
+                QuoteRequest.id.cast(String).like(search_like),
+                func.lower(QuoteRequest.subject).like(search_like) # Добавляем поиск по теме
             )
         )
     
@@ -149,7 +148,6 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False, search_
         })
         
     return kanban_data
-
 
 async def update_quote_request_status(db: AsyncSession, update_data: QuoteRequestStatusUpdate, user_id: int):
     try:
@@ -241,10 +239,6 @@ async def assign_quote_request_to_user(db: AsyncSession, quote_id: int, user_id:
     return req
 
 async def toggle_task_completion(db: AsyncSession, task_id: int, current_user: User):
-    """
-    Переключает статус выполнения задачи с проверкой прав доступа.
-    Суперпользователь может менять любые задачи, обычный пользователь - только свои.
-    """
     task = await db.get(Task, task_id)
     if not task:
         return None
@@ -290,10 +284,6 @@ async def create_task_for_quote(db: AsyncSession, task_data: TaskCreate):
         raise
 
 async def get_user_performance_stats(db: AsyncSession, user_id: int):
-    """
-    Считает статистику производительности для пользователя на основе
-    реального состояния заявок, а не только логов.
-    """
     thirty_days_ago_naive = to_naive_datetime(datetime.now(timezone.utc) - timedelta(days=30))
     
     closed_stmt = select(func.count(func.distinct(StatusChangeLog.quote_request_id))).where(
@@ -328,7 +318,6 @@ async def get_user_performance_stats(db: AsyncSession, user_id: int):
         "tasks_completed": tasks_completed_count
     }
 
-
 async def get_user_activity_feed(db: AsyncSession, user_id: int, limit: int = 10):
     stmt = select(StatusChangeLog).where(
         StatusChangeLog.user_id == user_id
@@ -344,7 +333,6 @@ async def get_contact_360_view(db: AsyncSession, contact_id: int):
         select(Contact)
         .where(Contact.id == contact_id)
         .options(
-            selectinload(Contact.requests).joinedload(QuoteRequest.product),
             selectinload(Contact.requests).joinedload(QuoteRequest.assigned_to),
             selectinload(Contact.tasks).joinedload(Task.assigned_to),
             selectinload(Contact.timeline_notes).joinedload(ContactNote.user)
@@ -546,7 +534,6 @@ async def export_requests_csv(db: AsyncSession, card_ids: list[int] = None) -> s
         select(QuoteRequest)
         .options(
             joinedload(QuoteRequest.contact),
-            joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.assigned_to)
         )
         .order_by(QuoteRequest.created_at.desc())
@@ -561,7 +548,8 @@ async def export_requests_csv(db: AsyncSession, card_ids: list[int] = None) -> s
     output = io.StringIO()
     writer = csv.writer(output)
     
-    writer.writerow(['ID', 'Client Name', 'Phone', 'Email', 'Product', 'Status', 'Assigned To', 'Business Type', 'Message', 'Created At'])
+    # --- ИЗМЕНЕНИЕ 4: Заменяем 'Product' на 'Subject' ---
+    writer.writerow(['ID', 'Client Name', 'Phone', 'Email', 'Subject', 'Status', 'Assigned To', 'Business Type', 'Message', 'Created At'])
     
     for req in requests:
         writer.writerow([
@@ -569,7 +557,7 @@ async def export_requests_csv(db: AsyncSession, card_ids: list[int] = None) -> s
             req.contact.full_name if req.contact else '',
             req.contact.phone if req.contact else '',
             req.contact.email if req.contact else '',
-            req.product.name_ru if req.product else 'General Request',
+            req.subject or 'N/A', # Используем новое поле
             req.status.value,
             req.assigned_to.username if req.assigned_to else 'Unassigned',
             req.business_type or '',

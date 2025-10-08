@@ -1,3 +1,5 @@
+# src/models/shop_models.py
+
 import uuid
 import enum
 from datetime import datetime
@@ -11,10 +13,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import Base
 
-# --- ИСПОЛЬЗУЕМ НОВЫЙ КЛАСС ---
+# --- ИЗМЕНЕНИЕ 1: Упрощаем роли, убираем SEO ---
 class UserRole(str, enum.Enum):
     MANAGER = "manager"
-    SEO = "seo"
     ADMIN = "admin"
 
 class User(Base):
@@ -48,7 +49,7 @@ class User(Base):
     invites_sent: Mapped[List["RegistrationInvite"]] = relationship(back_populates="created_by")
     contact_notes: Mapped[List["ContactNote"]] = relationship(back_populates="user")
 
-# ... (остальной код файла остается без изменений) ...
+# ... (Классы Contact, ContactNote, Task, Notification остаются без изменений) ...
 
 class Contact(Base):
     __tablename__ = 'shop_contact'
@@ -123,6 +124,7 @@ class Notification(Base):
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
 
+# --- Товары и Категории для сайта. Оставляем без изменений. ---
 class Category(Base):
     __tablename__ = 'shop_category'
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -189,7 +191,9 @@ class Product(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
 
     images: Mapped[List["ProductImage"]] = relationship(back_populates="product")
-    quote_requests: Mapped[List["QuoteRequest"]] = relationship(back_populates="product")
+    
+    # --- ИЗМЕНЕНИЕ: Удаляем связь с QuoteRequest из модели Product ---
+    # quote_requests: Mapped[List["QuoteRequest"]] = relationship(back_populates="product")
 
     @property
     def name(self):
@@ -231,8 +235,12 @@ class QuoteRequest(Base):
     contact_id: Mapped[int] = mapped_column(ForeignKey("shop_contact.id", ondelete="RESTRICT"))
     contact: Mapped["Contact"] = relationship(back_populates="requests")
     
-    product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("shop_product.id", ondelete="SET NULL"))
-    product: Mapped[Optional["Product"]] = relationship(back_populates="quote_requests")
+    # --- ИЗМЕНЕНИЕ 2: Убираем связь с продуктом ---
+    # product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("shop_product.id", ondelete="SET NULL"))
+    # product: Mapped[Optional["Product"]] = relationship(back_populates="quote_requests")
+
+    # --- ИЗМЕНЕНИЕ 3: Добавляем простое текстовое поле для темы ---
+    subject: Mapped[Optional[str]] = mapped_column(String(255), comment="Тема/причина обращения")
 
     message: Mapped[Optional[str]] = mapped_column(Text)
     
@@ -291,6 +299,7 @@ class QuoteRequest(Base):
     def get_status_display(self):
         return self.status.value.replace('_', ' ').capitalize()
 
+# --- Приглашения и Логи. Оставляем без изменений. ---
 class RegistrationInvite(Base):
     __tablename__ = 'shop_registrationinvite'
     code: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
