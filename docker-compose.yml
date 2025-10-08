@@ -70,6 +70,7 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       # Nginx все так же смотрит в папку media
       - ./media:/app/media:ro
+      - ./src/static:/app/src/static:ro 
     depends_on:
       site: 
         condition: service_healthy
