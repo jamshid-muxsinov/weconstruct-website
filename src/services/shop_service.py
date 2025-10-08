@@ -8,6 +8,8 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 import logging
+# --- ИСПРАВЛЕНИЕ: Добавляем этот импорт ---
+from typing import Optional, Union
 
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
@@ -39,11 +41,10 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
     
     return contact
     
-# --- ИЗМЕНЕНИЕ 1: Убираем product_id из аргументов ---
 async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, subject: str, source: str = "website") -> QuoteRequest:
     quote = QuoteRequest(
         contact_id=contact_id,
-        subject=subject, # Используем новое поле
+        subject=subject,
         message=message,
         source=QuoteRequest.SourceEnum(source),
         status=QuoteRequest.StatusEnum.IMPORTED
@@ -58,8 +59,7 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
     
     if not managers: return
 
-    # --- ИЗМЕНЕНИЕ 2: Ссылка теперь ведет на общую форму редактирования заявки ---
-    quote_url = f"/ru/quoterequest/{quote.id}/change/"
+    quote_url = f"/ru/admin/quoterequest/{quote.id}/change/"
     message_text = f"Новая заявка #{quote.id} от {contact_name}"
 
     notifications = [
@@ -68,7 +68,6 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
     ]
     db.add_all(notifications)
 
-# --- ИЗМЕНЕНИЕ 3: Обновляем основную функцию обработки заявок ---
 @invalidate_cache("categories_with_products") 
 async def process_quote_request(db: AsyncSession, name: str, phone: str, message: str, subject: Optional[str] = "Заявка с сайта", source: str = "website") -> Union[QuoteRequest, str]:
     contact = await _get_or_create_contact(db, name, phone)
@@ -91,14 +90,12 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
         return "duplicate"
     
     async with db.begin():
-        # Передаем subject вместо product_id
         quote = await _create_quote_request(db, contact.id, message, subject, source)
         await _notify_managers(db, quote, contact.full_name)
     
     await db.refresh(quote) 
     return quote
 
-# Функции для сайта (get_categories_with_active_products и get_product_for_modal) остаются без изменений
 @cache_result("categories_with_products", ttl=1800)  
 async def get_categories_with_active_products(db: AsyncSession):
     stmt = (
