@@ -19,20 +19,17 @@ from src.schemas.crm_schemas import QuoteRequestStatusUpdate, TaskCreate
 log = logging.getLogger(__name__)
 executor = ThreadPoolExecutor()
 
-# Все функции до export_requests_csv остаются без изменений
-
-# ... (код get_latest_quote_request, get_dashboard_data, get_kanban_data, и т.д.)
 
 def to_naive_datetime(dt: datetime) -> datetime:
-    """Convert timezone-aware datetime to naive datetime for database compatibility."""
     return dt.replace(tzinfo=None) if dt.tzinfo else dt
 
 async def get_latest_quote_request(db: AsyncSession) -> QuoteRequest | None:
-    """Возвращает самую последнюю созданную заявку со всеми необходимыми связями для рендеринга карточки."""
     stmt = (
         select(QuoteRequest)
         .options(
             joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
+            # --- ИЗМЕНЕНИЕ 1: Убираем загрузку продукта ---
+            # joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.assigned_to)
         )
         .order_by(QuoteRequest.id.desc())
@@ -74,6 +71,8 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
             QuoteRequest.assigned_to_id.is_(None)
         )
         .options(
+            # --- ИЗМЕНЕНИЕ 2: Убираем загрузку продукта ---
+            # joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes)
         )
         .order_by(QuoteRequest.created_at.desc())
@@ -107,6 +106,8 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False, search_
         select(QuoteRequest)
         .options(
             joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
+            # --- ИЗМЕНЕНИЕ 3: Убираем загрузку продукта ---
+            # joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.assigned_to)
         )
         .order_by(QuoteRequest.created_at.desc())
@@ -122,7 +123,7 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False, search_
                 func.lower(func.concat(Contact.name, ' ', Contact.last_name)).like(search_like),
                 Contact.phone.like(search_like),
                 QuoteRequest.id.cast(String).like(search_like),
-                func.lower(QuoteRequest.subject).like(search_like) # Добавляем поиск по теме
+                func.lower(QuoteRequest.subject).like(search_like)
             )
         )
     
@@ -148,6 +149,7 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False, search_
         })
         
     return kanban_data
+
 
 async def update_quote_request_status(db: AsyncSession, update_data: QuoteRequestStatusUpdate, user_id: int):
     try:
@@ -318,6 +320,7 @@ async def get_user_performance_stats(db: AsyncSession, user_id: int):
         "tasks_completed": tasks_completed_count
     }
 
+
 async def get_user_activity_feed(db: AsyncSession, user_id: int, limit: int = 10):
     stmt = select(StatusChangeLog).where(
         StatusChangeLog.user_id == user_id
@@ -333,6 +336,7 @@ async def get_contact_360_view(db: AsyncSession, contact_id: int):
         select(Contact)
         .where(Contact.id == contact_id)
         .options(
+            # --- ИЗМЕНЕНИЕ 4: Убираем загрузку продукта ---
             selectinload(Contact.requests).joinedload(QuoteRequest.assigned_to),
             selectinload(Contact.tasks).joinedload(Task.assigned_to),
             selectinload(Contact.timeline_notes).joinedload(ContactNote.user)
@@ -548,7 +552,6 @@ async def export_requests_csv(db: AsyncSession, card_ids: list[int] = None) -> s
     output = io.StringIO()
     writer = csv.writer(output)
     
-    # --- ИЗМЕНЕНИЕ 4: Заменяем 'Product' на 'Subject' ---
     writer.writerow(['ID', 'Client Name', 'Phone', 'Email', 'Subject', 'Status', 'Assigned To', 'Business Type', 'Message', 'Created At'])
     
     for req in requests:
@@ -557,7 +560,7 @@ async def export_requests_csv(db: AsyncSession, card_ids: list[int] = None) -> s
             req.contact.full_name if req.contact else '',
             req.contact.phone if req.contact else '',
             req.contact.email if req.contact else '',
-            req.subject or 'N/A', # Используем новое поле
+            req.subject or 'N/A',
             req.status.value,
             req.assigned_to.username if req.assigned_to else 'Unassigned',
             req.business_type or '',

@@ -1,8 +1,11 @@
+# src/pages/shop_pages.py
+
 import json
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
+from typing import Optional, Union
 
 from .jinja_config import templates
 from ..core.db import get_db_session
@@ -60,12 +63,16 @@ async def htmx_post_request_quote(
     form = await QuoteForm.from_formdata(request)
 
     if await form.validate_on_submit():
+        # --- ИЗМЕНЕНИЕ 1: Передаем название товара как 'subject' ---
+        t_get = templates.env.globals.get('t_get')
+        subject_text = t_get(request, product, 'name') if product else "Заявка с сайта"
+        
         result = await shop_service.process_quote_request(
             db=db, 
             name=form.name.data, 
             phone=form.phone.data, 
             message=form.message.data or "",
-            product_id=product_id, 
+            subject=subject_text, 
             source="website"
         )
         
@@ -100,12 +107,16 @@ async def htmx_post_general_quote(
     form = await GeneralQuoteForm.from_formdata(request)
     
     if await form.validate_on_submit():
+        # --- ИЗМЕНЕНИЕ 2: Передаем общую тему как 'subject' ---
+        _ = templates.env.globals.get('_')
+        subject_text = _({'request': request}, 'general_request_option')
+
         result = await shop_service.process_quote_request(
             db=db, 
             name=form.name.data, 
             phone=form.phone.data, 
             message=form.message.data,
-            product_id=None, 
+            subject=subject_text,
             source="contact_form"
         )
         

@@ -19,11 +19,16 @@ router = APIRouter()
 unprotected_router = APIRouter()
 htmx_router = htmx.router
 
+# Роутер для страниц, доступных всем сотрудникам (менеджерам)
 staff_crud_router = APIRouter(dependencies=[Depends(get_current_staff_user)])
 staff_crud_router.include_router(crud.quoterequest_router, prefix="/quoterequest", tags=["CRUD QuoteRequest"])
 staff_crud_router.include_router(contact.router, prefix="/contact", tags=["CRUD Contact"])
 
+# Роутер для страниц, доступных только админам
 admin_only_crud_router = APIRouter(dependencies=[Depends(get_current_superuser)])
+# --- ИЗМЕНЕНИЕ: Возвращаем роутеры для продуктов и категорий ---
+admin_only_crud_router.include_router(crud.product_router, prefix="/product", tags=["CRUD Product"])
+admin_only_crud_router.include_router(crud.category_router, prefix="/category", tags=["CRUD Category"])
 admin_only_crud_router.include_router(users.router, prefix="/users", tags=["CRUD Users"])
 admin_only_crud_router.include_router(importer.router)
 

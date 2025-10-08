@@ -1,5 +1,3 @@
-# src/pages/admin/htmx.py
-
 import json
 from urllib.parse import quote
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, Query
@@ -36,7 +34,7 @@ NO_CACHE_HEADERS = {
 class TaskForm(wtforms.Form):
     title = wtforms.StringField('Title')
     assigned_to_id = wtforms.SelectField('Assigned To', coerce=int)
-
+    
 @router.get("/quoterequest-modal/{pk}", response_class=HTMLResponse, name="admin_htmx_quoterequest_modal")
 async def get_quote_request_modal(
     pk: int,
@@ -50,7 +48,6 @@ async def get_quote_request_modal(
             .options(
                 selectinload(QuoteRequest.tasks).joinedload(Task.assigned_to),
                 selectinload(QuoteRequest.contact),
-                selectinload(QuoteRequest.product),
                 selectinload(QuoteRequest.assigned_to)
             )
         )
@@ -176,7 +173,6 @@ async def get_quote_slide_over(
         select(QuoteRequest).where(QuoteRequest.id == pk)
         .options(
             joinedload(QuoteRequest.contact),
-            joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.assigned_to),
             selectinload(QuoteRequest.tasks).joinedload(Task.assigned_to)
         )

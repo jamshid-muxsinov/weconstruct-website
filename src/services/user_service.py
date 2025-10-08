@@ -1,3 +1,5 @@
+# src/services/user_service.py
+
 import logging
 import uuid
 from typing import Optional
@@ -5,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 
-# --- ИЗМЕНЕНИЕ 1: Добавлен импорт UserRole ---
 from src.models.shop_models import User, RegistrationInvite, UserRole
 from src.core.password import verify_password, get_password_hash
 from src.schemas.user_schemas import UserCreate
@@ -61,7 +62,6 @@ async def create_user_from_invite(db: AsyncSession, user_data: UserCreate, invit
         hashed_password=hashed_password,
         is_active=True,
         is_staff=True
-        # При регистрации по инвайту роль по умолчанию будет 'manager', как указано в модели
     )
     db.add(new_user)
     
@@ -82,7 +82,7 @@ async def create_first_superuser(db: AsyncSession):
         if not user:
             try:
                 hashed_password = get_password_hash(settings.FIRST_SUPERUSER_PASSWORD)
-                # --- ИЗМЕНЕНИЕ 2: Добавлено явное указание роли ---
+                # --- ИЗМЕНЕНИЕ 7: Убеждаемся, что роль соответствует новой схеме ---
                 new_user = User(
                     username=settings.FIRST_SUPERUSER,
                     hashed_password=hashed_password,

@@ -52,11 +52,12 @@
                 <a href="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" class="nav-link {% if 'quoterequest' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bx-list-ul nav-icon'></i><span class="nav-text">{{ _('sidebar_requests') }}</span> </a>
                 <a href="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" class="nav-link {% if 'contact' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-user-detail nav-icon'></i><span class="nav-text">{{ _('sidebar_contacts') }}</span> </a>
                 
+                {# --- ИЗМЕНЕНИЕ: Возвращаем все ссылки, но с проверкой прав --- #}
                 {% if user.is_superuser %}
+                <a href="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-bar-chart-alt-2 nav-icon'></i><span class="nav-text">{{ _('sidebar_statistics') }}</span> </a>
                 <hr class="menu-divider">
-                {# --- ЭТИ ССЫЛКИ УДАЛЕНЫ, ТАК КАК ИХ РОУТЕРЫ ОТКЛЮЧЕНЫ В АДМИНКЕ --- #}
-                {# <a href="{{ request.url_for('admin_product_list', ...) }}">...</a> #}
-                {# <a href="{{ request.url_for('admin_category_list', ...) }}">...</a> #}
+                <a href="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" class="nav-link {% if 'product' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-package nav-icon'></i><span class="nav-text">{{ _('sidebar_products') }}</span> </a>
+                <a href="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" class="nav-link {% if 'category' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-component nav-icon'></i><span class="nav-text">{{ _('sidebar_categories') }}</span> </a>
                 <a href="{{ request.url_for('admin_user_list', locale=request.state.locale) }}" class="nav-link {% if '/users' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_user_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
                     <i class='bx bxs-user-account nav-icon'></i>
                     <span class="nav-text">{{ _('sidebar_users') }}</span>
