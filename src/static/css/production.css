@@ -1264,28 +1264,32 @@ select {
 /* ===== MODAL WINDOW ===== */
 .modal-overlay {
   position: fixed;
-  inset: 0;
-  background-color: rgba(7, 56, 90, 0.85);
+  inset: 0; /* Вместо top, left, right, bottom: 0; */
+  background-color: rgba(7, 56, 90, 0.85); /* Полупрозрачный фон */
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: var(--z-modal);
+  z-index: 1040; /* Убедимся, что он выше всего */
   padding: 1rem;
+  opacity: 1; /* Убираем transition для теста */
 }
+
 .modal-content {
-  background: white;
+  background-color: #ffffff; /* ЖЕЛЕЗНОБЕТОННО белый фон */
+  color: #212529; /* Темный текст для контраста */
   border-radius: 20px;
   width: 100%;
   max-width: 900px;
-  position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  position: relative; /* Важно для позиционирования дочерних элементов */
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   padding: 2.5rem;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; /* Важно, чтобы дочерние элементы не вылезали */
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 .modal-grid {
   display: grid;
