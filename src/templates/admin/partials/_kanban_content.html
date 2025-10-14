@@ -1,15 +1,24 @@
 <div class="kanban-board">
-    {% for status_group in requests_by_status %}
-    <div class="kanban-column" data-status="{{ status_group.status_code }}">
+    {% for column in requests_by_status %}
+    <div class="kanban-column" data-status="{{ column.status_code }}">
         <div class="kanban-column-header">
-            <h3>{{ get_status_display(status_group.status_code) }}</h3>
-            <span class="kanban-count">{{ status_group.requests|length }}</span>
+            <h3>{{ get_status_display(column.status_code) }}</h3>
+            <span class="kanban-count">{{ column.requests|length }}</span>
         </div>
         <div class="kanban-column-body">
-            {% for req in status_group.requests %}
-            {% include "admin/partials/_kanban_card.html" %}
+            {% for req in column.requests %}
+                {% include "admin/partials/_kanban_card.html" %}
             {% endfor %}
         </div>
     </div>
     {% endfor %}
 </div>
+
+<script>
+    if (window.initializeKanban) {
+        initializeKanban();
+    }
+    if (window.Alpine && Alpine.store('kanbanManager')) {
+        Alpine.store('kanbanManager').clearSelection();
+    }
+</script>

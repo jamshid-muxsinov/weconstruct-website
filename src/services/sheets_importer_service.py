@@ -26,7 +26,6 @@ async def process_single_lead_row(session: AsyncSession, lead_data: Dict[str, An
 
     try:
         async with session.begin():
-            # Проверяем, не импортировали ли мы этот лид ранее
             stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
             result = await session.execute(stmt)
             existing_lead = result.scalars().first()

@@ -1,69 +1,71 @@
-{# src/templates/admin/kanban_board.html #}
-{% if not htmx_request %}
-    {% extends "admin/base.html" %}
-{% endif %}
+{% extends "admin/base.html" %}
 
 {% block content %}
-<div x-data>
+<div x-data> {# Alpine.js scope #}
     <div class="page-header">
         <h1>{{ _('sales_funnel') }}</h1>
         <div class="page-header-actions">
-            {# --- Эта форма теперь будет частью основной формы фильтров --- #}
-            <a href="{{ request.url_for('admin_quoterequest_add', locale=request.state.locale) }}" class="btn btn-primary">
+            <a href="{{ url_for('admin_quoterequest_add', locale=request.state.locale) }}" 
+               class="btn btn-primary"
+               hx-get="{{ url_for('admin_quoterequest_add', locale=request.state.locale) }}"
+               hx-target="#slide-over-content"
+               hx-swap="innerHTML"
+               onclick="document.getElementById('slide-over-container').classList.add('open')">
                 <i class='bx bx-plus'></i>
                 {{ _('new_request') }}
             </a>
         </div>
     </div>
 
-    <!-- ИЗМЕНЕНИЕ: Вся фильтрация теперь в одной форме с HTMX-атрибутами -->
+    <!-- Панель фильтров -->
     <form class="advanced-filters" 
-          id="kanban-filters"
-          hx-get="{{ request.url_for('admin_htmx_kanban_content', locale=request.state.locale) }}"
+          id="kanban-filters-form"
+          hx-get="{{ url_for('admin_htmx_kanban_content', locale=request.state.locale) }}"
           hx-target="#kanban-board-container" 
           hx-trigger="keyup changed delay:300ms from:input[type='search'], change"
           hx-push-url="true">
 
         <div class="search-box" style="flex: 1; min-width: 250px;">
-            <input type="search" name="q" placeholder="{{ _('search_placeholder') }}" class="input-field" style="margin: 0;">
+            <i class='bx bx-search'></i>
+            <input type="search" name="q" placeholder="{{ _('search_placeholder') }}" class="input-field" value="{{ current_filters.q or '' }}">
         </div>
         
-        <div class="filter-chips" style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <label class="filter-chip" :class="{'active': $el.querySelector('input').checked}">
-                <input type="checkbox" name="assignee" value="me" class="hidden-checkbox">
-                <i class='bx bx-user'></i>
-                {{ _('my_tasks') }}
-            </label>
+        <div class="filter-chips">
+             <select name="assignee" class="select-field" style="min-width: 180px;">
+                <option value="">Все менеджеры</option>
+                <option value="me" {% if current_filters.assignee == 'me' %}selected{% endif %}>Только мои</option>
+                {% for manager in staff_users %}
+                    <option value="{{ manager.id }}" {% if current_filters.assignee == manager.id|string %}selected{% endif %}>{{ manager.username }}</option>
+                {% endfor %}
+            </select>
             
-            <label class="switch">
-                <input type="checkbox" name="show_archived" value="true" {% if show_archived %}checked{% endif %}>
-                <span class="slider"></span>
+            <label class="switch-label">
+                <span class="text">{{ _('show_archived') }}</span>
+                <label class="switch">
+                    <input type="checkbox" name="show_archived" value="true" {% if current_filters.show_archived %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
             </label>
-            <span>{{ _('show_archived') }}</span>
         </div>
     </form>
 
-
-    <!-- Панель массовых действий (остается без изменений) -->
+    <!-- Панель массовых действий -->
     <div class="bulk-actions-bar" x-show="$store.kanbanManager.selectedCards.size > 0" x-transition>
-        <span x-text="`{{ _('selected_cards_count', count='') }}${$store.kanbanManager.selectedCards.size}`" style="font-weight: 500;"></span>
+        <span x-text="`{{ _('selected_cards_count', count='') }}${$store.kanbanManager.selectedCards.size}`"></span>
         
-        <select @change="$store.kanbanManager.bulkAssign($event.target.value); $event.target.value = ''" class="select-field" style="min-width: 150px;">
+        <select @change="$store.kanbanManager.bulkAssign($event.target.value); $event.target.value = ''" class="select-field">
             <option value="">{{ _('assign_to') }}</option>
-            {% for user in staff_users %}
-            <option value="{{ user.id }}">{{ user.username }}</option>
-            {% endfor %}
+            <option value="0">--- Снять назначение ---</option>
+            {% for user in staff_users %}<option value="{{ user.id }}">{{ user.username }}</option>{% endfor %}
         </select>
         
-        <select @change="$store.kanbanManager.bulkUpdateStatus($event.target.value); $event.target.value = ''" class="select-field" style="min-width: 120px;">
+        <select @change="$store.kanbanManager.bulkUpdateStatus($event.target.value); $event.target.value = ''" class="select-field">
             <option value="">{{ _('status_placeholder') }}</option>
-            {% for status in QuoteRequest.StatusEnum %}
-            <option value="{{ status.value }}">{{ get_status_display(status) }}</option>
-            {% endfor %}
+            {% for status in QuoteRequest.StatusEnum %}<option value="{{ status.value }}">{{ get_status_display(status) }}</option>{% endfor %}
         </select>
                 
         <a :href="`{{ request.url_for('admin_quoterequest_export', locale=request.state.locale) }}?card_ids=${$store.kanbanManager.selectedIds.join(',')}`"
-            class="btn btn-sm btn-secondary">
+            class="btn btn-sm btn-secondary" target="_blank">
             <i class='bx bx-download'></i> {{ _('export') }}
         </a>
         
@@ -72,8 +74,9 @@
         </button>
     </div>
 
+    <!-- Контейнер для доски -->
     <div id="kanban-board-container" 
-         hx-get="{{ request.url_for('admin_htmx_kanban_content', locale=request.state.locale) }}?show_archived={{ show_archived }}"
+         hx-get="{{ url_for('admin_htmx_kanban_content', locale=request.state.locale) }}?{{ request.query_params }}"
          hx-trigger="load, updateKanban from:body"
          hx-swap="innerHTML">
         <div class="modal-loading-placeholder" style="padding: 100px 0;">
