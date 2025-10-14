@@ -51,3 +51,5 @@ gspread
 google-auth-oauthlib
 
 python-slugify
+
+httpx

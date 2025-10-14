@@ -9,9 +9,6 @@ from src.models.shop_models import QuoteRequest, GoogleSheetLead
 
 log = logging.getLogger(__name__)
 
-# --- ИЗМЕНЕНИЕ 1: Убираем старую логику, она больше не нужна ---
-# Функция _normalize_phone и STATUS_MAPPING удалены
-
 async def process_single_lead_row(session: AsyncSession, lead_data: Dict[str, Any]) -> bool:
     """
     Обрабатывает один структурированный лид в рамках сессии.

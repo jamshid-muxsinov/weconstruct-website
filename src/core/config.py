@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     CACHE_ENABLED: bool = True
      
     ROOT_PATH: str = ""
+    TELEGRAM_BOT_TOKEN: Optional[str] = None
+    TELEGRAM_CHAT_ID: Optional[str] = None
+    GOOGLE_WEBHOOK_SECRET_KEY: Optional[str] = None
     
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
