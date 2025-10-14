@@ -75,46 +75,41 @@ def create_admin_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
+    root_router_with_locale = APIRouter(prefix="/{locale}")
+
     async def set_locale_admin(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
         if locale not in ["ru", "uz"]:
-            locale = "ru"
+            locale = "ru" 
         request.state.locale = locale
+    
+    protected_router = APIRouter(dependencies=[Depends(set_locale_admin), Depends(get_current_active_user)])
 
-    admin_router_with_locale = APIRouter(
-        prefix="/{locale}", 
-        dependencies=[Depends(set_locale_admin)]
-    )
-    admin_router_with_locale.include_router(admin_router)
-    admin_router_with_locale.include_router(htmx_router)    
+    protected_router.include_router(admin_router)
+    protected_router.include_router(htmx_router)
+    protected_router.include_router(api_router) 
+
+    root_router_with_locale.include_router(protected_router)
 
     app.include_router(admin_unprotected_router) 
-    
-    app.include_router(webhooks_router)
-    app.include_router(
-        admin_router_with_locale,
-        dependencies=[Depends(get_current_active_user)]
-    )
-    
-    app.include_router(
-        api_router, 
-        dependencies=[Depends(get_current_active_user)]
-    )
+    app.include_router(webhooks_router) 
+    app.include_router(root_router_with_locale) 
+
     
     @app.get("/", include_in_schema=False)
     async def admin_root_redirect(request: Request):
-        return RedirectResponse(url=request.url_for('admin_dashboard', locale='ru'))
+        return RedirectResponse(url=request.url_for('admin_kanban_board', locale='ru'))
         
     add_pagination(app)
 
     @app.exception_handler(401)
     async def unauthorized_exception_handler(request: Request, exc: Exception):
         login_url = request.url_for('admin_login')
-        return RedirectResponse(url=f"{login_url}?next={request.url.path}", status_code=302)
+        next_path = request.url.path if request.url.path != '/' else request.url_for('admin_kanban_board', locale='ru')
+        return RedirectResponse(url=f"{login_url}?next={next_path}", status_code=302)
 
     @app.exception_handler(Exception)
     async def generic_admin_exception_handler(request: Request, exc: Exception):
         traceback.print_exc()
-        # --- ИЗМЕНЕНИЕ: Добавляем проверку и установку locale по умолчанию ---
         if not hasattr(request.state, "locale"):
             request.state.locale = "ru"
         context = {"request": request, "error_message": "Произошла внутренняя ошибка сервера."}
