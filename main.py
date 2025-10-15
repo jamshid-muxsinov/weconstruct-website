@@ -83,12 +83,12 @@ def create_admin_app() -> FastAPI:
     protected_router = APIRouter(dependencies=[Depends(set_locale_admin), Depends(get_current_active_user)])
 
     protected_router.include_router(admin_router)
-
     root_router_with_locale.include_router(protected_router)
 
     app.include_router(admin_unprotected_router) 
     app.include_router(webhooks_router) 
     app.include_router(root_router_with_locale) 
+
     
     @app.get("/", include_in_schema=False)
     async def admin_root_redirect(request: Request):
