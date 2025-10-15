@@ -74,24 +74,22 @@ def create_admin_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
-    locale_router = APIRouter()
+    async def set_locale_admin(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
+        if locale not in ["ru", "uz"]:
+            locale = "ru" 
+        request.state.locale = locale
 
-    @locale_router.on_event("startup")
-    async def set_locale_dependency():
-        async def set_locale_admin(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
-            if locale not in ["ru", "uz"]:
-                locale = "ru" 
-            request.state.locale = locale
-        locale_router.dependencies.append(Depends(set_locale_admin))
+    locale_router = APIRouter(prefix="/{locale}", dependencies=[Depends(set_locale_admin)])
 
     protected_admin_router = APIRouter(dependencies=[Depends(get_current_active_user)])
     protected_admin_router.include_router(admin_router)
+
     locale_router.include_router(protected_admin_router)
     
-    app.include_router(admin_unprotected_router)
+    app.include_router(admin_unprotected_router) 
     app.include_router(webhooks_router) 
-    app.include_router(locale_router, prefix="/{locale}") 
-
+    app.include_router(locale_router) 
+    
     @app.get("/", include_in_schema=False)
     async def admin_root_redirect(request: Request):
         return RedirectResponse(url=request.url_for('admin_kanban_board', locale='ru'))
@@ -113,6 +111,7 @@ def create_admin_app() -> FastAPI:
         return templates.TemplateResponse("admin/500.html", context, status_code=500)
 
     return app
+
 
 def create_site_app() -> FastAPI:
     fastapi_kwargs = {"title": "WeConstruct Website"}
