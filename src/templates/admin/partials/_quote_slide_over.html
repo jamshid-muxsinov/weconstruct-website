@@ -1,3 +1,4 @@
+<!-- src/templates/admin/partials/_quote_slide_over.html -->
 <div class="slide-over-header">
     <h2>{{ _('request_single') }} #{{ req.id }}</h2>
     <button class="slide-over-close" onclick="document.getElementById('slide-over-overlay').classList.remove('show')"><i class='bx bx-x'></i></button>
@@ -72,8 +73,8 @@
                 <input type='text' name='title' class="input-field" placeholder='{{ _('new_task_name_placeholder') }}' required>
                 <div style="display: flex; gap: 12px; margin-top: 12px;">
                     <select name="assigned_to_id" class="select-field" style="flex-grow: 1;">
-                        {% for user in staff_users %}
-                        <option value="{{ user.id }}" {% if user.id == request.user.id %}selected{% endif %}>{{ user.username }}</option>
+                        {% for staff_member in staff_users %}
+                        <option value="{{ staff_member.id }}" {% if staff_member.id == user.id %}selected{% endif %}>{{ staff_member.username }}</option>
                         {% endfor %}
                     </select>
                     <button type="submit" class="btn btn-primary">{{ _('add') }}</button>

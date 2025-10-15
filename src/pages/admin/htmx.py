@@ -1,3 +1,5 @@
+# src/pages/admin/htmx.py
+
 import json
 from urllib.parse import quote
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, Query
@@ -166,7 +168,7 @@ async def get_keyboard_shortcuts_modal(request: Request):
 @router.get("/quote-slide-over/{pk}", response_class=HTMLResponse, name="admin_htmx_quote_slide_over")
 async def get_quote_slide_over(
     pk: int,
-    request: Request,
+    context: dict = Depends(get_common_context),
     db: AsyncSession = Depends(get_db_session)
 ):
     stmt = (
@@ -186,13 +188,12 @@ async def get_quote_slide_over(
     task_form = TaskForm()
     task_form.assigned_to_id.choices = [(user.id, user.username) for user in staff_users]
     
-    context = {
-        "request": request,
+    context.update({
         "req": quote_request,
         "staff_users": staff_users,
         "tasks": sorted(quote_request.tasks, key=lambda t: (t.completed, -t.id)),
         "task_form": task_form,
-    }
+    })
     return templates.TemplateResponse("admin/partials/_quote_slide_over.html", context, headers=NO_CACHE_HEADERS)
 
 @router.get("/dashboard-new-requests/", response_class=HTMLResponse, name="admin_htmx_dashboard_new_requests")
@@ -257,7 +258,6 @@ async def htmx_delete_product_image(pk: int, db: AsyncSession = Depends(get_db_s
     image = await db.get(ProductImage, pk)
     if image:
         try:
-            # Используем абсолютный путь для надежности
             file_to_delete = BASE_DIR / "media" / image.image
             if file_to_delete.exists():
                 file_to_delete.unlink()
