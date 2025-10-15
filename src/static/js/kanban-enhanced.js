@@ -94,10 +94,11 @@ function initializeKanban() {
 
                 if (!cardId || !newStatus) return;
                 
-                const params = new URLSearchParams({ card_id: cardId, status: newStatus });
+                const payload = JSON.stringify({ id: parseInt(cardId), status: newStatus });
 
                 htmx.ajax('POST', '/api/update-status', {
-                    body: params,
+                    body: payload,
+                    headers: { 'Content-Type': 'application/json' },
                     swap: 'none'
                 }).then(data => {
                 }).catch(() => {

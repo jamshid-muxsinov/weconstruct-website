@@ -1,5 +1,7 @@
 # src/services/crm_service.py
 
+# src/services/crm_service.py
+
 import logging
 import wtforms
 import asyncio
@@ -173,7 +175,7 @@ async def update_quote_request_status(db: AsyncSession, update_data: QuoteReques
             user_id=user_id,
             old_status=old_status,
             new_status=req.status,
-            note="Статус изменен на Kanban-доске"
+            note="Status updated via drag & drop or swipe"
         )
         db.add(req)
         db.add(log_entry)
@@ -483,53 +485,6 @@ async def bulk_update_status(db: AsyncSession, card_ids: list[int], new_status: 
     except Exception as e:
         await db.rollback()
         log.error(f"Error in bulk status update: {e}", exc_info=True)
-        raise
-
-async def update_single_card_status(db: AsyncSession, card_id: int, new_status: str, current_user_id: int):
-    try:
-        status_enum = QuoteRequest.StatusEnum(new_status)
-        
-        req = await db.get(
-            QuoteRequest, 
-            card_id, 
-            options=[selectinload(QuoteRequest.google_sheet_lead)]
-        )
-        if not req:
-            return None
-            
-        old_status = req.status
-        
-        if old_status == status_enum:
-            return req
-        
-        req.status = status_enum
-        
-        log_entry = StatusChangeLog(
-            quote_request_id=req.id,
-            user_id=current_user_id,
-            old_status=old_status,
-            new_status=req.status,
-            note="Status updated via drag & drop or swipe"
-        )
-        db.add(req)
-        db.add(log_entry)
-        await db.commit()
-        await db.refresh(req)
-        
-        if req.google_sheet_lead and req.google_sheet_lead.sheet_row_id:
-            new_status_display = status_enum.value.replace('_', ' ').capitalize()
-            loop = asyncio.get_running_loop()
-            loop.run_in_executor(
-                executor, 
-                google_sheets_service.update_status_in_sheet, 
-                req.google_sheet_lead.sheet_row_id, 
-                new_status_display
-            )
-            
-        return req
-    except Exception as e:
-        await db.rollback()
-        log.error(f"Error updating single card status: {e}", exc_info=True)
         raise
 
 async def export_requests_csv(db: AsyncSession, card_ids: list[int] = None) -> str:

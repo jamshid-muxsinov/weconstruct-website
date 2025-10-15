@@ -10,6 +10,7 @@ from src.core.db import get_db_session
 from src.core.security import get_current_active_user
 from src.models.shop_models import User, Notification
 from src.services import crm_service
+from src.schemas.crm_schemas import QuoteRequestStatusUpdate
 
 router = APIRouter(prefix="/api", tags=["Admin API"])
 
@@ -70,13 +71,12 @@ async def bulk_status_api(
 
 @router.post("/update-status", name="api_update_single_status")
 async def update_single_card_status(
-    card_id: int = Form(...),
-    status: str = Form(...),
+    update_data: QuoteRequestStatusUpdate,
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user)
 ):
     """Обновление статуса одной карточки (для Drag & Drop)"""
-    req = await crm_service.update_single_card_status(db, card_id, status, current_user.id)
+    req = await crm_service.update_quote_request_status(db, update_data, current_user.id)
     if not req:
         raise HTTPException(status_code=404, detail="QuoteRequest not found")
     return {"status": "ok"}
