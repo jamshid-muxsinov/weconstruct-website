@@ -1,3 +1,5 @@
+# src/services/sheets_importer_service.py
+
 import logging
 from datetime import datetime
 from typing import Dict, Any
@@ -40,12 +42,13 @@ async def process_single_lead_row(session: AsyncSession, lead_data: Dict[str, An
             # Создаем или находим контакт по номеру телефона
             contact = await _get_or_create_contact(session, name=client_name, phone=phone_number)
             if not contact:
-                # На всякий случай, если что-то пошло не так
                 raise Exception(f"Не удалось создать/найти контакт для телефона {phone_number}")
 
-            # Формируем тему и сообщение для CRM
-            subject = f"Лид из Facebook ({business_type})" if business_type else "Лид из Facebook"
-            message_for_crm = f"Автоматический импорт из Google Sheets.\nИсходные данные:\n{lead_data.get('raw_data', '')}"
+            # --- ИЗМЕНЕНИЕ: Формируем чистые тему и сообщение ---
+            # Тема теперь - это тип бизнеса. Это наиболее релевантная информация.
+            subject = business_type if business_type else "Заявка из соц. сетей (без темы)"
+            # Поле сообщения оставляем пустым, т.к. изначальное сообщение не передается.
+            message_for_crm = ""
 
             # Создаем заявку
             quote = await _create_quote_request(session, contact.id, message_for_crm, subject, source="contact_form")
@@ -70,5 +73,4 @@ async def process_single_lead_row(session: AsyncSession, lead_data: Dict[str, An
 
     except Exception as e:
         log.error(f"Ошибка при обработке лида {sheet_row_id}: {e}", exc_info=True)
-        # Откатываем транзакцию session.begin() сделает это автоматически
         return False
