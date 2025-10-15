@@ -73,12 +73,6 @@ def create_admin_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
 
-    protected_admin_router = APIRouter(
-        dependencies=[Depends(get_current_active_user)]
-    )
-
-    protected_admin_router.include_router(admin_router)
-
     locale_router = APIRouter()
 
     @locale_router.on_event("startup")
@@ -89,12 +83,14 @@ def create_admin_app() -> FastAPI:
             request.state.locale = locale
         locale_router.dependencies.append(Depends(set_locale_admin))
 
+    protected_admin_router = APIRouter(dependencies=[Depends(get_current_active_user)])
+    protected_admin_router.include_router(admin_router)
     locale_router.include_router(protected_admin_router)
     
-    app.include_router(unprotected_router)
+    app.include_router(admin_unprotected_router)
     app.include_router(webhooks_router) 
-    app.include_router(locale_router, prefix="/{locale}")
-    
+    app.include_router(locale_router, prefix="/{locale}") 
+
     @app.get("/", include_in_schema=False)
     async def admin_root_redirect(request: Request):
         return RedirectResponse(url=request.url_for('admin_kanban_board', locale='ru'))
@@ -161,8 +157,7 @@ def create_site_app() -> FastAPI:
         return templates.TemplateResponse("shop/error.html", context, status_code=500)
     return app
 
-admin_app = create_admin_app()
-site_app = create_site_app()
 
 if __name__ == "__main__":
-    uvicorn.run("main:admin_app", host="0.0.0.0", port=8000, reload=True)
+    app_to_run = create_admin_app()
+    uvicorn.run(app_to_run, host="0.0.0.0", port=8000, reload=True)
