@@ -1,5 +1,3 @@
-# src/pages/admin/htmx.py
-
 import json
 from urllib.parse import quote
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, Query

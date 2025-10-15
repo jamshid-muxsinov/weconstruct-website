@@ -1,85 +1,84 @@
-<!-- src/templates/admin/partials/_quote_slide_over.html -->
 <div class="slide-over-header">
-    <h2>{{ _('request_single') }} #{{ req.id }}</h2>
-    <button class="slide-over-close" onclick="document.getElementById('slide-over-overlay').classList.remove('show')"><i class='bx bx-x'></i></button>
+    <h2>{{ _('request_single') }} #{{ req.id }}</h2>
+    <button class="slide-over-close" onclick="document.getElementById('slide-over-overlay').classList.remove('show')"><i class='bx bx-x'></i></button>
 </div>
 
 <div class="slide-over-body">
-    <div class="slide-over-grid">
-        
-        <!-- Левая колонка -->
-        <div>
-            <h3 class="slide-over-section-title">{{ _('request_details_title') }}</h3>
-            <div class="detail-item">
-                <strong>{{ _('header_client') }}</strong>
-                <span><a href="{{ url_for('admin_contact_detail', locale=request.state.locale, pk=req.contact_id) }}" class="link-to-change">{{ req.contact.full_name }}</a></span>
-            </div>
-            <div class="detail-item">
-                <strong>{{ _('header_phone') }}</strong>
-                <span>{{ req.contact.phone | format_phone }}</span>
-            </div>
-            <div class="detail-item">
-                <strong>Тема обращения</strong>
-                <span>{{ req.subject or "---" }}</span>
-            </div>
-            <div class="detail-item">
-                <strong>{{ _('form_field_message') }}</strong>
-                <span class="detail-item-message">{{ req.message or "---" }}</span>
-            </div>
+    <div class="slide-over-grid">
+        
+        <!-- Левая колонка -->
+        <div>
+            <h3 class="slide-over-section-title">{{ _('request_details_title') }}</h3>
+            <div class="detail-item">
+                <strong>{{ _('header_client') }}</strong>
+                <span><a href="{{ url_for('admin_contact_detail', locale=request.state.locale, pk=req.contact_id) }}" class="link-to-change">{{ req.contact.full_name }}</a></span>
+            </div>
+            <div class="detail-item">
+                <strong>{{ _('header_phone') }}</strong>
+                <span>{{ req.contact.phone | format_phone }}</span>
+            </div>
+            <div class="detail-item">
+                <strong>Тема обращения</strong>
+                <span>{{ req.subject or "---" }}</span>
+            </div>
+            <div class="detail-item">
+                <strong>{{ _('form_field_message') }}</strong>
+                <span class="detail-item-message">{{ req.message or "---" }}</span>
+            </div>
 
-            {% if req.business_type or req.dimensions or req.investment_details or req.conclusion or req.additional_info %}
-            <h3 class="slide-over-section-title">{{ _('manager_info') }}</h3>
-            {% if req.business_type %}<div class="detail-item"><strong>{{ _('form_field_business_type') }}</strong><span>{{ req.business_type }}</span></div>{% endif %}
-            {% if req.dimensions %}<div class="detail-item"><strong>{{ _('form_field_dimensions') }}</strong><span>{{ req.dimensions }}</span></div>{% endif %}
-            {% if req.investment_details %}<div class="detail-item"><strong>{{ _('form_field_investment') }}</strong><span class="detail-item-message">{{ req.investment_details }}</span></div>{% endif %}
-            {% if req.conclusion %}<div class="detail-item"><strong>{{ _('form_field_conclusion') }}</strong><span class="detail-item-message">{{ req.conclusion }}</span></div>{% endif %}
-            {% if req.additional_info %}<div class="detail-item"><strong>{{ _('form_field_additional_info') }}</strong><span class="detail-item-message">{{ req.additional_info }}</span></div>{% endif %}
-            {% endif %}
-        </div>
+            {% if req.business_type or req.dimensions or req.investment_details or req.conclusion or req.additional_info %}
+            <h3 class="slide-over-section-title">{{ _('manager_info') }}</h3>
+            {% if req.business_type %}<div class="detail-item"><strong>{{ _('form_field_business_type') }}</strong><span>{{ req.business_type }}</span></div>{% endif %}
+            {% if req.dimensions %}<div class="detail-item"><strong>{{ _('form_field_dimensions') }}</strong><span>{{ req.dimensions }}</span></div>{% endif %}
+            {% if req.investment_details %}<div class="detail-item"><strong>{{ _('form_field_investment') }}</strong><span class="detail-item-message">{{ req.investment_details }}</span></div>{% endif %}
+            {% if req.conclusion %}<div class="detail-item"><strong>{{ _('form_field_conclusion') }}</strong><span class="detail-item-message">{{ req.conclusion }}</span></div>{% endif %}
+            {% if req.additional_info %}<div class="detail-item"><strong>{{ _('form_field_additional_info') }}</strong><span class="detail-item-message">{{ req.additional_info }}</span></div>{% endif %}
+            {% endif %}
+        </div>
 
-        <!-- Правая колонка -->
-        <div>
-            <h3 class="slide-over-section-title">{{ _('management_title') }}</h3>
-           <form hx-post="{{ url_for('admin_api_quote_assign', pk=req.id) }}" hx-trigger="submit" style="margin-bottom: 20px;">
-                <div class="input-group" style="margin: 0;">
-                    <label for="assignee-select" style="margin-bottom: 10px; font-weight: 600; color: var(--text-secondary);">{{ _('assign_executor') }}</label>
-                    <div style="display: flex; gap: 12px;">
-                        <select id="assignee-select" name="assigned_to_id" class="select-field" style="flex-grow: 1;">
-                            <option value="0">{{ _('unassigned_option') }}</option>
-                            {% for u in staff_users %}
-                            <option value="{{ u.id }}" {% if req.assigned_to_id == u.id %}selected{% endif %}>{{ u.username }}</option>
-                            {% endfor %}
-                        </select>
-                        <button type="submit" class="btn btn-primary">{{ _('ok') }}</button>
-                    </div>
-                </div>
-            </form>
-            
-            <div style="margin-bottom: 20px;">
-                <a href="{{ url_for('admin_quoterequest_change', locale=request.state.locale, pk=req.id) }}" class="btn btn-secondary btn-full">
-                    <i class='bx bx-edit-alt'></i> {{ _('full_edit') }}
-                </a>
-            </div>
+        <!-- Правая колонка -->
+        <div>
+            <h3 class="slide-over-section-title">{{ _('management_title') }}</h3>
+           <form hx-post="{{ url_for('admin_api_quote_assign', pk=req.id) }}" hx-trigger="submit" style="margin-bottom: 20px;">
+                <div class="input-group" style="margin: 0;">
+                    <label for="assignee-select" style="margin-bottom: 10px; font-weight: 600; color: var(--text-secondary);">{{ _('assign_executor') }}</label>
+                    <div style="display: flex; gap: 12px;">
+                        <select id="assignee-select" name="assigned_to_id" class="select-field" style="flex-grow: 1;">
+                            <option value="0">{{ _('unassigned_option') }}</option>
+                            {% for u in staff_users %}
+                            <option value="{{ u.id }}" {% if req.assigned_to_id == u.id %}selected{% endif %}>{{ u.username }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary">{{ _('ok') }}</button>
+                    </div>
+                </div>
+            </form>
+            
+            <div style="margin-bottom: 20px;">
+                <a href="{{ url_for('admin_quoterequest_change', locale=request.state.locale, pk=req.id) }}" class="btn btn-secondary btn-full">
+                    <i class='bx bx-edit-alt'></i> {{ _('full_edit') }}
+                </a>
+            </div>
 
-            <h3 class="slide-over-section-title">{{ _('request_tasks_title') }}</h3>
-            <div class="task-list-container">
-                {% include 'admin/partials/_task_list_partial.html' %}
-            </div>
-            <form class="quick-task-form" style="margin-top: 20px;"
-                  hx-post="{{ url_for('admin_htmx_add_task_to_quote', locale=request.state.locale, pk=req.id) }}"
-                  hx-target=".task-list-container"
-                  hx-swap="innerHTML"
-                  hx-on::after-request="this.reset()">
-                <input type='text' name='title' class="input-field" placeholder='{{ _('new_task_name_placeholder') }}' required>
-                <div style="display: flex; gap: 12px; margin-top: 12px;">
-                    <select name="assigned_to_id" class="select-field" style="flex-grow: 1;">
-                        {% for staff_member in staff_users %}
-                        <option value="{{ staff_member.id }}" {% if staff_member.id == user.id %}selected{% endif %}>{{ staff_member.username }}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit" class="btn btn-primary">{{ _('add') }}</button>
-                </div>
-            </form>
-        </div>
-    </div>
+            <h3 class="slide-over-section-title">{{ _('request_tasks_title') }}</h3>
+            <div class="task-list-container">
+                {% include 'admin/partials/_task_list_partial.html' %}
+            </div>
+            <form class="quick-task-form" style="margin-top: 20px;"
+                  hx-post="{{ url_for('admin_htmx_add_task_to_quote', locale=request.state.locale, pk=req.id) }}"
+                  hx-target=".task-list-container"
+                  hx-swap="innerHTML"
+                  hx-on::after-request="this.reset()">
+                <input type='text' name='title' class="input-field" placeholder='{{ _('new_task_name_placeholder') }}' required>
+                <div style="display: flex; gap: 12px; margin-top: 12px;">
+                    <select name="assigned_to_id" class="select-field" style="flex-grow: 1;">
+                        {% for staff_member in staff_users %}
+                        <option value="{{ staff_member.id }}" {% if staff_member.id == user.id %}selected{% endif %}>{{ staff_member.username }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary">{{ _('add') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
