@@ -1,5 +1,7 @@
 # src/main.py
 
+# src/main.py
+
 import logging
 import sys
 import traceback
@@ -19,6 +21,7 @@ from starlette_wtf import CSRFProtectMiddleware
  
 from src.core.middleware import HTMXMiddleware
 from src.pages.admin.router import router as admin_router, unprotected_router as admin_unprotected_router
+from src.pages.admin.api import router as api_router
 from src.core.config import get_settings
 from src.core.db import check_db_connection, async_session_factory
 from src.core.security import get_current_active_user
@@ -88,6 +91,7 @@ def create_admin_app() -> FastAPI:
     
     app.include_router(admin_unprotected_router) 
     app.include_router(webhooks_router) 
+    app.include_router(api_router, dependencies=[Depends(get_current_active_user)])
     app.include_router(locale_router) 
     
     @app.get("/", include_in_schema=False)

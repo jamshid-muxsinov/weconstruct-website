@@ -34,7 +34,6 @@ async def admin_root_redirect(request: Request):
     kanban_url = request.url_for('admin_kanban_board', locale='ru')
     return RedirectResponse(url=kanban_url)
 
-router.include_router(api.router)
 router.include_router(htmx.router)
 
 router.include_router(dashboard.router)
