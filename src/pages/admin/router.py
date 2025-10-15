@@ -26,7 +26,6 @@ staff_crud_router.include_router(contact.router, prefix="/contact", tags=["CRUD 
 
 # Роутер для страниц, доступных только админам
 admin_only_crud_router = APIRouter(dependencies=[Depends(get_current_superuser)])
-# --- ИЗМЕНЕНИЕ: Возвращаем роутеры для продуктов и категорий ---
 admin_only_crud_router.include_router(crud.product_router, prefix="/product", tags=["CRUD Product"])
 admin_only_crud_router.include_router(crud.category_router, prefix="/category", tags=["CRUD Category"])
 admin_only_crud_router.include_router(users.router, prefix="/users", tags=["CRUD Users"])
@@ -37,6 +36,11 @@ admin_only_crud_router.include_router(importer.router)
 async def admin_root_redirect(request: Request):
     kanban_url = request.url_for('admin_kanban_board', locale='ru')
     return RedirectResponse(url=kanban_url)
+
+# --- НАЧАЛО ИЗМЕНЕНИЯ: ВКЛЮЧАЕМ API РОУТЕР ЗДЕСЬ ---
+# Это гарантирует, что все защищенные маршруты будут видны друг другу
+router.include_router(api.router)
+# --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
 router.include_router(dashboard.router)
 router.include_router(kanban.router)
