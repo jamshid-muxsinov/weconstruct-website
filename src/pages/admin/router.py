@@ -8,23 +8,20 @@ from . import kanban
 from . import crud
 from . import contact
 from . import profile
-from . import htmx 
+from . import htmx
 from . import api
 from . import importer
 from . import invites
-from . import users 
+from . import users
 from src.core.security import get_current_superuser, get_current_staff_user
 
 router = APIRouter()
 unprotected_router = APIRouter()
-htmx_router = htmx.router
 
-# Роутер для страниц, доступных всем сотрудникам (менеджерам)
 staff_crud_router = APIRouter(dependencies=[Depends(get_current_staff_user)])
 staff_crud_router.include_router(crud.quoterequest_router, prefix="/quoterequest", tags=["CRUD QuoteRequest"])
 staff_crud_router.include_router(contact.router, prefix="/contact", tags=["CRUD Contact"])
 
-# Роутер для страниц, доступных только админам
 admin_only_crud_router = APIRouter(dependencies=[Depends(get_current_superuser)])
 admin_only_crud_router.include_router(crud.product_router, prefix="/product", tags=["CRUD Product"])
 admin_only_crud_router.include_router(crud.category_router, prefix="/category", tags=["CRUD Category"])
@@ -37,10 +34,8 @@ async def admin_root_redirect(request: Request):
     kanban_url = request.url_for('admin_kanban_board', locale='ru')
     return RedirectResponse(url=kanban_url)
 
-# --- НАЧАЛО ИЗМЕНЕНИЯ: ВКЛЮЧАЕМ API РОУТЕР ЗДЕСЬ ---
-# Это гарантирует, что все защищенные маршруты будут видны друг другу
 router.include_router(api.router)
-# --- КОНЕЦ ИЗМЕНЕНИЯ ---
+router.include_router(htmx.router)
 
 router.include_router(dashboard.router)
 router.include_router(kanban.router)

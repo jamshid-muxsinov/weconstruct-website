@@ -18,8 +18,6 @@ from starlette_wtf import CSRFProtectMiddleware
  
 from src.core.middleware import HTMXMiddleware
 from src.pages.admin.router import router as admin_router, unprotected_router as admin_unprotected_router
-
-from src.pages.admin.router import htmx_router
 from src.core.config import get_settings
 from src.core.db import check_db_connection, async_session_factory
 from src.core.security import get_current_active_user
@@ -83,9 +81,9 @@ def create_admin_app() -> FastAPI:
         request.state.locale = locale
     
     protected_router = APIRouter(dependencies=[Depends(set_locale_admin), Depends(get_current_active_user)])
-
+    -
     protected_router.include_router(admin_router)
-    protected_router.include_router(htmx_router)
+
     root_router_with_locale.include_router(protected_router)
 
     app.include_router(admin_unprotected_router) 
