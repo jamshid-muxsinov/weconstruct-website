@@ -3,6 +3,7 @@
 import logging
 import sys
 import traceback
+import os 
 from typing import Callable
 import asyncio
 
@@ -48,16 +49,16 @@ async def on_startup():
     await init_cache()
     log.info("Cache initialization complete.")
     
-    asyncio.create_task(warm_up_cache())
-    asyncio.create_task(schedule_cache_cleanup())
-    log.info("Cache warm-up and cleanup scheduler started in background.")
+    if os.getenv("APP_TO_RUN") == "admin":
+        asyncio.create_task(warm_up_cache())
+        asyncio.create_task(schedule_cache_cleanup())
+        log.info("Cache warm-up and cleanup scheduler started in background.")
 
 async def on_shutdown():
     log.info("Application shutdown...")
     await cleanup_cache()
     log.info("Cache cleanup complete.")
 
-# --- ФАБРИКА ДЛЯ ПРИЛОЖЕНИЯ АДМИНКИ (admin.weconstruct.uz) ---
 def create_admin_app() -> FastAPI:
     fastapi_kwargs = {"title": "WeConstruct CRM"}
     if not settings.DEBUG:
@@ -113,7 +114,6 @@ def create_admin_app() -> FastAPI:
 
     return app
 
-# --- ФАБРИКА ДЛЯ ПРИЛОЖЕНИЯ ОСНОВНОГО САЙТА (weconstruct.uz) ---
 def create_site_app() -> FastAPI:
     fastapi_kwargs = {"title": "WeConstruct Website"}
     if not settings.DEBUG:
@@ -157,7 +157,15 @@ def create_site_app() -> FastAPI:
         return templates.TemplateResponse("shop/error.html", context, status_code=500)
     return app
 
+app: FastAPI
+app_to_run = os.getenv("APP_TO_RUN")
 
-if __name__ == "__main__":
-    app_to_run = create_admin_app()
-    uvicorn.run(app_to_run, host="0.0.0.0", port=8000, reload=True)
+if app_to_run == "site":
+    log.info("Creating SITE application instance.")
+    app = create_site_app()
+elif app_to_run == "admin":
+    log.info("Creating ADMIN application instance.")
+    app = create_admin_app()
+else:
+    log.info("APP_TO_RUN not set, creating ADMIN application by default.")
+    app = create_admin_app()
