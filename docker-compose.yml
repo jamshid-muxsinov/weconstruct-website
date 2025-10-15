@@ -16,7 +16,7 @@ services:
     build: .
     command: gunicorn --chdir /app/src -w 4 -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000 main:app
     environment:
-      - APP_TO_RUN=site  
+      - APP_TO_RUN=site
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
     volumes:
@@ -52,7 +52,8 @@ services:
     env_file: .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login"]
+      # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: Правильный URL для healthcheck ---
+      test: ["CMD", "curl", "-f", "http://localhost:8000/login"]
       interval: 30s
       timeout: 10s
       retries: 5
