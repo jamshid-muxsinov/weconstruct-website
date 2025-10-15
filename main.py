@@ -161,7 +161,6 @@ def create_site_app() -> FastAPI:
         return templates.TemplateResponse("shop/error.html", context, status_code=500)
     return app
 
-
 admin_app = create_admin_app()
 site_app = create_site_app()
 
