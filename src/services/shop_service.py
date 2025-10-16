@@ -89,9 +89,8 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
     if recent_requests:
         return "duplicate"
     
-    async with db.begin():
-        quote = await _create_quote_request(db, contact.id, message, subject, source)
-        await _notify_managers(db, quote, contact.full_name)
+    quote = await _create_quote_request(db, contact.id, message, subject, source)
+    await _notify_managers(db, quote, contact.full_name)
     
     await db.refresh(quote) 
     return quote
