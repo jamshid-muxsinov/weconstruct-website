@@ -1,5 +1,3 @@
-# src/pages/admin/crud.py
-
 import os
 import uuid
 import json
@@ -468,16 +466,23 @@ async def category_form_post(request: Request, pk: Optional[int] = None, context
     if pk and not instance: raise HTTPException(404)
     form_data = await request.form()
     form = CATEGORY_META.form_class(form_data, obj=instance)
+    
     if form.validate():
-        instance = instance or Category()
-        form.populate_obj(instance)
-        instance.slug = slugify(instance.name_ru)
-        db.add(instance)
-        await db.commit()
-        response = RedirectResponse(request.url_for(CATEGORY_META.change_url_name, locale=request.state.locale, pk=instance.id), status_code=303)
-        return set_hx_trigger_header(response, "category_saved_success", request)
+        try:
+            instance = instance or Category()
+            form.populate_obj(instance)
+            instance.slug = slugify(instance.name_ru)
+            db.add(instance)
+            await db.commit()
+            
+            response = RedirectResponse(request.url_for(CATEGORY_META.change_url_name, locale=request.state.locale, pk=instance.id), status_code=303)
+            return set_hx_trigger_header(response, "category_saved_success", request)
+        except IntegrityError:
+            await db.rollback()
+            form.name_ru.errors.append("Категория с таким названием уже существует.")
+
     context.update({"meta": CATEGORY_META, "original": instance, "form": form, "htmx_request": "HX-Request" in request.headers})
-    return templates.TemplateResponse("admin/generic_form.html", context)
+    return templates.TemplateResponse("admin/generic_form.html", context, status_code=422)
 
 @category_router.get("/{pk}/delete/", response_class=HTMLResponse, name="admin_category_delete")
 @category_router.post("/{pk}/delete/", response_class=HTMLResponse)
@@ -493,8 +498,12 @@ async def category_delete(request: Request, pk: int, context: dict = Depends(get
             return set_hx_trigger_header(response, "category_deleted_success", request, "error")
         except IntegrityError:
             await db.rollback()
-            context.update({"error_message": "Нельзя удалить категорию, к которой привязаны товары."})
-            return templates.TemplateResponse("admin/500.html", context, status_code=500)
+            redirect_url = request.url_for(CATEGORY_META.change_url_name, locale=request.state.locale, pk=pk)
+            response = RedirectResponse(url=redirect_url, status_code=303)
+            message = "Нельзя удалить категорию, к которой привязаны товары."
+            payload = json.dumps({"show-toast": {"message": message, "type": "error"}})
+            response.headers["HX-Trigger"] = quote(payload)
+            return response
     
     translated_entity_name = _({'request': request}, CATEGORY_META.verbose_name)
     title = _({'request': request}, 'delete_confirmation_title', entity=translated_entity_name)
