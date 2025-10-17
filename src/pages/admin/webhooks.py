@@ -8,7 +8,8 @@ from pydantic import BaseModel
 from src.core.config import get_settings
 from src.core.db import async_session_factory
 from src.services import sheets_importer_service
-
+from sqlalchemy.future import select 
+from src.models.shop_models import GoogleSheetLead
 from src.services import telegram_service
 
 log = logging.getLogger(__name__)
@@ -60,3 +61,27 @@ async def receive_new_lead_from_google(
     log.info(f"Обработка завершена. Успешно импортировано: {processed_count}. Пропущено/ошибки: {skipped_count}.")
     
     return {"status": "ok", "message": f"Processed: {processed_count}, Skipped/Errors: {skipped_count}."}
+
+class CheckExistingLeadsRequest(BaseModel):
+    sheet_row_ids: List[str]
+
+@router.post("/check-existing-leads", response_model=List[str])
+async def check_existing_leads(
+    payload: CheckExistingLeadsRequest,
+    db: AsyncSession = Depends(get_db_session),
+    x_secret_token: str = Header(None)
+):
+    """
+    Принимает список ID лидов и возвращает те, которые уже существуют в БД.
+    """
+    if not settings.GOOGLE_SHEET_WEBHOOK_SECRET or x_secret_token != settings.GOOGLE_SHEET_WEBHOOK_SECRET:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid secret token.")
+    
+    if not payload.sheet_row_ids:
+        return []
+        
+    stmt = select(GoogleSheetLead.sheet_row_id).where(GoogleSheetLead.sheet_row_id.in_(payload.sheet_row_ids))
+    result = await db.execute(stmt)
+    existing_ids = result.scalars().all()
+    
+    return existing_ids
