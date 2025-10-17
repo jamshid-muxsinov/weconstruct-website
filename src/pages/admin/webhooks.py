@@ -4,7 +4,8 @@ import logging
 from typing import List, Dict, Any
 from fastapi import APIRouter, Request, Header, HTTPException, status, Depends
 from pydantic import BaseModel
-
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.core.db import async_session_factory, get_db_session
 from src.core.config import get_settings
 from src.core.db import async_session_factory
 from src.services import sheets_importer_service
