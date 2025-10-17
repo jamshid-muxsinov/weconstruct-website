@@ -11,6 +11,7 @@ from src.models.shop_models import QuoteRequest, GoogleSheetLead
 
 log = logging.getLogger(__name__)
 
+
 async def process_single_lead_row(session: AsyncSession, lead_data: Dict[str, Any]) -> bool:
     """
     Обрабатывает один структурированный лид в рамках сессии.
@@ -39,22 +40,30 @@ async def process_single_lead_row(session: AsyncSession, lead_data: Dict[str, An
             client_name = lead_data.get("client_name", "Без имени")
             business_type = lead_data.get("business_type", "")
             
-            # Создаем или находим контакт по номеру телефона
             contact = await _get_or_create_contact(session, name=client_name, phone=phone_number)
             if not contact:
                 raise Exception(f"Не удалось создать/найти контакт для телефона {phone_number}")
 
-            # --- ИЗМЕНЕНИЕ: Формируем чистые тему и сообщение ---
-            # Тема теперь - это тип бизнеса. Это наиболее релевантная информация.
-            subject = business_type if business_type else "Заявка из соц. сетей (без темы)"
-            # Поле сообщения оставляем пустым, т.к. изначальное сообщение не передается.
-            message_for_crm = ""
-
-            # Создаем заявку
+            region = lead_data.get("region", "")
+            
+            subject_parts = []
+            if region and region not in ["Не указан", "Неизвестно (старый формат)"]:
+                subject_parts.append(region)
+            
+            if business_type:
+                subject_parts.append(business_type)
+            
+            if subject_parts:
+                subject = f"Лид из Facebook ({' / '.join(subject_parts)})"
+            else:
+                subject = "Лид из Facebook"
+            
+            message_for_crm = f"Автоматический импорт из Google Sheets.\nИсходные данные:\n{lead_data.get('raw_data', '')}"
+        
             quote = await _create_quote_request(session, contact.id, message_for_crm, subject, source="contact_form")
+            
             quote.business_type = business_type
             
-            # Создаем запись в реестре GoogleSheetLead
             new_lead_entry = GoogleSheetLead(
                 sheet_row_id=sheet_row_id, 
                 spreadsheet_id="16dZ3_sWE1yYUhYmtfpdNlbWDhRrltNNGMtroTmzkNpo",

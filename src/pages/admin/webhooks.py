@@ -21,6 +21,8 @@ class Lead(BaseModel):
     phone: str
     business_type: str
     raw_data: str
+    region: str
+    raw_data: str
 
 class NewLeadPayload(BaseModel):
     leads: List[Lead]
