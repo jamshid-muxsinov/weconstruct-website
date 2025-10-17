@@ -2,7 +2,7 @@
 
 import logging
 from typing import List, Dict, Any
-from fastapi import APIRouter, Request, Header, HTTPException, status
+from fastapi import APIRouter, Request, Header, HTTPException, status, Depends
 from pydantic import BaseModel
 
 from src.core.config import get_settings

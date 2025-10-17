@@ -31,7 +31,7 @@ from src.core.cache import init_cache, cleanup_cache
 from src.core.middleware import CacheMiddleware, RateLimitMiddleware
 from src.core.cache_utils import schedule_cache_cleanup, warm_up_cache
 from src.pages.jinja_config import templates, configure_jinja_templates
-from src.pages.admin.webhooks import router as webhooks_router
+
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 log = logging.getLogger(__name__)
@@ -69,6 +69,8 @@ def create_admin_app() -> FastAPI:
 
     app = FastAPI(**fastapi_kwargs, on_startup=[on_startup], on_shutdown=[on_shutdown])
     
+    from src.pages.admin.webhooks import router as webhooks_router
+
     app.add_middleware(HTMXMiddleware, templates=templates)
     app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
     app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.SECRET_KEY)
