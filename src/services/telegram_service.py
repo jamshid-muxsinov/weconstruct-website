@@ -15,6 +15,7 @@ def _escape_markdown(text: Any) -> str:
     if not isinstance(text, str):
         text = str(text)
     
+    # Список символов, которые нужно экранировать согласно документации Telegram
     escape_chars = r'_*[]()~`>#+-=|{}.!'
 
     return "".join(f'\\{char}' if char in escape_chars else char for char in text)
@@ -30,7 +31,7 @@ async def send_new_lead_notification(lead_data: Dict[str, Any]):
     if not token or not chat_id:
         log.warning("TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID не установлены. Уведомление не отправлено.")
         return
-
+    # Экранируем все входящие данные для безопасности
     source_text = _escape_markdown(lead_data.get("source_text", "Новая заявка"))
     client_name = _escape_markdown(lead_data.get("client_name", "N/A"))
     phone_raw = lead_data.get("phone", "")
