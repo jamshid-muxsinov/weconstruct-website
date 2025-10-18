@@ -34,16 +34,16 @@ async def send_new_lead_notification(lead_data: Dict[str, Any]):
     source_text = _escape_markdown(lead_data.get("source_text", "Новая заявка"))
     client_name = _escape_markdown(lead_data.get("client_name", "N/A"))
     phone_raw = lead_data.get("phone", "")
-    phone_escaped = _escape_markdown(phone_raw)
-    business_type = _escape_markdown(lead_data.get("business_type", "N/A")) 
+    phone_escaped_for_text = _escape_markdown(phone_raw)
+    subject = _escape_markdown(lead_data.get("subject", "N/A"))
     
     phone_url = f"tel:{''.join(filter(str.isdigit, phone_raw))}"
 
     message = (
         f"🔥 *{source_text}*\n\n"
         f"👤 *Клиент:* {client_name}\n"
-        f"📞 *Телефон:* [{phone_escaped}]({phone_url})\n"
-        f"📝 *Тип бизнеса(Или тема):* {business_type}"
+        f"📞 *Телефон:* [{phone_escaped_for_text}]({phone_url})\n"
+        f"📝 *Интерес:* {subject}"
     )
 
     api_url = f"https://api.telegram.org/bot{token}/sendMessage"
@@ -56,12 +56,12 @@ async def send_new_lead_notification(lead_data: Dict[str, Any]):
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(api_url, json=params)
-            response.raise_for_status()
+            response.raise_for_status() 
             log.info(f"Уведомление о лиде '{lead_data.get('client_name')}' успешно отправлено в Telegram.")
         except httpx.HTTPStatusError as e:
             log.error(
                 f"Ошибка API Telegram: {e.response.status_code} - {e.response.text}\n"
-                f"Отправляемый текст (до форматирования): {message}",
+                f"Отправляемый текст: {message}",
                 exc_info=True
             )
         except Exception as e:
