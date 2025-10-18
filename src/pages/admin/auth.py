@@ -17,7 +17,6 @@ from src.schemas.user_schemas import UserCreate
 router = APIRouter()
 settings = get_settings()
 
-# --- ФОРМА РЕГИСТРАЦИИ ---
 class RegistrationForm(wtforms.Form):
     username = wtforms.StringField('Имя пользователя', validators=[wtforms.validators.DataRequired(), wtforms.validators.Length(min=4, max=25)])
     password = wtforms.PasswordField('Пароль', validators=[wtforms.validators.DataRequired(), wtforms.validators.Length(min=8)])
@@ -26,7 +25,6 @@ class RegistrationForm(wtforms.Form):
         wtforms.validators.EqualTo('password', message='Пароли должны совпадать')
     ])
 
-# --- РОУТЫ ЛОГИНА/ЛОГАУТА ---
 @router.get("/login", response_class=HTMLResponse, name="admin_login")
 async def login_page(request: Request):
     return templates.TemplateResponse("admin/login.html", {"request": request})
@@ -75,8 +73,6 @@ async def logout_page(request: Request):
     response = RedirectResponse(url="/admin/login")
     response.delete_cookie("access_token")
     return response
-
-# --- НОВЫЕ РОУТЫ РЕГИСТРАЦИИ ---
 
 @router.get("/register", response_class=HTMLResponse, name="admin_register")
 async def register_page_get(request: Request, invite: Optional[uuid.UUID] = Query(None), db: AsyncSession = Depends(get_db_session)):
@@ -145,6 +141,4 @@ async def test_form_receiver(request: Request):
     print("\nRAW BODY:")
     print(body.decode('utf-8', errors='ignore'))
     print("="*58)
-
-    # Важно вернуть успешный ответ, чтобы не было ошибок в браузере
     return {"status": "ok", "message": "Test data received successfully"}

@@ -112,7 +112,6 @@ async def user_change_post(
     return templates.TemplateResponse("admin/generic_form.html", context, status_code=422)
 
 
-# --- НАЧАЛО ИЗМЕНЕНИЯ: Добавляем недостающий роут для удаления ---
 @router.get("/users/{pk}/delete/", response_class=HTMLResponse, name="admin_user_delete")
 @router.post("/users/{pk}/delete/", response_class=HTMLResponse)
 async def user_delete(
@@ -125,7 +124,6 @@ async def user_delete(
     if not user_to_delete:
         raise HTTPException(404)
 
-    # Нельзя удалить самого себя
     if context["user"].id == user_to_delete.id:
         context["error_message"] = "Вы не можете удалить свой собственный профиль."
         return templates.TemplateResponse("admin/500.html", context, status_code=400)
@@ -142,7 +140,6 @@ async def user_delete(
             context["error_message"] = "Нельзя удалить пользователя, к которому привязаны заявки, задачи или другие объекты."
             return templates.TemplateResponse("admin/500.html", context, status_code=400)
 
-    # Для GET запроса показываем страницу подтверждения
     _ = templates.env.globals['_']
     title = _({'request': request}, 'delete_confirmation_title', entity=f"пользователя '{user_to_delete.username}'")
     
@@ -153,4 +150,3 @@ async def user_delete(
         "back_url": request.url_for(USER_META.change_url_name, locale=request.state.locale, pk=pk)
     })
     return templates.TemplateResponse("admin/delete_confirmation.html", context)
-# --- КОНЕЦ ИЗМЕНЕНИЯ ---

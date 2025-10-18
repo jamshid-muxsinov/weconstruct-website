@@ -63,7 +63,6 @@ async def htmx_post_request_quote(
     form = await QuoteForm.from_formdata(request)
 
     if await form.validate_on_submit():
-        # --- ИЗМЕНЕНИЕ 1: Передаем название товара как 'subject' ---
         t_get = templates.env.globals.get('t_get')
         subject_text = t_get(request, product, 'name') if product else "Заявка с сайта"
         
@@ -107,7 +106,6 @@ async def htmx_post_general_quote(
     form = await GeneralQuoteForm.from_formdata(request)
     
     if await form.validate_on_submit():
-        # --- ИЗМЕНЕНИЕ 2: Передаем общую тему как 'subject' ---
         _ = templates.env.globals.get('_')
         subject_text = _({'request': request}, 'general_request_option')
 

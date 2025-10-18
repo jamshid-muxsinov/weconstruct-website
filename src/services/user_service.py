@@ -82,7 +82,6 @@ async def create_first_superuser(db: AsyncSession):
         if not user:
             try:
                 hashed_password = get_password_hash(settings.FIRST_SUPERUSER_PASSWORD)
-                # --- ИЗМЕНЕНИЕ 7: Убеждаемся, что роль соответствует новой схеме ---
                 new_user = User(
                     username=settings.FIRST_SUPERUSER,
                     hashed_password=hashed_password,

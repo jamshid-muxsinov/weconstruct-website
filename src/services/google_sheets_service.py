@@ -2,7 +2,6 @@
 
 import logging
 import gspread
-# --- ИЗМЕНЕНИЕ: Добавляем импорт 'os' для проверки файлов ---
 import os
 from google.oauth2.service_account import Credentials
 from src.core.config import get_settings
@@ -24,7 +23,6 @@ def get_gspread_client() -> gspread.Client | None:
     """Аутентифицируется и возвращает клиент gspread."""
     credentials_path = settings.GOOGLE_CREDENTIALS_FILE
     
-    # --- ИЗМЕНЕНИЕ: Добавляем надежные проверки перед чтением файла ---
     if not credentials_path:
         log.warning("Путь к файлу ключей GOOGLE_CREDENTIALS_FILE не указан в .env файле.")
         return None
@@ -36,7 +34,6 @@ def get_gspread_client() -> gspread.Client | None:
     if not os.path.isfile(credentials_path):
         log.error(f"Ошибка: Путь '{credentials_path}' указывает на папку, а не на файл. Проверьте ваш Docker-монтирование.")
         return None
-    # --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
     try:
         creds = Credentials.from_service_account_file(credentials_path, scopes=SCOPES)

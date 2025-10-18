@@ -78,20 +78,17 @@ class CacheManager:
     
     async def get(self, key: str, default: Any = None) -> Any:
         """Получение значения из кэша (сначала in-memory, потом Redis)."""
-        # Проверяем in-memory кэш
         if key in memory_cache:
             return memory_cache[key]
         
         if key in lru_cache:
             return lru_cache[key]
         
-        # Проверяем Redis с проверкой состояния
         if await self._check_redis_health():
             try:
                 value_str = await self.redis_client.get(key)
                 if value_str:
                     parsed_value = json.loads(value_str)
-                    # Кэшируем в памяти для быстрого доступа
                     memory_cache[key] = parsed_value
                     return parsed_value
             except (aioredis.ConnectionError, json.JSONDecodeError) as e:

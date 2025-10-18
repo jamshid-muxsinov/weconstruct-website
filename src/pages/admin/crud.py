@@ -14,10 +14,8 @@ from slugify import slugify
 import wtforms
 from typing import Optional, List
 from datetime import datetime
-
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
-# --- ИСПРАВЛЕНИЕ: Возвращаем импорты ---
 from src.models.shop_models import User, Product, Category, GoogleSheetLead, QuoteRequest, Contact, ProductImage
 from src.core.security import get_current_active_user
 from .dependencies import get_common_context
@@ -26,7 +24,6 @@ from fastapi_pagination import Params, Page
 from fastapi_pagination.api import create_page
 from src.services import crm_service
 
-# --- ИСПРАВЛЕНИЕ: Возвращаем все роутеры ---
 product_router = APIRouter()
 category_router = APIRouter()
 quoterequest_router = APIRouter()
@@ -192,9 +189,6 @@ async def populate_request_form_choices(db: AsyncSession, request: Request, form
     form.assigned_to_id.choices = [(0, _({'request': request}, 'unassigned_option'))] + [(u.id, u.username) for u in staff_users]
 
 # --- VIEWS (LIST, ADD/CHANGE, DELETE) ---
-
-# --- QuoteRequest Routes ---
-# (Код для quoterequest_router остается таким же, как я присылал ранее)
 @quoterequest_router.get("/", response_class=HTMLResponse, name="admin_quoterequest_list")
 async def quoterequest_list(request: Request, page: int = Query(1, ge=1), size: int = Query(20, ge=1, le=100), q: Optional[str] = Query(None), sort: Optional[str] = Query(None), date_from: Optional[str] = Query(None), date_to: Optional[str] = Query(None), context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
     page_obj = await handle_list_view(db, QUOTEREQUEST_META, page=page, size=size, search_query=q, sort=sort, date_from=date_from, date_to=date_to)

@@ -65,7 +65,6 @@ async def post_my_profile_page(
         if success:
             redirect_url = request.url_for("admin_profile", locale=request.state.locale)
             response = RedirectResponse(redirect_url, status_code=303)
-            # --- ИЗМЕНЕНИЕ: Используем ключ перевода ---
             return set_hx_trigger_header(response, "password_changed_success", request)
         else:
             form.old_password.errors.append("Неверный текущий пароль.")
@@ -83,7 +82,6 @@ async def post_my_profile_page(
     
     return templates.TemplateResponse("admin/profile.html", context, status_code=422)
 
-# --- НОВЫЙ РОУТ ---
 @router.get("/users/{pk}/profile", response_class=HTMLResponse, name="admin_user_profile")
 async def get_user_profile_page(
     pk: int,

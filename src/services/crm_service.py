@@ -1,7 +1,5 @@
 # src/services/crm_service.py
 
-# src/services/crm_service.py
-
 import logging
 import wtforms
 import asyncio
@@ -30,8 +28,6 @@ async def get_latest_quote_request(db: AsyncSession) -> QuoteRequest | None:
         select(QuoteRequest)
         .options(
             joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
-            # --- ИЗМЕНЕНИЕ 1: Убираем загрузку продукта ---
-            # joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.assigned_to)
         )
         .order_by(QuoteRequest.id.desc())
@@ -73,8 +69,6 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
             QuoteRequest.assigned_to_id.is_(None)
         )
         .options(
-            # --- ИЗМЕНЕНИЕ 2: Убираем загрузку продукта ---
-            # joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes)
         )
         .order_by(QuoteRequest.created_at.desc())
@@ -108,8 +102,6 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False, search_
         select(QuoteRequest)
         .options(
             joinedload(QuoteRequest.contact).selectinload(Contact.timeline_notes),
-            # --- ИЗМЕНЕНИЕ 3: Убираем загрузку продукта ---
-            # joinedload(QuoteRequest.product),
             joinedload(QuoteRequest.assigned_to)
         )
         .order_by(QuoteRequest.created_at.desc())
@@ -338,7 +330,6 @@ async def get_contact_360_view(db: AsyncSession, contact_id: int):
         select(Contact)
         .where(Contact.id == contact_id)
         .options(
-            # --- ИЗМЕНЕНИЕ 4: Убираем загрузку продукта ---
             selectinload(Contact.requests).joinedload(QuoteRequest.assigned_to),
             selectinload(Contact.tasks).joinedload(Task.assigned_to),
             selectinload(Contact.timeline_notes).joinedload(ContactNote.user)

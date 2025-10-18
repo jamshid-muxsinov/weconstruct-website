@@ -83,7 +83,6 @@ async def schedule_cache_cleanup():
     
     while True:
         try:
-            # Ожидаем 6 часов перед следующей очисткой
             await asyncio.sleep(6 * 60 * 60)
             
             print(f"🕐 Running scheduled cache cleanup: {datetime.now()}")

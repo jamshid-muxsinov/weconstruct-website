@@ -11,7 +11,6 @@ from sqlalchemy.exc import IntegrityError
 import logging
 from typing import Optional, Union
 from typing import Any
-# Импортируем все необходимые модули
 from src.services import telegram_service
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
@@ -65,7 +64,6 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
     """
     settings = get_settings()
     
-    # --- ЧАСТЬ 1: Уведомления внутри CRM (остается без изменений) ---
     managers_stmt = select(User).where(User.is_staff == True, User.is_active == True)
     managers_result = await db.execute(managers_stmt)
     managers = managers_result.scalars().all()
@@ -80,7 +78,6 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
         ]
         db.add_all(notifications)
 
-    # --- ЧАСТЬ 2: Уведомление в Telegram (новая улучшенная логика) ---
     token = settings.TELEGRAM_BOT_TOKEN
     chat_id = settings.TELEGRAM_CHAT_ID
 
@@ -88,22 +85,18 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
         log.warning("TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID не установлены. Уведомление в Telegram не отправлено.")
         return
 
-    # Экранируем спецсимволы для MarkdownV2
     def _escape_markdown(text: Any) -> str:
         if not isinstance(text, str): text = str(text)
         escape_chars = r'_*[]()~`>#+-=|{}.!'
         return "".join(f'\\{char}' if char in escape_chars else char for char in text)
-
-    # Собираем данные из заявки
+   
     client_name_escaped = _escape_markdown(contact_name)
     phone_raw = quote.contact.phone if quote.contact else ""
     phone_escaped = _escape_markdown(phone_raw)
     
-    # Ищем регион и тип бизнеса в теме (subject)
     subject = quote.subject or ""
     business_type_escaped = _escape_markdown(quote.business_type or "Не указан")
     
-    # Пытаемся извлечь регион из темы, если он там есть
     region_escaped = "Не указан"
     if "Лид из Facebook (" in subject:
         try:
@@ -112,11 +105,10 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
             if len(parts) > 1:
                 region_escaped = _escape_markdown(parts[0])
         except IndexError:
-            pass # Если парсинг не удался, останется "Не указан"
+            pass
     
     phone_url = f"tel:{''.join(filter(str.isdigit, phone_raw))}"
 
-    # Формируем сообщение
     message = (
         f"🔥 *Новый лид из Facebook/Instagram*\n\n"
         f"👤 *Клиент:* {client_name_escaped}\n"
@@ -194,7 +186,6 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
         await db.rollback()
         return "error"
 
-# --- ВОССТАНОВЛЕННАЯ ФУНКЦИЯ ---
 @cache_result("categories_with_products", ttl=1800)  
 async def get_categories_with_active_products(db: AsyncSession):
     stmt = (
@@ -217,7 +208,6 @@ async def get_categories_with_active_products(db: AsyncSession):
     
     return filtered_categories
 
-# --- ВОССТАНОВЛЕННАЯ ФУНКЦИЯ ---
 @cache_result("product_modal", ttl=3600) 
 async def get_product_for_modal(db: AsyncSession, product_id: int):
     stmt = (

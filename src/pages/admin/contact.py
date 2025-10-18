@@ -2,7 +2,6 @@
 
 import json
 from urllib.parse import quote
-# --- ИЗМЕНЕНИЕ: Добавляем Query и Optional ---
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -16,12 +15,10 @@ from .dependencies import get_common_context
 
 from sqlalchemy.exc import IntegrityError
 from src.models.shop_models import Contact
-# --- ИЗМЕНЕНИЕ: Импортируем handle_list_view и CONTACT_META из crud.py ---
 from .crud import handle_list_view, CONTACT_META
 
 router = APIRouter()
 
-# --- ИЗМЕНЕНИЕ: Замена статических строк на ключи перевода ---
 class ContactForm(wtforms.Form):
     name = wtforms.StringField('form_field_name', validators=[wtforms.validators.DataRequired()])
     last_name = wtforms.StringField('form_field_last_name')

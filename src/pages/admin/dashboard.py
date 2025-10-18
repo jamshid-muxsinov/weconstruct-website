@@ -29,7 +29,6 @@ async def get_dashboard(
         "htmx_request": "HX-Request" in request.headers
     })
 
-    # --- ДОБАВЬТЕ ЭТИ СТРОКИ ДЛЯ ДИАГНОСТИКИ ---
     print("\n" + "="*20 + " DEBUG START: Контекст для шаблона dashboard.html " + "="*20)
     print(f"Ключи в контексте: {list(context.keys())}")
     if 'user' in context:
@@ -38,6 +37,5 @@ async def get_dashboard(
     else:
         print("!!! Ключ 'user' ОТСУТСТВУЕТ в контексте !!!")
     print("="*78 + "\n")
-    # --- КОНЕЦ БЛОКА ДИАГНОСТИКИ ---
     
     return templates.TemplateResponse("admin/dashboard.html", context)

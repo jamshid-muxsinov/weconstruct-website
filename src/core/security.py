@@ -2,15 +2,12 @@
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.core.config import get_settings
 from src.core.db import get_db_session
-# --- ИЗМЕНЕНИЕ: импортируем обновленную UserRole ---
 from src.models.shop_models import User, UserRole
 from src.services.user_service import get_user_by_username
 from src.schemas.user_schemas import TokenData

@@ -87,13 +87,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!sidebar || !expandBtn) return;
         
-        // Применяем ширину при первой загрузке страницы
         const savedWidth = localStorage.getItem('sidebarWidth');
         if (window.innerWidth > 992 && savedWidth) {
             sidebar.style.width = `${savedWidth}px`;
         }
 
-        // Логика для мобильного меню
         expandBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (window.innerWidth <= 992) body.classList.toggle('sidebar-mobile-open');
@@ -104,7 +102,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Логика изменения размера и сохранения ширины
         let isResizing = false;
         sidebar.addEventListener('mousedown', e => {
             if (Math.abs(sidebar.offsetWidth - e.offsetX) < 10) isResizing = true;
@@ -132,7 +129,6 @@ document.addEventListener('DOMContentLoaded', function() {
             link.classList.remove('active');
             const linkPath = new URL(link.href).pathname;
             
-            // Находим наиболее точное совпадение
             if (path.startsWith(linkPath)) {
                 if (!bestMatch || linkPath.length > new URL(bestMatch.href).pathname.length) {
                     bestMatch = link;
@@ -140,7 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Особый случай для главной страницы
         if (path === '/admin/' || path === '/admin/kanban') {
             const kanbanLink = navContainer.querySelector('a[href*="/admin/kanban"]');
             kanbanLink?.classList.add('active');
@@ -148,7 +143,6 @@ document.addEventListener('DOMContentLoaded', function() {
             bestMatch.classList.add('active');
         }
     }
-    // *** КОНЕЦ ИЗМЕНЕНИЙ ***
     
     // --- INITIALIZATION ---
     function init() {
@@ -159,14 +153,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     init();
-
-    // Re-initialize dynamic components after HTMX swaps
     document.body.addEventListener('htmx:afterSwap', (event) => {
         if (event.detail.target.id === 'modal-body-content') document.getElementById('modal-overlay')?.classList.add('show');
         if (event.detail.target.id === 'slide-over-content') document.getElementById('slide-over-overlay')?.classList.add('show');
     });
-
-    // *** ИЗМЕНЕНИЕ: Обновляем активную ссылку после навигации ***
     document.body.addEventListener('htmx:pushedIntoHistory', (event) => {
         const path = event.detail.path;
         updateActiveNavLink(path);
