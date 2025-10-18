@@ -31,20 +31,19 @@ async def send_new_lead_notification(lead_data: Dict[str, Any]):
         log.warning("TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID не установлены. Уведомление не отправлено.")
         return
 
+    source_text = _escape_markdown(lead_data.get("source_text", "Новая заявка"))
     client_name = _escape_markdown(lead_data.get("client_name", "N/A"))
     phone_raw = lead_data.get("phone", "")
     phone_escaped = _escape_markdown(phone_raw)
-    business_type = _escape_markdown(lead_data.get("business_type", "N/A"))
-    region = _escape_markdown(lead_data.get("region", "N/A"))
+    business_type = _escape_markdown(lead_data.get("business_type", "N/A")) 
     
     phone_url = f"tel:{''.join(filter(str.isdigit, phone_raw))}"
 
     message = (
-        f"🔥 *Новый лид из Facebook/Instagram*\n\n"
+        f"🔥 *{source_text}*\n\n"
         f"👤 *Клиент:* {client_name}\n"
         f"📞 *Телефон:* [{phone_escaped}]({phone_url})\n"
-        f"🏢 *Тип бизнеса:* {business_type}\n"
-        f"📍 *Регион:* {region}" 
+        f"📝 *Тип бизнеса(Или тема):* {business_type}"
     )
 
     api_url = f"https://api.telegram.org/bot{token}/sendMessage"
@@ -57,15 +56,13 @@ async def send_new_lead_notification(lead_data: Dict[str, Any]):
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(api_url, json=params)
-            response.raise_for_status() # Вызовет ошибку для кодов 4xx и 5xx
+            response.raise_for_status()
             log.info(f"Уведомление о лиде '{lead_data.get('client_name')}' успешно отправлено в Telegram.")
         except httpx.HTTPStatusError as e:
-            # --- НАЧАЛО ИЗМЕНЕНИЯ: УЛУЧШЕННОЕ ЛОГИРОВАНИЕ ---
             log.error(
                 f"Ошибка API Telegram: {e.response.status_code} - {e.response.text}\n"
                 f"Отправляемый текст (до форматирования): {message}",
                 exc_info=True
             )
-            # --- КОНЕЦ ИЗМЕНЕНИЯ ---
         except Exception as e:
             log.error(f"Не удалось отправить уведомление в Telegram: {e}", exc_info=True)
