@@ -13,7 +13,7 @@ from typing import Optional, Union
 
 # Импортируем все необходимые модули
 from src.services import telegram_service
-from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
+from src.models.shop_models import Category, Product, Contact, QuoteRequest, User
 from src.core.cache import cache_result, invalidate_cache
 
 log = logging.getLogger(__name__)
@@ -59,89 +59,6 @@ async def _create_quote_request(db: AsyncSession, contact_id: int, message: str,
     await db.flush()
     return quote
 
-async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: str):
-    """
-    Отправляет уведомления о новой заявке и менеджерам в CRM, и в Telegram.
-    """
-    settings = get_settings()
-    
-    # --- ЧАСТЬ 1: Уведомления внутри CRM (остается без изменений) ---
-    managers_stmt = select(User).where(User.is_staff == True, User.is_active == True)
-    managers_result = await db.execute(managers_stmt)
-    managers = managers_result.scalars().all()
-    
-    if managers:
-        quote_url = f"/ru/admin/quoterequest/{quote.id}/change/"
-        message_text = f"Новая заявка #{quote.id} от {contact_name}"
-
-        notifications = [
-            Notification(user_id=manager.id, message=message_text, link=quote_url)
-            for manager in managers
-        ]
-        db.add_all(notifications)
-
-    # --- ЧАСТЬ 2: Уведомление в Telegram (новая улучшенная логика) ---
-    token = settings.TELEGRAM_BOT_TOKEN
-    chat_id = settings.TELEGRAM_CHAT_ID
-
-    if not token or not chat_id:
-        log.warning("TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID не установлены. Уведомление в Telegram не отправлено.")
-        return
-
-    # Экранируем спецсимволы для MarkdownV2
-    def _escape_markdown(text: Any) -> str:
-        if not isinstance(text, str): text = str(text)
-        escape_chars = r'_*[]()~`>#+-=|{}.!'
-        return "".join(f'\\{char}' if char in escape_chars else char for char in text)
-
-    # Собираем данные из заявки
-    client_name_escaped = _escape_markdown(contact_name)
-    phone_raw = quote.contact.phone if quote.contact else ""
-    phone_escaped = _escape_markdown(phone_raw)
-    
-    # Ищем регион и тип бизнеса в теме (subject)
-    subject = quote.subject or ""
-    business_type_escaped = _escape_markdown(quote.business_type or "Не указан")
-    
-    # Пытаемся извлечь регион из темы, если он там есть
-    region_escaped = "Не указан"
-    if "Лид из Facebook (" in subject:
-        try:
-            content = subject.split("(", 1)[1].rsplit(")", 1)[0]
-            parts = content.split(" / ")
-            if len(parts) > 1:
-                region_escaped = _escape_markdown(parts[0])
-        except IndexError:
-            pass # Если парсинг не удался, останется "Не указан"
-    
-    phone_url = f"tel:{''.join(filter(str.isdigit, phone_raw))}"
-
-    # Формируем сообщение
-    message = (
-        f"🔥 *Новый лид из Facebook/Instagram*\n\n"
-        f"👤 *Клиент:* {client_name_escaped}\n"
-        f"📞 *Телефон:* [{phone_escaped}]({phone_url})\n"
-        f"🏢 *Тип бизнеса:* {business_type_escaped}\n"
-        f"📍 *Регион:* {region_escaped}"
-    )
-
-    api_url = f"https://api.telegram.org/bot{token}/sendMessage"
-    params = {
-        "chat_id": chat_id,
-        "text": message,
-        "parse_mode": "MarkdownV2"
-    }
-
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(api_url, json=params)
-            response.raise_for_status()
-            log.info(f"Уведомление о заявке #{quote.id} успешно отправлено в Telegram.")
-    except httpx.HTTPStatusError as e:
-        log.error(f"Ошибка API Telegram при отправке заявки #{quote.id}: {e.response.status_code} - {e.response.text}")
-    except Exception as e:
-        log.error(f"Не удалось отправить уведомление о заявке #{quote.id} в Telegram: {e}", exc_info=True)
-
 @invalidate_cache("categories_with_products") 
 async def process_quote_request(db: AsyncSession, name: str, phone: str, message: str, subject: Optional[str] = "Заявка с сайта", source: str = "website") -> Union[QuoteRequest, str]:
     """
@@ -170,7 +87,6 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
             return "duplicate"
         
         quote = await _create_quote_request(db, contact.id, message, subject, source)
-        await _notify_managers(db, quote, contact.full_name)
         
         await db.commit()
         

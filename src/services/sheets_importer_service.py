@@ -6,7 +6,7 @@ from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from src.services.shop_service import _get_or_create_contact, _create_quote_request, _notify_managers
+from src.services.shop_service import _get_or_create_contact, _create_quote_request
 from src.models.shop_models import QuoteRequest, GoogleSheetLead
 
 log = logging.getLogger(__name__)
@@ -56,7 +56,5 @@ async def process_single_lead_row(session: AsyncSession, lead_data: Dict[str, An
         raw_data=lead_data
     )
     session.add(new_lead_entry)
-    
-    await _notify_managers(session, quote, contact.full_name)
     
     log.info(f"Успешно обработан и добавлен в сессию лид с ID {sheet_row_id}")

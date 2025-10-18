@@ -114,15 +114,14 @@
             {% endif %}
 
                 {% if user %}
-                <div class="user-profile" x-data="{ open: false }" @click.away="open = false">
+                    
+<div class="user-profile" x-data="{ open: false }" @click.away="open = false">
                     <button @click="open = !open" id="profile-menu-button" class="user-profile-button">
                         <span class="profile-name">{{ _('hello_user', username=user.username) }}</span>
-                        <div id="notification-indicator-wrapper" 
-                            hx-get="{{ request.url_for('admin_htmx_notification_indicator', locale=request.state.locale) }}"
-                            hx-trigger="load, every 8s, notifications-read from:body"
-                            hx-swap="innerHTML">
-                            {% include "admin/partials/_notification_indicator.html" %}
-                        </div>
+                        
+                        {# Простая иконка пользователя без индикатора #}
+                        <i class='bx bxs-user-circle' style="font-size: 2rem;"></i>
+                        
                         <i class='bx bx-chevron-down' :class="{'bx-rotate-180': open}"></i>
                     </button>
 
@@ -134,12 +133,8 @@
                          x-transition:leave-end="opacity-0 transform scale-95"
                          id="profile-menu" 
                          style="display: none;">
-                        <div id="notifications-container"
-                             hx-get="{{ request.url_for('admin_htmx_notifications', locale=request.state.locale) }}"
-                             hx-trigger="load, click from:#profile-menu-button"
-                             hx-swap="innerHTML">
-                             <div class="modal-loading-placeholder"><i class='bx bx-loader-alt bx-spin'></i></div>
-                        </div>
+                        
+                        {# Блок с уведомлениями полностью удален #}
                         
                         <ul class="profile-menu-list">
                             <li><a href="{{ request.url_for('admin_profile', locale=request.state.locale) }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_profile', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-user-circle'></i><span>{{ _('profile') }}</span></a></li>
@@ -151,6 +146,8 @@
                         </ul>
                     </div>
                 </div>
+
+  
                 {% endif %}
             </header>
             
