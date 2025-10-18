@@ -18,10 +18,6 @@ log = logging.getLogger(__name__)
 
 
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact | None:
-    """
-    Атомарная и надежная версия для поиска или создания контакта с использованием
-    специфичной для PostgreSQL команды INSERT ... ON CONFLICT.
-    """
     if not phone:
         return None
 
@@ -35,6 +31,7 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
         index_elements=['phone']
     )
     await db.execute(insert_stmt)
+    await db.commit() # Немедленно сохраняем контакт, чтобы избежать проблем с параллельными запросами
 
     stmt = select(Contact).where(Contact.phone == phone)
     result = await db.execute(stmt)
@@ -51,7 +48,7 @@ async def _create_quote_request(db: AsyncSession, contact_id: int, message: str,
         status=QuoteRequest.StatusEnum.IMPORTED
     )
     db.add(quote)
-    await db.flush()
+    await db.flush() # Получаем ID для quote
     return quote
 
 async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: str):
@@ -75,32 +72,39 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
     Обрабатывает входящую заявку: создает контакт, заявку, уведомляет менеджеров в CRM и Telegram.
     Реализована проверка на дубликаты.
     """
-    contact = await _get_or_create_contact(db, name, phone)
-    if not contact:
-        return "invalid_contact"
-    seven_days_ago = datetime.utcnow() - timedelta(days=7)
-    stmt = select(QuoteRequest).where(
-        QuoteRequest.contact_id == contact.id,
-        QuoteRequest.created_at >= seven_days_ago
-    )
-    if message:
-        stmt = stmt.where(QuoteRequest.message == message)
-    if subject:
-        stmt = stmt.where(QuoteRequest.subject == subject)
-
-    recent_requests = (await db.execute(stmt)).scalars().all()
-    
-    if recent_requests:
-        log.warning(f"Обнаружена дублирующая заявка от {name} ({phone}). Пропуск.")
-        return "duplicate"
-    
     try:
-        async with db.begin_nested():
-            quote = await _create_quote_request(db, contact.id, message, subject, source)
-            await _notify_managers(db, quote, contact.full_name)
-        
-        await db.refresh(quote) 
+        contact = await _get_or_create_contact(db, name, phone)
+        if not contact:
+            return "invalid_contact"
 
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        stmt = select(QuoteRequest).where(
+            QuoteRequest.contact_id == contact.id,
+            QuoteRequest.created_at >= seven_days_ago
+        )
+        if message:
+            stmt = stmt.where(QuoteRequest.message == message)
+        if subject:
+            stmt = stmt.where(QuoteRequest.subject == subject)
+
+        recent_requests = (await db.execute(stmt)).scalars().all()
+        
+        if recent_requests:
+            log.warning(f"Обнаружена дублирующая заявка от {name} ({phone}). Пропуск.")
+            return "duplicate"
+        
+        # Создаем заявку и CRM-уведомления
+        quote = await _create_quote_request(db, contact.id, message, subject, source)
+        await _notify_managers(db, quote, contact.full_name)
+        
+        # --- ГЛАВНОЕ ИСПРАВЛЕНИЕ: Добавляем коммит транзакции ---
+        # Эта команда окончательно сохраняет заявку и уведомления в базу данных
+        await db.commit()
+        # ---------------------------------------------------------
+        
+        await db.refresh(quote)
+
+        # Отправляем уведомление в Telegram только ПОСЛЕ успешного сохранения в БД
         try:
             source_text = "Новая заявка с сайта" if source == "website" else "Новая заявка (общая)"
             lead_data_for_tg = {
@@ -111,43 +115,12 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
             }
             await telegram_service.send_new_lead_notification(lead_data_for_tg)
         except Exception as e:
-            log.error(f"Не удалось отправить Telegram-уведомление для заявки #{quote.id}: {e}", exc_info=True)
+            log.error(f"Не удалось отправить Telegram-уведомление для заявки #{quote.id} (но она сохранена в CRM): {e}", exc_info=True)
 
         return quote
 
     except Exception as e:
         log.error(f"Критическая ошибка при обработке заявки от {name} ({phone}): {e}", exc_info=True)
+        # В случае любой ошибки откатываем все изменения
         await db.rollback()
         return "error"
-
-@cache_result("categories_with_products", ttl=1800)  
-async def get_categories_with_active_products(db: AsyncSession):
-    stmt = (
-        select(Category)
-        .options(selectinload(Category.products))
-        .join(Category.products)
-        .where(Product.is_active == True)
-        .distinct()
-        .order_by(Category.name_ru)
-    )
-    result = await db.execute(stmt)
-    categories = result.scalars().all()
-    
-    filtered_categories = []
-    for category in categories:
-        active_products = [p for p in category.products if p.is_active]
-        if active_products:
-            category.products = active_products
-            filtered_categories.append(category)
-    
-    return filtered_categories
-
-@cache_result("product_modal", ttl=3600) 
-async def get_product_for_modal(db: AsyncSession, product_id: int):
-    stmt = (
-        select(Product)
-        .options(selectinload(Product.images))
-        .where(Product.id == product_id)
-    )
-    result = await db.execute(stmt)
-    return result.scalars().first()
