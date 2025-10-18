@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 import logging
 from typing import Optional, Union
-
+from typing import Any
 # Импортируем все необходимые модули
 from src.services import telegram_service
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
