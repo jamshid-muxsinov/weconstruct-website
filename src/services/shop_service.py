@@ -17,28 +17,34 @@ from src.core.cache import cache_result, invalidate_cache
 
 log = logging.getLogger(__name__)
 
-
 async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Contact | None:
+    """
+    Надежная версия для поиска или создания контакта, которая корректно
+    работает внутри транзакционных блоков.
+    """
     if not phone:
         return None
-
-    first_name, _, last_name = name.partition(" ")
-    
-    insert_stmt = pg_insert(Contact).values(
-        phone=phone,
-        name=first_name,
-        last_name=last_name or None
-    ).on_conflict_do_nothing(
-        index_elements=['phone']
-    )
-    await db.execute(insert_stmt)
-    await db.commit() 
 
     stmt = select(Contact).where(Contact.phone == phone)
     result = await db.execute(stmt)
     contact = result.scalars().first()
+    if contact:
+        return contact
     
-    return contact
+    first_name, _, last_name = name.partition(" ")
+    
+    new_contact = Contact(
+        phone=phone,
+        name=first_name,
+        last_name=last_name or None
+    )
+    db.add(new_contact)
+    
+    await db.flush()
+    await db.refresh(new_contact)
+    
+    return new_contact
+
 
 async def _create_quote_request(db: AsyncSession, contact_id: int, message: str, subject: str, source: str = "website") -> QuoteRequest:
     quote = QuoteRequest(
