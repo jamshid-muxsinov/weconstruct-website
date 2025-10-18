@@ -52,7 +52,6 @@ async def receive_new_lead_from_google(
                     await sheets_importer_service.process_single_lead_row(session, lead_dict)
             
                 processed_count += 1
-                await telegram_service.send_new_lead_notification(lead_dict)
             
             except Exception as e:
                 skipped_count += 1
