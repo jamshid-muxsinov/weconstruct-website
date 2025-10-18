@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 import logging
 from typing import Optional, Union
 
+# Импортируем все необходимые модули
 from src.services import telegram_service
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
@@ -31,7 +32,7 @@ async def _get_or_create_contact(db: AsyncSession, name: str, phone: str) -> Con
         index_elements=['phone']
     )
     await db.execute(insert_stmt)
-    await db.commit() # Немедленно сохраняем контакт, чтобы избежать проблем с параллельными запросами
+    await db.commit() 
 
     stmt = select(Contact).where(Contact.phone == phone)
     result = await db.execute(stmt)
@@ -48,7 +49,7 @@ async def _create_quote_request(db: AsyncSession, contact_id: int, message: str,
         status=QuoteRequest.StatusEnum.IMPORTED
     )
     db.add(quote)
-    await db.flush() # Получаем ID для quote
+    await db.flush()
     return quote
 
 async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: str):
@@ -93,18 +94,13 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
             log.warning(f"Обнаружена дублирующая заявка от {name} ({phone}). Пропуск.")
             return "duplicate"
         
-        # Создаем заявку и CRM-уведомления
         quote = await _create_quote_request(db, contact.id, message, subject, source)
         await _notify_managers(db, quote, contact.full_name)
         
-        # --- ГЛАВНОЕ ИСПРАВЛЕНИЕ: Добавляем коммит транзакции ---
-        # Эта команда окончательно сохраняет заявку и уведомления в базу данных
         await db.commit()
-        # ---------------------------------------------------------
         
         await db.refresh(quote)
 
-        # Отправляем уведомление в Telegram только ПОСЛЕ успешного сохранения в БД
         try:
             source_text = "Новая заявка с сайта" if source == "website" else "Новая заявка (общая)"
             lead_data_for_tg = {
@@ -121,6 +117,39 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
 
     except Exception as e:
         log.error(f"Критическая ошибка при обработке заявки от {name} ({phone}): {e}", exc_info=True)
-        # В случае любой ошибки откатываем все изменения
         await db.rollback()
         return "error"
+
+# --- ВОССТАНОВЛЕННАЯ ФУНКЦИЯ ---
+@cache_result("categories_with_products", ttl=1800)  
+async def get_categories_with_active_products(db: AsyncSession):
+    stmt = (
+        select(Category)
+        .options(selectinload(Category.products))
+        .join(Category.products)
+        .where(Product.is_active == True)
+        .distinct()
+        .order_by(Category.name_ru)
+    )
+    result = await db.execute(stmt)
+    categories = result.scalars().all()
+    
+    filtered_categories = []
+    for category in categories:
+        active_products = [p for p in category.products if p.is_active]
+        if active_products:
+            category.products = active_products
+            filtered_categories.append(category)
+    
+    return filtered_categories
+
+# --- ВОССТАНОВЛЕННАЯ ФУНКЦИЯ ---
+@cache_result("product_modal", ttl=3600) 
+async def get_product_for_modal(db: AsyncSession, product_id: int):
+    stmt = (
+        select(Product)
+        .options(selectinload(Product.images))
+        .where(Product.id == product_id)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().first()
