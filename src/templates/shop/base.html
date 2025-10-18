@@ -65,14 +65,10 @@
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
     <script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js" defer></script>
     
-    <!-- !!! ВАШ ФАЙЛ main.js УДАЛЕН ИЗ <head> !!! -->
 
 </head>
 <body x-data="{ mobileMenuOpen: false, pageLoading: true }" @load.window="pageLoading = false" @keydown.escape.window="mobileMenuOpen = false">
 
-  <!-- =================================================================================== -->
-  <!-- PRELOADER -->
-  <!-- =================================================================================== -->
   <div x-show="pageLoading" x-transition:leave="transition ease-in duration-400" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="preloader">
     <div class="preloader__logo">
       {% include 'shop/partials/_logo.html' %}
@@ -238,10 +234,6 @@
 }
 </script>
 {% endblock %}
-
-  <!-- =================================================================== -->
-  <!-- ===== ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: ВАШ СКРИПТ ПЕРЕНЕСЕН СЮДА ===== -->
-  <!-- =================================================================== -->
   <script src="{{ url_for('static', path='js/main.js') }}" defer></script>
 
 </body>

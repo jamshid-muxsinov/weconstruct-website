@@ -46,18 +46,17 @@ async def receive_new_lead_from_google(
 
     for lead in payload.leads:
         lead_dict = lead.model_dump()
-        
         async with async_session_factory() as session:
-            success = await sheets_importer_service.process_single_lead_row(session, lead_dict)
+            try:
+                async with session.begin():
+                    await sheets_importer_service.process_single_lead_row(session, lead_dict)
             
-            if success:
                 processed_count += 1
-                try:
-                    await telegram_service.send_new_lead_notification(lead_dict)
-                except Exception as e:
-                    log.error(f"Ошибка при отправке Telegram уведомления для лида {lead.sheet_row_id}: {e}", exc_info=True)
-            else:
+                await telegram_service.send_new_lead_notification(lead_dict)
+            
+            except Exception as e:
                 skipped_count += 1
+                log.error(f"Ошибка при обработке лида {lead_dict.get('sheet_row_id')}: {e}", exc_info=True)
 
     log.info(f"Обработка завершена. Успешно импортировано: {processed_count}. Пропущено/ошибки: {skipped_count}.")
     

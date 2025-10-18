@@ -11,75 +11,52 @@ from src.models.shop_models import QuoteRequest, GoogleSheetLead
 
 log = logging.getLogger(__name__)
 
-
-async def process_single_lead_row(session: AsyncSession, lead_data: Dict[str, Any]) -> bool:
+async def process_single_lead_row(session: AsyncSession, lead_data: Dict[str, Any]):
     """
-    Обрабатывает один структурированный лид в рамках сессии.
-    Возвращает True в случае успеха и False в случае любой ошибки.
+    Обрабатывает один лид. Вся обработка ошибок и транзакций происходит снаружи.
     """
     sheet_row_id = lead_data.get("sheet_row_id")
-    if not sheet_row_id:
-        log.warning(f"Лид пропущен, так как отсутствует sheet_row_id. Данные: {lead_data}")
-        return False
+    if not sheet_row_id or not lead_data.get("phone"):
+        log.warning(f"Лид пропущен из-за отсутствия ID или телефона. Данные: {lead_data}")
+        return
 
+    stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
+    result = await session.execute(stmt)
+    if result.scalars().first():
+        log.info(f"Лид с ID {sheet_row_id} уже существует в базе. Пропуск.")
+        return
+
+    client_name = lead_data.get("client_name", "Без имени")
     phone_number = lead_data.get("phone")
-    if not phone_number:
-        log.warning(f"Лид {sheet_row_id} пропущен, так как отсутствует номер телефона.")
-        return False
+    business_type = lead_data.get("business_type", "")
+    region = lead_data.get("region", "")
 
-    try:
-        async with session.begin():
-            stmt = select(GoogleSheetLead).where(GoogleSheetLead.sheet_row_id == sheet_row_id)
-            result = await session.execute(stmt)
-            existing_lead = result.scalars().first()
+    contact = await _get_or_create_contact(session, name=client_name, phone=phone_number)
+    if not contact:
+        raise Exception(f"Не удалось создать/найти контакт для телефона {phone_number}")
 
-            if existing_lead:
-                log.info(f"Лид с ID {sheet_row_id} уже существует в базе. Пропуск.")
-                return True 
+    subject_parts = []
+    if region and region not in ["Не указан", "Неизвестно (старый формат)"]:
+        subject_parts.append(region)
+    if business_type:
+        subject_parts.append(business_type)
+    subject = f"Лид из Facebook ({' / '.join(subject_parts)})" if subject_parts else "Лид из Facebook"
+    
+    message_for_crm = f"Автоматический импорт из Google Sheets.\nИсходные данные:\n{lead_data.get('raw_data', '')}"
 
-            client_name = lead_data.get("client_name", "Без имени")
-            business_type = lead_data.get("business_type", "")
-            
-            contact = await _get_or_create_contact(session, name=client_name, phone=phone_number)
-            if not contact:
-                raise Exception(f"Не удалось создать/найти контакт для телефона {phone_number}")
+    quote = await _create_quote_request(session, contact.id, message_for_crm, subject, source="contact_form")
+    quote.business_type = business_type
 
-            region = lead_data.get("region", "")
-            
-            subject_parts = []
-            if region and region not in ["Не указан", "Неизвестно (старый формат)"]:
-                subject_parts.append(region)
-            
-            if business_type:
-                subject_parts.append(business_type)
-            
-            if subject_parts:
-                subject = f"Лид из Facebook ({' / '.join(subject_parts)})"
-            else:
-                subject = "Лид из Facebook"
-            
-            message_for_crm = f"Автоматический импорт из Google Sheets.\nИсходные данные:\n{lead_data.get('raw_data', '')}"
-        
-            quote = await _create_quote_request(session, contact.id, message_for_crm, subject, source="contact_form")
-            
-            quote.business_type = business_type
-            
-            new_lead_entry = GoogleSheetLead(
-                sheet_row_id=sheet_row_id, 
-                spreadsheet_id="16dZ3_sWE1yYUhYmtfpdNlbWDhRrltNNGMtroTmzkNpo",
-                status=GoogleSheetLead.StatusEnum.IMPORTED,
-                processed_at=datetime.utcnow(),
-                quote_request_id=quote.id,
-                raw_data=lead_data 
-            )
-            session.add(new_lead_entry)
-            
-            # Уведомляем менеджеров
-            await _notify_managers(session, quote, contact.full_name)
-        
-        log.info(f"Успешно импортирован лид с ID {sheet_row_id}")
-        return True
-
-    except Exception as e:
-        log.error(f"Ошибка при обработке лида {sheet_row_id}: {e}", exc_info=True)
-        return False
+    new_lead_entry = GoogleSheetLead(
+        sheet_row_id=sheet_row_id,
+        spreadsheet_id="16dZ3_sWE1yYUhYmtfpdNlbWDhRrltNNGMtroTmzkNpo",
+        status=GoogleSheetLead.StatusEnum.IMPORTED,
+        processed_at=datetime.utcnow(),
+        quote_request_id=quote.id,
+        raw_data=lead_data
+    )
+    session.add(new_lead_entry)
+    
+    await _notify_managers(session, quote, contact.full_name)
+    
+    log.info(f"Успешно обработан и добавлен в сессию лид с ID {sheet_row_id}")
