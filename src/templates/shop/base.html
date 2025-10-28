@@ -188,10 +188,15 @@
           <ul class="footer__links footer__contacts">
             <li><a href="tel:+998771308888" class="footer__contact"><i class="fas fa-phone-alt"></i><span>+998 77 130 88 88</span></a></li>
             <li><a href="mailto:weconstructuz@gmail.com" class="footer__contact"><i class="fas fa-envelope"></i><span>weconstructuz@gmail.com</span></a></li>
+            <li>
+                <span class="footer__contact">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>{% if request.state.locale == 'uz' %}Yakkasaroy tumani Gavhar 22A, Tashkent, Uzbekistan {% else %}Яккасаройский район Гавхар 22А, Ташкент, Узбекистан{% endif %}</span>
+                </span>
+            </li>
           </ul>
         </div>
       </div>
-
       <div class="footer-bottom">
         <p class="footer__copyright">© {{ current_year }} WeConstruct. {% if request.state.locale == 'uz' %}Barcha huquqlar himoyalangan.{% else %}Все права защищены.{% endif %}</p>
         <div class="footer__socials">

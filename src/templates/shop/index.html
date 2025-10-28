@@ -1,11 +1,11 @@
 {% extends "shop/base.html" %}
 
-{% set page_title %}{% if request.state.locale == 'uz' %}WeConstruct — O'zbekiston bo'ylab tez quriladigan binolar{% else %}WeConstruct — Быстровозводимые здания по всему Узбекистану{% endif %}{% endset %}
+{% set page_title %}{% if request.state.locale == 'uz' %}Modulli uylar Toshkent va O'zbekistonda – Tez quriladigan binolar | WeConstruct{% else %}Модульные дома в Ташкенте и Узбекистане – Купить быстровозводимые здания | WeConstruct{% endif %}{% endset %}
 {% set page_description %}
 {% if request.state.locale == 'uz' %}
-Zamonaviy modulli va karkasli uylar, ofislar va pavilyonlarni loyihalash, ishlab chiqarish va o'rnatish. WeConstruct bilan O'zbekistonda tez va sifatli qurilish.
+O'zbekistonda modulli uylar, kapsula mehmonxonalar, ofislar va pavilyonlar qurish va o'rnatish. ✅ Sifat kafolati ✅ Tez muddatlar. WeConstruct veb-saytida loyihangiz narxini hisoblang.
 {% else %}
-Проектирование, производство и монтаж современных модульных и каркасных домов, офисов и павильонов. Быстрое и качественное строительство в Узбекистане с WeConstruct.
+Производство и монтаж модульных домов, капсульных отелей, офисов и павильонов под ключ в Узбекистане. ✅ Гарантия качества ✅ Быстрые сроки. Рассчитайте стоимость вашего проекта на сайте WeConstruct.
 {% endif %}
 {% endset %}
 
@@ -19,15 +19,17 @@ Zamonaviy modulli va karkasli uylar, ofislar va pavilyonlarni loyihalash, ishlab
 <section class="hero">
   <div class="hero__background-overlay"></div>
   <div class="container hero__content">
+    <!-- ИЗМЕНЕНО -->
     <h1 class="hero__title">
       {% if request.state.locale == 'uz' %}
-      <span class="hero__title-main">Hayot va biznes uchun</span>
-      <span class="hero__title-sub">zamonaviy modulli yechimlar</span>
+      <span class="hero__title-main">O'zbekistonda modulli binolar</span>
+      <span class="hero__title-sub">Hayot va biznes uchun zamonaviy yechimlar</span>
       {% else %}
-      <span class="hero__title-main">Современные модульные решения</span>
-      <span class="hero__title-sub">для жизни и бизнеса</span>
+      <span class="hero__title-main">Модульные здания в Узбекистане</span>
+      <span class="hero__title-sub">Современные решения для жизни и бизнеса</span>
       {% endif %}
     </h1>
+    <!-- /ИЗМЕНЕНО -->
     <p class="hero__description">
       {% if request.state.locale == 'uz' %}
       Ofislar va savdo pavilyonlaridan tortib turar-joy binolari va sanitariya bloklarigacha bo'lgan har qanday maqsaddagi tez quriladigan binolarni loyihalashtiramiz, ishlab chiqaramiz va o'rnatamiz.

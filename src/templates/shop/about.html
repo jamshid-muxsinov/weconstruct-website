@@ -1,11 +1,11 @@
 {% extends 'shop/base.html' %}
 
-{% set page_title %}{% if request.state.locale == 'uz' %}Kompaniya haqida — WeConstruct{% else %}О компании — WeConstruct{% endif %}{% endset %}
+{% set page_title %}{% if request.state.locale == 'uz' %}WeConstruct kompaniyasi haqida: Toshkentda modulli binolar ishlab chiqarish{% else %}О компании WeConstruct: Производство модульных зданий в Ташкенте{% endif %}{% endset %}
 {% set page_description %}
 {% if request.state.locale == 'uz' %}
-WeConstruct — bu O'zbekistonda har bir inson uchun zamonaviy va qulay makonlarni yaratish missiyasi bilan birlashgan muhandislar, dizaynerlar va quruvchilar jamoasi.
+WeConstruct — O'zbekistonda modulli uylar, kapsulali mehmonxonalar va tez quriladigan binolarni qurish bo'yicha yetakchi kompaniya. Bizning missiyamiz, jamoamiz va afzalliklarimiz haqida ko'proq bilib oling.
 {% else %}
-WeConstruct — это команда инженеров, дизайнеров и строителей, объединенных миссией сделать современные и комфортные пространства доступными для каждого в Узбекистане.
+WeConstruct — ведущая компания по строительству модульных домов, капсульных отелей и быстровозводимых зданий в Узбекистане. Узнайте больше о нашей миссии, команде и преимуществах.
 {% endif %}
 {% endset %}
 
@@ -19,10 +19,10 @@ WeConstruct — это команда инженеров, дизайнеров �
   <div class="container">
     <div class="page-header__content">
       {% if request.state.locale == 'uz' %}
-      <h1 class="page-title">Biz shunchaki qurmaymiz.<br>Biz kelajak makonlarini yaratamiz.</h1>
+      <h1 class="page-title">O'zbekistonda zamonaviy modulli binolar qurish</h1>
       <p class="page-subtitle">WeConstruct — bu O'zbekistonda har bir inson uchun zamonaviy, qulay va ekologik toza makonlarni ochiq qilish missiyasi bilan birlashgan muhandislar, dizaynerlar va quruvchilar jamoasi.</p>
       {% else %}
-      <h1 class="page-title">Мы не просто строим.<br>Мы создаем будущие пространства.</h1>
+      <h1 class="page-title">Строим современные модульные здания в Узбекистане</h1>
       <p class="page-subtitle">WeConstruct — это команда инженеров, дизайнеров и строителей, объединенных миссией сделать современные, комфортные и экологичные пространства доступными для каждого в Узбекистане.</p>
       {% endif %}
     </div>
@@ -126,8 +126,10 @@ WeConstruct — это команда инженеров, дизайнеров �
           <h3 class="team-member__name">{% if request.state.locale == 'uz' %}Sobir Qayumov{% else %}Собир Каюмов{% endif %}</h3>
           <p class="team-member__position">{% if request.state.locale == 'uz' %}Asoschi{% else %}Основатель{% endif %}</p>
           <p class="team-member__bio">
-            {% if request.state.locale == 'uz' %}Qurilish sohasidagi ko'p yillik tajribaga ega bo'lgan Sobir, ilg'or texnologiyalarni joriy etib va eng yuqori sifat standartlarini ta'minlab, kompaniyaning rivojlanish yo'nalishini belgilaydi. Uning maqsadi — zamonaviy modulli yechimlarni har bir inson uchun ochiq qilish.{% else %}
-            С многолетним опытом в строительной индустрии, Собир задает вектор развития компании, внедряя передовые технологии и обеспечивая высочайшие стандарты качества. Его цель — сделать современные модульные решения доступными для каждого.
+            {% if request.state.locale == 'uz' %}
+            **Modulli qurilish** sohasidagi ko'p yillik tajribaga ega bo'lgan Sobir, ilg'or texnologiyalarni joriy etib va eng yuqori sifat standartlarini ta'minlab, kompaniyaning rivojlanish yo'nalishini belgilaydi. Uning maqsadi — zamonaviy **modulli uylar va kapsulali mehmonxonalarni** har bir **O'zbekiston** fuqarosi uchun ochiq qilish.
+            {% else %}
+            С многолетним опытом в сфере **модульного строительства**, Собир задает вектор развития компании, внедряя передовые технологии и обеспечивая высочайшие стандарты качества. Его цель — сделать современные **модульные дома и капсульные отели** доступными для каждого жителя **Узбекистана**.
             {% endif %}
           </p>
           <div class="team-member__socials">

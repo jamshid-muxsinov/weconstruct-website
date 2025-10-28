@@ -1,17 +1,18 @@
 # src/main.py
 
-# src/main.py
-
 import logging
 import sys
 import traceback
 import os 
 from typing import Callable
 import asyncio
+from datetime import date
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 import uvicorn
 from fastapi import FastAPI, Request, Depends, APIRouter, Path
-from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.responses import RedirectResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi_pagination import add_pagination
 from pathlib import Path as FilePath
@@ -23,7 +24,8 @@ from src.core.middleware import HTMXMiddleware
 from src.pages.admin.router import router as admin_router, unprotected_router as admin_unprotected_router
 from src.pages.admin.api import router as api_router
 from src.core.config import get_settings
-from src.core.db import check_db_connection, async_session_factory
+from src.core.db import check_db_connection, async_session_factory, get_db_session
+from src.models.shop_models import Category, Product 
 from src.core.security import get_current_active_user
 from src.pages.shop_pages import router as shop_router, root_router as shop_root_router
 from src.services.user_service import create_first_superuser
@@ -123,7 +125,7 @@ def create_site_app() -> FastAPI:
     fastapi_kwargs = {"title": "WeConstruct Website"}
     if not settings.DEBUG:
         fastapi_kwargs.update({"docs_url": None, "redoc_url": None, "openapi_url": None})
-    app = FastAPI(**fastapi_kwargs, root_path=settings.ROOT_PATH)
+    app = FastAPI(**fastapi_kwargs, root_path=settings.ROOT_PATH, on_startup=[on_startup], on_shutdown=[on_shutdown]) # --- ИЗМЕНЕНО: добавлены on_startup/on_shutdown
     app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
     app.add_middleware(CSRFProtectMiddleware, csrf_secret=settings.SECRET_KEY)
     if settings.CACHE_ENABLED:
@@ -143,8 +145,57 @@ def create_site_app() -> FastAPI:
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
     @app.get("/robots.txt", include_in_schema=False)
     async def robots_txt(): return FileResponse(BASE_DIR / "src/static/robots.txt")
+
     @app.get("/sitemap.xml", include_in_schema=False)
-    async def get_sitemap(): return FileResponse(BASE_DIR / "src/static/sitemap.xml", media_type="application/xml")
+    async def get_sitemap(request: Request, db: AsyncSession = Depends(get_db_session)):
+        base_url = "https://www.weconstruct.uz"
+        today = date.today().strftime("%Y-%m-%d")
+        
+        static_pages = {
+            "": 1.0,      
+            "/about": 0.8  
+        }
+
+        xml_content = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        xml_content += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
+
+        for path, priority in static_pages.items():
+            xml_content += f"""
+    <url>
+        <loc>{base_url}/ru{path}</loc>
+        <xhtml:link rel="alternate" hreflang="ru" href="{base_url}/ru{path}"/>
+        <xhtml:link rel="alternate" hreflang="uz" href="{base_url}/uz{path}"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="{base_url}/ru{path}"/>
+        <lastmod>{today}</lastmod>
+        <priority>{priority}</priority>
+    </url>
+"""
+
+        """
+        products_stmt = select(Product).where(Product.is_active == True)
+        products_result = await db.execute(products_stmt)
+        products = products_result.scalars().all()
+        
+        for product in products:
+            # Предполагается, что у вас будет URL вида /ru/shop/product/{product.slug}
+            product_path = f"/shop/product/{product.slug}" 
+            last_mod = product.updated_at.strftime("%Y-%m-%d") if product.updated_at else today
+            
+            xml_content += f'''
+    <url>
+        <loc>{base_url}/ru{product_path}</loc>
+        <xhtml:link rel="alternate" hreflang="ru" href="{base_url}/ru{product_path}"/>
+        <xhtml:link rel="alternate" hreflang="uz" href="{base_url}/uz{product_path}"/>
+        <lastmod>{last_mod}</lastmod>
+        <priority>0.9</priority>
+    </url>
+'''
+        """
+
+        xml_content += '</urlset>'
+        
+        return Response(content=xml_content, media_type="application/xml")
+
     def _ensure_locale(request: Request):
         if not hasattr(request.state, "locale"):
             path_parts = request.url.path.split('/')

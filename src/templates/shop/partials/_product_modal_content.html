@@ -119,3 +119,31 @@
         </div>
     </div>
 </div>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ t_get(request, product, 'name') }}",
+  "image": "{{ url_for('media', path=product.main_image) if product.main_image else url_for('static', path='img/placeholder.png') }}",
+  "description": "{{ t_get(request, product, 'full_description') or t_get(request, product, 'short_description') }}",
+  "sku": "WC-{{ product.id }}",
+  "brand": {
+    "@type": "Brand",
+    "name": "WeConstruct"
+  },
+  {% if product.price_min %}
+  "offers": {
+    "@type": "AggregateOffer",
+    "lowPrice": "{{ product.price_min }}",
+    {% if product.price_max %}
+    "highPrice": "{{ product.price_max }}",
+    {% endif %}
+    "priceCurrency": "UZS",
+    "offerCount": 1,
+    "availability": "https://schema.org/InStock",
+    "url": "{{ request.url }}"
+  }
+  {% endif %}
+}
+</script>
