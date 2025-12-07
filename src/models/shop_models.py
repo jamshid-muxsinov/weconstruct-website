@@ -350,3 +350,89 @@ class GoogleSheetLead(Base):
     processing_notes: Mapped[Optional[str]] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+class Project(Base):
+    __tablename__ = 'shop_project'
+    class StatusEnum(str, enum.Enum):
+        DESIGN = 'design'
+        PROCUREMENT = 'procurement' 
+        CONSTRUCTION = 'construction'
+        FINISHING = 'finishing'    
+        HANDOVER = 'handover'    
+        COMPLETED = 'completed'   
+        HOLD = 'hold'            
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), comment="Название проекта")
+    
+    quote_request_id: Mapped[Optional[int]] = mapped_column(ForeignKey("shop_quoterequest.id", ondelete="SET NULL"))
+    quote_request: Mapped[Optional["QuoteRequest"]] = relationship()
+
+    manager_id: Mapped[int] = mapped_column(ForeignKey("auth_user.id"))
+    manager: Mapped["User"] = relationship(foreign_keys=[manager_id])
+    
+    designer_id: Mapped[Optional[int]] = mapped_column(ForeignKey("auth_user.id"), nullable=True)
+    designer: Mapped[Optional["User"]] = relationship(foreign_keys=[designer_id])
+    
+    foreman_id: Mapped[Optional[int]] = mapped_column(ForeignKey("auth_user.id"), nullable=True) # Прораб
+    foreman: Mapped[Optional["User"]] = relationship(foreign_keys=[foreman_id])
+    contract_amount: Mapped[float] = mapped_column(DECIMAL(15, 2), default=0, comment="Сумма контракта")
+    
+    status: Mapped[StatusEnum] = mapped_column(
+        EnumType(StatusEnum, name="project_status_enum", native_enum=False),
+        default=StatusEnum.DESIGN
+    )
+    
+    start_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    deadline: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    transactions: Mapped[List["Transaction"]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    files: Mapped[List["ProjectFile"]] = relationship(back_populates="project", cascade="all, delete-orphan")
+
+
+class Transaction(Base):
+    """Доходы и Расходы по проекту"""
+    __tablename__ = 'shop_transaction'
+    
+    class TypeEnum(str, enum.Enum):
+        INCOME = 'income' 
+        EXPENSE = 'expense' 
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    
+    project_id: Mapped[int] = mapped_column(ForeignKey("shop_project.id", ondelete="CASCADE"))
+    project: Mapped["Project"] = relationship(back_populates="transactions")
+    
+    amount: Mapped[float] = mapped_column(DECIMAL(15, 2), nullable=False)
+    type: Mapped[TypeEnum] = mapped_column(EnumType(TypeEnum, name="transaction_type_enum", native_enum=False))
+    
+    category: Mapped[str] = mapped_column(String(100), comment="Категория: Бетон, Аванс, Дизайн") 
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    created_by_id: Mapped[int] = mapped_column(ForeignKey("auth_user.id"))
+    created_by: Mapped["User"] = relationship()
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+
+
+class ProjectFile(Base):
+    """Фотоотчеты и документы"""
+    __tablename__ = 'shop_projectfile'
+    class TypeEnum(str, enum.Enum):
+        PHOTO_REPORT = 'photo_report'
+        DESIGN_DOC = 'design_doc'
+        DOCUMENT = 'document'        
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    
+    project_id: Mapped[int] = mapped_column(ForeignKey("shop_project.id", ondelete="CASCADE"))
+    project: Mapped["Project"] = relationship(back_populates="files")
+    
+    file_path: Mapped[str] = mapped_column(String(255))
+    type: Mapped[TypeEnum] = mapped_column(EnumType(TypeEnum, name="file_type_enum", native_enum=False))
+    comment: Mapped[Optional[str]] = mapped_column(String(255))
+    
+    uploaded_by_id: Mapped[int] = mapped_column(ForeignKey("auth_user.id"))
+    uploaded_by: Mapped["User"] = relationship()
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
