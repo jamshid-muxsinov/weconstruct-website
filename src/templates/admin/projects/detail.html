@@ -1,0 +1,183 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <a href="{{ request.url_for('admin_project_list', locale=request.state.locale) }}" class="btn btn-secondary btn-sm" style="margin-bottom: 8px;"><i class='bx bx-arrow-back'></i> Назад</a>
+        <h1>{{ project.name }}</h1>
+    </div>
+    <div style="display:flex; gap: 10px; align-items: center;">
+        <span class="status-badge status-{{ project.status.value }}" style="font-size: 1rem; padding: 8px 16px;">{{ project.status.value|upper }}</span>
+        {% if project.quote_request_id %}
+        <a href="{{ request.url_for('admin_quoterequest_change', locale=request.state.locale, pk=project.quote_request_id) }}" class="btn btn-secondary" title="Перейти к заявке"><i class='bx bx-link'></i></a>
+        {% endif %}
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    
+    <!-- ЛЕВАЯ КОЛОНКА -->
+    <div>
+        <!-- ФОТО ОТЧЕТЫ -->
+        <div class="card" style="margin-bottom: 24px;">
+            <h3 style="margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">📸 Фотоотчеты и Документы</h3>
+            
+            <form action="{{ request.url_for('admin_project_upload', locale=request.state.locale, pk=project.id) }}" 
+                  method="post" enctype="multipart/form-data" 
+                  style="background: var(--surface-2); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <select name="report_type" class="select-field">
+                        <option value="photo_report">Фото со стройки</option>
+                        <option value="design_doc">Чертеж/Дизайн</option>
+                        <option value="document">Документ/Договор</option>
+                    </select>
+                    <input type="file" name="file" class="input-field" required>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" name="comment" placeholder="Комментарий (н-р: Фундамент залит)" class="input-field" style="flex-grow: 1;">
+                    <button type="submit" class="btn btn-primary"><i class='bx bx-upload'></i> Загрузить</button>
+                </div>
+            </form>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px;">
+                {% for file in project.files %}
+                <div style="background: var(--bg-main); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color);">
+                    <a href="{{ url_for('media', path=file.file_path) }}" target="_blank" style="display: block; aspect-ratio: 1; overflow: hidden;">
+                        {% if file.type.value == 'photo_report' %}
+                            <img src="{{ url_for('media', path=file.file_path) }}" style="width:100%; height:100%; object-fit: cover; transition: 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        {% else %}
+                            <div style="width:100%; height:100%; display: flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--text-secondary);">
+                                <i class='bx bxs-file-pdf' style="font-size: 3rem;"></i>
+                            </div>
+                        {% endif %}
+                    </a>
+                    <div style="padding: 8px; font-size: 0.8rem;">
+                        <div style="font-weight: 600; color: var(--text-primary);">{{ file.uploaded_by.username }}</div>
+                        <div style="color: var(--text-secondary); margin-bottom: 4px;">{{ file.created_at.strftime('%d.%m %H:%M') }}</div>
+                        {% if file.comment %}
+                        <div style="background: var(--surface-2); padding: 4px; border-radius: 4px; margin-top: 4px;">{{ file.comment }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ИСТОРИЯ ФИНАНСОВ -->
+        {% if user.is_superuser or user.id == project.manager_id %}
+        <div class="card">
+            <h3 style="margin-bottom: 16px;">История транзакций</h3>
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Кто</th>
+                        <th>Категория</th>
+                        <th>Сумма</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in project.transactions %}
+                    <tr>
+                        <td>{{ t.created_at.strftime('%d.%m.%Y') }}</td>
+                        <td>{{ t.created_by.username }}</td>
+                        <td>
+                            {{ t.category }}
+                            {% if t.description %}<br><small style="color: var(--text-secondary);">{{ t.description }}</small>{% endif %}
+                        </td>
+                        <td style="font-weight: bold; color: {{ 'var(--status-green)' if t.type.value == 'income' else 'var(--status-red)' }};">
+                            {{ '+' if t.type.value == 'income' else '-' }} {{ t.amount|format_number }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ПРАВАЯ КОЛОНКА -->
+    <div>
+        <!-- ФИНАНСЫ ВИДЖЕТ -->
+        {% if user.is_superuser or user.id == project.manager_id %}
+        <div class="card" style="margin-bottom: 24px; border-top: 4px solid var(--status-yellow);">
+            <h3 style="margin-bottom: 15px;">💰 Финансы</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div style="text-align: center; padding: 10px; background: rgba(74, 222, 128, 0.1); border-radius: 8px;">
+                    <small style="color: var(--text-secondary);">Приход</small>
+                    <div style="font-weight: 700; color: var(--status-green); font-size: 1.1rem;">{{ income|format_number }}</div>
+                </div>
+                <div style="text-align: center; padding: 10px; background: rgba(248, 113, 113, 0.1); border-radius: 8px;">
+                    <small style="color: var(--text-secondary);">Расход</small>
+                    <div style="font-weight: 700; color: var(--status-red); font-size: 1.1rem;">{{ expenses|format_number }}</div>
+                </div>
+            </div>
+            <div style="text-align: center; padding: 10px; background: var(--surface-2); border-radius: 8px; margin-bottom: 20px;">
+                Прибыль: <strong>{{ profit|format_number }}</strong>
+            </div>
+
+            <button onclick="document.getElementById('finance-form').style.display = document.getElementById('finance-form').style.display === 'none' ? 'block' : 'none'" class="btn btn-secondary btn-full btn-sm">
+                <i class='bx bx-plus'></i> Добавить операцию
+            </button>
+
+            <form id="finance-form" action="{{ request.url_for('admin_project_finance', locale=request.state.locale, pk=project.id) }}" method="post" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <select name="type" class="select-field" style="width: 100%; margin-bottom: 10px;">
+                    <option value="expense">🔴 Расход</option>
+                    <option value="income">🟢 Приход</option>
+                </select>
+                <input type="number" name="amount" placeholder="Сумма" class="input-field" style="width: 100%; margin-bottom: 10px;" required>
+                <input type="text" name="category" placeholder="Категория (Бетон, Аванс)" class="input-field" style="width: 100%; margin-bottom: 10px;" required>
+                <input type="text" name="description" placeholder="Описание (опционально)" class="input-field" style="width: 100%; margin-bottom: 10px;">
+                <button type="submit" class="btn btn-primary btn-full">Сохранить</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- КОМАНДА -->
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">Команда проекта</h3>
+            
+            {% if user.is_superuser or user.id == project.manager_id %}
+            <form action="{{ request.url_for('admin_project_update_team', locale=request.state.locale, pk=project.id) }}" method="post">
+                <div class="input-group">
+                    <label>Статус</label>
+                    <select name="status" class="select-field">
+                        <option value="design" {% if project.status.value == 'design' %}selected{% endif %}>Design</option>
+                        <option value="procurement" {% if project.status.value == 'procurement' %}selected{% endif %}>Procurement</option>
+                        <option value="construction" {% if project.status.value == 'construction' %}selected{% endif %}>Construction</option>
+                        <option value="finishing" {% if project.status.value == 'finishing' %}selected{% endif %}>Finishing</option>
+                        <option value="handover" {% if project.status.value == 'handover' %}selected{% endif %}>Handover</option>
+                        <option value="completed" {% if project.status.value == 'completed' %}selected{% endif %}>Completed</option>
+                        <option value="hold" {% if project.status.value == 'hold' %}selected{% endif %}>Hold</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Дизайнер</label>
+                    <select name="designer_id" class="select-field">
+                        <option value="0">--- Не назначен ---</option>
+                        {% for u in staff_users %}
+                        <option value="{{ u.id }}" {% if project.designer_id == u.id %}selected{% endif %}>{{ u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Прораб</label>
+                    <select name="foreman_id" class="select-field">
+                        <option value="0">--- Не назначен ---</option>
+                        {% for u in staff_users %}
+                        <option value="{{ u.id }}" {% if project.foreman_id == u.id %}selected{% endif %}>{{ u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-secondary btn-sm btn-full">Обновить команду</button>
+            </form>
+            {% else %}
+                <ul style="list-style: none; font-size: 0.9rem;">
+                    <li style="margin-bottom: 8px;"><strong>PM:</strong> {{ project.manager.username }}</li>
+                    <li style="margin-bottom: 8px;"><strong>Дизайнер:</strong> {{ project.designer.username if project.designer else '-' }}</li>
+                    <li><strong>Прораб:</strong> {{ project.foreman.username if project.foreman else '-' }}</li>
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -13,6 +13,7 @@ from . import api
 from . import importer
 from . import invites
 from . import users
+from . import project
 from src.core.security import get_current_superuser, get_current_staff_user
 
 router = APIRouter()
@@ -47,5 +48,5 @@ router.include_router(
     invites.router,
     dependencies=[Depends(get_current_superuser)]
 )
-
+protected_admin_router.include_router(project.router)
 unprotected_router.include_router(auth.router)

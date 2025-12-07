@@ -3,12 +3,21 @@
 {% endif %}
 
 {% block content %}
+{% block content %}
 <div class="page-header">
-    <h1>Заявка #{{ quote.id }} от {{ quote.created_at.strftime('%d.%m.%Y') }}</h1>
+    <h1>Заявка #{{ quote.id }} ...</h1>
     <div>
-        <a href="{{ request.url_for('admin_quoterequest_list') }}" class="btn btn-secondary">
-            <i class='bx bx-list-ul'></i> К списку заявок
+        <a href="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" class="btn btn-secondary">
+            <i class='bx bx-list-ul'></i> К списку
         </a>
+
+        <!-- ДОБАВЬ ЭТО: -->
+        {% if quote.status.value == 'closed' %}
+            <a href="{{ request.url_for('create_project_from_quote', locale=request.state.locale, quote_id=quote.id) }}" class="btn btn-success" style="background-color: var(--status-green); color: white; margin-left: 10px;">
+                <i class='bx bx-building'></i> Начать проект
+            </a>
+        {% endif %}
+        <!-- КОНЕЦ -->
     </div>
 </div>
 
