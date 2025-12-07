@@ -48,5 +48,5 @@ router.include_router(
     invites.router,
     dependencies=[Depends(get_current_superuser)]
 )
-protected_admin_router.include_router(project.router)
+router.include_router(project.router)
 unprotected_router.include_router(auth.router)
