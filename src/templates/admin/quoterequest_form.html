@@ -3,12 +3,23 @@
 {% endif %}
 
 {% block content %}
+    
 <div class="page-header">
     <h1>{{ title }}</h1>
-    <a href="{{ request.url_for(meta.list_url_name, locale=request.state.locale) }}" class="btn btn-secondary">
-        <i class='bx bx-arrow-back'></i> {{ _('back_to_request_list') }}
-    </a>
+    
+    <div style="display: flex; gap: 10px;">
+        <a href="{{ request.url_for(meta.list_url_name, locale=request.state.locale) }}" class="btn btn-secondary">
+            <i class='bx bx-arrow-back'></i> {{ _('back_to_request_list') }}
+        </a>
+        {% if original and original.status.value == 'closed' %}
+            <a href="{{ request.url_for('create_project_from_quote', locale=request.state.locale, quote_id=original.id) }}" class="btn btn-success" style="background-color: var(--status-green); color: white;">
+                <i class='bx bx-building'></i> Начать проект
+            </a>
+        {% endif %}
+    </div>
 </div>
+
+  
 
 <div class="card form-container">
     <form method="post" novalidate id="quote-request-form">
