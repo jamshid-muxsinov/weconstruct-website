@@ -1067,3 +1067,79 @@ input[type="checkbox"] {
     color: var(--primary);
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
+
+/* --- Product Image Gallery Styles --- */
+
+/* Контейнер для превью основного фото */
+.main-image-preview {
+    margin-top: 12px;
+    width: 200px;
+    height: 200px;
+    border-radius: 12px;
+    border: 2px dashed var(--border-light);
+    padding: 4px;
+    background: #FFFFFF;
+}
+
+.main-image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Чтобы фото заполняло квадрат */
+    border-radius: 8px;
+}
+
+/* Сетка для дополнительных фото */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+/* Карточка одной фотки в галерее */
+.gallery-item {
+    position: relative;
+    aspect-ratio: 1; /* Квадрат */
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+    background: #FFFFFF;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+}
+
+.gallery-item:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Кнопка удаления (крестик) */
+.btn-delete-img {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #FECACA; /* Красная обводка */
+    color: #DC2626; /* Красный крестик */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.2s;
+    z-index: 2;
+}
+
+.btn-delete-img:hover {
+    background: #FEE2E2;
+    transform: scale(1.1);
+}

@@ -142,12 +142,51 @@
                                     </div>
 
                                 {% elif field.type == 'FileField' or field.type == 'MultipleFileField' %}
-                                    {{ field(class_='input-field', style="padding: 8px;") }}
-                                    {% if original and field.name == 'main_image' and original.main_image %}
-                                        <div style="margin-top: 8px;">
-                                            <img src="{{ url_for('media', path=original.main_image) }}" style="height: 60px; border-radius: 6px;">
-                                            <span style="font-size: 0.8rem; color: var(--text-muted);">Текущее фото</span>
+                                    <!-- Поле загрузки -->
+                                    <div style="position: relative;">
+                                        {{ field(class_='input-field', style="padding: 10px;") }}
+                                        <i class='bx bx-cloud-upload' style="position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:1.5rem; color:var(--text-muted); pointer-events:none;"></i>
+                                    </div>
+
+                                    <!-- 1. ОСНОВНОЕ ИЗОБРАЖЕНИЕ (Main Image) -->
+                                    {% if field.name == 'main_image' and original and original.main_image %}
+                                        <div class="main-image-preview">
+                                            <a href="{{ url_for('media', path=original.main_image) }}" target="_blank">
+                                                <img src="{{ url_for('media', path=original.main_image) }}" alt="Main Image">
+                                            </a>
                                         </div>
+                                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">
+                                            Текущее основное фото (загрузите новое для замены)
+                                        </div>
+                                    {% endif %}
+
+                                    <!-- 2. ГАЛЕРЕЯ (Additional Images) -->
+                                    {% if field.name == 'images' and original and original.images %}
+                                        <div class="gallery-grid">
+                                            {% for img in original.images %}
+                                                <!-- ID нужен для удаления через HTMX -->
+                                                <div class="gallery-item" id="gallery-item-{{ img.id }}">
+                                                    <a href="{{ url_for('media', path=img.image) }}" target="_blank">
+                                                        <img src="{{ url_for('media', path=img.image) }}" loading="lazy">
+                                                    </a>
+                                                    
+                                                    <!-- Кнопка удаления -->
+                                                    <button type="button" class="btn-delete-img"
+                                                            hx-delete="{{ request.url_for('admin_htmx_delete_product_image', locale=request.state.locale, pk=img.id) }}"
+                                                            hx-target="#gallery-item-{{ img.id }}"
+                                                            hx-swap="outerHTML"
+                                                            hx-confirm="{{ _('delete_confirmation_text', item='image') }}"
+                                                            title="{{ _('delete') }}">
+                                                        &times;
+                                                    </button>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% if original.images|length > 0 %}
+                                            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
+                                                Нажмите на крестик, чтобы удалить отдельное фото.
+                                            </div>
+                                        {% endif %}
                                     {% endif %}
 
                                 {% else %}
