@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import or_, func
-
+import os
+import uuid
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
 from src.core.security import get_current_active_user
@@ -26,7 +27,8 @@ async def project_list(
     request: Request,
     q: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
-    manager_id: Optional[int] = Query(None),
+    # ИЗМЕНЕНИЕ ЗДЕСЬ: принимаем str, а не int, чтобы не падать от пустой строки
+    manager_id: Optional[str] = Query(None), 
     context: dict = Depends(get_common_context),
     db: AsyncSession = Depends(get_db_session)
 ):
@@ -58,14 +60,15 @@ async def project_list(
             stmt = stmt.where(Project.status == status)
 
         if user.is_superuser:
-            if manager_id:
-                stmt = stmt.where(Project.manager_id == manager_id)
+            # ИЗМЕНЕНИЕ ЗДЕСЬ: Проверяем, что manager_id не пустой и является числом
+            if manager_id and manager_id.isdigit():
+                stmt = stmt.where(Project.manager_id == int(manager_id))
         else:
             stmt = stmt.where((Project.manager_id == user.id) | 
                               (Project.designer_id == user.id) | 
                               (Project.foreman_id == user.id))
                               
-        # Выполнение
+        # Выполнение запроса
         result = await db.execute(stmt)
         projects = result.scalars().all()
         
@@ -82,6 +85,7 @@ async def project_list(
             "request": request
         })
 
+        # Если запрос от HTMX (поиск/фильтр)
         if "HX-Request" in request.headers:
             return templates.TemplateResponse("admin/partials/_project_list_content.html", context)
             
@@ -90,10 +94,8 @@ async def project_list(
     except Exception as e:
         log.error(f"ERROR IN PROJECT LIST: {e}")
         traceback.print_exc()
-        # Возвращаем понятную ошибку в браузер
-        return HTMLResponse(f"Server Error (Check logs): {e}", status_code=500)
+        return HTMLResponse(f"<div style='padding:20px; color:red;'>Ошибка сервера: {str(e)}</div>", status_code=500)
 
-# ... (Остальные методы create/upload/finance без изменений) ...
 @router.get("/create-from-quote/{quote_id}", response_class=RedirectResponse, name="create_project_from_quote")
 async def create_project_from_quote(quote_id: int, request: Request, db: AsyncSession = Depends(get_db_session), user: User = Depends(get_current_active_user)):
     quote = await db.get(QuoteRequest, quote_id, options=[selectinload(QuoteRequest.contact)])
