@@ -62,7 +62,7 @@ async def login_for_access_token(
         value=token, 
         httponly=True,
         samesite="lax",
-        secure=not settings.DEBUG,
+        secure=True,
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60  
     )
     
