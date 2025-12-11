@@ -2,8 +2,8 @@
     {% for column in requests_by_status %}
     <div class="kanban-column" data-status="{{ column.status_code }}">
         <div class="kanban-column-header">
-            <h3>{{ get_status_display(column.status_code) }}</h3>
-            <span class="kanban-count">{{ column.requests|length }}</span>
+            <span>{{ get_status_display(column.status_code) }}</span>
+            <span class="kanban-count-badge">{{ column.requests|length }}</span>
         </div>
         <div class="kanban-column-body">
             {% for req in column.requests %}

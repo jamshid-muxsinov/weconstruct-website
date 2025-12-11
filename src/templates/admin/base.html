@@ -1,174 +1,162 @@
 <!DOCTYPE html>
 <html lang="{{ request.state.locale }}">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token(request) }}">
-    <meta name="current-user-id" content="{{ user.id if user else '' }}">
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="WeConstruct CRM">
-    <link rel="manifest" href="{{ url_for('static', path='manifest.json') }}">
-    
-    <title>{{ title|default(_('admin_panel')) }} | WeConstruct CRM</title>
-    
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', path='favicons/apple-touch-icon.png') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', path='favicons/favicon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', path='favicons/favicon-16x16.png') }}">
-    <link rel="manifest" href="{{ url_for('static', path='favicons/site.webmanifest') }}">
-    <link rel="shortcut icon" href="{{ url_for('static',path='favicons/favicon.ico') }}">
-    <meta name="msapplication-TileColor" content="#07385a">
-    <meta name="theme-color" content="#ffffff">
+    <title>{{ title|default('WeConstruct ERP') }}</title>
 
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', path='css/crm-enhanced.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- ТОЛЬКО НОВЫЙ CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/modern-erp.css') }}">
 
     <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
-    <script src="https://unpkg.com/htmx.org/dist/ext/sse.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js" defer></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
+    <script src="{{ url_for('static', path='js/modern-crm.js') }}" defer></script>
+    <script src="{{ url_for('static', path='js/kanban-enhanced.js') }}" defer></script>
 </head>
 
-<body class="dark" hx-ext="class-tools">
-    
-    <div id="crm-container">
-        
+<body data-theme="light">
+
+    <div id="app-shell">
+        <!-- SIDEBAR -->
         <aside id="sidebar">
-            <div class="sidebar-header"> 
-                <i class='bx bxs-color-fill logo-icon'></i> 
-                <span class="logo-text">WeConstruct</span>
+            <div class="sidebar-header">
+                <i class='bx bxs-layer' style="color:var(--primary); font-size:24px; margin-right:12px;"></i>
+                <span>WeConstruct</span>
             </div>
+
             <nav id="sidebar-nav">
-                <a href="{{ request.url_for('admin_kanban_board', locale=request.state.locale) }}" class="nav-link {% if 'kanban' in request.url.path or request.url.path == '/admin/' or request.url.path.endswith('/admin/ru') or request.url.path.endswith('/admin/uz') %}active{% endif %}" hx-get="{{ request.url_for('admin_kanban_board', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-grid-alt nav-icon'></i><span class="nav-text">{{ _('sidebar_kanban') }}</span> </a>
-                <a href="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" class="nav-link {% if 'quoterequest' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bx-list-ul nav-icon'></i><span class="nav-text">{{ _('sidebar_requests') }}</span> </a>
-                <a href="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" class="nav-link {% if 'contact' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-user-detail nav-icon'></i><span class="nav-text">{{ _('sidebar_contacts') }}</span> </a>
+                <div class="nav-group-label">CRM</div>
                 
-                {# --- ИЗМЕНЕНИЕ: Возвращаем все ссылки, но с проверкой прав --- #}
-                {% if user.is_superuser %}
-                <a href="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-bar-chart-alt-2 nav-icon'></i><span class="nav-text">{{ _('sidebar_statistics') }}</span> </a>
-                <hr class="menu-divider">
-                <a href="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" class="nav-link {% if 'product' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-package nav-icon'></i><span class="nav-text">{{ _('sidebar_products') }}</span> </a>
-                <a href="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" class="nav-link {% if 'category' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"> <i class='bx bxs-component nav-icon'></i><span class="nav-text">{{ _('sidebar_categories') }}</span> </a>
-                <a href="{{ request.url_for('admin_user_list', locale=request.state.locale) }}" class="nav-link {% if '/users' in request.url.path %}active{% endif %}" hx-get="{{ request.url_for('admin_user_list', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
-                    <i class='bx bxs-user-account nav-icon'></i>
-                    <span class="nav-text">{{ _('sidebar_users') }}</span>
+                <!-- ДАШБОРД ТЕПЕРЬ ТУТ (ВИДЕН ВСЕМ) -->
+                <a href="{{ request.url_for('admin_dashboard', locale=request.state.locale) }}" 
+                   class="nav-link {% if 'dashboard' in request.url.path %}active{% endif %}">
+                    <i class='bx bxs-pie-chart-alt-2'></i>
+                    <span>{{ _('sidebar_statistics') }}</span>
                 </a>
-                <a href="{{ request.url_for('admin_invites', locale=request.state.locale) }}" class="nav-link {% if request.url.path.endswith('/invites') or request.url.path.endswith('/invites/') %} active {% endif %}" hx-get="{{ request.url_for('admin_invites', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true">
-                    <i class='bx bxs-paper-plane nav-icon'></i>
-                    <span class="nav-text">{{ _('sidebar_invites') }}</span>
+
+                <a href="{{ request.url_for('admin_kanban_board', locale=request.state.locale) }}" 
+                   class="nav-link {% if 'kanban' in request.url.path %}active{% endif %}">
+                    <i class='bx bxs-dashboard'></i>
+                    <span>{{ _('sidebar_kanban') }}</span>
+                </a>
+
+                <a href="{{ request.url_for('admin_project_list', locale=request.state.locale) }}" 
+                   class="nav-link {% if '/projects' in request.url.path %}active{% endif %}">
+                    <i class='bx bxs-briefcase'></i>
+                    <span>{{ _('sidebar_projects') }}</span>
+                </a>
+
+                <a href="{{ request.url_for('admin_quoterequest_list', locale=request.state.locale) }}" 
+                   class="nav-link {% if 'quoterequest' in request.url.path %}active{% endif %}">
+                    <i class='bx bx-list-ul'></i>
+                    <span>{{ _('sidebar_requests') }}</span>
+                </a>
+
+                <a href="{{ request.url_for('admin_contact_list', locale=request.state.locale) }}" 
+                   class="nav-link {% if 'contact' in request.url.path %}active{% endif %}">
+                    <i class='bx bxs-user-detail'></i>
+                    <span>{{ _('sidebar_contacts') }}</span>
+                </a>
+
+                <!-- АДМИНСКАЯ ЧАСТЬ -->
+                {% if user.is_superuser %}
+                <div class="nav-group-label" style="margin-top: 16px;">ADMIN</div>
+                
+                <a href="{{ request.url_for('admin_user_list', locale=request.state.locale) }}" 
+                   class="nav-link {% if '/users' in request.url.path %}active{% endif %}">
+                    <i class='bx bxs-group'></i>
+                    <span>{{ _('sidebar_users') }}</span>
+                </a>
+                
+                <a href="{{ request.url_for('admin_invites', locale=request.state.locale) }}" 
+                   class="nav-link {% if 'invites' in request.url.path %}active{% endif %}">
+                    <i class='bx bx-paper-plane'></i>
+                    <span>{{ _('sidebar_invites') }}</span>
+                </a>
+
+                <a href="{{ request.url_for('admin_product_list', locale=request.state.locale) }}" 
+                   class="nav-link {% if 'product' in request.url.path %}active{% endif %}">
+                    <i class='bx bxs-package'></i>
+                    <span>{{ _('sidebar_products') }}</span>
+                </a>
+
+                <a href="{{ request.url_for('admin_category_list', locale=request.state.locale) }}" 
+                   class="nav-link {% if 'category' in request.url.path %}active{% endif %}">
+                    <i class='bx bxs-category'></i>
+                    <span>{{ _('sidebar_categories') }}</span>
                 </a>
                 {% endif %}
             </nav>
-            <div class="sidebar-footer"> 
-                <a href="{{ request.url_for('admin_logout') }}" class="logout-trigger nav-link"> <i class='bx bx-log-out nav-icon'></i><span class="nav-text">{{ _('logout') }}</span> </a> 
+
+            <div class="sidebar-footer">
+                <a href="{{ request.url_for('admin_profile', locale=request.state.locale) }}" class="user-mini-profile">
+                    <div class="avatar">{{ user.username[0]|upper }}</div>
+                    <div class="info">
+                        <div class="name">{{ user.username }}</div>
+                        <div class="role">{{ 'Admin' if user.is_superuser else 'Manager' }}</div>
+                    </div>
+                </a>
             </div>
         </aside>
-        
-        <div id="content-wrapper">
-            <header class="main-header">
-                <button id="sidebar-expand-btn" class="btn-icon"><i class='bx bx-menu'></i></button>
+
+        <!-- TOP BAR -->
+        <header class="top-bar">
+            <div style="font-size:1.1rem; font-weight:600;">{{ title|default('CRM') }}</div>
                 
-                <div class="header-spacer"></div> 
+<div class="top-bar-right" style="display:flex; align-items:center; gap:16px;">
                 
-                {% if request.scope.get('route') %}
-                {% set route_name = request.scope.route.name %}
-
-                {% set path_params = request.path_params.copy() %}
-
-                {% set query_params = dict(request.query_params) %}
-
-                <div class="lang-switcher-container" id="lang-switcher">
-                    <button class="lang-switcher-btn" aria-haspopup="true" aria-expanded="false">
-                        <i class='bx bx-globe'></i>
-                        <span class="current-lang-text">{{ request.state.locale|upper }}</span>
-                        <i class='bx bx-chevron-down'></i>
-                    </button>
-                    <div class="lang-switcher-menu" role="menu">
-                        {% set path_params_ru = path_params.copy() %}
-                        {% set __ = path_params_ru.update({'locale': 'ru'}) %}
-                        <a href="{{ request.url_for(route_name, **path_params_ru) }}{% if query_params %}?{{ urlencode(query_params) }}{% endif %}" 
-                        class="lang-option {% if request.state.locale == 'ru' %}active{% endif %}" role="menuitem">
-                            <span>Русский</span>
-                            <i class='bx bx-check'></i>
-                        </a>
-                        
-                        {% set path_params_uz = path_params.copy() %}
-                        {% set __ = path_params_uz.update({'locale': 'uz'}) %}
-                        <a href="{{ request.url_for(route_name, **path_params_uz) }}{% if query_params %}?{{ urlencode(query_params) }}{% endif %}" 
-                        class="lang-option {% if request.state.locale == 'uz' %}active{% endif %}" role="menuitem">
-                            <span>O'zbekcha</span>
-                            <i class='bx bx-check'></i>
-                        </a>
-
-                    </div>
-                </div>
-            {% endif %}
-
-                {% if user %}
+                <!-- ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКОВ -->
+                <div class="lang-switcher-pill">
+                    {% set current_path = request.url.path %}
+                    {% set query = request.url.query %}
                     
-<div class="user-profile" x-data="{ open: false }" @click.away="open = false">
-                    <button @click="open = !open" id="profile-menu-button" class="user-profile-button">
-                        <span class="profile-name">{{ _('hello_user', username=user.username) }}</span>
-                        
-                        {# Простая иконка пользователя без индикатора #}
-                        <i class='bx bxs-user-circle' style="font-size: 2rem;"></i>
-                        
-                        <i class='bx bx-chevron-down' :class="{'bx-rotate-180': open}"></i>
-                    </button>
-
-                    <div x-show="open" x-transition:enter="transition ease-out duration-200"
-                         x-transition:enter-start="opacity-0 transform scale-95"
-                         x-transition:enter-end="opacity-100 transform scale-100"
-                         x-transition:leave="transition ease-in duration-150"
-                         x-transition:leave-start="opacity-100 transform scale-100"
-                         x-transition:leave-end="opacity-0 transform scale-95"
-                         id="profile-menu" 
-                         style="display: none;">
-                        
-                        {# Блок с уведомлениями полностью удален #}
-                        
-                        <ul class="profile-menu-list">
-                            <li><a href="{{ request.url_for('admin_profile', locale=request.state.locale) }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_profile', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-user-circle'></i><span>{{ _('profile') }}</span></a></li>
-                            {% if user.is_superuser %}
-                            <li><a href="{{ request.url_for('admin_invites', locale=request.state.locale) }}" class="profile-menu-link" hx-get="{{ request.url_for('admin_invites', locale=request.state.locale) }}" hx-target="#main-content" hx-push-url="true"><i class='bx bxs-paper-plane'></i><span>{{ _('sidebar_invites') }}</span></a></li>
-                            {% endif %}
-                            <li><hr class="menu-divider"></li>
-                            <li><a href="{{ request.url_for('admin_logout') }}" class="profile-menu-link logout logout-trigger"><i class='bx bx-log-out'></i><span>{{ _('logout') }}</span></a></li>
-                        </ul>
-                    </div>
+                    <a href="{{ current_path.replace('/uz/', '/ru/') }}{% if query %}?{{ query }}{% endif %}" 
+                       class="lang-opt {% if request.state.locale == 'ru' %}active{% endif %}">
+                       RU
+                    </a>
+                    <a href="{{ current_path.replace('/ru/', '/uz/') }}{% if query %}?{{ query }}{% endif %}" 
+                       class="lang-opt {% if request.state.locale == 'uz' %}active{% endif %}">
+                       UZ
+                    </a>
                 </div>
+
+                <!-- Индикатор загрузки -->
+                <div class="htmx-indicator"><i class='bx bx-loader-alt bx-spin' style="color:var(--primary); font-size:1.5rem;"></i></div>
+                
+                <!-- Кнопка Выйти -->
+                <a href="{{ request.url_for('admin_logout') }}" class="btn btn-secondary btn-sm" style="color:var(--danger-text); border:none; background:transparent;">
+                    <i class='bx bx-log-out' style="font-size:1.2rem;"></i>
+                </a>
+            </div>
 
   
-                {% endif %}
-            </header>
-            
-            <main id="main-content"> 
-                {% block content %}{% endblock %} 
-            </main>
-        </div>
+        </header>
 
-    </div>
-    
-    <div id="modal-overlay" class="modal-overlay">
-        <div id="modal-body-content" class="modal-content"><div class="modal-loading-placeholder"><i class='bx bx-loader-alt bx-spin'></i><span>{{ _('loading') }}</span></div></div>
-    </div>
-    
-    <div id="slide-over-overlay" class="slide-over-overlay">
-        <div id="slide-over-panel" class="slide-over-panel">
-            <div id="slide-over-content"><div class="modal-loading-placeholder"><i class='bx bx-loader-alt bx-spin'></i><span>{{ _('loading') }}</span></div></div>
-        </div>
+        <!-- CONTENT -->
+        <main id="main-content">
+            {% block content %}{% endblock %}
+        </main>
     </div>
 
-	<script src="{{ url_for('static', path='js/crm.js') }}"></script>
-    <script src="{{ url_for('static', path='js/kanban-enhanced.js') }}"></script>
+    <!-- OVERLAYS -->
+    <div id="slide-over-overlay" class="overlay"><div class="slide-panel" id="slide-over-content"></div></div>
+    <div id="modal-overlay" class="overlay" style="align-items:center; justify-content:center;"><div class="modal-panel" id="modal-body-content"></div></div>
+
+    <style>
+        .nav-group-label { padding:16px 12px 8px; font-size:0.7rem; font-weight:700; color:#6B7280; opacity:0.8; letter-spacing:0.05em; }
+        .user-mini-profile { display:flex; align-items:center; gap:10px; padding:8px; border-radius:6px; transition:0.2s; }
+        .user-mini-profile:hover { background:rgba(255,255,255,0.05); }
+        .user-mini-profile .avatar { width:32px; height:32px; background:#3B82F6; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; }
+        .user-mini-profile .info { line-height:1.2; }
+        .user-mini-profile .name { font-size:0.9rem; font-weight:500; color:#F9FAFB; }
+        .user-mini-profile .role { font-size:0.75rem; color:#9CA3AF; }
+    </style>
 </body>
 </html>

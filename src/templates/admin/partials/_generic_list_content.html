@@ -1,41 +1,21 @@
-{# src/templates/admin/partials/_generic_list_content.html #}
-{% from "admin/partials/pagination.html" import render_pagination %}
-
-<div class="table-wrapper">
-    <table class="styled-table">
+<div class="table-container">
+    <table>
         <thead>
             <tr>
                 {% if meta.model_name == 'quoterequest' %}
-                <th style="width: 40px; text-align: center;">
-                    <input type="checkbox" id="select-all-checkbox" title="Выбрать все на странице">
+                <th style="width:90px; text-align: center;">
+                    <input type="checkbox" id="select-all">
                 </th>
                 {% endif %}
 
                 {% for header in list_display %}
                     <th>
-                        {% if header == 'name_ru' and meta.model_name in ['product', 'category'] %}
-                            {{ _('header_name') }}
-                        {% elif header == 'name' and meta.model_name == 'quoterequest' %}
-                            {{ _('header_client') }}
-                        {% elif header == 'phone' and meta.model_name == 'quoterequest' %}
-                            {{ _('header_phone') }}
-                        {% elif header == 'business_type' %}
-                            {{ _('header_business_type') }}
-                        {% elif header == 'created_at' %}
-                            {{ _('header_created_at') }}
-                        {% elif header == 'status' %}
-                            {{ _('header_status') }}
-                        {% elif header == 'assigned_to' %}
-                            {{ _('header_assignee') }}
-                        {% elif header == 'category' %}
-                            {{ _('header_category') }}
-                        {% elif header == 'price_min' %}
-                            {{ _('header_price_from') }}
-                        {% elif header == 'is_active' %}
-                            {{ _('header_is_active') }}
-                        {% else %}
-                            {{ header.replace('_', ' ')|capfirst }}
-                        {% endif %}
+                        <!-- Логика перевода заголовков -->
+                        {% if header == 'name_ru' %}{{ _('header_name') }}
+                        {% elif header == 'created_at' %}{{ _('header_created_at') }}
+                        {% elif header == 'status' %}{{ _('header_status') }}
+                        {% elif header == 'assigned_to' %}{{ _('header_assignee') }}
+                        {% else %}{{ header.replace('_', ' ')|capfirst }}{% endif %}
                     </th>
                 {% endfor %}
             </tr>
@@ -44,61 +24,34 @@
             {% for item in page.items %}
                 {% set change_url = request.url_for(meta.change_url_name, locale=request.state.locale, pk=item.id) if meta.change_url_name else '#' %}
                 
-                <tr class="clickable-row" 
-                    {% if change_url != '#' %}
-                    onclick="window.location.href='{{ change_url }}';"
-                    {% endif %}
-                    >
+                <tr onclick="{% if meta.model_name == 'quoterequest' %}
+                                htmx.ajax('GET', '{{ request.url_for('admin_htmx_quote_slide_over', locale=request.state.locale, pk=item.id) }}', {target:'#slide-over-content'}); openOverlay('slide-over-overlay');
+                             {% else %}
+                                window.location.href='{{ change_url }}'
+                             {% endif %}">
                     
                     {% if meta.model_name == 'quoterequest' %}
-                    <td data-label="Выбрать" onclick="event.stopPropagation();" style="text-align: center;">
-                        <input type="checkbox" class="row-checkbox" value="{{ item.id }}">
+                    <td onclick="event.stopPropagation()" style="text-align: center;">
+                        <input type="checkbox" value="{{ item.id }}">
                     </td>
                     {% endif %}
 
                     {% for field_name in list_display %}
-                        <td data-label="{{ field_name.replace('_', ' ')|capfirst }}">
+                        <td>
                             {% set value = getattr(item, field_name, '') %}
-
-                            {% if field_name == 'name' and meta.model_name == 'quoterequest' %}
-                                {% if item.contact %}
-                                    <a href="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=item.contact_id) }}" 
-                                       class="link-to-change" 
-                                       onclick="event.stopPropagation();"
-                                       title="Перейти к профилю клиента">
-                                       {{ item.contact.full_name }}
-                                    </a>
-                                {% else %}
-                                    <span style="color: var(--status-red);">Контакт удален</span>
-                                {% endif %}
                             
-                            {% elif field_name == 'phone' and meta.model_name == 'quoterequest' %}
-                                {{ item.phone | format_phone }}
-
-                            {% elif field_name == 'name_ru' %}
-                                <a href="{{ change_url }}" class="link-to-change">{{ t_get(request, item, 'name') }}</a>
-
-                            {% elif field_name == 'category' and value %}
-                                {{ t_get(request, value, 'name') }}
-
-                            {% elif field_name == 'status' and hasattr(item, 'status') %}
-                                <span class="status-badge status-{{ item.status.value }}">{{ get_status_display(item.status) }}</span>
-                            
+                            <!-- Форматирование значений -->
+                            {% if field_name == 'status' %}
+                                <span class="badge badge-info">{{ get_status_display(item.status) }}</span>
                             {% elif field_name == 'created_at' %}
-                                {{ item.created_at | localtime }}
-                                                        
+                                <span style="color:var(--text-muted); font-size:0.85rem;">{{ item.created_at | localtime }}</span>
                             {% elif field_name == 'assigned_to' and value %}
-                                {{ value.username }}
-                            
-                            {% elif field_name == 'business_type' %}
-                                {{ value or '—' }}
-
-                            {% elif field_name == 'price_min' and value is not none %}
-                                {{ value|format_number }} so'm
-                            
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <div style="width:20px; height:20px; background:var(--primary); color:white; border-radius:50%; font-size:0.6rem; display:flex; justify-content:center; align-items:center;">{{ value.username[0]|upper }}</div>
+                                    <span>{{ value.username }}</span>
+                                </div>
                             {% elif value is none %}
-                                <span style="color: var(--text-secondary);">&mdash;</span>
-                            
+                                <span style="color: var(--text-muted);">—</span>
                             {% else %}
                                 {{ value }}
                             {% endif %}
@@ -107,13 +60,52 @@
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="{{ (list_display|length) + (1 if meta.model_name == 'quoterequest' else 0) }}" class="empty-list-placeholder">
-                        {{ _('no_records_found') }}
+                    <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <i class='bx bx-search' style="font-size: 2rem; margin-bottom: 8px;"></i>
+                        <p>{{ _('no_records_found') }}</p>
                     </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-</div>
 
-{{ render_pagination(page, meta.list_url_name, request) }}
+    {% if page.total > page.size %}
+    <div class="pagination-bar">
+        <div class="page-info">
+            Страница {{ page.page }} из {{ (page.total / page.size) | round(0, 'ceil') | int }} 
+            <span style="color:var(--text-muted); margin-left:8px;">(Всего: {{ page.total }})</span>
+        </div>
+        
+        <div class="pagination-controls">
+            <!-- Кнопка НАЗАД -->
+            {% if page.page > 1 %}
+            <button class="page-btn" 
+                    hx-get="{{ request.url.include_query_params(page=page.page-1) }}" 
+                    hx-target="#list-content-wrapper" 
+                    hx-push-url="true">
+                <i class='bx bx-chevron-left'></i>
+            </button>
+            {% else %}
+            <button class="page-btn" disabled><i class='bx bx-chevron-left'></i></button>
+            {% endif %}
+            
+            <!-- Текущая -->
+            <button class="page-btn" style="background:var(--bg-body); font-weight:700; border-color:var(--text-muted);">
+                {{ page.page }}
+            </button>
+
+            <!-- Кнопка ВПЕРЕД -->
+            {% if page.page * page.size < page.total %}
+            <button class="page-btn" 
+                    hx-get="{{ request.url.include_query_params(page=page.page+1) }}" 
+                    hx-target="#list-content-wrapper" 
+                    hx-push-url="true">
+                <i class='bx bx-chevron-right'></i>
+            </button>
+            {% else %}
+            <button class="page-btn" disabled><i class='bx bx-chevron-right'></i></button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>

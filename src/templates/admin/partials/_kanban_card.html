@@ -1,34 +1,41 @@
-{# src/templates/admin/partials/_kanban_card.html #}
 <div class="kanban-card status-{{ req.status.value }}"
      data-id="{{ req.id }}"
-     data-client-name="{{ req.contact.full_name|lower if req.contact else '' }}"
-     data-phone="{{ req.contact.phone or '' }}"
-     data-status="{{ req.status.value }}"
-     data-assignee="{{ req.assigned_to.id if req.assigned_to else '' }}"
      id="kanban-card-{{ req.id }}"
-     
      hx-get="{{ request.url_for('admin_htmx_quote_slide_over', locale=request.state.locale, pk=req.id) }}"
      hx-target="#slide-over-content"
-     hx-trigger="openDetails"
-     x-data
-     @click="$store.kanbanManager.handleCardClick($el, '{{ req.id }}', $event)"
-     :class="{ 'selected': $store.kanbanManager.selectedCards.has('{{ req.id }}') }">
+     hx-trigger="click"
+     onclick="openOverlay('slide-over-overlay')"> <!-- Открываем Slide Over при клике -->
 
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
-        <h4 class="card-title" style="margin: 0; font-weight: 600; font-size: 1rem;">
-            {% if req.contact %}
-            <a href="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=req.contact.id) }}" class="link-to-change">{{ req.contact.full_name }}</a>
-            {% else %}
-            <span style="color: var(--status-red);">Контакт не найден</span>
-            {% endif %}
-        </h4>
-        <div style="font-size: 0.75rem; color: var(--text-secondary); background: var(--surface-2); padding: 2px 6px; border-radius: 4px;">#{{ req.id }}</div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <span class="card-title">
+            {{ req.contact.full_name if req.contact else "Неизвестный" }}
+        </span>
+        <span style="font-size: 0.7rem; color: var(--text-muted);">#{{ req.id }}</span>
     </div>
-    
-    {# --- ИЗМЕНЕНИЕ 1: Отображаем тему вместо телефона --- #}
-    {% if req.subject %}<div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">{{ req.subject }}</div>{% endif %}
 
-    {% if req.business_type %}<div style="margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; background: color-mix(in srgb, var(--status-blue) 10%, transparent); color: var(--status-blue); padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600;"><i class='bx bxs-briefcase'></i><span>{{ req.business_type }}</span></div>{% endif %}
-    {% if req.contact and req.contact.pinned_note %}<div class="pinned-note" title="Закрепленная заметка: {{ req.contact.pinned_note.note }}"><i class='bx bxs-pin'></i><span>{{ req.contact.pinned_note.note|truncate(50) }}</span></div>{% endif %}
-    <div class="card-footer" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border-color);"><span style="font-weight: 500;">{{ req.created_at | localtime }}</span>{% if req.assigned_to %}<div class="assignee" title="Ответственный: {{ req.assigned_to.username }}"><i class='bx bxs-user'></i><span>{{ req.assigned_to.username|truncate(15) }}</span></div>{% endif %}</div>
+    {% if req.subject %}
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; line-height: 1.3;">
+        {{ req.subject|truncate(40) }}
+    </div>
+    {% endif %}
+
+    {% if req.business_type %}
+    <div style="margin-bottom: 8px;">
+        <span class="card-tag">{{ req.business_type }}</span>
+    </div>
+    {% endif %}
+
+    <div class="card-meta">
+        <div style="display:flex; align-items:center; gap:4px;">
+            <i class='bx bx-calendar'></i>
+            <span>{{ req.created_at.strftime('%d.%m') }}</span>
+        </div>
+        
+        {% if req.assigned_to %}
+        <div title="Ответственный: {{ req.assigned_to.username }}" 
+             style="width:20px; height:20px; background:var(--primary); color:white; border-radius:50%; font-size:0.6rem; display:flex; align-items:center; justify-content:center;">
+            {{ req.assigned_to.username[0]|upper }}
+        </div>
+        {% endif %}
+    </div>
 </div>

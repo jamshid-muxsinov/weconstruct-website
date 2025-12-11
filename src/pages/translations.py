@@ -1,265 +1,309 @@
 # src/pages/translations.py
 
 TRANSLATIONS = {
-    # Общие слова
+    # ============================================================
+    # 1. ОБЩИЕ ДЕЙСТВИЯ И КНОПКИ (GENERAL ACTIONS)
+    # ============================================================
     'save': {'ru': 'Сохранить', 'uz': 'Saqlash'},
-    'ok': {'ru': 'ОК', 'uz': 'OK'},
     'cancel': {'ru': 'Отмена', 'uz': 'Bekor qilish'},
     'delete': {'ru': 'Удалить', 'uz': 'Oʻchirish'},
     'edit': {'ru': 'Редактировать', 'uz': 'Tahrirlash'},
     'add': {'ru': 'Добавить', 'uz': 'Qoʻshish'},
     'search': {'ru': 'Поиск', 'uz': 'Qidiruv'},
-    'apply': {'ru': 'Применить', 'uz': 'Qoʻllash'},
-    'clear': {'ru': 'Очистить', 'uz': 'Tozalash'},
-    'export': {'ru': 'Экспорт', 'uz': 'Eksport'},
-    'status': {'ru': 'Статус', 'uz': 'Holati'},
-    'actions': {'ru': 'Действия', 'uz': 'Harakatlar'},
-    'selected': {'ru': 'Выбрано', 'uz': 'Tanlandi'},
-    'selected_cards_count': {'ru': 'Выбрано: {count}', 'uz': 'Tanlandi: {count}'},
+    'upload': {'ru': 'Загрузить', 'uz': 'Yuklash'},
+    'back': {'ru': 'Назад', 'uz': 'Orqaga'},
     'back_to_list': {'ru': 'К списку', 'uz': 'Roʻyxatga qaytish'},
-    'lang_ru': {'ru': 'Русский', 'uz': 'Rus tili'},
-    'lang_uz': {'ru': 'O\'zbekcha', 'uz': 'Oʻzbek tili'},
-    'loading': {'ru': 'Загрузка...', 'uz': 'Yuklanmoqda...'},
-    'general_request_option': {'ru': '--- Общая заявка ---', 'uz': '--- Umumiy ariza ---'},
-    'unassigned_option': {'ru': '--- Не назначен ---', 'uz': '--- Tayinlanmagan ---'},
+    'call': {'ru': 'Позвонить', 'uz': 'Qoʻngʻiroq qilish'},
+    'yes_sure': {'ru': 'Да, удалить', 'uz': 'Ha, oʻchirish'},
+    'apply': {'ru': 'Применить', 'uz': 'Qoʻllash'},
+    'export': {'ru': 'Экспорт', 'uz': 'Eksport'},
+    'logout': {'ru': 'Выйти', 'uz': 'Chiqish'},
+    'profile': {'ru': 'Профиль', 'uz': 'Profil'},
+    'ok': {'ru': 'ОК', 'uz': 'OK'},
+    'clear': {'ru': 'Очистить', 'uz': 'Tozalash'},
 
-    # Шаблон base.html (меню и шапка)
-    'admin_panel': {'ru': 'Панель управления', 'uz': 'Boshqaruv paneli'},
-    'sidebar_kanban': {'ru': 'Канбан-доска', 'uz': 'Kanban-doska'},
+    # ============================================================
+    # 2. МЕНЮ (SIDEBAR)
+    # ============================================================
+    'sidebar_crm': {'ru': 'CRM (Продажи)', 'uz': 'CRM (Sotuvlar)'},
+    'sidebar_operations': {'ru': 'ОПЕРАЦИИ', 'uz': 'OPERATSIYALAR'},
+    'sidebar_management': {'ru': 'УПРАВЛЕНИЕ', 'uz': 'BOSHQARUV'},
+    'sidebar_admin': {'ru': 'АДМИН', 'uz': 'ADMIN'},
+    
+    'sidebar_kanban': {'ru': 'Воронка (Канбан)', 'uz': 'Voronka (Kanban)'},
+    'sidebar_projects': {'ru': 'Проекты', 'uz': 'Loyihalar'},
     'sidebar_requests': {'ru': 'Заявки', 'uz': 'Arizalar'},
-    'sidebar_contacts': {'ru': 'Контакты', 'uz': 'Kontaktlar'},
-    'sidebar_statistics': {'ru': 'Статистика', 'uz': 'Statistika'},
+    'sidebar_contacts': {'ru': 'Клиенты', 'uz': 'Mijozlar'},
+    'sidebar_statistics': {'ru': 'Дашборд', 'uz': 'Dashbord'},
+    'sidebar_users': {'ru': 'Сотрудники', 'uz': 'Xodimlar'},
     'sidebar_products': {'ru': 'Товары', 'uz': 'Mahsulotlar'},
     'sidebar_categories': {'ru': 'Категории', 'uz': 'Kategoriyalar'},
-    'sidebar_import': {'ru': 'Импорт', 'uz': 'Import'},
     'sidebar_invites': {'ru': 'Приглашения', 'uz': 'Taklifnomalar'},
-    'logout': {'ru': 'Выйти', 'uz': 'Chiqish'},
-    'hello_user': {'ru': 'Привет, {username}!', 'uz': 'Salom, {username}!'},
-    'profile': {'ru': 'Профиль', 'uz': 'Profil'},
-    'notifications': {'ru': 'Уведомления', 'uz': 'Bildirishnomalar'},
-    'no_notifications': {'ru': 'Новых уведомлений нет.', 'uz': 'Yangi bildirishnomalar yoʻq.'},
-    'mark_all_as_read': {'ru': 'Пометить все как прочитанные', 'uz': 'Barchasini oʻqilgan deb belgilash'},
-    'sidebar_users': {'ru': 'Пользователи', 'uz': 'Foydalanuvchilar'},
-    # Страница Канбан
-    'sales_funnel': {'ru': 'Воронка продаж', 'uz': 'Sotuv voronkasi'},
-    'show_archived': {'ru': 'Показать архивные', 'uz': 'Arxivdagilarni koʻrsatish'},
-    'new_request': {'ru': 'Новая заявка', 'uz': 'Yangi ariza'},
-    'search_placeholder': {'ru': 'Поиск по имени, телефону или ID...', 'uz': 'Ism, telefon yoki ID boʻyicha qidirish...'},
-    'my_tasks': {'ru': 'Мои задачи', 'uz': 'Mening vazifalarim'},
-    'assign_to': {'ru': 'Назначить...', 'uz': 'Tayinlash...'},
-    'status_placeholder': {'ru': 'Статус...', 'uz': 'Holat...'},
-    'cancel_selection': {'ru': 'Отменить выбор', 'uz': 'Tanlovni bekor qilish'},
-    'loading_kanban': {'ru': 'Загрузка канбан-доски...', 'uz': 'Kanban-doska yuklanmoqda...'},
-    'export_selected': {'ru': 'Экспорт выбранных', 'uz': 'Tanlanganlarni eksport qilish'},
+    'sidebar_import': {'ru': 'Импорт', 'uz': 'Import'},
 
-    'pagination_back': {'ru': 'Назад', 'uz': 'Orqaga'},
-    'pagination_forward': {'ru': 'Вперед', 'uz': 'Oldinga'},
-     
-    # Статусы заявок
-    'status_imported': {'ru': 'Импортировано', 'uz': 'Import qilindi'},
-    'status_qualification': {'ru': 'Квалификация', 'uz': 'Saralash'},
-    'status_contacted': {'ru': 'Контакт установлен', 'uz': "Aloqa o'rnatildi"},
-    'status_proposal': {'ru': 'Предложение', 'uz': 'Taklif yuborildi'},
-    'status_negotiation': {'ru': 'Переговоры', 'uz': 'Muzokaralar'},
-    'status_closed': {'ru': 'Успешно закрыто', 'uz': 'Muvaffaqiyatli yopildi'},
-    'status_archived': {'ru': 'В архиве', 'uz': 'Arxivda'},
+    # ============================================================
+    # 3. ФИЛЬТРЫ И СПИСКИ (FILTERS & LISTS)
+    # ============================================================
+    'search_placeholder': {'ru': 'Поиск...', 'uz': 'Qidirish...'},
+    'search_placeholder_general': {'ru': 'Поиск (имя, телефон)...', 'uz': 'Qidirish (ism, telefon)...'},
+    'search_project_placeholder': {'ru': 'Поиск проекта...', 'uz': 'Loyihani qidirish...'},
+    'search_client_placeholder': {'ru': 'Введите имя или телефон...', 'uz': 'Ism yoki telefon kiriting...'},
+    
+    'all_managers': {'ru': 'Все менеджеры', 'uz': 'Barcha menejerlar'},
+    'only_my': {'ru': 'Только мои', 'uz': 'Faqat meniki'},
+    'show_archive': {'ru': 'Архив', 'uz': 'Arxiv'},
+    'all_statuses': {'ru': 'Все статусы', 'uz': 'Barcha holatlar'},
+    'nothing_found': {'ru': 'Ничего не найдено', 'uz': 'Hech narsa topilmadi'},
+    'try_changing_filters': {'ru': 'Измените фильтры', 'uz': 'Filtrlarni oʻzgartiring'},
+    'no_records_found': {'ru': 'Записей не найдено', 'uz': 'Yozuvlar topilmadi'},
+    
+    'new_request_btn': {'ru': 'Новая заявка', 'uz': 'Yangi ariza'},
+    'unassigned_option': {'ru': '-- Не назначен --', 'uz': '-- Tayinlanmagan --'},
 
-    # CRUD
-    'list_requests': {'ru': 'Заявки', 'uz': 'Arizalar'},
-    'request_single': {'ru': 'Заявка', 'uz': 'Ariza'},
-    'list_products': {'ru': 'Товары', 'uz': 'Mahsulotlar'},
-    'product_single': {'ru': 'Товар', 'uz': 'Mahsulot'},
-    'list_categories': {'ru': 'Категории', 'uz': 'Kategoriyalar'},
-    'category_single': {'ru': 'Категория', 'uz': 'Kategoriya'},
-    'list_contacts': {'ru': 'Контакты', 'uz': 'Kontaktlar'},
-    'client_single': {'ru': 'Клиент', 'uz': 'Mijoz'},
-    'add_button': {'ru': 'Добавить {entity}', 'uz': '{entity} qoʻshish'},
-    'editing': {'ru': 'Редактирование', 'uz': 'Tahrirlash'},
-    'adding': {'ru': 'Добавление', 'uz': 'Qoʻshish'},
-    'page_title_stats': {'ru': 'Статистика и Обзор', 'uz': 'Statistika va Sharh'},
-    'back_to_request_list': {'ru': 'К списку заявок', 'uz': 'Arizalar roʻyxatiga'},
-    'general_settings': {'ru': 'Общие настройки', 'uz': 'Umumiy sozlamalar'},
-    'export_all': {'ru': 'Экспорт всех', 'uz': 'Barchasini eksport qilish'},
-    'date_from': {'ru': 'Дата от', 'uz': 'Sana (dan)'},
-    'date_to': {'ru': 'Дата до', 'uz': 'Sana (gacha)'},
-    'period_start': {'ru': 'Начало периода', 'uz': 'Davr boshi'},
-    'period_end': {'ru': 'Конец периода', 'uz': 'Davr oxiri'},
-    'reset_filters': {'ru': 'Сбросить все фильтры', 'uz': 'Barcha filtrlarni tiklash'},
-
-    # Заголовки таблиц и списков
-    'header_client': {'ru': 'Клиент', 'uz': 'Mijoz'},
-    'header_phone': {'ru': 'Телефон', 'uz': 'Telefon'},
-    'header_business_type': {'ru': 'Тип бизнеса', 'uz': 'Biznes turi'},
-    'header_created_at': {'ru': 'Дата создания', 'uz': 'Yaratilgan sana'},
-    'header_status': {'ru': 'Статус', 'uz': 'Holati'},
-    'header_assignee': {'ru': 'Ответственный', 'uz': 'Masʼul'},
-    'header_name': {'ru': 'Название', 'uz': 'Nomi'},
-    'header_category': {'ru': 'Категория', 'uz': 'Kategoriya'},
-    'header_price_from': {'ru': 'Цена от', 'uz': 'Narx (dan)'},
-    'header_is_active': {'ru': 'Активен', 'uz': 'Aktiv'},
-    'no_records_found': {'ru': 'Записей не найдено.', 'uz': 'Yozuvlar topilmadi.'},
-    'top_managers_title': {'ru': 'Лучшие менеджеры (за 30 дней)', 'uz': 'Eng yaxshi menejerlar (oxirgi 30 kun)'},
-    'manager_col': {'ru': 'Менеджер', 'uz': 'Menejer'},
+    # ============================================================
+    # 4. ДАШБОРД И СТАТИСТИКА (DASHBOARD)
+    # ============================================================
+    'page_title_stats': {'ru': 'Статистика и обзор', 'uz': 'Statistika va sharh'},
+    'funnel_title': {'ru': 'Воронка продаж', 'uz': 'Sotuv voronkasi'},
+    'top_managers_title': {'ru': 'Топ менеджеров (30 дней)', 'uz': 'Top menejerlar (30 kun)'},
+    'deals_count': {'ru': 'сделок', 'uz': 'bitimlar'},
     'requests_closed_col': {'ru': 'Закрыто заявок', 'uz': 'Yopilgan arizalar'},
-    'no_rating_data': {'ru': 'Нет данных для построения рейтинга.', 'uz': 'Reyting tuzish uchun maʼlumotlar yoʻq.'},
-    'new_requests_title': {'ru': 'Новые заявки', 'uz': 'Yangi arizalar'},
-    'no_new_requests': {'ru': 'Нет новых нераспределенных заявок.', 'uz': 'Yangi taqsimlanmagan arizalar yoʻq.'},
+    'manager_col': {'ru': 'Менеджер', 'uz': 'Menejer'},
+    'unassigned_title': {'ru': 'Нераспределенные', 'uz': 'Taqsimlanmagan'},
+    'no_new_requests': {'ru': 'Всё чисто! Новых заявок нет.', 'uz': 'Hammasi toza! Yangi arizalar yoʻq.'},
+    'no_data': {'ru': 'Нет данных', 'uz': 'Maʼlumot yoʻq'},
+    'no_rating_data': {'ru': 'Нет данных для рейтинга', 'uz': 'Reyting uchun maʼlumot yoʻq'},
+    'my_tasks': {'ru': 'Мои задачи', 'uz': 'Mening vazifalarim'},
 
-    # Формы
+    # ============================================================
+    # 5. СТРАНИЦА ПРОЕКТА (PROJECT DETAIL)
+    # ============================================================
+    'project_finance': {'ru': 'Финансы', 'uz': 'Moliya'},
+    'income': {'ru': 'Приход', 'uz': 'Kirim'},
+    'expense': {'ru': 'Расход', 'uz': 'Chiqim'},
+    'profit': {'ru': 'Прибыль', 'uz': 'Foyda'},
+    
+    'files_title': {'ru': 'Файлы и Отчеты', 'uz': 'Fayllar va Hisobotlar'},
+    'no_files': {'ru': 'Нет загруженных файлов', 'uz': 'Yuklangan fayllar yoʻq'},
+    'upload_file_btn': {'ru': 'Загрузить файл', 'uz': 'Fayl yuklash'},
+    
+    'file_type_label': {'ru': 'Тип файла', 'uz': 'Fayl turi'},
+    'file_label': {'ru': 'Файл', 'uz': 'Fayl'},
+    'desc_label': {'ru': 'Описание', 'uz': 'Tavsif'},
+
+    'file_type_photo_report': {'ru': 'Фотоотчет', 'uz': 'Foto hisobot'},
+    'file_type_design_doc': {'ru': 'Чертеж / Дизайн', 'uz': 'Chizma / Dizayn'},
+    'file_type_document': {'ru': 'Документ', 'uz': 'Hujjat'},
+    
+    'file_comment_placeholder': {'ru': 'Например: залили бетон', 'uz': 'Masalan: beton quyildi'},
+
+    'history_operations': {'ru': 'История операций', 'uz': 'Operatsiyalar tarixi'},
+    'add_operation': {'ru': 'Добавить операцию', 'uz': 'Operatsiya qoʻshish'},
+    'sum_placeholder': {'ru': 'Сумма', 'uz': 'Summa'},
+    'category_placeholder': {'ru': 'Категория (Бетон, ЗП)', 'uz': 'Kategoriya (Beton, Ish haqi)'},
+    'desc_placeholder': {'ru': 'Описание (опционально)', 'uz': 'Tavsif (ixtiyoriy)'},
+
+    'team_status': {'ru': 'Команда и Статус', 'uz': 'Jamoa va Holat'},
+    'update_btn': {'ru': 'Обновить', 'uz': 'Yangilash'},
+    'designer': {'ru': 'Дизайнер', 'uz': 'Dizayner'},
+    'foreman': {'ru': 'Прораб', 'uz': 'Prorab'},
+    'manager': {'ru': 'Менеджер', 'uz': 'Menejer'},
+    'no_active_projects': {'ru': 'Активных проектов пока нет', 'uz': 'Faol loyihalar yoʻq'},
+    'create_project_hint': {'ru': 'Создайте проект из Заявки (статус Closed)', 'uz': 'Arizadan loyiha yarating (holati Closed)'},
+
+    # ============================================================
+    # 6. СТРАНИЦА КЛИЕНТА (CONTACT DETAIL)
+    # ============================================================
+    'client_header': {'ru': 'Клиент', 'uz': 'Mijoz'},
+    'contact_info_title': {'ru': 'Контактная информация', 'uz': 'Kontakt maʼlumotlari'},
+    'timeline_title': {'ru': 'История взаимодействий', 'uz': 'Oʻzaro aloqalar tarixi'},
+    'add_note_placeholder': {'ru': 'Добавить заметку о звонке...', 'uz': 'Qoʻngʻiroq haqida eslatma...'},
+    'add_note_button': {'ru': 'Добавить', 'uz': 'Qoʻshish'},
+    'add_note_btn': {'ru': 'Добавить', 'uz': 'Qoʻshish'},
+    'delete_contact_btn': {'ru': 'Удалить контакт', 'uz': 'Kontaktni oʻchirish'},
+    'edit_btn': {'ru': 'Редактировать', 'uz': 'Tahrirlash'},
+    'request_title': {'ru': 'Заявка', 'uz': 'Ariza'},
+    'contract_title': {'ru': 'Договор', 'uz': 'Shartnoma'},
+    'no_activity_log': {'ru': 'Истории пока нет', 'uz': 'Tarix hozircha yoʻq'},
+
+    # ============================================================
+    # 7. МОДАЛЬНЫЕ ОКНА И ФОРМЫ (FORMS & MODALS)
+    # ============================================================
+    'modal_add_title': {'ru': 'Добавление: Заявка', 'uz': 'Qoʻshish: Ariza'},
+    'modal_edit_title': {'ru': 'Редактирование: Заявка', 'uz': 'Tahrirlash: Ariza'},
+    
+    'client_section': {'ru': 'Информация о клиенте', 'uz': 'Mijoz haqida maʼlumot'},
+    'client_info': {'ru': 'Информация о клиенте', 'uz': 'Mijoz haqida maʼlumot'},
+    
+    'manager_section': {'ru': 'Информация от менеджера', 'uz': 'Menejerdan maʼlumot'},
+    'manager_info': {'ru': 'Информация от менеджера', 'uz': 'Menejerdan maʼlumot'},
+    
+    'search_client_input': {'ru': 'Имя или телефон клиента...', 'uz': 'Mijoz ismi yoki telefoni...'},
+    'create_new_client_link': {'ru': '+ Создать нового', 'uz': '+ Yangi yaratish'},
+    'new_client_block': {'ru': 'Новый клиент', 'uz': 'Yangi mijoz'},
+    'new_client': {'ru': 'Новый клиент', 'uz': 'Yangi mijoz'},
+    
+    'start_project_btn': {'ru': 'Начать проект', 'uz': 'Loyihani boshlash'},
+    'delete_request_btn': {'ru': 'Удалить заявку', 'uz': 'Arizani oʻchirish'},
+    'delete_request': {'ru': 'Удалить заявку', 'uz': 'Arizani oʻchirish'},
+
+    'general_settings': {'ru': 'Общие настройки', 'uz': 'Umumiy sozlamalar'},
+    'add_button': {'ru': 'Добавить {entity}', 'uz': '{entity} qoʻshish'},
+    'adding': {'ru': 'Добавление', 'uz': 'Qoʻshish'},
+    'editing': {'ru': 'Редактирование', 'uz': 'Tahrirlash'},
+    'request_single': {'ru': 'Заявка', 'uz': 'Ariza'},
+    'client_single': {'ru': 'Клиент', 'uz': 'Mijoz'},
+    'product_single': {'ru': 'Товар', 'uz': 'Mahsulot'},
+    'category_single': {'ru': 'Категория', 'uz': 'Kategoriya'},
+    'list_requests': {'ru': 'Заявки', 'uz': 'Arizalar'},
+    'list_products': {'ru': 'Товары', 'uz': 'Mahsulotlar'},
+    'list_categories': {'ru': 'Категории', 'uz': 'Kategoriyalar'},
+    'list_contacts': {'ru': 'Контакты', 'uz': 'Kontaktlar'},
+    'add_new_category': {'ru': 'Добавить категорию', 'uz': 'Kategoriya qoʻshish'},
+
+    # ============================================================
+    # 8. СЛАЙДЕР ДЕТАЛЕЙ ЗАЯВКИ (SLIDE OVER)
+    # ============================================================
+    'request_details_title': {'ru': 'Детали заявки', 'uz': 'Ariza tafsilotlari'},
+    'request_id_label': {'ru': 'Заявка #', 'uz': 'Ariza #'},
+    
+    'label_subject': {'ru': 'ТЕМА ОБРАЩЕНИЯ', 'uz': 'MAVZU'},
+    'label_phone': {'ru': 'ТЕЛЕФОН', 'uz': 'TELEFON'},
+    'label_message': {'ru': 'СООБЩЕНИЕ', 'uz': 'XABAR'},
+    'label_business': {'ru': 'ТИП БИЗНЕСА', 'uz': 'BIZNES TURI'},
+    'label_dimensions': {'ru': 'РАЗМЕРЫ', 'uz': 'OʻLCHAMLARI'},
+    'label_assignee': {'ru': 'ОТВЕТСТВЕННЫЙ', 'uz': 'MASʼUL'},
+    'label_tasks': {'ru': 'ЗАДАЧИ', 'uz': 'VAZIFALAR'},
+    'request_tasks_title': {'ru': 'ЗАДАЧИ', 'uz': 'VAZIFALAR'},
+    
+    'no_tasks': {'ru': 'Нет задач по этой заявке', 'uz': 'Bu ariza boʻyicha vazifalar yoʻq'},
+    'no_tasks_for_request': {'ru': 'Нет задач по этой заявке', 'uz': 'Bu ariza boʻyicha vazifalar yoʻq'},
+    'add_task_placeholder': {'ru': 'Добавить задачу...', 'uz': 'Vazifa qoʻshish...'},
+    'new_task_name_placeholder': {'ru': 'Название задачи...', 'uz': 'Vazifa nomi...'},
+
+    # ============================================================
+    # 9. ПОЛЯ ВВОДА (INPUT LABELS)
+    # ============================================================
+    'form_field_name': {'ru': 'Имя', 'uz': 'Ism'},
+    'form_field_last_name': {'ru': 'Фамилия', 'uz': 'Familiya'},
+    'form_field_phone': {'ru': 'Телефон', 'uz': 'Telefon'},
+    'form_field_status': {'ru': 'Статус', 'uz': 'Holati'},
+    'form_field_assignee': {'ru': 'Ответственный', 'uz': 'Masʼul'},
+    'form_field_contact': {'ru': 'Контакт', 'uz': 'Kontakt'},
+    'form_field_new_contact_name': {'ru': 'Имя нового клиента', 'uz': 'Yangi mijoz ismi'},
+    'form_field_new_contact_phone': {'ru': 'Телефон нового клиента', 'uz': 'Yangi mijoz telefoni'},
+    'form_field_message': {'ru': 'Сообщение клиента', 'uz': 'Mijoz xabari'},
+    'form_field_business_type': {'ru': 'Тип бизнеса', 'uz': 'Biznes turi'},
+    'form_field_dimensions': {'ru': 'Размеры', 'uz': 'Oʻlchamlari'},
+    'form_field_investment': {'ru': 'Бюджет (Sarmoysi)', 'uz': 'Byudjet (Sarmoyasi)'},
+    'form_field_conclusion': {'ru': 'Выводы (Xulosasi)', 'uz': 'Xulosa (Menejer)'},
+    'form_field_additional_info': {'ru': 'Дополнительно', 'uz': 'Qoʻshimcha'},
+    
+    'label_name': {'ru': 'Имя', 'uz': 'Ism'},
+    'label_lastname': {'ru': 'Фамилия', 'uz': 'Familiya'},
+    'label_email': {'ru': 'Email', 'uz': 'Email'},
+    'label_company': {'ru': 'Компания', 'uz': 'Kompaniya'},
+    'label_notes': {'ru': 'Заметки', 'uz': 'Eslatmalar'},
+
+    # Продукты и Категории
     'form_field_name_ru': {'ru': 'Название (RU)', 'uz': 'Nomi (RU)'},
-    'form_field_short_desc_ru': {'ru': 'Краткое описание (RU)', 'uz': 'Qisqa tavsif (RU)'},
-    'form_field_full_desc_ru': {'ru': 'Полное описание (RU)', 'uz': 'Toʻliq tavsif (RU)'},
-    'form_field_dimensions_ru': {'ru': 'Размеры (RU)', 'uz': 'Oʻlchamlari (RU)'},
-    'form_field_materials_ru': {'ru': 'Материалы (RU)', 'uz': 'Materiallar (RU)'},
     'form_field_name_uz': {'ru': 'Название (UZ)', 'uz': 'Nomi (UZ)'},
+    'form_field_short_desc_ru': {'ru': 'Краткое описание (RU)', 'uz': 'Qisqa tavsif (RU)'},
     'form_field_short_desc_uz': {'ru': 'Краткое описание (UZ)', 'uz': 'Qisqa tavsif (UZ)'},
+    'form_field_full_desc_ru': {'ru': 'Полное описание (RU)', 'uz': 'Toʻliq tavsif (RU)'},
     'form_field_full_desc_uz': {'ru': 'Полное описание (UZ)', 'uz': 'Toʻliq tavsif (UZ)'},
+    'form_field_dimensions_ru': {'ru': 'Размеры (RU)', 'uz': 'Oʻlchamlari (RU)'},
     'form_field_dimensions_uz': {'ru': "O'lchamlari (UZ)", 'uz': 'Oʻlchamlari (UZ)'},
+    'form_field_materials_ru': {'ru': 'Материалы (RU)', 'uz': 'Materiallar (RU)'},
     'form_field_materials_uz': {'ru': "Materiallar (UZ)", 'uz': 'Materiallar (UZ)'},
-    'form_field_price_min': {'ru': 'Цена за м² от (сум)', 'uz': 'm² uchun narx (dan) (soʻm)'},
-    'form_field_price_max': {'ru': 'Цена за м² до (сум)', 'uz': 'm² uchun narx (gacha) (soʻm)'},
+    'form_field_price_min': {'ru': 'Цена от (сум)', 'uz': 'Narx (dan) (soʻm)'},
+    'form_field_price_max': {'ru': 'Цена до (сум)', 'uz': 'Narx (gacha) (soʻm)'},
     'form_field_category': {'ru': 'Категория', 'uz': 'Kategoriya'},
     'form_field_is_active': {'ru': 'Активен', 'uz': 'Faol'},
     'form_field_main_image': {'ru': 'Основное изображение', 'uz': 'Asosiy rasm'},
     'form_field_extra_images': {'ru': 'Дополнительные изображения', 'uz': 'Qoʻshimcha rasmlar'},
     'form_field_desc_ru': {'ru': 'Описание (RU)', 'uz': 'Tavsif (RU)'},
     'form_field_desc_uz': {'ru': 'Описание (UZ)', 'uz': 'Tavsif (UZ)'},
-    'form_field_contact': {'ru': 'Контакт', 'uz': 'Kontakt'},
-    'form_field_new_contact_name': {'ru': 'Имя и Фамилия нового клиента', 'uz': 'Yangi mijozning ismi va familiyasi'},
-    'form_field_new_contact_phone': {'ru': 'Телефон нового клиента', 'uz': 'Yangi mijozning telefoni'},
-    'form_field_product': {'ru': 'Товар (необязательно)', 'uz': 'Mahsulot (ixtiyoriy)'},
-    'form_field_message': {'ru': 'Сообщение клиента', 'uz': 'Mijoz xabari'},
-    'form_field_status': {'ru': 'Статус', 'uz': 'Holati'},
-    'form_field_assignee': {'ru': 'Ответственный', 'uz': 'Masʼul'},
-    'form_field_business_type': {'ru': 'Тип бизнеса клиента', 'uz': 'Mijoz biznesining turi'},
-    'form_field_dimensions': {'ru': 'Предполагаемые размеры объекта', 'uz': 'Obyektning taxminiy oʻlchamlari'},
-    'form_field_investment': {'ru': 'Бюджет и детали (Sarmoysi)', 'uz': 'Byudjet va tafsilotlar (Sarmoyasi)'},
-    'form_field_conclusion': {'ru': 'Выводы менеджера (Xulosasi)', 'uz': 'Menejer xulosasi (Xulosasi)'},
-    'form_field_additional_info': {'ru': 'Дополнительные сведения', 'uz': 'Qoʻshimcha maʼlumotlar'},
-    'form_field_name': {'ru': 'Имя', 'uz': 'Ism'},
-    'form_field_last_name': {'ru': 'Фамилия', 'uz': 'Familiya'},
-    'form_field_phone': {'ru': 'Телефон', 'uz': 'Telefon'},
-    'form_materials_desc_ru': {'ru': 'Каждый материал с новой строки', 'uz': 'Har bir material yangi qatordan'},
-    'form_materials_desc_uz': {'ru': 'Har bir material yangi qatordan', 'uz': 'Har bir material yangi qatordan'},
-    'form_is_active_desc': {'ru': 'Виден на сайте', 'uz': 'Saytda koʻrinadi'},
+    'form_materials_desc_ru': {'ru': 'Каждый с новой строки', 'uz': 'Har biri yangi qatordan'},
+    'form_materials_desc_uz': {'ru': 'Har biri yangi qatordan', 'uz': 'Har biri yangi qatordan'},
+    'form_is_active_desc': {'ru': 'Показывать на сайте', 'uz': 'Saytda koʻrsatish'},
 
-    'client_info': {'ru': 'Информация от клиента', 'uz': 'Mijozdan maʼlumot'},
-    'manager_info': {'ru': 'Информация от менеджера', 'uz': 'Menejerdan maʼlumot'},
-    'search_client_placeholder': {'ru': 'Поиск клиента (по имени или телефону)', 'uz': 'Mijozni qidirish (ism yoki telefon boʻyicha)'},
-    'new_client': {'ru': 'Новый клиент', 'uz': 'Yangi mijoz'},
-    'delete_request': {'ru': 'Удалить заявку', 'uz': 'Arizani oʻchirish'},
-    'contact_info': {'ru': 'Контактная информация', 'uz': 'Kontakt maʼlumotlari'},
-    'delete_contact': {'ru': 'Удалить контакт', 'uz': 'Kontaktni oʻchirish'},
-    'interaction_feed': {'ru': 'Лента взаимодействий', 'uz': 'Oʻzaro aloqalar lentasi'},
-    'add_note_placeholder': {'ru': 'Добавить заметку о звонке или встрече...', 'uz': 'Qoʻngʻiroq yoki uchrashuv haqida eslatma qoʻshish...'},
-    'add_note_button': {'ru': 'Добавить заметку', 'uz': 'Eslatma qoʻshish'},
-    'delete_confirmation_title': {'ru': 'Удалить {entity}', 'uz': '{entity} oʻchirilsinmi'},
-    'delete_confirmation_text': {'ru': 'Вы уверены, что хотите удалить "{item}"? Это действие необратимо.', 'uz': '"{item}"ni oʻchirishni xohlaysizmi? Bu amalni bekor qilib boʻlmaydi.'},
-    'confirm_delete': {'ru': 'Да, я уверен', 'uz': 'Ha, aminman'},
-    'add_new_category': {'ru': 'Добавить новую категорию', 'uz': 'Yangi kategoriya qoʻshish'},
-    'category_name': {'ru': 'Название категории', 'uz': 'Kategoriya nomi'},
-    'add_category_modal_title': {'ru': 'Добавить категорию', 'uz': 'Kategoriya qoʻshish'},
-    'add_category_modal_desc': {'ru': 'Вы можете быстро добавить новую категорию, не покидая страницу товара.', 'uz': 'Mahsulot sahifasidan chiqmasdan yangi kategoriya qoʻshishingiz mumkin.'},
+    # ============================================================
+    # 10. ЗАГОЛОВКИ ТАБЛИЦ (TABLE HEADERS)
+    # ============================================================
+    'header_name': {'ru': 'Название', 'uz': 'Nomi'},
+    'header_client': {'ru': 'Клиент', 'uz': 'Mijoz'},
+    'header_phone': {'ru': 'Телефон', 'uz': 'Telefon'},
+    'header_status': {'ru': 'Статус', 'uz': 'Holati'},
+    'header_created_at': {'ru': 'Дата создания', 'uz': 'Yaratilgan sana'},
+    'header_assignee': {'ru': 'Ответственный', 'uz': 'Masʼul'},
+    'header_category': {'ru': 'Категория', 'uz': 'Kategoriya'},
+    'header_price_from': {'ru': 'Цена от', 'uz': 'Narx (dan)'},
+    'header_is_active': {'ru': 'Активен', 'uz': 'Faol'},
+
+    # ============================================================
+    # 11. СТАТУСЫ (STATUSES)
+    # ============================================================
+    'status_imported': {'ru': 'Новая (Импорт)', 'uz': 'Yangi (Import)'},
+    'status_qualification': {'ru': 'Квалификация', 'uz': 'Saralash'},
+    'status_contacted': {'ru': 'Контакт установлен', 'uz': 'Aloqa oʻrnatildi'},
+    'status_proposal': {'ru': 'КП отправлено', 'uz': 'Taklif yuborildi'},
+    'status_negotiation': {'ru': 'Переговоры', 'uz': 'Muzokaralar'},
+    'status_closed': {'ru': 'Успех (Договор)', 'uz': 'Muvaffaqiyat (Shartnoma)'},
+    'status_archived': {'ru': 'Архив / Отказ', 'uz': 'Arxiv / Rad etish'},
+
+    'status_design': {'ru': 'Проектирование', 'uz': 'Loyihalash'},
+    'status_procurement': {'ru': 'Закупка', 'uz': 'Xaridlar'},
+    'status_construction': {'ru': 'Строительство', 'uz': 'Qurilish'},
+    'status_finishing': {'ru': 'Отделка', 'uz': 'Pardozlash'},
+    'status_handover': {'ru': 'Сдача', 'uz': 'Topshirish'},
+    'status_completed': {'ru': 'Завершен', 'uz': 'Yakunlandi'},
+    'status_hold': {'ru': 'Пауза', 'uz': 'Pauza'},
+
+    # ============================================================
+    # 12. ВХОД, ОШИБКИ И СИСТЕМНЫЕ (LOGIN & ERRORS)
+    # ============================================================
+    'login_title': {'ru': 'Вход в систему', 'uz': 'Tizimga kirish'},
+    'login_button': {'ru': 'Войти', 'uz': 'Kirish'},
+    'username_label': {'ru': 'Имя пользователя', 'uz': 'Foydalanuvchi nomi'},
+    'password_label': {'ru': 'Пароль', 'uz': 'Parol'},
     
-    # Страница профиля
-    'my_profile_title': {'ru': 'Мой профиль: {username}', 'uz': 'Mening profilim: {username}'},
-    'manager_profile_title': {'ru': 'Профиль менеджера: {username}', 'uz': 'Menejer profili: {username}'},
-    'performance_summary': {'ru': 'Сводка производительности (за 30 дней)', 'uz': 'Ish faoliyati xulosasi (oxirgi 30 kun)'},
-    'requests_closed': {'ru': 'Заявок закрыто', 'uz': 'Yopilgan arizalar'},
-    'requests_in_progress': {'ru': 'Взято в работу', 'uz': 'Ishga olingan'},
-    'conversion': {'ru': 'Конверсия', 'uz': 'Konversiya'},
-    'tasks_completed': {'ru': 'Задач выполнено', 'uz': 'Bajarilgan vazifalar'},
-    'my_recent_activity': {'ru': 'Мои последние действия', 'uz': 'Mening oxirgi harakatlarim'},
-    'manager_recent_activity': {'ru': 'Последние действия менеджера', 'uz': 'Menejerning oxirgi harakatlari'},
-    'no_activity_log': {'ru': 'Пока нет записей о ваших действиях.', 'uz': 'Sizning harakatlaringiz haqida yozuvlar yoʻq.'},
-    'no_manager_activity_log': {'ru': 'Нет записей о действиях этого менеджера.', 'uz': 'Ushbu menejerning harakatlari haqida yozuvlar yoʻq.'},
-    'change_password': {'ru': 'Смена пароля', 'uz': 'Parolni oʻzgartirish'},
-    'current_password': {'ru': 'Текущий пароль', 'uz': 'Joriy parol'},
-    'new_password': {'ru': 'Новый пароль', 'uz': 'Yangi parol'},
-    'confirm_new_password': {'ru': 'Повторите новый пароль', 'uz': 'Yangi parolni takrorlang'},
-    'save_new_password': {'ru': 'Сохранить новый пароль', 'uz': 'Yangi parolni saqlash'},
+    'error_title_404': {'ru': 'Страница не найдена', 'uz': 'Sahifa topilmadi'},
+    'error_text_404': {'ru': 'Возможно, она была удалена.', 'uz': 'Ehtimol, u oʻchirilgan.'},
+    'error_title_500': {'ru': 'Ошибка сервера', 'uz': 'Server xatosi'},
+    'error_text_500': {'ru': 'Мы уже работаем над этим.', 'uz': 'Biz allaqachon ishlayapmiz.'},
+    'back_home': {'ru': 'На главную', 'uz': 'Bosh sahifaga'},
 
-    # Страница импорта
-    'import_from_sheets': {'ru': 'Импорт из Google Sheets', 'uz': 'Google Sheetsdan import qilish'},
-    'run_import': {'ru': 'Запуск импорта', 'uz': 'Importni boshlash'},
-    'sheet_url': {'ru': 'URL таблицы Google Sheets', 'uz': 'Google Sheets jadvali URL manzili'},
-    'sheet_url_desc': {'ru': 'Скопируйте URL вашей таблицы целиком из браузера.', 'uz': 'Brauzerdan jadvalingizning toʻliq URL manzilini koʻchiring.'},
-    'start_import_button': {'ru': 'Запустить импорт', 'uz': 'Importni boshlash'},
-    'deduplication': {'ru': 'Очистка дубликатов', 'uz': 'Dublikatlarni tozalash'},
-    'deduplication_desc': {'ru': 'Объединяет контакты с одинаковыми номерами и удаляет лишние. <strong>Сначала используйте диагностику, чтобы проверить, что будет удалено.</strong>', 'uz': 'Bir xil raqamli kontaktlarni birlashtiradi va ortiqchalarini oʻchiradi. <strong>Oʻchiriladigan narsalarni tekshirish uchun avval diagnostikadan foydalaning.</strong>'},
-    'find_duplicates_button': {'ru': '1. Найти потенциальные дубликаты (Диагностика)', 'uz': '1. Potensial dublikatlarni topish (Diagnostika)'},
-    'merge_duplicates_button': {'ru': '2. Объединить найденные дубликаты', 'uz': '2. Topilgan dublikatlarni birlashtirish'},
-    'confirm_merge': {'ru': 'Вы уверены, что хотите запустить слияние дубликатов? Это действие необратимо.', 'uz': 'Dublikatlarni birlashtirishni ishga tushirishni xohlaysizmi? Bu amalni bekor qilib boʻlmaydi.'},
-    'import_result': {'ru': 'Результат импорта', 'uz': 'Import natijasi'},
-    'import_success': {'ru': 'Успешно', 'uz': 'Muvaffaqiyatli'},
-    'import_error': {'ru': 'Ошибка', 'uz': 'Xatolik'},
-    'import_how_it_works': {'ru': 'Как это работает?', 'uz': 'Bu qanday ishlaydi?'},
-    'import_instructions': {
-        'ru': """
-            <ol style="list-style: decimal; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; color: var(--text-secondary);">
-                <li>Убедитесь, что ваша Google-таблица <strong>общедоступна для просмотра по ссылке</strong>. Без этого импорт не сработает.</li>
-                <li>Вставьте полную ссылку на вашу таблицу. Система автоматически извлечет ID таблицы и ID листа (gid).</li>
-                <li><strong>Важно:</strong> Система ожидает, что данные будут в определенных колонках:
-                    <ul style="list-style-type: disc; padding-left: 20px; margin-top: 8px;">
-                        <li><b>Дата:</b> 2-я колонка (B)</li>
-                        <li><b>Тип бизнеса:</b> 14-я колонка (N)</li>
-                        <li><b>Имя клиента:</b> 16-я колонка (P)</li>
-                        <li><b>Телефон:</b> 17-я колонка (Q)</li>
-                    </ul>
-                </li>
-                <li>Система поддерживает разные форматы дат, включая <code>8.13.25</code> и <code>2025-08-22T11:31:06-05:00</code>.</li>
-                <li><strong>Защита от дублей:</strong> Если заявка с таким же номером телефона и сообщением уже есть, она будет пропущена.</li>
-            </ol>
-        """,
-        'uz': """
-            <ol style="list-style: decimal; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; color: var(--text-secondary);">
-                <li>Google-jadvalingiz <strong>havola orqali koʻrish uchun ochiq</strong> ekanligiga ishonch hosil qiling. Aks holda import ishlamaydi.</li>
-                <li>Jadvalingizga toʻliq havolani joylashtiring. Tizim avtomatik ravishda jadval ID va varaq ID (gid) sini oladi.</li>
-                <li><strong>Muhim:</strong> Tizim maʼlumotlar maʼlum ustunlarda boʻlishini kutadi:
-                    <ul style="list-style-type: disc; padding-left: 20px; margin-top: 8px;">
-                        <li><b>Sana:</b> 2-ustun (B)</li>
-                        <li><b>Biznes turi:</b> 14-ustun (N)</li>
-                        <li><b>Mijoz ismi:</b> 16-ustun (P)</li>
-                        <li><b>Telefon:</b> 17-ustun (Q)</li>
-                    </ul>
-                </li>
-                <li>Tizim turli sana formatlarini qoʻllab-quvvatlaydi, jumladan <code>8.13.25</code> va <code>2025-08-22T11:31:06-05:00</code>.</li>
-                <li><strong>Dublikatlardan himoya:</strong> Agar bir xil telefon raqami va xabar bilan ariza mavjud boʻlsa, u oʻtkazib yuboriladi.</li>
-            </ol>
-        """
-    },
-
-    # Страница приглашений
-    'invites_title': {'ru': 'Управление приглашениями', 'uz': 'Taklifnomalarni boshqarish'},
+    # --- УВЕДОМЛЕНИЯ (MESSAGES) ---
+    'msg_saved': {'ru': 'Успешно сохранено', 'uz': 'Muvaffaqiyatli saqlandi'},
+    'request_saved_success': {'ru': 'Заявка сохранена', 'uz': 'Ariza saqlandi'},
+    'request_created_success': {'ru': 'Заявка создана', 'uz': 'Ariza yaratildi'},
+    'category_saved_success': {'ru': 'Категория сохранена', 'uz': 'Kategoriya saqlandi'},
+    'product_saved_success': {'ru': 'Товар сохранен', 'uz': 'Mahsulot saqlandi'},
+    'contact_updated_success': {'ru': 'Контакт обновлен', 'uz': 'Kontakt yangilandi'},
+    'msg_deleted': {'ru': 'Удалено', 'uz': 'Oʻchirildi'},
+    'request_deleted_success': {'ru': 'Заявка удалена', 'uz': 'Ariza oʻchirildi'},
+    'product_deleted_success': {'ru': 'Товар удален', 'uz': 'Mahsulot oʻchirildi'},
+    'category_deleted_success': {'ru': 'Категория удалена', 'uz': 'Kategoriya oʻchirildi'},
+    'msg_status_updated': {'ru': 'Статус обновлен', 'uz': 'Holat yangilandi'},
+    
+    # --- ДРУГОЕ ---
+    'invite_created_success': {'ru': 'Приглашение создано', 'uz': 'Taklifnoma yaratildi'},
+    'invites_title': {'ru': 'Приглашения', 'uz': 'Taklifnomalar'},
     'create_invite': {'ru': 'Создать приглашение', 'uz': 'Taklifnoma yaratish'},
-    'invite_note': {'ru': 'Заметка (для кого это приглашение)', 'uz': 'Eslatma (bu taklifnoma kim uchun)'},
-    'invite_note_placeholder': {'ru': 'Например, Иван Иванов', 'uz': 'Masalan, Ivan Ivanov'},
-    'generate_link': {'ru': 'Сгенерировать ссылку', 'uz': 'Havolani yaratish'},
-    'invites_history': {'ru': 'История приглашений', 'uz': 'Taklifnomalar tarixi'},
+    'invite_note': {'ru': 'Заметка', 'uz': 'Eslatma'},
+    'invite_note_placeholder': {'ru': 'Кому...', 'uz': 'Kimga...'},
+    'generate_link': {'ru': 'Создать ссылку', 'uz': 'Havola yaratish'},
+    'invites_history': {'ru': 'История', 'uz': 'Tarix'},
     'invite_status_active': {'ru': 'Активно', 'uz': 'Faol'},
     'invite_status_used': {'ru': 'Использовано', 'uz': 'Foydalanilgan'},
-    'invite_link': {'ru': 'Ссылка-приглашение', 'uz': 'Taklifnoma havolasi'},
-    'no_invites_yet': {'ru': 'Вы еще не создали ни одного приглашения.', 'uz': 'Siz hali birorta ham taklifnoma yaratmadingiz.'},
-    'link_copied': {'ru': 'Ссылка скопирована!', 'uz': 'Havola nusxalandi!'},
+    'link_copied': {'ru': 'Ссылка скопирована', 'uz': 'Havola nusxalandi'},
+    'no_invites_yet': {'ru': 'Нет приглашений', 'uz': 'Taklifnomalar yoʻq'},
     
-    # Модальное окно заявки (Slide Over)
-    'request_details_title': {'ru': 'Детали заявки', 'uz': 'Ariza tafsilotlari'},
-    'request_tasks_title': {'ru': 'Задачи по заявке', 'uz': 'Ariza boʻyicha vazifalar'},
-    'management_title': {'ru': 'Управление', 'uz': 'Boshqaruv'},
-    'assign_executor': {'ru': 'Назначить исполнителя', 'uz': 'Ijrochiga tayinlash'},
-    'full_edit': {'ru': 'Полное редактирование', 'uz': 'Toʻliq tahrirlash'},
-    'no_tasks_for_request': {'ru': 'Задач по этой заявке нет.', 'uz': 'Bu ariza boʻyicha vazifalar yoʻq.'},
-    'new_task_name_placeholder': {'ru': 'Название новой задачи...', 'uz': 'Yangi vazifa nomi...'},
+    'delete_confirmation_title': {'ru': 'Удалить {entity}?', 'uz': '{entity} oʻchirilsinmi?'},
+    'delete_confirmation_text': {'ru': 'Это действие нельзя отменить.', 'uz': 'Bu amalni bekor qilib boʻlmaydi.'},
+    'confirm_delete': {'ru': 'Да, удалить', 'uz': 'Ha, oʻchirish'},
 
-    # Сообщения
-    'contact_updated_success': {'ru': 'Данные клиента успешно обновлены!', 'uz': 'Mijoz maʼlumotlari muvaffaqiyatli yangilandi!'},
-    'product_saved_success': {'ru': 'Товар успешно сохранен!', 'uz': 'Mahsulot muvaffaqiyatli saqlandi!'},
-    'product_deleted_success': {'ru': 'Товар удален', 'uz': 'Mahsulot oʻchirildi'},
-    'category_saved_success': {'ru': 'Категория сохранена!', 'uz': 'Kategoriya saqlandi!'},
-    'category_deleted_success': {'ru': 'Категория удалена', 'uz': 'Kategoriya oʻchirildi'},
-    'request_created_success': {'ru': 'Заявка успешно создана!', 'uz': 'Ariza muvaffaqiyatli yaratildi!'},
-    'request_saved_success': {'ru': 'Заявка успешно сохранена!', 'uz': 'Ariza muvaffaqiyatli saqlandi!'},
-    'request_deleted_success': {'ru': 'Заявка удалена', 'uz': 'Ariza oʻchirildi'},
-    'invite_created_success': {'ru': 'Приглашение успешно создано!', 'uz': 'Taklifnoma muvaffaqiyatli yaratildi!'},
-    'password_changed_success': {'ru': 'Пароль успешно изменен!', 'uz': 'Parol muvaffaqiyatli oʻzgartirildi!'},
+    'date_from': {'ru': 'Дата от', 'uz': 'Sana (dan)'},
+    'date_to': {'ru': 'Дата до', 'uz': 'Sana (gacha)'},
 }

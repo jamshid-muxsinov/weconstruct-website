@@ -1,97 +1,77 @@
-{% if not htmx_request %}
-    {% extends "admin/base.html" %}
-{% endif %}
+{% extends "admin/base.html" %}
 
 {% block content %}
-<div class="page-header">
-    <h1>{{ _('page_title_stats') }}</h1>
-</div>
+<div style="padding: 32px; max-width: 1400px; margin: 0 auto;">
+    
+    <div style="margin-bottom: 32px;">
+        <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main);">{{ _('page_title_stats') }}</h1>
+        <p style="color: var(--text-muted);">Обзор эффективности за последние 30 дней</p>
+    </div>
 
-<h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 24px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">{{ _('sales_funnel') }}</h2>
-<div class="dashboard-stats">
-    {% for item in sales_funnel %}
-    <div class="stats-card">
-        <div class="stats-card-content">
-            {% set status_val = item.status.value if item.status else 'unknown' %}
-            <div class="stats-icon status-{{ status_val if status_val in ['imported', 'qualification', 'contacted', 'proposal', 'negotiation', 'closed', 'archived'] else 'blue' }}">
-                {% if status_val == 'imported' %}<i class='bx bx-log-in-circle'></i>
-                {% elif status_val == 'qualification' %}<i class='bx bx-loader-circle'></i>
-                {% elif status_val == 'contacted' %}<i class='bx bx-phone-call'></i>
-                {% elif status_val == 'proposal' %}<i class='bx bx-file'></i>
-                {% elif status_val == 'negotiation' %}<i class='bx bx-user-voice'></i>
-                {% elif status_val == 'closed' %}<i class='bx bx-check-double'></i>
-                {% elif status_val == 'archived' %}<i class='bx bx-archive'></i>
-                {% else %}<i class='bx bxs-help-circle'></i>
-                {% endif %}
-            </div>
-            <div class="stats-details">
-                <h3>{{ item.count }}</h3>
-                <p>{{ get_status_display(item.status, request.state.locale) }}</p>
+    <!-- 1. Воронка (Карточки) -->
+    <h3 style="font-size: 0.9rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px;">Воронка продаж</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px;">
+        {% for item in sales_funnel %}
+        <div class="card" style="padding: 20px; border-left: 4px solid var(--primary);">
+            <div style="font-size: 2rem; font-weight: 800; color: var(--text-main);">{{ item.count }}</div>
+            <!-- ИСПРАВЛЕНИЕ ЗДЕСЬ: -->
+            <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 4px;">
+                {{ get_status_display(item.status) }}
             </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px; align-items: flex-start;">
-    <div class="card">
-        <h3 style="margin-bottom: 20px; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">{{ _('top_managers_title') }}</h3>
-        <div class="table-wrapper">
-            <table class="styled-table">
-                <thead>
-                    <tr>
-                        <th style="width: 50px;">#</th>
-                        <th>{{ _('manager_col') }}</th>
-                        <th style="text-align: right;">{{ _('requests_closed_col') }}</th>
-                    </tr>
-                </thead>
+    <!-- 2. Две колонки: Топ менеджеров и Новые заявки -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px; align-items: start;">
+        
+        <!-- Топ Менеджеры -->
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-light);">
+                <h3 style="margin: 0; font-size: 1.1rem;">{{ _('top_managers_title') }}</h3>
+            </div>
+            <table style="width: 100%;">
                 <tbody>
                     {% for user, count in top_managers %}
                     <tr>
-                        <td data-label="#"><span class="rank-badge rank-{{ loop.index }}">{{ loop.index }}</span></td>
-                        <td data-label="{{ _('manager_col') }}">
-                            <a href="{{ request.url_for('admin_user_profile', locale=request.state.locale, pk=user.id) }}" class="link-to-change">{{ user.username }}</a>
+                        <td style="width: 50px; text-align: center; color: var(--text-muted); font-weight: 700;">#{{ loop.index }}</td>
+                        <td>
+                            <div style="font-weight: 600;">{{ user.username }}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Менеджер</div>
                         </td>
-                        <td data-label="{{ _('requests_closed_col') }}" style="text-align: right; font-weight: 700; font-size: 1.2rem; color: var(--accent-primary-solid);">{{ count }}</td>
+                        <td style="text-align: right; font-weight: 700; font-size: 1.1rem; color: var(--success-text);">
+                            {{ count }} <span style="font-size: 0.8rem; font-weight: 400; color: var(--text-muted);">сделок</span>
+                        </td>
                     </tr>
                     {% else %}
-                    <tr>
-                        <td colspan="3" class="empty-list-placeholder">{{ _('no_rating_data') }}</td>
-                    </tr>
+                    <tr><td colspan="3" style="padding: 30px; text-align: center; color: var(--text-muted);">Нет данных</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <div class="card">
-        {% include "admin/partials/_dashboard_new_requests.html" %}
-    </div>
-</div>
-
-<div class="card" style="margin-top: 32px;">
-    <h3 style="margin-bottom: 20px; font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">{{ _('my_tasks') }}</h3>
-    {% if my_tasks %}
-    <ul style="display: flex; flex-direction: column; gap: 16px; list-style: none; padding: 0; margin: 0;">
-        {% for task in my_tasks %}
-        <a href="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=task.contact.id) if task.contact else '#' }}"
-            class="task-link-item">
-            <li style="display: flex; align-items: center; justify-content: space-between;">
-                <div>
-                    <p style="margin: 0; font-weight: 600; color: var(--text-primary);">{{ task.title }}</p>
-                    {% if task.contact %}
-                    <small style="color: var(--text-secondary); font-size: 0.85rem;">{{ _('header_client') }}: {{ task.contact.full_name }}</small>
-                    {% endif %}
+        <!-- Новые заявки -->
+        <div class="card">
+            <h3 style="margin-bottom: 20px; font-size: 1.1rem;">Нераспределенные</h3>
+            {% if new_unassigned_requests %}
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                {% for req in new_unassigned_requests %}
+                <div style="padding: 12px; border: 1px solid var(--border-light); border-radius: 8px; cursor: pointer; transition: 0.2s;"
+                     class="hover-bg"
+                     onclick="htmx.ajax('GET', '{{ request.url_for('admin_htmx_quote_slide_over', locale=request.state.locale, pk=req.id) }}', {target:'#slide-over-content'}); openOverlay('slide-over-overlay');">
+                    <div style="font-weight: 600; font-size: 0.95rem;">{{ req.contact.full_name }}</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">{{ req.subject or 'Без темы' }}</div>
+                    <div style="margin-top: 8px; font-size: 0.75rem; color: var(--primary);">{{ req.created_at | localtime }}</div>
                 </div>
-                {% if task.due_date %}
-                <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 500;">{{ task.due_date.strftime('%d.%m.%Y') }}</span>
-                {% endif %}
-            </li>
-        </a>
-        {% endfor %}
-    </ul>
-    {% else %}
-    <p class="empty-list-placeholder" style="padding: 30px 0;">У вас нет назначенных задач.</p>
-    {% endif %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; color: var(--text-muted); padding: 20px;">
+                {{ _('no_new_requests') }}
+            </div>  
+            {% endif %}
+        </div>
+
+    </div>
 </div>
 {% endblock %}

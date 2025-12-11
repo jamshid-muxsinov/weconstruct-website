@@ -9,7 +9,7 @@ import asyncio
 from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
+from fastapi.exceptions import StarletteHTTPException  
 import uvicorn
 from fastapi import FastAPI, Request, Depends, APIRouter, Path
 from fastapi.responses import RedirectResponse, FileResponse, Response
@@ -104,19 +104,49 @@ def create_admin_app() -> FastAPI:
         
     add_pagination(app)
 
+    # --- ОБРАБОТЧИКИ ОШИБОК ---
+
     @app.exception_handler(401)
     async def unauthorized_exception_handler(request: Request, exc: Exception):
-        login_url = request.url_for('admin_login')
-        next_path = request.url.path if request.url.path != '/' else request.url_for('admin_kanban_board', locale='ru')
-        return RedirectResponse(url=f"{login_url}?next={next_path}", status_code=302)
+        if not hasattr(request.state, "locale"): request.state.locale = "ru"
+        try:
+            login_url = request.url_for('admin_login')
+            next_path = request.url.path if request.url.path != '/' else request.url_for('admin_kanban_board', locale='ru')
+            return RedirectResponse(url=f"{login_url}?next={next_path}", status_code=302)
+        except:
+            return RedirectResponse(url="/admin/login", status_code=302)
 
+    @app.exception_handler(404)
+    async def not_found_error(request: Request, exc: Exception):
+        if not hasattr(request.state, "locale"): request.state.locale = "ru"
+        return templates.TemplateResponse("admin/error.html", {
+            "request": request,
+            "status_code": 404,
+            "title": "Страница не найдена",
+            "message": "Мы не смогли найти то, что вы искали."
+        }, status_code=404)
+
+    @app.exception_handler(500)
     @app.exception_handler(Exception)
-    async def generic_admin_exception_handler(request: Request, exc: Exception):
+    async def internal_error(request: Request, exc: Exception):
         traceback.print_exc()
-        if not hasattr(request.state, "locale"):
-            request.state.locale = "ru"
-        context = {"request": request, "error_message": "Произошла внутренняя ошибка сервера."}
-        return templates.TemplateResponse("admin/500.html", context, status_code=500)
+        if not hasattr(request.state, "locale"): request.state.locale = "ru"
+        return templates.TemplateResponse("admin/error.html", {
+            "request": request,
+            "status_code": 500,
+            "title": "Ошибка сервера",
+            "message": "Произошла внутренняя ошибка. Мы уже работаем над этим."
+        }, status_code=500)
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+        if not hasattr(request.state, "locale"): request.state.locale = "ru"
+        return templates.TemplateResponse("admin/error.html", {
+            "request": request,
+            "status_code": exc.status_code,
+            "title": "Ошибка",
+            "message": str(exc.detail)
+        }, status_code=exc.status_code)
 
     return app
 

@@ -1,34 +1,56 @@
 {% extends "admin/base.html" %}
-{% block content %}
-<div class="page-header">
-    <h1>Управление проектами</h1>
-</div>
 
-<div class="kanban-board">
-    {% for project in projects %}
-    <div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--accent-primary);">
-        <div style="display:flex; justify-content:space-between; align-items: flex-start;">
-            <div>
-                <h3 style="margin: 0; font-size: 1.2rem;">
-                    <a href="{{ request.url_for('admin_project_detail', locale=request.state.locale, pk=project.id) }}" class="link-to-change">{{ project.name }}</a>
-                </h3>
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">
-                    <i class='bx bxs-user'></i> PM: {{ project.manager.username }}
-                    {% if project.quote_request and project.quote_request.contact %}
-                     | <i class='bx bxs-face'></i> {{ project.quote_request.contact.full_name }}
-                    {% endif %}
-                </p>
-            </div>
-            <span class="status-badge status-{{ project.status.value }}">{{ project.status.value|upper }}</span>
+{% block content %}
+<div style="display: flex; flex-direction: column; height: 100vh; overflow: hidden;">
+    
+    <!-- 1. ПАНЕЛЬ ФИЛЬТРОВ -->
+    <form class="filter-bar" 
+          hx-get="{{ request.url_for('admin_project_list', locale=request.state.locale) }}" 
+          hx-target="#project-grid-container" 
+          hx-trigger="keyup changed delay:300ms from:input, change from:select"
+          hx-push-url="true"
+          style="flex-shrink: 0; background: white; padding: 16px 32px; border-bottom: 1px solid var(--border-light); display: flex; gap: 16px; align-items: center;">
+
+        <!-- Поиск -->
+        <div class="search-input-wrapper" style="width: 300px; position: relative;">
+            <i class='bx bx-search' style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+            <input type="search" name="q" placeholder="{{ _('search_project_placeholder') }}" 
+                   class="input-field" 
+                   value="{{ request.query_params.get('q', '') }}" 
+                   autocomplete="off"
+                   style="padding-left: 36px;">
         </div>
-        
-        <div style="margin-top: 12px; display: flex; gap: 10px; font-size: 0.85rem; color: var(--text-secondary);">
-            <span><i class='bx bxs-image'></i> Файлов: {{ project.files|length }}</span>
-            <span><i class='bx bxs-wallet'></i> Операций: {{ project.transactions|length }}</span>
+
+        <!-- Фильтр по статусу (ПЕРЕВЕДЕНО) -->
+        <div style="width: 200px;">
+            <select name="status" class="select-field">
+                <option value="">{{ _('all_statuses') }}</option>
+                {% for status_code in ['design', 'procurement', 'construction', 'finishing', 'handover', 'completed', 'hold'] %}
+                    <option value="{{ status_code }}" {% if request.query_params.get('status') == status_code %}selected{% endif %}>
+                         {{ get_status_display(status_code) }}
+                    </option>
+                {% endfor %}
+            </select>
         </div>
+
+        <!-- Фильтр по менеджеру (для админов) -->
+        {% if user.is_superuser %}
+        <div style="width: 200px;">
+            <select name="manager_id" class="select-field">
+                <option value="">{{ _('all_managers') }}</option>
+                {% for u in staff_users %}
+                <option value="{{ u.id }}" {% if request.query_params.get('manager_id') == u.id|string %}selected{% endif %}>{{ u.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+    </form>
+
+    <!-- 2. СЕТКА ПРОЕКТОВ -->
+    <div style="flex: 1; overflow-y: auto; background: var(--bg-body);">
+        {% include "admin/partials/_project_list_content.html" %}
     </div>
-    {% else %}
-    <p class="empty-list-placeholder">Активных проектов нет. Создайте проект из Заявки (статус Closed).</p>
-    {% endfor %}
+
 </div>
 {% endblock %}

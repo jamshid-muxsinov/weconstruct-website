@@ -42,6 +42,8 @@ services:
       - FORWARDED_ALLOW_IPS=*
       - TZ=Asia/Tashkent
       - GOOGLE_CREDENTIALS_FILE=/app/credentials.json
+    ports:
+      - "8000:8000"
     volumes:
       - .:/app
       - ./media:/app/media

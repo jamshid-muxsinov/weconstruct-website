@@ -3,94 +3,173 @@
 {% endif %}
 
 {% block content %}
-<div class="page-header">
-    <h1>
-        {% if original %}
-        <i class='bx bxs-edit-alt'></i> {{ _('editing') }}: {{ _(meta.verbose_name) }}
-        {% else %}
-        <i class='bx bx-plus-circle'></i> {{ _('adding') }}: {{ _(meta.verbose_name) }}
+<div class="page-container" style="padding: 32px; max-width: 1000px; margin: 0 auto;">
+
+    <!-- ЗАГОЛОВОК -->
+    <div class="page-header" style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">
+                {% if original %}
+                    {{ _('editing') }}: {{ original }}
+                {% else %}
+                    {{ _('adding') }}: {{ _(meta.verbose_name) }}
+                {% endif %}
+            </h1>
+            <a href="{{ request.url_for(meta.list_url_name, locale=request.state.locale) }}" class="btn btn-sm" style="color: var(--text-muted); padding-left: 0;">
+                <i class='bx bx-arrow-back'></i> {{ _('cancel') }}
+            </a>
+        </div>
+
+        {% if original and meta.delete_url_name %}
+        <a href="{{ request.url_for(meta.delete_url_name, locale=request.state.locale, pk=original.id) }}" 
+           class="btn btn-secondary" style="color: var(--danger-text); border-color: var(--danger-bg); background: #FEF2F2;">
+           <i class='bx bx-trash'></i> {{ _('delete') }}
+        </a>
         {% endif %}
-    </h1>
-</div>
+    </div>
 
-<div class="card form-container">
-    {% if original %}
-    <h2 style="font-weight: 500; margin-bottom: 24px; font-size: 1.25rem;">{{ original }}</h2>
-    {% endif %}
+    <!-- ФОРМА -->
+    <div class="card" style="padding: 32px;">
+        <form method="post" enctype="multipart/form-data" novalidate>
+            
+            <!-- ЛОГИКА ВКЛАДОК (RU / UZ) -->
+            <!-- Проверяем, есть ли в форме поля с переводом -->
+            {% if 'name_ru' in form %}
+            <div x-data="{ lang: 'ru' }">
+                
+                <!-- Переключатели -->
+                <div class="tabs-header">
+                    <button type="button" class="tab-btn" :class="{ 'active': lang === 'ru' }" @click="lang = 'ru'">
+                        🇷🇺 Русский
+                    </button>
+                    <button type="button" class="tab-btn" :class="{ 'active': lang === 'uz' }" @click="lang = 'uz'">
+                        🇺🇿 O'zbekcha
+                    </button>
+                </div>
 
-    <form method="post" enctype="multipart/form-data" novalidate>
+                <!-- Контент RU -->
+                <div x-show="lang === 'ru'">
+                    {% for field_name in ['name_ru', 'short_description_ru', 'full_description_ru', 'description_ru', 'dimensions_ru', 'materials_ru'] %}
+                        {% if field_name in form %}
+                            {% set field = form[field_name] %}
+                            <div class="input-group">
+                                <label for="{{ field.id }}">{{ _(field.label.text) }}</label>
+                                {% if field.type == 'TextAreaField' %}
+                                    {{ field(class_='textarea-field', style="min-height: 100px;") }}
+                                {% else %}
+                                    {{ field(class_='input-field') }}
+                                {% endif %}
+                                {% if field.errors %}<div style="color:red; font-size:0.8rem; margin-top:4px;">{{ field.errors[0] }}</div>{% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
 
-        {% if 'name_ru' in form %}
-        <div class="tabs">
-            <div class="tab-header">
-                <button type="button" class="tab-link active" onclick="openTab(event, 'lang-ru')">{{ _('lang_ru') }}</button>
-                <button type="button" class="tab-link" onclick="openTab(event, 'lang-uz')">{{ _('lang_uz') }}</button>
+                <!-- Контент UZ -->
+                <div x-show="lang === 'uz'" x-cloak>
+                    {% for field_name in ['name_uz', 'short_description_uz', 'full_description_uz', 'description_uz', 'dimensions_uz', 'materials_uz'] %}
+                        {% if field_name in form %}
+                            {% set field = form[field_name] %}
+                            <div class="input-group">
+                                <label for="{{ field.id }}">{{ _(field.label.text) }}</label>
+                                {% if field.type == 'TextAreaField' %}
+                                    {{ field(class_='textarea-field', style="min-height: 100px;") }}
+                                {% else %}
+                                    {{ field(class_='input-field') }}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                
+                <div class="form-section-title" style="margin-top: 32px;">
+                    <i class='bx bx-slider-alt'></i> {{ _('general_settings') }}
+                </div>
             </div>
+            {% endif %}
+            <!-- КОНЕЦ ЛОГИКИ ВКЛАДОК -->
 
-            <div id="lang-ru" class="tab-content active">
-                {% for field_name in ['name_ru', 'short_description_ru', 'full_description_ru', 'description_ru', 'dimensions_ru', 'materials_ru'] %}
-                    {% if field_name in form %}
-                        {% set field = form[field_name] %}
-                        <div class="input-group">
-                            <label for="{{ field.id }}">{{ _(field.label.text) }}</label>
-                            {% if field.type == 'TextAreaField' %}
-                                {{ field(class_='textarea-field') }}
-                            {% else %}
-                                {{ field(class_='input-field') }}
-                            {% endif %}
-                            {% if field.description %}<small class="form-field-description">{{ _(field.description) }}</small>{% endif %}
-                            {% if field.errors %}<div class="error-text">{{ field.errors[0] }}</div>{% endif %}
-                        </div>
+            <!-- ОСТАЛЬНЫЕ ПОЛЯ (Цена, Категория, Роли, Чекбоксы) -->
+            <div class="form-grid" style="grid-template-columns: 1fr;">
+                {% for field in form %}
+                    <!-- Пропускаем поля перевода, так как мы их уже вывели выше -->
+                    {% if not field.name.endswith('_ru') and not field.name.endswith('_uz') and field.name != 'csrf_token' %}
+                        
+                        <!-- Специальная обработка для Цены (Min/Max в одну строку) -->
+                        {% if field.name == 'price_min' %}
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div class="input-group">
+                                    <label>{{ _(form.price_min.label.text) }}</label>
+                                    {{ form.price_min(class_='input-field') }}
+                                </div>
+                                <div class="input-group">
+                                    <label>{{ _(form.price_max.label.text) }}</label>
+                                    {{ form.price_max(class_='input-field') }}
+                                </div>
+                            </div>
+                        
+                        {% elif field.name == 'price_max' %}
+                            <!-- Пропускаем, так как вывели выше -->
+                        
+                        <!-- Рендеринг остальных полей -->
+                        {% else %}
+                            <div class="input-group">
+                                <label for="{{ field.id }}">
+                                    {{ _(field.label.text) }}
+                                    {% if field.flags.required %}<span style="color:red">*</span>{% endif %}
+                                </label>
+
+                                {% if field.type == 'SelectField' %}
+                                    <div style="position:relative;">
+                                        {{ field(class_='select-field') }}
+                                        
+                                        <!-- Кнопка добавления категории "на лету" -->
+                                        {% if field.name == 'category_id' %}
+                                        <button type="button" 
+                                                hx-get="{{ request.url_for('admin_htmx_category_add_modal', locale=request.state.locale) }}" 
+                                                hx-target="#modal-body-content" 
+                                                onclick="openOverlay('modal-overlay')"
+                                                style="position:absolute; right: 5px; top: 5px; padding: 6px 10px; background: var(--bg-body); border: 1px solid var(--border-light); border-radius: 6px; cursor: pointer;">
+                                            <i class='bx bx-plus'></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+
+                                {% elif field.type == 'BooleanField' %}
+                                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border-light); border-radius: 10px;">
+                                        {{ field(style="width: 20px; height: 20px; accent-color: var(--primary);") }}
+                                        <span style="font-size: 0.9rem; font-weight: 500;">{{ _(field.description) or _(field.label.text) }}</span>
+                                    </div>
+
+                                {% elif field.type == 'FileField' or field.type == 'MultipleFileField' %}
+                                    {{ field(class_='input-field', style="padding: 8px;") }}
+                                    {% if original and field.name == 'main_image' and original.main_image %}
+                                        <div style="margin-top: 8px;">
+                                            <img src="{{ url_for('media', path=original.main_image) }}" style="height: 60px; border-radius: 6px;">
+                                            <span style="font-size: 0.8rem; color: var(--text-muted);">Текущее фото</span>
+                                        </div>
+                                    {% endif %}
+
+                                {% else %}
+                                    {{ field(class_='input-field') }}
+                                {% endif %}
+
+                                {% if field.errors %}
+                                    <div style="color: var(--danger-text); font-size: 0.8rem; margin-top: 4px;">{{ field.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     {% endif %}
                 {% endfor %}
             </div>
 
-            <div id="lang-uz" class="tab-content">
-                {% for field_name in ['name_uz', 'short_description_uz', 'full_description_uz', 'description_uz', 'dimensions_uz', 'materials_uz'] %}
-                    {% if field_name in form %}
-                        {% set field = form[field_name] %}
-                        <div class="input-group">
-                            <label for="{{ field.id }}">{{ _(field.label.text) }}</label>
-                            {% if field.type == 'TextAreaField' %}
-                                {{ field(class_='textarea-field') }}
-                            {% else %}
-                                {{ field(class_='input-field') }}
-                            {% endif %}
-                            {% if field.description %}<small class="form-field-description">{{ _(field.description) }}</small>{% endif %}
-                            {% if field.errors %}<div class="error-text">{{ field.errors[0] }}</div>{% endif %}
-                        </div>
-                    {% endif %}
-                {% endfor %}
+            <!-- КНОПКА СОХРАНИТЬ -->
+            <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border-light); text-align: right;">
+                <button type="submit" class="btn btn-primary" style="padding: 12px 32px; font-size: 1rem;">
+                    {{ _('save') }}
+                </button>
             </div>
-        </div>
-        <hr style="margin: 24px 0; border-color: var(--border-color);">
-        <h3 style="font-size: 1.1rem; font-weight: 500; margin-bottom: 16px;">{{ _('general_settings') }}</h3>
-        {% endif %}
-
-        {% for field in form %}
-            {% if not field.name.endswith('_ru') and not field.name.endswith('_uz') %}
-                {% include 'admin/partials/_form_field.html' %}
-            {% endif %}
-        {% endfor %}
-
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">{{ _('save') }}</button>
-            {% if original and meta.delete_url_name %}
-            <a href="{{ request.url_for(meta.delete_url_name, locale=request.state.locale, pk=original.id) }}" class="btn btn-danger">{{ _('delete') }}</a>
-            {% endif %}
-            <a href="{{ request.url_for(meta.list_url_name, locale=request.state.locale) }}" class="btn btn-secondary" style="margin-left: auto;">{{ _('cancel') }}</a>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
-<script>
-    function openTab(evt, tabName) {
-        evt.preventDefault();
-        const tabContents = document.querySelectorAll(".tab-content");
-        tabContents.forEach(tc => tc.classList.remove("active"));
-        const tabLinks = document.querySelectorAll(".tab-link");
-        tabLinks.forEach(tl => tl.classList.remove("active"));
-        document.getElementById(tabName).classList.add("active");
-        evt.currentTarget.classList.add("active");
-    }
-</script>
 {% endblock %}

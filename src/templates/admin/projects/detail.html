@@ -1,182 +1,193 @@
 {% extends "admin/base.html" %}
+
 {% block content %}
-<div class="page-header">
-    <div>
-        <a href="{{ request.url_for('admin_project_list', locale=request.state.locale) }}" class="btn btn-secondary btn-sm" style="margin-bottom: 8px;"><i class='bx bx-arrow-back'></i> Назад</a>
-        <h1>{{ project.name }}</h1>
+
+<!-- Статистика -->
+<div class="project-stats-grid">
+    <div class="stat-box">
+        <span class="stat-label">{{ _('income') }}</span>
+        <span class="stat-value income">{{ income|format_number }}</span>
     </div>
-    <div style="display:flex; gap: 10px; align-items: center;">
-        <span class="status-badge status-{{ project.status.value }}" style="font-size: 1rem; padding: 8px 16px;">{{ project.status.value|upper }}</span>
-        {% if project.quote_request_id %}
-        <a href="{{ request.url_for('admin_quoterequest_change', locale=request.state.locale, pk=project.quote_request_id) }}" class="btn btn-secondary" title="Перейти к заявке"><i class='bx bx-link'></i></a>
-        {% endif %}
+    <div class="stat-box">
+        <span class="stat-label">{{ _('expense') }}</span>
+        <span class="stat-value expense">{{ expenses|format_number }}</span>
+    </div>
+    <div class="stat-box">
+        <span class="stat-label">{{ _('profit') }}</span>
+        <span class="stat-value" style="color: var(--text-main);">{{ profit|format_number }}</span>
+    </div>
+    <div class="stat-box">
+        <span class="stat-label">{{ _('status') }}</span>
+        <div style="margin-top: 4px;">
+             <!-- ПЕРЕВОД СТАТУСА -->
+             <span class="badge badge-info" style="font-size: 1rem;">{{ get_status_display(project.status.value) }}</span>
+        </div>
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
     
-    <!-- ЛЕВАЯ КОЛОНКА -->
-    <div>
-        <!-- ФОТО ОТЧЕТЫ -->
-        <div class="card" style="margin-bottom: 24px;">
-            <h3 style="margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">📸 Фотоотчеты и Документы</h3>
-            
+    <!-- LEFT COLUMN -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        
+        <!-- Files -->
+        <div class="card" x-data="{ showUpload: false }">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h3 style="font-size:1.1rem; font-weight:600;">📁 {{ _('files_title') }}</h3>
+                <button type="button" @click="showUpload = true" class="btn btn-primary btn-sm" x-show="!showUpload">
+                    <i class='bx bx-upload'></i> {{ _('upload') }}
+                </button>
+            </div>
+
+            <!-- Upload Form -->
             <form action="{{ request.url_for('admin_project_upload', locale=request.state.locale, pk=project.id) }}" 
-                  method="post" enctype="multipart/form-data" 
-                  style="background: var(--surface-2); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                  method="post" enctype="multipart/form-data" x-show="showUpload" x-transition
+                  style="display: none; background:var(--bg-body); padding:16px; border-radius:var(--radius-sm); margin-bottom:16px; border: 1px solid var(--border-light);">
+                
+                <div style="display:grid; gap:12px;">
+                    <label style="font-weight:500; font-size:0.9rem;">{{ _('file_type_label') }}</label>
                     <select name="report_type" class="select-field">
-                        <option value="photo_report">Фото со стройки</option>
-                        <option value="design_doc">Чертеж/Дизайн</option>
-                        <option value="document">Документ/Договор</option>
+                        <!-- ПЕРЕВОД ТИПОВ ФАЙЛОВ -->
+                        <option value="photo_report">{{ _('file_type_photo_report') }}</option>
+                        <option value="design_doc">{{ _('file_type_design_doc') }}</option>
+                        <option value="document">{{ _('file_type_document') }}</option>
                     </select>
+                    
+                    <label style="font-weight:500; font-size:0.9rem;">{{ _('file_label') }}</label>
                     <input type="file" name="file" class="input-field" required>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" name="comment" placeholder="Комментарий (н-р: Фундамент залит)" class="input-field" style="flex-grow: 1;">
-                    <button type="submit" class="btn btn-primary"><i class='bx bx-upload'></i> Загрузить</button>
+                    
+                    <label style="font-weight:500; font-size:0.9rem;">{{ _('desc_label') }}</label>
+                    <input type="text" name="comment" placeholder="{{ _('file_comment_placeholder') }}" class="input-field">
+                    
+                    <div style="display:flex; gap:10px; margin-top: 8px;">
+                        <button type="submit" class="btn btn-primary">{{ _('upload_file_btn') }}</button>
+                        <button type="button" @click="showUpload = false" class="btn btn-secondary">{{ _('cancel') }}</button>
+                    </div>
                 </div>
             </form>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px;">
+            <div class="file-grid">
                 {% for file in project.files %}
-                <div style="background: var(--bg-main); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color);">
-                    <a href="{{ url_for('media', path=file.file_path) }}" target="_blank" style="display: block; aspect-ratio: 1; overflow: hidden;">
+                <div class="file-item">
+                    <a href="{{ url_for('media', path=file.file_path) }}" target="_blank">
                         {% if file.type.value == 'photo_report' %}
-                            <img src="{{ url_for('media', path=file.file_path) }}" style="width:100%; height:100%; object-fit: cover; transition: 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            <img src="{{ url_for('media', path=file.file_path) }}" loading="lazy">
                         {% else %}
-                            <div style="width:100%; height:100%; display: flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--text-secondary);">
-                                <i class='bx bxs-file-pdf' style="font-size: 3rem;"></i>
+                            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#f3f4f6; color:#9ca3af; flex-direction: column;">
+                                <i class='bx bxs-file-pdf' style="font-size:3rem;"></i>
                             </div>
                         {% endif %}
+                        <div class="file-meta">
+                            {{ file.created_at.strftime('%d.%m') }} | {{ file.uploaded_by.username }}
+                            {% if file.comment %}<div style="font-size:0.65rem; opacity:0.9;">{{ file.comment|truncate(15) }}</div>{% endif %}
+                        </div>
                     </a>
-                    <div style="padding: 8px; font-size: 0.8rem;">
-                        <div style="font-weight: 600; color: var(--text-primary);">{{ file.uploaded_by.username }}</div>
-                        <div style="color: var(--text-secondary); margin-bottom: 4px;">{{ file.created_at.strftime('%d.%m %H:%M') }}</div>
-                        {% if file.comment %}
-                        <div style="background: var(--surface-2); padding: 4px; border-radius: 4px; margin-top: 4px;">{{ file.comment }}</div>
-                        {% endif %}
-                    </div>
                 </div>
+                {% else %}
+                <p style="color:var(--text-muted); grid-column:1/-1; padding: 10px; text-align: center; background: var(--bg-body); border-radius: var(--radius-sm);">
+                    {{ _('no_files') }}
+                </p>
                 {% endfor %}
             </div>
         </div>
 
-        <!-- ИСТОРИЯ ФИНАНСОВ -->
-        {% if user.is_superuser or user.id == project.manager_id %}
+        <!-- Transactions -->
         <div class="card">
-            <h3 style="margin-bottom: 16px;">История транзакций</h3>
-            <table class="styled-table">
-                <thead>
-                    <tr>
-                        <th>Дата</th>
-                        <th>Кто</th>
-                        <th>Категория</th>
-                        <th>Сумма</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for t in project.transactions %}
-                    <tr>
-                        <td>{{ t.created_at.strftime('%d.%m.%Y') }}</td>
-                        <td>{{ t.created_by.username }}</td>
-                        <td>
-                            {{ t.category }}
-                            {% if t.description %}<br><small style="color: var(--text-secondary);">{{ t.description }}</small>{% endif %}
-                        </td>
-                        <td style="font-weight: bold; color: {{ 'var(--status-green)' if t.type.value == 'income' else 'var(--status-red)' }};">
-                            {{ '+' if t.type.value == 'income' else '-' }} {{ t.amount|format_number }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:16px;">{{ _('history_operations') }}</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{{ _('header_created_at') }}</th>
+                            <th>{{ _('label_additional') }}</th>
+                            <th>{{ _('sum_placeholder') }}</th>
+                            <th>{{ _('desc_placeholder') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in project.transactions %}
+                        <tr>
+                            <td>{{ t.created_at.strftime('%d.%m.%Y') }}</td>
+                            <td>
+                                {% if t.type.value == 'income' %}
+                                <span style="color:var(--success-text); font-weight:600;">{{ _('income') }}</span>
+                                {% else %}
+                                <span style="color:var(--danger-text);">{{ _('expense') }}</span>
+                                {% endif %}
+                                <div style="font-size:0.75rem; color:var(--text-muted);">{{ t.category }}</div>
+                            </td>
+                            <td style="font-weight:600;">{{ t.amount|format_number }}</td>
+                            <td style="color:var(--text-muted);">{{ t.description or '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">{{ _('nothing_found') }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-        {% endif %}
     </div>
 
-    <!-- ПРАВАЯ КОЛОНКА -->
-    <div>
-        <!-- ФИНАНСЫ ВИДЖЕТ -->
-        {% if user.is_superuser or user.id == project.manager_id %}
-        <div class="card" style="margin-bottom: 24px; border-top: 4px solid var(--status-yellow);">
-            <h3 style="margin-bottom: 15px;">💰 Финансы</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                <div style="text-align: center; padding: 10px; background: rgba(74, 222, 128, 0.1); border-radius: 8px;">
-                    <small style="color: var(--text-secondary);">Приход</small>
-                    <div style="font-weight: 700; color: var(--status-green); font-size: 1.1rem;">{{ income|format_number }}</div>
-                </div>
-                <div style="text-align: center; padding: 10px; background: rgba(248, 113, 113, 0.1); border-radius: 8px;">
-                    <small style="color: var(--text-secondary);">Расход</small>
-                    <div style="font-weight: 700; color: var(--status-red); font-size: 1.1rem;">{{ expenses|format_number }}</div>
-                </div>
-            </div>
-            <div style="text-align: center; padding: 10px; background: var(--surface-2); border-radius: 8px; margin-bottom: 20px;">
-                Прибыль: <strong>{{ profit|format_number }}</strong>
-            </div>
-
-            <button onclick="document.getElementById('finance-form').style.display = document.getElementById('finance-form').style.display === 'none' ? 'block' : 'none'" class="btn btn-secondary btn-full btn-sm">
-                <i class='bx bx-plus'></i> Добавить операцию
-            </button>
-
-            <form id="finance-form" action="{{ request.url_for('admin_project_finance', locale=request.state.locale, pk=project.id) }}" method="post" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-                <select name="type" class="select-field" style="width: 100%; margin-bottom: 10px;">
-                    <option value="expense">🔴 Расход</option>
-                    <option value="income">🟢 Приход</option>
-                </select>
-                <input type="number" name="amount" placeholder="Сумма" class="input-field" style="width: 100%; margin-bottom: 10px;" required>
-                <input type="text" name="category" placeholder="Категория (Бетон, Аванс)" class="input-field" style="width: 100%; margin-bottom: 10px;" required>
-                <input type="text" name="description" placeholder="Описание (опционально)" class="input-field" style="width: 100%; margin-bottom: 10px;">
-                <button type="submit" class="btn btn-primary btn-full">Сохранить</button>
-            </form>
-        </div>
-        {% endif %}
-
-        <!-- КОМАНДА -->
+    <!-- RIGHT COLUMN -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        
+        <!-- Team -->
         <div class="card">
-            <h3 style="margin-bottom: 15px;">Команда проекта</h3>
-            
-            {% if user.is_superuser or user.id == project.manager_id %}
+            <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:16px;">{{ _('team_status') }}</h3>
             <form action="{{ request.url_for('admin_project_update_team', locale=request.state.locale, pk=project.id) }}" method="post">
                 <div class="input-group">
-                    <label>Статус</label>
+                    <label>{{ _('status') }}</label>
                     <select name="status" class="select-field">
-                        <option value="design" {% if project.status.value == 'design' %}selected{% endif %}>Design</option>
-                        <option value="procurement" {% if project.status.value == 'procurement' %}selected{% endif %}>Procurement</option>
-                        <option value="construction" {% if project.status.value == 'construction' %}selected{% endif %}>Construction</option>
-                        <option value="finishing" {% if project.status.value == 'finishing' %}selected{% endif %}>Finishing</option>
-                        <option value="handover" {% if project.status.value == 'handover' %}selected{% endif %}>Handover</option>
-                        <option value="completed" {% if project.status.value == 'completed' %}selected{% endif %}>Completed</option>
-                        <option value="hold" {% if project.status.value == 'hold' %}selected{% endif %}>Hold</option>
+                        {% for s in ['design', 'procurement', 'construction', 'finishing', 'handover', 'completed', 'hold'] %}
+                        <option value="{{ s }}" {% if project.status.value == s %}selected{% endif %}>{{ get_status_display(s) }}</option>
+                        {% endfor %}
                     </select>
                 </div>
+                
                 <div class="input-group">
-                    <label>Дизайнер</label>
+                    <label>{{ _('designer') }}</label>
                     <select name="designer_id" class="select-field">
-                        <option value="0">--- Не назначен ---</option>
+                        <option value="0">-</option>
                         {% for u in staff_users %}
                         <option value="{{ u.id }}" {% if project.designer_id == u.id %}selected{% endif %}>{{ u.username }}</option>
                         {% endfor %}
                     </select>
                 </div>
+
                 <div class="input-group">
-                    <label>Прораб</label>
+                    <label>{{ _('foreman') }}</label>
                     <select name="foreman_id" class="select-field">
-                        <option value="0">--- Не назначен ---</option>
+                        <option value="0">-</option>
                         {% for u in staff_users %}
                         <option value="{{ u.id }}" {% if project.foreman_id == u.id %}selected{% endif %}>{{ u.username }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <button type="submit" class="btn btn-secondary btn-sm btn-full">Обновить команду</button>
+                <button type="submit" class="btn btn-secondary" style="width:100%;">{{ _('update_btn') }}</button>
             </form>
-            {% else %}
-                <ul style="list-style: none; font-size: 0.9rem;">
-                    <li style="margin-bottom: 8px;"><strong>PM:</strong> {{ project.manager.username }}</li>
-                    <li style="margin-bottom: 8px;"><strong>Дизайнер:</strong> {{ project.designer.username if project.designer else '-' }}</li>
-                    <li><strong>Прораб:</strong> {{ project.foreman.username if project.foreman else '-' }}</li>
-                </ul>
-            {% endif %}
+        </div>
+
+        <!-- Add Finance -->
+        <div class="card">
+            <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:16px;">{{ _('add_operation') }}</h3>
+            <form action="{{ request.url_for('admin_project_finance', locale=request.state.locale, pk=project.id) }}" method="post">
+                <div class="input-group">
+                    <select name="type" class="select-field">
+                        <option value="expense">🔴 {{ _('expense') }}</option>
+                        <option value="income">🟢 {{ _('income') }}</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <input type="number" name="amount" placeholder="{{ _('sum_placeholder') }}" class="input-field" required>
+                </div>
+                <div class="input-group">
+                    <input type="text" name="category" placeholder="{{ _('category_placeholder') }}" class="input-field" required>
+                </div>
+                <div class="input-group">
+                    <input type="text" name="description" placeholder="{{ _('desc_placeholder') }}" class="input-field">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">{{ _('save') }}</button>
+            </form>
         </div>
     </div>
 </div>

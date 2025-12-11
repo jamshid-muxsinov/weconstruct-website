@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ошибка {{ status_code }} | WeConstruct</title>
+    
+    <!-- Подключаем те же стили, что и везде -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/modern-erp.css') }}">
+
+    <style>
+        body {
+            background-color: var(--bg-body);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .error-card {
+            background: #FFFFFF;
+            padding: 48px;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            border: 1px solid var(--border-light);
+        }
+
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            display: inline-block;
+        }
+        
+        .status-404 .error-icon { color: var(--primary); } /* Синий для 404 */
+        .status-500 .error-icon { color: var(--danger-text); } /* Красный для 500 */
+
+        .error-code {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1;
+            margin-bottom: 8px;
+            letter-spacing: -0.03em;
+        }
+
+        .error-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 12px;
+        }
+
+        .error-message {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 32px;
+            background: var(--bg-body);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .error-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn {
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="error-card status-{{ status_code }}">
+        <div class="error-icon">
+            {% if status_code == 404 %}
+                <i class='bx bxs-compass'></i>
+            {% else %}
+                <i class='bx bxs-error-alt'></i>
+            {% endif %}
+        </div>
+        
+        <div class="error-code">{{ status_code }}</div>
+        <div class="error-title">{{ title }}</div>
+        
+        <div class="error-message">
+            {{ message }}
+        </div>
+
+        <div class="error-actions">
+            <a href="javascript:history.back()" class="btn btn-secondary">
+                Назад
+            </a>
+            <a href="{{ url_for('admin_dashboard', locale='ru') }}" class="btn btn-primary">
+                На главную
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

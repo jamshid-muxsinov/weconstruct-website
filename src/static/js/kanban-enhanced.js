@@ -1,118 +1,78 @@
-// src/static/js/kanban-enhanced.js
+/* --- src/static/js/kanban-enhanced.js --- */
 
-document.addEventListener('alpine:init', () => {
-    if (!window.notyf) {
-        window.notyf = new Notyf({
-            duration: 3500,
-            position: { x: 'right', y: 'top' },
-            dismissible: true
-        });
-    }
+function initKanbanSortable() {
+    const columns = document.querySelectorAll('.kanban-column-body');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-    Alpine.store('kanbanManager', {
-        selectedCards: new Set(),
+    columns.forEach(col => {
+        // Уничтожаем старый инстанс, если был, чтобы не дублировать события
+        if (col.sortable) col.sortable.destroy();
 
-        handleCardClick(cardElement, cardId, event) {
-            if (event.ctrlKey || event.metaKey) {
-                event.preventDefault();
-                const newSet = new Set(this.selectedCards);
-                if (newSet.has(cardId)) {
-                    newSet.delete(cardId);
-                } else {
-                    newSet.add(cardId);
-                }
-                this.selectedCards = newSet;
-            } 
-            else if (!event.target.closest('a')) {
-                htmx.trigger(cardElement, 'openDetails');
-                document.getElementById('slide-over-container').classList.add('open');
-            }
-        },
-        
-        get selectedIds() { 
-            return Array.from(this.selectedCards); 
-        },
-
-        clearSelection() { 
-            this.selectedCards = new Set();
-        },
-
-        bulkAssign(userId) {
-            if (!userId || this.selectedIds.length === 0) return;
-            
-            const params = new URLSearchParams();
-            this.selectedIds.forEach(id => params.append('card_ids', id));
-            params.append('user_id', userId);
-
-            htmx.ajax('POST', '/api/bulk-assign', {
-                body: params,
-                swap: 'none'
-            }).then(() => {
-                window.notyf.success(`Назначено ${this.selectedIds.length} заявок.`);
-                this.clearSelection();
-                htmx.trigger(document.body, 'updateKanban');
-            });
-        },
-        
-        bulkUpdateStatus(status) {
-            if (!status || this.selectedIds.length === 0) return;
-            
-            const params = new URLSearchParams();
-            this.selectedIds.forEach(id => params.append('card_ids', id));
-            params.append('status', status);
-
-            htmx.ajax('POST', '/api/bulk-status', {
-                body: params,
-                swap: 'none'
-            }).then(() => {
-                window.notyf.success(`Статус ${this.selectedIds.length} заявок обновлен.`);
-                this.clearSelection();
-                htmx.trigger(document.body, 'updateKanban');
-            });
-        }
-    });
-});
-
-function initializeKanban() {
-    const kanbanColumns = document.querySelectorAll('.kanban-column-body');
-    if (kanbanColumns.length === 0) return;
-
-    kanbanColumns.forEach(column => {
-        if (column.sortableInstance) {
-            column.sortableInstance.destroy();
-        }
-        
-        column.sortableInstance = new Sortable(column, {
-            group: 'kanban',
+        col.sortable = new Sortable(col, {
+            group: 'kanban', // Разрешает перетаскивание между колонками
             animation: 150,
             ghostClass: 'kanban-card-ghost',
-            chosenClass: 'kanban-card-chosen',
-            dragClass: 'kanban-card-drag',
+            delay: 100, // Небольшая задержка, чтобы не путать с кликом
+            delayOnTouchOnly: true,
+            
             onEnd: function (evt) {
-                const cardId = evt.item.dataset.id;
-                const newStatus = evt.to.closest('.kanban-column').dataset.status;
-
-                if (!cardId || !newStatus) return;
+                const itemEl = evt.item;
+                const cardId = itemEl.dataset.id;
                 
-                const payload = JSON.stringify({ id: parseInt(cardId), status: newStatus });
+                // Получаем новую колонку и её статус
+                const newColumn = evt.to.closest('.kanban-column');
+                const newStatus = newColumn.dataset.status;
+                const oldStatus = evt.from.closest('.kanban-column').dataset.status;
 
-                htmx.ajax('POST', '/api/update-status', {
-                    body: payload,
-                    headers: { 'Content-Type': 'application/json' },
-                    swap: 'none'
-                }).then(data => {
-                }).catch(() => {
-                    evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex]);
-                    window.notyf.error('Не удалось изменить статус.');
+                // Если статус не изменился, ничего не делаем
+                if (newStatus === oldStatus) return;
+
+                console.log(`Moving card #${cardId} from ${oldStatus} to ${newStatus}`);
+
+                // Визуально меняем цвет полоски статуса сразу (для плавности)
+                itemEl.classList.remove(`status-${oldStatus}`);
+                itemEl.classList.add(`status-${newStatus}`);
+
+                // Отправляем запрос на сервер
+                fetch('/api/update-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken // Обязательно для защиты
+                    },
+                    body: JSON.stringify({
+                        id: parseInt(cardId),
+                        status: newStatus
+                    })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Успех
+                        const notyf = new Notyf({position: {x:'right', y:'top'}});
+                        notyf.success('Статус обновлен');
+                    } else {
+                        // Ошибка сервера
+                        throw new Error('Server error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    const notyf = new Notyf({position: {x:'right', y:'top'}});
+                    notyf.error('Ошибка сохранения. Возвращаем карточку.');
+                    // Возвращаем карточку назад при ошибке
+                    evt.from.appendChild(itemEl); 
                 });
             }
         });
     });
 }
 
-document.addEventListener('DOMContentLoaded', initializeKanban);
-document.body.addEventListener('htmx:afterSwap', function(event) {
-    if (event.detail.target.id === 'kanban-board-container') {
-        initializeKanban();
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', initKanbanSortable);
+
+// Инициализация после обновлений HTMX (например, фильтрации)
+document.body.addEventListener('htmx:afterSwap', (evt) => {
+    if (evt.detail.target.id === 'kanban-board-container') {
+        initKanbanSortable();
     }
 });

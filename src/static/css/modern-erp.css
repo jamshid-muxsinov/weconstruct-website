@@ -1,0 +1,1069 @@
+/* --- START OF FILE modern-erp.css --- */
+:root {
+    /* --- Palette: Clean & Professional --- */
+    --bg-body: #F3F4F6;       /* Светло-серый фон для контента */
+    --bg-surface: #FFFFFF;    /* Белые карточки */
+    --bg-sidebar: #111827;    /* Темный сайдбар для контраста */
+    
+    --text-main: #1F2937;
+    --text-muted: #6B7280;
+    --text-on-dark: #F9FAFB;
+
+    --border-light: #E5E7EB;
+    
+    /* --- Brand Colors --- */
+    --primary: #3B82F6;       /* Blue */
+    --primary-hover: #2563EB;
+    --primary-light: #EFF6FF;
+
+    /* --- Status Colors (Pastel) --- */
+    --success-bg: #DCFCE7; --success-text: #166534;
+    --warning-bg: #FEF3C7; --warning-text: #92400E;
+    --danger-bg: #FEE2E2;  --danger-text: #991B1B;
+    --info-bg: #E0F2FE;    --info-text: #075985;
+    
+    /* --- Dimensions --- */
+    --sidebar-width: 250px;
+    --header-height: 64px;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    
+    /* --- Transitions --- */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* Apple-like smoothing */
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] {
+    --bg-body: #0F172A;
+    --bg-surface: #1E293B;
+    --bg-sidebar: #020617;
+    --text-main: #F1F5F9;
+    --text-muted: #94A3B8;
+    --border-light: #334155;
+    --primary-light: #1e3a8a;
+}
+
+/* --- Reset & Base --- */
+* { box-sizing: border-box; outline: none; }
+body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-body);
+    color: var(--text-main);
+    font-size: 14px;
+    line-height: 1.5;
+    overflow: hidden; /* App-like feel */
+}
+
+a { text-decoration: none; color: inherit; transition: color 0.2s; }
+button { cursor: pointer; font-family: inherit; }
+
+/* --- Layout Grid --- */
+#app-shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    grid-template-rows: var(--header-height) 1fr;
+    height: 100vh;
+    transition: grid-template-columns 0.4s var(--ease-out);
+}
+
+/* --- Sidebar --- */
+#sidebar {
+    grid-row: 1 / -1;
+    grid-column: 1;
+    background: var(--bg-sidebar);
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid transparent;
+    z-index: 20;
+}
+
+.sidebar-header {
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    color: var(--text-on-dark);
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+}
+
+#sidebar nav {
+    padding: 16px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 4px;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-on-dark);
+}
+
+.nav-link.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* --- Main Header --- */
+.top-bar {
+    grid-column: 2;
+    grid-row: 1;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    z-index: 10;
+}
+
+/* --- Main Content Area --- */
+#main-content {
+    grid-column: 2;
+    grid-row: 2;
+    overflow-y: auto;
+    padding: 32px;
+    position: relative;
+}
+
+/* --- Components: Buttons --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+.btn-secondary {
+    background: var(--bg-surface);
+    border-color: var(--border-light);
+    color: var(--text-main);
+}
+.btn-secondary:hover { background: var(--bg-body); border-color: var(--text-muted); }
+
+/* --- Components: Cards --- */
+.card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s;
+}
+.card:hover { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+
+/* --- Components: Tables (Data Grid Style) --- */
+.table-container {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+table { width: 100%; border-collapse: collapse; }
+th {
+    text-align: left;
+    padding: 12px 24px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    background: var(--bg-body);
+    border-bottom: 1px solid var(--border-light);
+    font-weight: 600;
+}
+td {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-main);
+    vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg-body); cursor: pointer; }
+
+/* --- Components: Inputs --- */
+.input-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text-muted);
+}
+.input-field, .select-field, .textarea-field {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    color: var(--text-main);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-field:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* --- Status Badges --- */
+.badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.badge-success { background: var(--success-bg); color: var(--success-text); }
+.badge-warning { background: var(--warning-bg); color: var(--warning-text); }
+.badge-danger  { background: var(--danger-bg);  color: var(--danger-text); }
+.badge-info    { background: var(--info-bg);    color: var(--info-text); }
+
+/* --- Slide Over & Modal (Clean) --- */
+.overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 100;
+    display: flex; justify-content: flex-end; /* Right align for slideover */
+}
+.overlay.active { opacity: 1; pointer-events: all; }
+
+.slide-panel {
+    width: 600px;
+    max-width: 90vw;
+    height: 100%;
+    background: var(--bg-surface);
+    border-left: 1px solid var(--border-light);
+    transform: translateX(100%);
+    transition: transform 0.3s var(--ease-out);
+    display: flex; flex-direction: column;
+}
+.overlay.active .slide-panel { transform: translateX(0); }
+
+.modal-panel {
+    margin: auto;
+    width: 500px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    transform: scale(0.95);
+    transition: transform 0.2s;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+.overlay.active .modal-panel { transform: scale(1); }
+
+/* --- HTMX Progress Bar --- */
+.htmx-indicator { opacity: 0; transition: opacity 0.2s; }
+.htmx-request .htmx-indicator { opacity: 1; }
+
+/* --- Kanban Updates --- */
+.kanban-board {
+    display: flex;
+    gap: 24px;
+    height: 100%;
+    overflow-x: auto;
+    padding-bottom: 20px;
+}
+.kanban-col {
+    min-width: 300px;
+    background: var(--bg-body); /* Slightly darker than card */
+    border-radius: var(--radius-md);
+    padding: 12px;
+    display: flex; flex-direction: column;
+}
+.kanban-header {
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+}
+.kanban-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    cursor: grab;
+}
+.kanban-card:hover { border-color: var(--primary); }
+.kanban-card-ghost { opacity: 0.5; background: var(--bg-body); border: 1px dashed var(--text-muted); }
+
+/* --- Responsive --- */
+@media (max-width: 1024px) {
+    #app-shell { grid-template-columns: 0 1fr; }
+    #app-shell.sidebar-open { grid-template-columns: var(--sidebar-width) 1fr; }
+    #sidebar { border-right: 1px solid var(--border-light); }
+}
+/* --- Project Grid View --- */
+.project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.project-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.project-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary);
+}
+
+/* Цветная полоска сверху карточки в зависимости от статуса */
+.project-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--border-light); /* Default */
+}
+
+.project-card.status-design::before { background: var(--info-text); }
+.project-card.status-construction::before { background: var(--warning-text); }
+.project-card.status-completed::before { background: var(--success-text); }
+
+.project-header {
+    margin-bottom: 12px;
+}
+
+.project-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 4px;
+    display: block;
+}
+
+.project-client {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex; align-items: center; gap: 6px;
+}
+
+/* --- Project Dashboard (Detail) --- */
+.project-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    padding: 16px;
+    border-radius: var(--radius-md);
+    display: flex; flex-direction: column;
+}
+
+.stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-value { font-size: 1.5rem; font-weight: 700; margin-top: 4px; }
+.stat-value.income { color: var(--success-text); }
+.stat-value.expense { color: var(--danger-text); }
+
+/* --- File Grid --- */
+.file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 16px;
+}
+.file-item {
+    aspect-ratio: 1;
+    background: var(--bg-body);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border-light);
+}
+.file-item img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.3s;
+}
+.file-item:hover img { transform: scale(1.05); }
+.file-meta {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    font-size: 0.7rem;
+    padding: 4px;
+    text-align: center;
+    backdrop-filter: blur(2px);
+}
+
+/* --- Modern Kanban & Filters --- */
+
+/* Панель фильтров */
+.filter-bar {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-light);
+    padding: 16px 32px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.search-input-wrapper {
+    position: relative;
+    flex-grow: 1;
+    max-width: 400px;
+}
+.search-input-wrapper i {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+.search-input-wrapper input {
+    padding-left: 36px;
+    border-radius: 20px; /* Более округлый поиск */
+}
+
+/* Сам Канбан */
+.kanban-container {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 24px 32px;
+    height: calc(100vh - 140px); /* Высота минус хедер и фильтры */
+    white-space: nowrap; /* Чтобы колонки шли в ряд */
+}
+
+.kanban-board {
+    display: inline-flex;
+    gap: 16px;
+    height: 100%;
+    align-items: flex-start;
+}
+
+.kanban-column {
+    width: 280px;
+    background: #F9FAFB; /* Очень светлый серый */
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    flex-shrink: 0;
+}
+
+/* Заголовок колонки */
+.kanban-column-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.kanban-count-badge {
+    background: rgba(0,0,0,0.05);
+    color: var(--text-main);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+}
+
+/* Тело колонки со скроллом */
+.kanban-column-body {
+    padding: 8px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Карточка */
+.kanban-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 12px;
+    white-space: normal; /* Текст внутри переносится */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    border-left: 3px solid transparent;
+}
+
+.kanban-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+/* Цветные индикаторы слева */
+.kanban-card.status-imported { border-left-color: #3B82F6; } /* Blue */
+.kanban-card.status-qualification { border-left-color: #F59E0B; } /* Yellow */
+.kanban-card.status-closed { border-left-color: #10B981; } /* Green */
+.kanban-card.status-archived { border-left-color: #6B7280; } /* Gray */
+
+.card-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+    color: var(--text-main);
+    display: block;
+}
+
+.card-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.card-tag {
+    font-size: 0.7rem;
+    background: var(--bg-body);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text-muted);
+}
+
+/* Пустое состояние колонки */
+.empty-col-placeholder {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    opacity: 0.6;
+    border: 1px dashed var(--border-light);
+    border-radius: 6px;
+    margin: 8px;
+}
+
+/* --- MODERN OVERLAYS & MODALS --- */
+
+/* 1. Базовый фон (Overlay) */
+.overlay {
+    position: fixed;
+    inset: 0; /* top:0, left:0, right:0, bottom:0 */
+    background: rgba(9, 9, 11, 0.4); /* Темный полупрозрачный фон */
+    backdrop-filter: blur(4px); /* Эффект размытия заднего плана (Glassmorphism) */
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+}
+
+/* Состояние "Открыто" */
+.overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 2. Слайд-панель (выезжает справа) */
+.slide-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 600px; /* Широкая, удобная панель */
+    max-width: 90vw; /* На мобилках не шире экрана */
+    background: #FFFFFF;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+    transform: translateX(100%); /* Спрятана справа */
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.overlay.active .slide-panel {
+    transform: translateX(0); /* Выезжает */
+}
+
+/* 3. Модальное окно (по центру) */
+#modal-overlay {
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-panel {
+    width: 500px;
+    max-width: 90vw;
+    background: #FFFFFF;
+    border-radius: 16px; /* Большие скругления */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transform: scale(0.95) translateY(10px);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0;
+    overflow: hidden; /* Чтобы контент не вылезал за скругления */
+}
+
+.overlay.active .modal-panel {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+/* --- Внутренности панелей (Header, Body, Footer) --- */
+
+.panel-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #FFFFFF;
+    flex-shrink: 0; /* Не сжимается */
+}
+
+.panel-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.panel-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    display: flex;
+}
+.panel-close:hover {
+    background: var(--bg-body);
+    color: var(--text-main);
+    transform: rotate(90deg);
+}
+
+.panel-body {
+    padding: 24px;
+    overflow-y: auto; /* Скролл только внутри тела */
+    flex-grow: 1;
+}
+
+/* --- Красивые детали внутри Слайдера --- */
+
+.detail-group {
+    margin-bottom: 24px;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.detail-value {
+    font-size: 1rem;
+    color: var(--text-main);
+    background: #F9FAFB;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    line-height: 1.5;
+}
+
+.detail-value.highlight {
+    background: #EFF6FF; /* Светло-голубой */
+    border-color: #DBEAFE;
+    color: #1E40AF;
+}
+
+/* Список задач внутри слайдера */
+.task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.2s;
+}
+.task-item:last-child { border-bottom: none; }
+.task-item:hover { background: #F9FAFB; }
+
+.task-checkbox {
+    width: 18px; height: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.task-text {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+.task-text.done {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+/* --- Modern Form Styles (Modal & Page) --- */
+
+/* Скрываем лишнее в модальном режиме */
+.modal-mode .page-header,
+.modal-mode .btn-back {
+    display: none !important;
+}
+
+/* Заголовок внутри модалки */
+.modal-form-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.modal-form-title {
+    font-size: 1.25rem; font-weight: 700; color: var(--text-main);
+}
+
+/* Секции формы (вместо fieldset) */
+.form-section {
+    margin-bottom: 24px;
+    border: none;
+    padding: 0;
+    background: transparent;
+}
+
+.form-section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+}
+.form-section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border-light);
+}
+
+/* Сетка полей */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* На мобильных - в одну колонку */
+@media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+}
+
+/* Поля ввода (доработка) */
+.input-group { margin-bottom: 16px; }
+.input-group label { margin-bottom: 6px; display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-main); }
+
+/* Подвал формы (Кнопки) */
+.form-footer {
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-surface); /* Чтобы кнопки не просвечивали при скролле */
+    z-index: 10;
+}
+
+/* --- Улучшенные стили полей (чтобы не были белыми на белом) --- */
+.input-field, .select-field, .textarea-field {
+    width: 100%;
+    padding: 12px 16px;
+    
+    /* Делаем фон серым, чтобы поле было видно */
+    background-color: #F3F4F6 !important; 
+    border: 1px solid transparent !important; 
+    border-radius: 8px;
+    
+    font-size: 0.9rem;
+    color: var(--text-main);
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+/* При наведении поле темнеет */
+.input-field:hover, .select-field:hover, .textarea-field:hover {
+    background-color: #E5E7EB !important;
+}
+
+/* При фокусе — белеет и светится синим */
+.input-field:focus, .select-field:focus, .textarea-field:focus {
+    background-color: #FFFFFF !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 4px var(--primary-light) !important;
+    outline: none;
+}
+
+/* --- Заголовки секций с иконками --- */
+.form-section-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--primary); /* Синий цвет вместо серого */
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+    margin-top: 8px;
+    
+    display: flex; 
+    align-items: center; 
+    gap: 12px;
+}
+
+/* Линия-разделитель */
+.form-section-title::after {
+    content: '';
+    flex: 1;
+    height: 2px; /* Чуть толще */
+    background: #F3F4F6;
+    border-radius: 2px;
+}
+
+/* Лейблы над полями */
+.input-group label {
+    margin-bottom: 6px;
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6B7280;
+    margin-left: 2px;
+}
+
+/* --- Красивая полоса прокрутки внутри модалки --- */
+.form-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+.form-scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+.form-scroll-area::-webkit-scrollbar-thumb {
+    background-color: #E5E7EB;
+    border-radius: 20px;
+}
+
+/* --- 1. MODERN TABLES (Таблицы) --- */
+.table-container {
+    background: #FFFFFF;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+thead {
+    background: #F9FAFB;
+    border-bottom: 1px solid var(--border-light);
+}
+
+th {
+    text-align: left;
+    padding: 14px 24px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+}
+
+td {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-main);
+    vertical-align: middle;
+}
+
+tr:last-child td { border-bottom: none; }
+
+/* Ховер эффект для строк */
+tbody tr { transition: background 0.15s; }
+tbody tr:hover { background: #F3F4F6; cursor: pointer; }
+
+/* Ссылки внутри таблицы */
+.table-link {
+    font-weight: 500;
+    color: var(--text-main);
+    text-decoration: none;
+}
+.table-link:hover { color: var(--primary); }
+
+/* --- 2. PAGINATION (Пагинация) --- */
+.pagination-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: #FFFFFF;
+    border-top: 1px solid var(--border-light);
+    border-radius: 0 0 12px 12px;
+}
+
+.page-info { font-size: 0.85rem; color: var(--text-muted); }
+
+.pagination-controls { display: flex; gap: 8px; }
+
+.page-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 6px 12px;
+    border: 1px solid var(--border-light);
+    background: white;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    transition: all 0.2s;
+}
+.page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.page-btn:disabled { opacity: 0.5; cursor: not-allowed; background: #F3F4F6; }
+
+/* --- 3. INPUTS FIX (Исправление селектов) --- */
+select.select-field {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236B7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px top 50%;
+    background-size: 10px auto;
+    padding-right: 32px;
+}
+
+/* Красивые чекбоксы */
+input[type="checkbox"] {
+    accent-color: var(--primary);
+    width: 16px; height: 16px;
+    cursor: pointer;
+}
+
+/* --- Modern Tabs (RU/UZ) --- */
+.tabs-container {
+    margin-bottom: 24px;
+}
+
+.tabs-header {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    background: #F3F4F6;
+    border-radius: 10px;
+    width: fit-content;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 8px 24px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    color: var(--text-main);
+}
+
+.tab-btn.active {
+    background: #FFFFFF;
+    color: var(--primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Скрываем контент неактивной вкладки */
+[x-cloak] { display: none !important; }
+
+/* --- Language Switcher Pill --- */
+.lang-switcher-pill {
+    display: flex;
+    background: #F3F4F6;
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+}
+
+.lang-opt {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.lang-opt:hover {
+    color: var(--text-main);
+}
+
+.lang-opt.active {
+    background: #FFFFFF;
+    color: var(--primary);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}

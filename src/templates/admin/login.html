@@ -1,49 +1,59 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход | WeConstruct CRM</title>
+    <title>Вход | WeConstruct ERP</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    <link rel="stylesheet" href="{{ url_for('static', path='css/crm.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/modern-erp.css') }}">
+    <style>
+        body {
+            background-color: #F3F4F6;
+            display: flex; align-items: center; justify-content: center;
+            height: 100vh; margin: 0;
+        }
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%; max-width: 400px;
+        }
+        .brand { text-align: center; margin-bottom: 32px; }
+        .brand i { font-size: 40px; color: var(--primary); }
+        .brand h1 { font-size: 1.5rem; margin: 10px 0 5px; color: var(--text-main); }
+        .brand p { color: var(--text-muted); font-size: 0.9rem; }
+    </style>
 </head>
+<body>
 
-<body class="login-page">
-
-    <div class="card login-card">
-        <div class="login-header">
-            <a href="#" class="brand">
-                <i class='bx bxs-color-fill logo-icon'></i>
-                <span class="text">WeConstruct CRM</span>
-            </a>
-            <p>Добро пожаловать. Авторизуйтесь для начала работы.</p>
+    <div class="login-card">
+        <div class="brand">
+            <i class='bx bxs-layer'></i>
+            <h1>WeConstruct</h1>
+            <p>Вход в систему управления</p>
         </div>
 
         {% if error %}
-        <div class="login-error-note" style="display: block;">{{ error }}</div>
+        <div style="background: #FEE2E2; color: #991B1B; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; text-align: center;">
+            {{ error }}
+        </div>
         {% endif %}
 
-        <form id="login-form" action="{{ url_for('admin_login_token') }}" method="post">
+        <form action="{{ url_for('admin_login_token') }}" method="post">
+            <div class="input-group">
+                <label>Имя пользователя</label>
+                <input class="input-field" type="text" name="username" required style="background: #F9FAFB;">
+            </div>
 
             <div class="input-group">
-                <label for="username">Имя пользователя</label>
-                <input class="input-field" type="text" id="username" name="username" required>
+                <label>Пароль</label>
+                <input class="input-field" type="password" name="password" required style="background: #F9FAFB;">
             </div>
 
-            <div class="input-group">
-                <label for="password">Пароль</label>
-                <input class="input-field" type="password" id="password" name="password" required>
-            </div>
-
-            <div class="form-actions" style="border: none; padding-top: 10px; margin-top: 10px;">
-                <button type="submit" class="btn btn-primary btn-full">Войти</button>
-            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;">Войти</button>
         </form>
-
     </div>
 
-    <script src="{{ url_for('static', path='js/crm.js') }}"></script>
 </body>
-
 </html>

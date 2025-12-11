@@ -3,41 +3,61 @@
 {% endif %}
 
 {% block content %}
-<div class="page-header">
-    <h1><i class='bx bxs-user-rectangle' style="vertical-align: middle;"></i> {{ _('client_single') }}: {{ contact.full_name }}</h1>
-</div>
+<div class="page-container" style="padding: 32px; max-width: 1200px; margin: 0 auto;">
 
-<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: flex-start;">
-    <div class="card">
-        <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">{{ _('contact_info') }}</h2>
-        <form method="post" action="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=contact.id) }}" novalidate>
-            {% for field in form %}
-            <div class="input-group">
-                <label for="{{ field.id }}">{{ _(field.label.text) }}</label>
-                {{ field(class_='input-field') }}
-                {% if field.errors %}<div class="error-text">{{ field.errors[0] }}</div>{% endif %}
-            </div>
-            {% endfor %}
-            <div class="form-actions" style="padding: 0; border: none; margin-top: 8px;">
-                <button type="submit" class="btn btn-primary">{{ _('save') }}</button>
-                 <a href="{{ request.url_for('admin_contact_delete', locale=request.state.locale, pk=contact.id) }}" class="btn btn-danger">{{ _('delete_contact') }}</a>
-            </div>
-        </form>
+    <!-- HEADER -->
+    <div class="page-header" style="margin-bottom: 32px; display: flex; align-items: center; gap: 12px;">
+        <div style="width: 48px; height: 48px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem;">
+            <i class='bx bxs-user'></i>
+        </div>
+        <div>
+            <!-- Исправлен ключ на строчный -->
+            <div style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">{{ _('client_header') }}</div>
+            <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin: 0;">{{ contact.full_name }}</h1>
+        </div>
     </div>
 
-    <div class="card">
-        <h2 style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">{{ _('interaction_feed') }}</h2>
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 32px; align-items: start;">
         
-        <form hx-post="{{ request.url_for('admin_contact_add_note', locale=request.state.locale, pk=contact.id) }}" hx-target="#timeline-list"
-            hx-swap="innerHTML" hx-on::after-request="this.reset()"
-            style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color);">
-            <textarea name="note" class="textarea-field" rows="3" placeholder="{{ _('add_note_placeholder') }}"></textarea>
-            <div style="text-align: right; margin-top: 10px;">
-                <button type="submit" class="btn btn-secondary">{{ _('add_note_button') }}</button>
+        <!-- LEFT: INFO FORM -->
+        <div class="card" style="padding: 24px;">
+            <div class="form-section-title">
+                <i class='bx bx-id-card'></i> {{ _('contact_info_title') }}
             </div>
-        </form>
+            
+            <form method="post" action="{{ request.url_for('admin_contact_detail', locale=request.state.locale, pk=contact.id) }}" novalidate>
+                <div class="input-group"><label>{{ _('label_name') }}</label>{{ form.name(class_='input-field') }}</div>
+                <div class="input-group"><label>{{ _('label_lastname') }}</label>{{ form.last_name(class_='input-field') }}</div>
+                <div class="input-group"><label>{{ _('label_phone') }}</label>{{ form.phone(class_='input-field') }}</div>
+                
+                {% if form.email %}<div class="input-group"><label>{{ _('label_email') }}</label>{{ form.email(class_='input-field') }}</div>{% endif %}
+                {% if form.company %}<div class="input-group"><label>{{ _('label_company') }}</label>{{ form.company(class_='input-field') }}</div>{% endif %}
+                
+                <div class="form-footer" style="background: transparent; border: none; padding: 0; margin-top: 24px;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">{{ _('save') }}</button>
+                    <!-- Исправлен ключ delete_contact_btn -->
+                    <a href="{{ request.url_for('admin_contact_delete', locale=request.state.locale, pk=contact.id) }}" class="btn btn-secondary" style="width: 100%; margin-top: 10px; color: var(--danger-text); border-color: var(--danger-bg);">{{ _('delete_contact_btn') }}</a>
+                </div>
+            </form>
+        </div>
 
-        {% include 'admin/partials/_contact_timeline.html' %}
+        <!-- RIGHT: TIMELINE -->
+        <div class="card" style="padding: 24px;">
+            <div class="form-section-title">
+                <i class='bx bx-time-five'></i> {{ _('timeline_title') }}
+            </div>
+            
+            <!-- Add Note -->
+            <form hx-post="{{ request.url_for('admin_contact_add_note', locale=request.state.locale, pk=contact.id) }}" hx-target="#timeline-list"
+                hx-swap="innerHTML" hx-on::after-request="this.reset()"
+                style="margin-bottom: 32px; display: flex; gap: 10px;">
+                <textarea name="note" class="textarea-field" rows="2" placeholder="{{ _('add_note_placeholder') }}" style="resize: none;"></textarea>
+                <button type="submit" class="btn btn-secondary" style="height: auto;">{{ _('add_note_btn') }}</button>
+            </form>
+
+            <!-- Timeline List -->
+            {% include 'admin/partials/_contact_timeline.html' %}
+        </div>
     </div>
 </div>
 {% endblock %}

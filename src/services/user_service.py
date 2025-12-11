@@ -98,3 +98,44 @@ async def create_first_superuser(db: AsyncSession):
                 log.info(f"Суперпользователь '{settings.FIRST_SUPERUSER}' уже был создан другим процессом.")
         else:
             log.info(f"Суперпользователь '{settings.FIRST_SUPERUSER}' уже существует.")
+
+async def create_user_direct(
+    db: AsyncSession, 
+    username: str, 
+    password: str, 
+    role: str, 
+    first_name: str = None,
+    last_name: str = None,
+    is_staff: bool = True, 
+    is_superuser: bool = False
+) -> User:
+    """
+    Ручное создание пользователя администратором (сразу с паролем).
+    """
+    hashed_password = get_password_hash(password)
+    
+    # Конвертируем строку роли в Enum
+    try:
+        user_role = UserRole(role)
+    except ValueError:
+        user_role = UserRole.MANAGER
+
+    new_user = User(
+        username=username,
+        hashed_password=hashed_password,
+        first_name=first_name,
+        last_name=last_name,
+        role=user_role,
+        is_active=True,
+        is_staff=is_staff,
+        is_superuser=is_superuser
+    )
+    db.add(new_user)
+    
+    try:
+        await db.commit()
+        await db.refresh(new_user)
+        return new_user
+    except IntegrityError:
+        await db.rollback()
+        return None

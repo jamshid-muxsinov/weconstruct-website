@@ -70,7 +70,12 @@ async def login_for_access_token(
 
 @router.get("/logout", name="admin_logout")
 async def logout_page(request: Request):
-    response = RedirectResponse(url="/admin/login")
+    try:
+        login_url = request.url_for("admin_login")
+    except:
+        login_url = "/admin/login"
+        
+    response = RedirectResponse(url=login_url, status_code=303)
     response.delete_cookie("access_token")
     return response
 

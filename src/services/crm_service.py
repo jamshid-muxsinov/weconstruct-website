@@ -92,12 +92,16 @@ async def get_dashboard_data(db: AsyncSession, user_id: int):
         "activity_log": activity_log,
     }
 
-async def get_kanban_data(db: AsyncSession, show_archived: bool = False, search_query: str = None, assignee_id: int = None):
+async def get_kanban_data(
+    db: AsyncSession, 
+    show_archived: bool = False, 
+    search_query: str = None, 
+    assignee_id: int = None
+):
     archived_statuses = [
         QuoteRequest.StatusEnum.CLOSED,
         QuoteRequest.StatusEnum.ARCHIVED,
     ]
-    
     stmt = (
         select(QuoteRequest)
         .options(
@@ -106,7 +110,7 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False, search_
         )
         .order_by(QuoteRequest.created_at.desc())
     )
-    
+
     if not show_archived:
         stmt = stmt.where(QuoteRequest.status.notin_(archived_statuses))
 
@@ -124,26 +128,27 @@ async def get_kanban_data(db: AsyncSession, show_archived: bool = False, search_
     if assignee_id:
         stmt = stmt.where(QuoteRequest.assigned_to_id == assignee_id)
         
-    requests_result = await db.execute(stmt)
-    all_requests = requests_result.scalars().unique().all()
-    
+    result = await db.execute(stmt)
+    all_requests = result.scalars().unique().all()
     requests_by_status = {status.value: [] for status in QuoteRequest.StatusEnum}
+    
     for req in all_requests:
-        requests_by_status[req.status.value].append(req)
+        if req.status.value in requests_by_status:
+            requests_by_status[req.status.value].append(req)
         
     kanban_data = []
     for status_enum in QuoteRequest.StatusEnum:
-        if not show_archived and status_enum in archived_statuses and not requests_by_status.get(status_enum.value):
-            continue
-            
-        kanban_data.append({
+        column_data = {
             "status_code": status_enum.value,
             "display_name": status_enum.value.replace('_', ' ').capitalize(),
             "requests": requests_by_status.get(status_enum.value, [])
-        })
+        }
+        if not show_archived and status_enum in archived_statuses:
+            continue
+            
+        kanban_data.append(column_data)
         
     return kanban_data
-
 
 async def update_quote_request_status(db: AsyncSession, update_data: QuoteRequestStatusUpdate, user_id: int):
     try:
