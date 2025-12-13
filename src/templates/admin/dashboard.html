@@ -106,11 +106,11 @@
 </div>
 
 <!-- ИНИЦИАЛИЗАЦИЯ ГРАФИКОВ -->
+<!-- ИНИЦИАЛИЗАЦИЯ ГРАФИКОВ -->
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     
-    // --- 1. График Воронки (Реальные данные) ---
-    // Данные приходят из Python как JSON строки
+    // --- 1. График Воронки ---
     const funnelLabels = JSON.parse('{{ chart_funnel_labels | safe }}'); 
     const funnelValues = JSON.parse('{{ chart_funnel_values | safe }}');
 
@@ -122,45 +122,64 @@ document.addEventListener('DOMContentLoaded', function () {
         chart: {
             type: 'bar',
             height: 350,
-            toolbar: { show: false }
+            toolbar: { show: false },
+            fontFamily: 'Inter, sans-serif'
         },
         plotOptions: {
             bar: {
                 borderRadius: 4,
-                horizontal: true, // Горизонтальная воронка
-                barHeight: '70%'
+                horizontal: true,
+                barHeight: '60%'
             }
         },
         dataLabels: { enabled: true },
         xaxis: { categories: funnelLabels },
-        colors: ['#3B82F6']
+        colors: ['#3B82F6'],
+        grid: { borderColor: '#F3F4F6' }
     };
 
     var chartFunnel = new ApexCharts(document.querySelector("#funnelChart"), optionsFunnel);
     chartFunnel.render();
 
 
-    // --- 2. График Финансов (Демо) ---
-    // Пока у вас мало транзакций, показываем пример, как это будет выглядеть
+    // --- 2. График Финансов (РЕАЛЬНЫЕ ДАННЫЕ) ---
+    const finLabels = JSON.parse('{{ chart_finance_labels | safe }}');
+    const finIncome = JSON.parse('{{ chart_finance_income | safe }}');
+    const finExpense = JSON.parse('{{ chart_finance_expense | safe }}');
+
     var optionsFinance = {
         series: [{
-            name: 'Приход',
-            data: [44, 55, 57, 56, 61, 58, 63, 60, 66] // Демо
+            name: '{{ _("income") }}', // Берем слово из словаря
+            data: finIncome
         }, {
-            name: 'Расход',
-            data: [76, 85, 101, 98, 87, 105, 91, 114, 94] // Демо
+            name: '{{ _("expense") }}',
+            data: finExpense
         }],
         chart: {
-            type: 'area', // Красивая область
+            type: 'area',
             height: 350,
-            toolbar: { show: false }
+            toolbar: { show: false },
+            fontFamily: 'Inter, sans-serif',
+            zoom: { enabled: false }
         },
         dataLabels: { enabled: false },
-        stroke: { curve: 'smooth' },
+        stroke: { curve: 'smooth', width: 2 },
         xaxis: {
-            categories: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+            categories: finLabels,
+            axisBorder: { show: false },
+            axisTicks: { show: false }
         },
-        colors: ['#10B981', '#EF4444'], // Зеленый и Красный
+        yaxis: {
+            labels: {
+                formatter: function (value) {
+                    // Форматируем большие числа (1k, 1M)
+                    if (value >= 1000000) return (value / 1000000).toFixed(1) + "M";
+                    if (value >= 1000) return (value / 1000).toFixed(0) + "k";
+                    return value;
+                }
+            }
+        },
+        colors: ['#10B981', '#EF4444'], // Зеленый (Приход), Красный (Расход)
         fill: {
              type: "gradient",
              gradient: {
@@ -169,6 +188,15 @@ document.addEventListener('DOMContentLoaded', function () {
                opacityTo: 0.05,
                stops: [0, 100]
              }
+        },
+        grid: { borderColor: '#F3F4F6', strokeDashArray: 4 },
+        tooltip: {
+            y: {
+                formatter: function (val) {
+                    // Форматируем число с пробелами (1 000 000)
+                    return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+                }
+            }
         }
     };
 
