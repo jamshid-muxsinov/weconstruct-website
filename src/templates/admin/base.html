@@ -108,9 +108,17 @@
 
         <!-- TOP BAR -->
         <header class="top-bar">
-            <div style="font-size:1.1rem; font-weight:600;">{{ title|default('CRM') }}</div>
+            <div class="top-bar-left" style="display: flex; align-items: center; gap: 12px;">
+                <!-- ВОТ ЭТА КНОПКА ВАЖНА -->
+                <button id="sidebar-toggle" class="btn-icon mobile-only" style="display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-main);">
+                    <i class='bx bx-menu'></i>
+                </button>
                 
-<div class="top-bar-right" style="display:flex; align-items:center; gap:16px;">
+                <div style="font-size:1.1rem; font-weight:600;">{{ title|default('CRM') }}</div>
+            </div>
+            
+                
+            <div class="top-bar-right" style="display:flex; align-items:center; gap:16px;">
                 
                 <!-- ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКОВ -->
                 <div class="lang-switcher-pill">

@@ -109,6 +109,50 @@ document.addEventListener('change', function(e) {
             cb.checked = isChecked;
         });
     }
+
+    /* --- MOBILE SIDEBAR LOGIC --- */
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const appShell = document.getElementById('app-shell');
+
+    // Создаем затемнение (backdrop) динамически, если его нет
+    let sidebarOverlay = document.querySelector('.sidebar-overlay');
+    if (!sidebarOverlay) {
+        sidebarOverlay = document.createElement('div');
+        sidebarOverlay.className = 'sidebar-overlay';
+        document.body.appendChild(sidebarOverlay);
+    }
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('open');
+        sidebarOverlay.classList.toggle('active');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('active');
+    }
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Чтобы клик не ушел дальше
+            toggleSidebar();
+        });
+    }
+
+    // Закрываем при клике на затемнение
+    sidebarOverlay.addEventListener('click', closeSidebar);
+
+    // Закрываем при клике на любую ссылку в меню (чтобы перейти на страницу)
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            // Закрываем только на мобильных (если экран меньше 1024)
+            if (window.innerWidth <= 1024) {
+                closeSidebar();
+            }
+        });
+    });
 });
 
 function getSelectedIds() {
@@ -118,3 +162,4 @@ function getSelectedIds() {
     });
     return selected;
 }
+
