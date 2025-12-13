@@ -306,4 +306,30 @@ TRANSLATIONS = {
 
     'date_from': {'ru': 'Дата от', 'uz': 'Sana (dan)'},
     'date_to': {'ru': 'Дата до', 'uz': 'Sana (gacha)'},
+
+     'label_name': {'ru': 'Имя', 'uz': 'Ism'},
+    'label_lastname': {'ru': 'Фамилия', 'uz': 'Familiya'},
+    'label_phone': {'ru': 'Телефон', 'uz': 'Telefon'},
+    'label_email': {'ru': 'Email', 'uz': 'Email'},
+    'label_company': {'ru': 'Компания', 'uz': 'Kompaniya'},
+    'label_notes': {'ru': 'Заметки', 'uz': 'Eslatmalar'},
+    
+    # Заявка (Модальное окно)
+    'label_subject': {'ru': 'Тема обращения', 'uz': 'Murojaat mavzusi'},
+    'label_message': {'ru': 'Сообщение', 'uz': 'Xabar'},
+    'label_status': {'ru': 'Статус', 'uz': 'Holati'},
+    'label_assignee': {'ru': 'Ответственный', 'uz': 'Masʼul'},
+    
+    # Специфичные поля (те, что были "сломаны")
+    'label_business_type': {'ru': 'Тип бизнеса', 'uz': 'Biznes turi'},
+    'label_dimensions': {'ru': 'Размеры', 'uz': 'Oʻlchamlari'},
+    'label_investment': {'ru': 'Бюджет и детали', 'uz': 'Byudjet va tafsilotlar'},
+    'label_conclusion': {'ru': 'Выводы менеджера', 'uz': 'Menejer xulosasi'},
+    'label_additional': {'ru': 'Дополнительные сведения', 'uz': 'Qoʻshimcha maʼlumotlar'},
+    
+    # Кнопки в карточке клиента (которые тоже были английскими)
+    'add_note_btn': {'ru': 'Добавить', 'uz': 'Qoʻshish'},
+    'delete_contact_btn': {'ru': 'Удалить контакт', 'uz': 'Kontaktni oʻchirish'},
+    'request_title': {'ru': 'Заявка', 'uz': 'Ariza'},
+    'edit_btn': {'ru': 'Редактировать', 'uz': 'Tahrirlash'},
 }
