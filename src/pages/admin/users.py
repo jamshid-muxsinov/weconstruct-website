@@ -228,9 +228,12 @@ async def user_delete(
             return set_hx_trigger_header(response, f"Пользователь удален", request, type="warning")
         except IntegrityError:
             await db.rollback()
-            context["error_message"] = "Нельзя удалить пользователя, у которого есть задачи или заявки."
-            return templates.TemplateResponse("admin/500.html", context, status_code=400)
-
+            return templates.TemplateResponse("admin/error.html", {
+                "request": request,
+                "status_code": 400,
+                "title": "Ошибка удаления",
+                "message": "Нельзя удалить пользователя, к которому привязаны задачи или проекты."
+            }, status_code=400)
     _ = templates.env.globals['_']
     title = _({'request': request}, 'delete_confirmation_title', entity=f"пользователя {user_to_delete.username}")
     

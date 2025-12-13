@@ -329,8 +329,12 @@ async def quoterequest_delete(request: Request, pk: int, context: dict = Depends
             return response
         except IntegrityError:
             await db.rollback()
-            context.update({"error_message": "Не удалось удалить заявку."})
-            return templates.TemplateResponse("admin/500.html", context, status_code=500)
+            return templates.TemplateResponse("admin/error.html", {
+                "request": request,
+                "status_code": 400,
+                "title": "Ошибка удаления",
+                "message": "Не удалось удалить заявку, так как она связана с другими данными."
+            }, status_code=400)
             
     back_url = request.headers.get("referer", request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale))
     

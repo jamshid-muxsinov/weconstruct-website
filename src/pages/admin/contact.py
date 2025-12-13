@@ -167,12 +167,12 @@ async def contact_delete(
             return set_hx_trigger_header(response, "Контакт удален", request, "error")
         except IntegrityError:
             await db.rollback()
-            error_msg = "Нельзя удалить контакт, к которому привязаны заявки или задачи."
-            context.update({
-                "error_message": error_msg,
-                "title": "Ошибка удаления"
-            })
-            return templates.TemplateResponse("admin/500.html", context, status_code=400)
+            return templates.TemplateResponse("admin/error.html", {
+                "request": request,
+                "status_code": 400,
+                "title": "Ошибка удаления",
+                "message": "Нельзя удалить контакт, к которому привязаны заявки или задачи."
+            }, status_code=400)
 
     back_url = request.url_for("admin_contact_detail", locale=request.state.locale, pk=pk)
     title = f"{_({'request': request}, 'delete_confirmation_title', entity=_(CONTACT_META.verbose_name))}"

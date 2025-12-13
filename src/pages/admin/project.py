@@ -14,7 +14,7 @@ import uuid
 from src.pages.jinja_config import templates
 from src.core.db import get_db_session
 from src.core.security import get_current_active_user
-# Убедитесь, что Contact добавлен в импорт!
+import shutil
 from src.models.shop_models import User, Project, Transaction, ProjectFile, QuoteRequest, Contact
 from src.pages.admin.dependencies import get_common_context
 
