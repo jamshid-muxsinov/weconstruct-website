@@ -2,23 +2,21 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Уведомления (Notyf)
-    const notyf = new Notyf({
+    window.notyf = new Notyf({
         duration: 4000,
         position: { x: 'right', y: 'top' },
-        ripple: false, // Отключаем для производительности
+        ripple: false, 
         dismissible: true
     });
 
     // 2. Обработка событий HTMX
     const body = document.body;
-    
-    // Передаем CSRF токен
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    
     body.addEventListener('htmx:configRequest', (evt) => {
         if(evt.detail.verb !== 'get') {
             evt.detail.headers['X-CSRFToken'] = csrfToken;
         }
-        // Индикатор загрузки в стиле NProgress можно добавить здесь
         body.style.cursor = 'wait';
     });
 
@@ -27,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     body.addEventListener('htmx:responseError', () => {
-        notyf.error('Ошибка соединения с сервером');
+        window.notyf.error('Ошибка соединения с сервером');
     });
 
     // Обработка "Toast" уведомлений от сервера
@@ -38,43 +36,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = JSON.parse(trigger);
                 if (data['show-toast']) {
                     const { message, type } = data['show-toast'];
-                    notyf.open({ type: type || 'success', message });
+                    window.notyf.open({ type: type || 'success', message });
                 }
-                // Автоматическое закрытие модалок если пришел сигнал
                 if (data['closeSlideOver']) closeOverlay('slide-over-overlay');
                 if (data['closeModal']) closeOverlay('modal-overlay');
                 
-                // Реинициализация скриптов если контент обновился
-                if (evt.detail.target.id === 'kanban-board-container') {
-                    initKanbanSortable(); // Функция из kanban-enhanced.js
+                if (evt.detail.target.id === 'kanban-board-container' && window.initKanbanSortable) {
+                    window.initKanbanSortable();
                 }
             } catch (e) { console.error("Trigger parse error", e); }
         }
         
-        // Авто-открытие оверлеев при загрузке контента в них
-        if (evt.detail.target.id === 'slide-over-content') {
-            openOverlay('slide-over-overlay');
-        }
-        if (evt.detail.target.id === 'modal-body-content') {
-            openOverlay('modal-overlay');
-        }
+        if (evt.detail.target.id === 'slide-over-content') openOverlay('slide-over-overlay');
+        if (evt.detail.target.id === 'modal-body-content') openOverlay('modal-overlay');
     });
 
-    // 3. Управление Sidebar (Мобильная версия)
-    const toggleBtn = document.getElementById('sidebar-toggle');
-    const appShell = document.getElementById('app-shell');
-    
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            appShell.classList.toggle('sidebar-open');
-        });
-    }
-
-    // 4. Логика Оверлеев (Modals/Slide-overs)
+    // 3. Логика Оверлеев (Modals/Slide-overs)
     window.openOverlay = (id) => document.getElementById(id)?.classList.add('active');
     window.closeOverlay = (id) => document.getElementById(id)?.classList.remove('active');
 
-    // Закрытие по клику вне контента или ESC
     document.querySelectorAll('.overlay').forEach(overlay => {
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) overlay.classList.remove('active');
@@ -87,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 5. Alpine.js Store для Kanban (если используется)
+    // 4. Alpine.js Store
     document.addEventListener('alpine:init', () => {
         Alpine.store('erp', {
             selectedItems: new Set(),
@@ -99,8 +79,12 @@ document.addEventListener('DOMContentLoaded', () => {
             get count() { return this.selectedItems.size; }
         });
     });
+
+    // 5. Инициализация мобильного меню
+    initMobileSidebar();
 });
 
+/* --- ГЛОБАЛЬНАЯ ЛОГИКА ЧЕКБОКСОВ (Вне DOMContentLoaded) --- */
 document.addEventListener('change', function(e) {
     if (e.target && e.target.id === 'select-all') {
         const isChecked = e.target.checked;
@@ -109,13 +93,16 @@ document.addEventListener('change', function(e) {
             cb.checked = isChecked;
         });
     }
+});
 
-    /* --- MOBILE SIDEBAR LOGIC --- */
+/* --- ФУНКЦИИ МОБИЛЬНОГО МЕНЮ --- */
+function initMobileSidebar() {
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebar-toggle');
-    const appShell = document.getElementById('app-shell');
+    
+    if (!sidebar || !sidebarToggle) return;
 
-    // Создаем затемнение (backdrop) динамически, если его нет
+    // Создаем затемнение, если нет
     let sidebarOverlay = document.querySelector('.sidebar-overlay');
     if (!sidebarOverlay) {
         sidebarOverlay = document.createElement('div');
@@ -133,27 +120,23 @@ document.addEventListener('change', function(e) {
         sidebarOverlay.classList.remove('active');
     }
 
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', (e) => {
-            e.stopPropagation(); // Чтобы клик не ушел дальше
-            toggleSidebar();
-        });
-    }
+    sidebarToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSidebar();
+    });
 
-    // Закрываем при клике на затемнение
     sidebarOverlay.addEventListener('click', closeSidebar);
 
-    // Закрываем при клике на любую ссылку в меню (чтобы перейти на страницу)
+    // Закрываем меню при клике на ссылку (только на мобильных)
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
-            // Закрываем только на мобильных (если экран меньше 1024)
             if (window.innerWidth <= 1024) {
                 closeSidebar();
             }
         });
     });
-});
+}
 
 function getSelectedIds() {
     const selected = [];
@@ -162,4 +145,3 @@ function getSelectedIds() {
     });
     return selected;
 }
-
