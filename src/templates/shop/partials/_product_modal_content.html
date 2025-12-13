@@ -49,9 +49,6 @@
                 </div>
                 {% endif %}
             </div>
-            <div id="modal-form-wrapper">
-                    {% include 'shop/partials/_quote_form.html' %}
-            </div>
             <div class="modal-info-scrollable">
                 <h2 class="modal-title">{{ t_get(request, product, 'name') }}</h2>
                 
@@ -113,7 +110,9 @@
                         <p>{% if request.state.locale == 'uz' %}Har qanday loyihaning tashqi va ichki pardoz materiallarini byudjetingiz va didingizga mos ravda o'zgartirishimiz mumkin.{% else %}Мы можем изменить материалы внешней и внутренней отделки в любом проекте под ваш бюджет и вкус.{% endif %}</p>
                     </div>
                 </div>
-                
+                <div id="modal-form-wrapper">
+                    {% include 'shop/partials/_quote_form.html' %}
+                </div>
             </div>
         </div>
     </div>
