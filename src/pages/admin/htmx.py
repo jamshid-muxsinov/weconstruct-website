@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 from urllib.parse import quote
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, Response, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -207,11 +208,18 @@ async def htmx_get_dashboard_new_requests(
     return templates.TemplateResponse("admin/partials/_dashboard_new_requests.html", context, headers=NO_CACHE_HEADERS)
     
 @router.get("/contact-search/", response_class=HTMLResponse, name="admin_htmx_contact_search")
-async def htmx_contact_search(q: str, request: Request, db: AsyncSession = Depends(get_db_session)):
-    if not q:
+async def htmx_contact_search(
+    request: Request, 
+    db: AsyncSession = Depends(get_db_session),
+    q: Optional[str] = Query(None, alias="q") # alias на случай если в запросе будет ?q=
+):
+    # Пытаемся получить запрос из разных параметров, которые может слать HTMX
+    search_term = q or request.query_params.get("contact-search") or ""
+    
+    if len(search_term) < 2:
         return HTMLResponse("")
 
-    search_query = f"%{q}%"
+    search_query = f"%{search_term}%"
     stmt = (
         select(Contact)
         .where(

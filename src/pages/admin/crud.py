@@ -185,16 +185,24 @@ async def handle_list_view(
     return create_page(items, total, Params(page=page, size=size))
 
 async def populate_request_form_choices(db: AsyncSession, request: Request, form: QuoteRequestForm):
+    # 1. Загружаем сотрудников
     staff_users = (await db.execute(select(User).where(User.is_staff == True).order_by(User.username))).scalars().all()
+    
     _ = templates.env.globals['_']
+    locale = getattr(request.state, 'locale', 'ru')
+    
+    # Текст для "Не назначен"
     unassigned_text = _({'request': request}, 'unassigned_option')
     form.assigned_to_id.choices = [(0, unassigned_text)] + [(u.id, u.username) for u in staff_users]
-    locale = request.state.locale
+
+    # 2. Переводим статусы ЗАЯВОК
     translated_statuses = []
     for status_enum in QuoteRequest.StatusEnum:
-        key = f"status_{status_enum.value}"
-        label = TRANSLATIONS.get(key, {}).get(locale, status_enum.value)
+        status_key = f"status_{status_enum.value}"
+        # Берем перевод из словаря translations.py
+        label = TRANSLATIONS.get(status_key, {}).get(locale, status_enum.value.replace('_', ' ').capitalize())
         translated_statuses.append((status_enum.value, label))
+    
     form.status.choices = translated_statuses
 
 # --- VIEWS (LIST, ADD/CHANGE, DELETE) ---

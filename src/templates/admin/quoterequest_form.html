@@ -31,12 +31,12 @@
                     <label for="contact-search">{{ _('contact_search_label') }}</label>
                     <div style="position: relative;">
                         <i class='bx bx-search' style="position: absolute; left: 12px; top: 13px; color: var(--text-secondary);"></i>
-                        <input type="text" id="contact-search" class="input-field" 
-                               placeholder="{{ _('contact_search_placeholder') }}" 
-                               style="padding-left: 40px;" autocomplete="off"
-                               hx-get="{{ request.url_for('admin_htmx_contact_search', locale=request.state.locale) }}"
-                               hx-trigger="keyup[target.value.length > 1] changed delay:300ms" 
-                               hx-target="#search-results">
+                        <input type="text" id="contact-search" name="q" class="input-field" 
+                            placeholder="{{ _('contact_search_placeholder') }}" 
+                            style="padding-left: 40px;" autocomplete="off"
+                            hx-get="{{ request.url_for('admin_htmx_contact_search', locale=request.state.locale) }}"
+                            hx-trigger="keyup[this.value.length > 1] changed delay:300ms" 
+                            hx-target="#search-results">
                         <div id="search-results" class="search-results-dropdown"></div>
                     </div>
                 </div>
