@@ -193,8 +193,7 @@ async def populate_request_form_choices(db: AsyncSession, request: Request, form
     translated_statuses = []
     for status_enum in QuoteRequest.StatusEnum:
         key = f"status_{status_enum.value}"
-        translation_dict = TRANSLATIONS.get(key, {})
-        label = translation_dict.get(locale, translation_dict.get('ru', status_enum.value.capitalize()))
+        label = TRANSLATIONS.get(key, {}).get(locale, status_enum.value)
         translated_statuses.append((status_enum.value, label))
     form.status.choices = translated_statuses
 
@@ -217,45 +216,87 @@ async def quoterequest_form_get_add(request: Request, context: dict = Depends(ge
     return templates.TemplateResponse("admin/quoterequest_form.html", context)
 
 @quoterequest_router.post("/add/", response_class=HTMLResponse)
-async def quoterequest_form_post_add(request: Request, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
+async def quoterequest_form_post_add(
+    request: Request, 
+    context: dict = Depends(get_common_context), 
+    db: AsyncSession = Depends(get_db_session)
+):
     form_data = await request.form()
     form = QUOTEREQUEST_META.form_class(form_data)
+    
+    # Загружаем списки (менеджеры, статусы)
     await populate_request_form_choices(db, request, form)
+    
     if form.validate():
-        # 1. Создаем объект
-        quote = QuoteRequest()
-        
-        # 2. Заполняем данными из формы (subject, message...), НО это может перезаписать contact_id пустым значением
-        form.populate_obj(quote)
-        
-        # 3. ИЩЕМ или СОЗДАЕМ контакт вручную
-        from src.services.shop_service import _get_or_create_contact
-        
-        contact_id = None
-        # Если передан ID существующего контакта
-        if form.contact_id.data and str(form.contact_id.data).strip().isdigit():
-            contact_id = int(form.contact_id.data)
-        
-        # Если ID нет, создаем новый контакт по имени и телефону
-        if not contact_id:
-            contact = await _get_or_create_contact(db, form.new_contact_name.data, form.new_contact_phone.data)
-            contact_id = contact.id
+        try:
+            # 1. ЛОГИКА КОНТАКТА (FOOLPROOF)
+            contact_id = None
             
-        # 4. ВАЖНО: Присваиваем contact_id ПОСЛЕ populate_obj, чтобы не затерлось
-        quote.contact_id = contact_id
-        
-        # 5. Обработка ответственного
-        if quote.assigned_to_id == 0:
-            quote.assigned_to_id = None
+            # Проверяем, пришел ли ID существующего контакта из поиска
+            raw_contact_id = form.contact_id.data
+            if raw_contact_id and str(raw_contact_id).strip().isdigit() and int(raw_contact_id) > 0:
+                contact_id = int(raw_contact_id)
+            else:
+                # Если ID нет, создаем нового клиента (используем внутренний сервис)
+                from src.services.shop_service import _get_or_create_contact
+                
+                # Валидация полей нового контакта (если ID не выбран)
+                if not form.new_contact_name.data or not form.new_contact_phone.data:
+                    form.contact_id.errors.append("Выберите клиента из поиска или заполните данные нового.")
+                    raise ValueError("Contact data missing")
+                
+                contact = await _get_or_create_contact(
+                    db, 
+                    name=form.new_contact_name.data, 
+                    phone=form.new_contact_phone.data
+                )
+                contact_id = contact.id
+
+            # 2. СОЗДАНИЕ ЗАЯВКИ
+            quote = QuoteRequest()
             
-        db.add(quote)
-        await db.commit()
-        response = RedirectResponse(request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale), status_code=303)
-        return set_hx_trigger_header(response, "request_created_success", request)
-        
+            # Заполняем основные поля (subject, message, business_type и т.д.)
+            form.populate_obj(quote)
+            
+            # 3. ПРИНУДИТЕЛЬНАЯ ПРИВЯЗКА
+            quote.contact_id = contact_id
+            
+            # Обработка ответственного (0 в форме = None в базе)
+            if quote.assigned_to_id == 0:
+                quote.assigned_to_id = None
+            
+            # Если менеджер назначен вручную, меняем статус на "Квалификация"
+            if quote.assigned_to_id and quote.status == QuoteRequest.StatusEnum.IMPORTED:
+                quote.status = QuoteRequest.StatusEnum.QUALIFICATION
+
+            db.add(quote)
+            await db.commit()
+            
+            # Редирект обратно в список или в канбан (с уведомлением)
+            response = RedirectResponse(
+                request.url_for(QUOTEREQUEST_META.list_url_name, locale=request.state.locale), 
+                status_code=303
+            )
+            return set_hx_trigger_header(response, "request_created_success", request)
+
+        except ValueError:
+            # Ошибка валидации контакта уже добавлена в form.errors
+            pass
+        except Exception as e:
+            await db.rollback()
+            log.error(f"Error creating QuoteRequest: {e}", exc_info=True)
+            form.contact_id.errors.append(f"Системная ошибка при сохранении: {str(e)}")
+
+    # Если форма невалидна, возвращаем её с ошибками
     _ = templates.env.globals['_']
     title = f"{_({'request': request}, 'adding')}: {_({'request': request}, 'request_single')}"
-    context.update({"meta": QUOTEREQUEST_META, "original": None, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
+    context.update({
+        "meta": QUOTEREQUEST_META, 
+        "original": None, 
+        "form": form, 
+        "title": title, 
+        "htmx_request": "HX-Request" in request.headers
+    })
     return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
 
 @quoterequest_router.get("/{pk}/change/", response_class=HTMLResponse, name="admin_quoterequest_change")
@@ -285,25 +326,81 @@ async def quoterequest_change_form_get(
     return templates.TemplateResponse("admin/quoterequest_form.html", context)
 
 @quoterequest_router.post("/{pk}/change/", response_class=HTMLResponse)
-async def quoterequest_change_form_post(request: Request, pk: int, context: dict = Depends(get_common_context), db: AsyncSession = Depends(get_db_session)):
-    quote = await db.get(QuoteRequest, pk, options=[joinedload(QuoteRequest.contact)])
-    if not quote: raise HTTPException(404)
+async def quoterequest_change_form_post(
+    request: Request, 
+    pk: int, 
+    context: dict = Depends(get_common_context), 
+    db: AsyncSession = Depends(get_db_session)
+):
+    # Загружаем заявку вместе с контактом
+    stmt = select(QuoteRequest).where(QuoteRequest.id == pk).options(joinedload(QuoteRequest.contact))
+    quote = (await db.execute(stmt)).scalars().first()
+    
+    if not quote: 
+        raise HTTPException(404)
+        
     form_data = await request.form()
     form = QUOTEREQUEST_META.form_class(form_data, obj=quote)
+    
+    # Списки выбора
     await populate_request_form_choices(db, request, form)
+    
     if form.validate():
-        form.populate_obj(quote)
-
-        if quote.assigned_to_id == 0:
-            quote.assigned_to_id = None
+        try:
+            # 1. ЗАПОЛНЕНИЕ ДАННЫХ
+            # Мы не позволяем менять контакт_ид из этой формы напрямую (защита данных)
+            old_status = quote.status
+            form.populate_obj(quote)
             
-        db.add(quote)
-        await db.commit()
-        response = RedirectResponse(request.url_for(QUOTEREQUEST_META.change_url_name, locale=request.state.locale, pk=pk), status_code=303)
-        return set_hx_trigger_header(response, "request_saved_success", request)
+            # 2. ЛОГИКА СТАТУСОВ И ЛОГИРОВАНИЕ
+            if quote.assigned_to_id == 0:
+                quote.assigned_to_id = None
+
+            # Проверяем, изменился ли статус для записи в историю
+            if old_status != quote.status:
+                from src.models.shop_models import StatusChangeLog
+                log_entry = StatusChangeLog(
+                    quote_request_id=quote.id,
+                    user_id=context["user"].id,
+                    old_status=old_status,
+                    new_status=quote.status,
+                    note="Изменено через форму редактирования"
+                )
+                db.add(log_entry)
+
+            db.add(quote)
+            await db.commit()
+            
+            # Возвращаем пользователя на ту же страницу с уведомлением об успехе
+            response = RedirectResponse(
+                request.url_for(QUOTEREQUEST_META.change_url_name, locale=request.state.locale, pk=pk), 
+                status_code=303
+            )
+            return set_hx_trigger_header(response, "request_saved_success", request)
+
+        except Exception as e:
+            await db.rollback()
+            log.error(f"Error updating QuoteRequest #{pk}: {e}", exc_info=True)
+            form.form_errors = [f"Ошибка базы данных: {e}"]
+
+    # Если есть ошибки валидации
     _ = templates.env.globals['_']
     title = f"{_({'request': request}, 'editing')}: {_({'request': request}, 'request_single')} #{pk}"
-    context.update({"meta": QUOTEREQUEST_META, "original": quote, "form": form, "title": title, "htmx_request": "HX-Request" in request.headers})
+    
+    # Проверяем наличие проекта для отображения кнопки "Перейти в проект"
+    from src.models.shop_models import Project
+    project_stmt = select(Project.id).where(Project.quote_request_id == pk)
+    project_id = (await db.execute(project_stmt)).scalar()
+
+    context.update({
+        "meta": QUOTEREQUEST_META, 
+        "original": quote, 
+        "form": form, 
+        "title": title, 
+        "project_exists": bool(project_id),
+        "project_id": project_id,
+        "htmx_request": "HX-Request" in request.headers
+    })
     return templates.TemplateResponse("admin/quoterequest_form.html", context, status_code=422)
 
 @quoterequest_router.get("/{pk}/delete/", response_class=HTMLResponse, name="admin_quoterequest_delete")

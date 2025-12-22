@@ -332,4 +332,25 @@ TRANSLATIONS = {
     'delete_contact_btn': {'ru': 'Удалить контакт', 'uz': 'Kontaktni oʻchirish'},
     'request_title': {'ru': 'Заявка', 'uz': 'Ariza'},
     'edit_btn': {'ru': 'Редактировать', 'uz': 'Tahrirlash'},
+
+    'client_info': {'ru': 'Информация о клиенте', 'uz': 'Mijoz ma’lumotlari'},
+    'contact_search_label': {'ru': 'Поиск по базе (начните вводить имя или телефон)', 'uz': 'Baza bo‘yicha qidiruv (ism yoki telefon kiriting)'},
+    'contact_search_placeholder': {'ru': 'Поиск клиента...', 'uz': 'Mijozni qidirish...'},
+    'new_client_reg_title': {'ru': 'Регистрация нового клиента', 'uz': 'Yangi mijozni ro‘yxatga olish'},
+    
+    # Метки полей (Labels)
+    'label_subject': {'ru': 'Тема обращения', 'uz': 'Murojaat mavzusi'},
+    'subject_placeholder': {'ru': 'Например, "Холодный звонок"', 'uz': 'Masalan, "Sovuq qo‘ng‘iroq"'},
+    'label_status': {'ru': 'Статус заявки', 'uz': 'Ariza holati'},
+    'label_assignee': {'ru': 'Ответственный менеджер', 'uz': 'Mas’ul menejer'},
+    'label_business_type': {'ru': 'Тип строения / Бизнеса', 'uz': 'Bino / Biznes turi'},
+    'label_dimensions': {'ru': 'Размеры объекта', 'uz': 'O‘lchamlari'},
+    'label_message': {'ru': 'Сообщение от клиента', 'uz': 'Mijoz xabari'},
+    
+    # Кнопки
+    'btn_save_request': {'ru': 'Сохранить заявку', 'uz': 'Arizani saqlash'},
+    'btn_cancel': {'ru': 'Отмена', 'uz': 'Bekor qilish'},
+    
+    # Статусы (для селекта)
+    'unassigned_option': {'ru': '-- Не назначен --', 'uz': '-- Tayinlanmagan --'},
 }

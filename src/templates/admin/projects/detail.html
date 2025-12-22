@@ -1,194 +1,129 @@
 {% extends "admin/base.html" %}
 
 {% block content %}
-
-<!-- Статистика -->
-<div class="project-stats-grid">
-    <div class="stat-box">
-        <span class="stat-label">{{ _('income') }}</span>
-        <span class="stat-value income">{{ income|format_number }}</span>
-    </div>
-    <div class="stat-box">
-        <span class="stat-label">{{ _('expense') }}</span>
-        <span class="stat-value expense">{{ expenses|format_number }}</span>
-    </div>
-    <div class="stat-box">
-        <span class="stat-label">{{ _('profit') }}</span>
-        <span class="stat-value" style="color: var(--text-main);">{{ profit|format_number }}</span>
-    </div>
-    <div class="stat-box">
-        <span class="stat-label">{{ _('status') }}</span>
-        <div style="margin-top: 4px;">
-             <!-- ПЕРЕВОД СТАТУСА -->
-             <span class="badge badge-info" style="font-size: 1rem;">{{ get_status_display(project.status.value) }}</span>
-        </div>
-    </div>
-</div>
-
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
+<div class="project-container" style="max-width: 1400px; margin: 0 auto; padding: 20px;">
     
-    <!-- LEFT COLUMN -->
-    <div style="display: flex; flex-direction: column; gap: 24px;">
-        
-        <!-- Files -->
-        <div class="card" x-data="{ showUpload: false }">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h3 style="font-size:1.1rem; font-weight:600;">📁 {{ _('files_title') }}</h3>
-                <button type="button" @click="showUpload = true" class="btn btn-primary btn-sm" x-show="!showUpload">
-                    <i class='bx bx-upload'></i> {{ _('upload') }}
-                </button>
-            </div>
-
-            <!-- Upload Form -->
-            <form action="{{ request.url_for('admin_project_upload', locale=request.state.locale, pk=project.id) }}" 
-                  method="post" enctype="multipart/form-data" x-show="showUpload" x-transition
-                  style="display: none; background:var(--bg-body); padding:16px; border-radius:var(--radius-sm); margin-bottom:16px; border: 1px solid var(--border-light);">
-                
-                <div style="display:grid; gap:12px;">
-                    <label style="font-weight:500; font-size:0.9rem;">{{ _('file_type_label') }}</label>
-                    <select name="report_type" class="select-field">
-                        <!-- ПЕРЕВОД ТИПОВ ФАЙЛОВ -->
-                        <option value="photo_report">{{ _('file_type_photo_report') }}</option>
-                        <option value="design_doc">{{ _('file_type_design_doc') }}</option>
-                        <option value="document">{{ _('file_type_document') }}</option>
-                    </select>
-                    
-                    <label style="font-weight:500; font-size:0.9rem;">{{ _('file_label') }}</label>
-                    <input type="file" name="file" class="input-field" required>
-                    
-                    <label style="font-weight:500; font-size:0.9rem;">{{ _('desc_label') }}</label>
-                    <input type="text" name="comment" placeholder="{{ _('file_comment_placeholder') }}" class="input-field">
-                    
-                    <div style="display:flex; gap:10px; margin-top: 8px;">
-                        <button type="submit" class="btn btn-primary">{{ _('upload_file_btn') }}</button>
-                        <button type="button" @click="showUpload = false" class="btn btn-secondary">{{ _('cancel') }}</button>
-                    </div>
-                </div>
-            </form>
-
-            <div class="file-grid">
-                {% for file in project.files %}
-                <div class="file-item">
-                    <a href="{{ url_for('media', path=file.file_path) }}" target="_blank">
-                        {% if file.type.value == 'photo_report' %}
-                            <img src="{{ url_for('media', path=file.file_path) }}" loading="lazy">
-                        {% else %}
-                            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#f3f4f6; color:#9ca3af; flex-direction: column;">
-                                <i class='bx bxs-file-pdf' style="font-size:3rem;"></i>
-                            </div>
-                        {% endif %}
-                        <div class="file-meta">
-                            {{ file.created_at.strftime('%d.%m') }} | {{ file.uploaded_by.username }}
-                            {% if file.comment %}<div style="font-size:0.65rem; opacity:0.9;">{{ file.comment|truncate(15) }}</div>{% endif %}
-                        </div>
-                    </a>
-                </div>
-                {% else %}
-                <p style="color:var(--text-muted); grid-column:1/-1; padding: 10px; text-align: center; background: var(--bg-body); border-radius: var(--radius-sm);">
-                    {{ _('no_files') }}
-                </p>
-                {% endfor %}
-            </div>
+    <!-- HEADER: Название и текущий этап -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px;">
+        <div>
+            <h1 style="font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">{{ project.name }}</h1>
+            <p style="color: var(--text-muted);">
+                <i class='bx bx-user'></i> {{ project.quote_request.contact.full_name }} | 
+                <i class='bx bx-calendar'></i> Запущен: {{ project.created_at.strftime('%d.%m.%Y') }}
+            </p>
         </div>
-
-        <!-- Transactions -->
-        <div class="card">
-            <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:16px;">{{ _('history_operations') }}</h3>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>{{ _('header_created_at') }}</th>
-                            <th>{{ _('label_additional') }}</th>
-                            <th>{{ _('sum_placeholder') }}</th>
-                            <th>{{ _('desc_placeholder') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for t in project.transactions %}
-                        <tr>
-                            <td>{{ t.created_at.strftime('%d.%m.%Y') }}</td>
-                            <td>
-                                {% if t.type.value == 'income' %}
-                                <span style="color:var(--success-text); font-weight:600;">{{ _('income') }}</span>
-                                {% else %}
-                                <span style="color:var(--danger-text);">{{ _('expense') }}</span>
-                                {% endif %}
-                                <div style="font-size:0.75rem; color:var(--text-muted);">{{ t.category }}</div>
-                            </td>
-                            <td style="font-weight:600;">{{ t.amount|format_number }}</td>
-                            <td style="color:var(--text-muted);">{{ t.description or '-' }}</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">{{ _('nothing_found') }}</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="status-steps">
+            <!-- Визуализация этапов стройки -->
+            {% for s in ['design', 'procurement', 'construction', 'finishing', 'handover'] %}
+                <div class="step {{ 'active' if project.status.value == s }} {{ 'completed' if loop.index < loop_index_of_current }}">
+                    {{ get_status_display(s) }}
+                </div>
+            {% endfor %}
         </div>
     </div>
 
-    <!-- RIGHT COLUMN -->
-    <div style="display: flex; flex-direction: column; gap: 24px;">
-        
-        <!-- Team -->
-        <div class="card">
-            <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:16px;">{{ _('team_status') }}</h3>
-            <form action="{{ request.url_for('admin_project_update_team', locale=request.state.locale, pk=project.id) }}" method="post">
-                <div class="input-group">
-                    <label>{{ _('status') }}</label>
-                    <select name="status" class="select-field">
-                        {% for s in ['design', 'procurement', 'construction', 'finishing', 'handover', 'completed', 'hold'] %}
-                        <option value="{{ s }}" {% if project.status.value == s %}selected{% endif %}>{{ get_status_display(s) }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="input-group">
-                    <label>{{ _('designer') }}</label>
-                    <select name="designer_id" class="select-field">
-                        <option value="0">-</option>
-                        {% for u in staff_users %}
-                        <option value="{{ u.id }}" {% if project.designer_id == u.id %}selected{% endif %}>{{ u.username }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+    <!-- KPI ROW: Финансы (Крупные карточки) -->
+    <div class="kpi-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px;">
+        <div class="card kpi-card green">
+            <label>Приход</label>
+            <div class="value">{{ income | format_number }} сум</div>
+        </div>
+        <div class="card kpi-card red">
+            <label>Расход</label>
+            <div class="value">{{ expenses | format_number }} сум</div>
+        </div>
+        <div class="card kpi-card {{ 'green' if profit >= 0 else 'red' }}">
+            <label>Текущая прибыль</label>
+            <div class="value">{{ profit | format_number }} сум</div>
+        </div>
+        <div class="card kpi-card blue">
+            <label>Рентабельность</label>
+            <div class="value">{{ ((profit/income)*100)|round(1) if income > 0 else 0 }}%</div>
+        </div>
+    </div>
 
-                <div class="input-group">
-                    <label>{{ _('foreman') }}</label>
-                    <select name="foreman_id" class="select-field">
-                        <option value="0">-</option>
-                        {% for u in staff_users %}
-                        <option value="{{ u.id }}" {% if project.foreman_id == u.id %}selected{% endif %}>{{ u.username }}</option>
-                        {% endfor %}
-                    </select>
+    <div class="main-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+        
+        <!-- LEFT COLUMN: Фотоотчеты и Документы -->
+        <div class="content-section">
+            
+            <!-- Блок для Прораба (Максимально простой) -->
+            <div class="card" style="margin-bottom: 24px; border: 2px dashed var(--primary);">
+                <h3 style="margin-bottom: 15px;"><i class='bx bx-camera'></i> Быстрый фотоотчет</h3>
+                <form action="{{ url_for('admin_project_upload', pk=project.id, locale=request.state.locale) }}" method="post" enctype="multipart/form-data" style="display: flex; gap: 15px; align-items: center;">
+                    <input type="hidden" name="report_type" value="photo_report">
+                    <input type="file" name="file" accept="image/*" capture="environment" class="input-field" required>
+                    <input type="text" name="comment" placeholder="Что на фото?" class="input-field" style="flex: 1;">
+                    <button type="submit" class="btn btn-primary">Отправить</button>
+                </form>
+            </div>
+
+            <!-- Галерея -->
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Лента проекта</h3>
+                <div class="file-timeline">
+                    {% for file in project.files | sort(attribute='created_at', reverse=True) %}
+                        <div class="timeline-item">
+                            <div class="time">{{ file.created_at.strftime('%H:%M') }} <span>{{ file.created_at.strftime('%d.%m') }}</span></div>
+                            <div class="content">
+                                {% if file.type.value == 'photo_report' %}
+                                    <a href="{{ url_for('media', path=file.file_path) }}" target="_blank">
+                                        <img src="{{ url_for('media', path=file.file_path) }}" class="report-img">
+                                    </a>
+                                {% endif %}
+                                <p>{{ file.comment or 'Без описания' }}</p>
+                                <small>Загрузил: {{ file.uploaded_by.username }}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
-                <button type="submit" class="btn btn-secondary" style="width:100%;">{{ _('update_btn') }}</button>
-            </form>
+            </div>
         </div>
 
-        <!-- Add Finance -->
-        <div class="card">
-            <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:16px;">{{ _('add_operation') }}</h3>
-            <form action="{{ request.url_for('admin_project_finance', locale=request.state.locale, pk=project.id) }}" method="post">
-                <div class="input-group">
-                    <select name="type" class="select-field">
-                        <option value="expense">🔴 {{ _('expense') }}</option>
-                        <option value="income">🟢 {{ _('income') }}</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <input type="number" name="amount" placeholder="{{ _('sum_placeholder') }}" class="input-field" required>
-                </div>
-                <div class="input-group">
-                    <input type="text" name="category" placeholder="{{ _('category_placeholder') }}" class="input-field" required>
-                </div>
-                <div class="input-group">
-                    <input type="text" name="description" placeholder="{{ _('desc_placeholder') }}" class="input-field">
-                </div>
-                <button type="submit" class="btn btn-primary" style="width:100%;">{{ _('save') }}</button>
-            </form>
+        <!-- RIGHT COLUMN: Финансы и Команда -->
+        <div class="sidebar-section">
+            <div class="card" style="margin-bottom: 24px;">
+                <h3>Добавить транзакцию</h3>
+                <form hx-post="{{ url_for('admin_project_finance', pk=project.id, locale=request.state.locale) }}" hx-target="body">
+                    <div class="input-group">
+                        <select name="type" class="select-field">
+                            <option value="expense">Расход (Материалы/ЗП)</option>
+                            <option value="income">Приход (Оплата клиента)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" name="amount" placeholder="Сумма" class="input-field" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" name="category" placeholder="Категория (напр. Бетон)" class="input-field" required>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%;">Записать</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Команда</h3>
+                <!-- Форма смены прораба/дизайнера -->
+                {% include "admin/projects/_team_form.html" %}
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    .kpi-card { text-align: center; padding: 30px; }
+    .kpi-card label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+    .kpi-card .value { font-size: 1.5rem; font-weight: 800; margin-top: 5px; }
+    
+    .report-img { width: 100%; border-radius: 12px; margin: 10px 0; border: 1px solid var(--border-light); }
+    
+    .status-steps { display: flex; gap: 5px; }
+    .step { padding: 5px 10px; background: var(--bg-body); border-radius: 4px; font-size: 0.7rem; color: var(--text-muted); }
+    .step.active { background: var(--primary); color: white; font-weight: 700; }
+    
+    /* Таймлайн */
+    .file-timeline { border-left: 2px solid var(--border-light); padding-left: 20px; margin-left: 10px; }
+    .timeline-item { position: relative; margin-bottom: 30px; }
+    .timeline-item::before { content: ''; position: absolute; left: -27px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 3px solid var(--bg-surface); }
+</style>
 {% endblock %}

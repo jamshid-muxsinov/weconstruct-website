@@ -1,176 +1,143 @@
 {% if not htmx_request %}
     {% extends "admin/base.html" %}
 {% endif %}
-
 {% block content %}
+<div class="page-header">
+    <h1>{{ title }}</h1>
+    <a href="{{ request.url_for(meta.list_url_name, locale=request.state.locale) }}" class="btn btn-secondary">
+        <i class='bx bx-arrow-back'></i> {{ _('back_to_list') }}
+    </a>
+</div>
 
-<div class="{{ 'modal-mode' if htmx_request else '' }}">
-
-    <!-- Header (Page Mode) -->
-    <div class="page-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
-        <h1 style="font-size: 1.5rem; font-weight: 700;">{{ title }}</h1>
-        <div style="display: flex; gap: 10px;">
-            <a href="{{ request.url_for(meta.list_url_name, locale=request.state.locale) }}" class="btn btn-secondary btn-back">
-                <i class='bx bx-arrow-back'></i> {{ _('back_to_list') }}
-            </a>
-            {% if original %}
-                <a href="{{ request.url_for('create_project_from_quote', locale=request.state.locale, quote_id=original.id) }}" class="btn btn-primary btn-success-style">
-                    <i class='bx bx-building'></i> {{ _('start_project_btn') }}
-                </a>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Header (Modal Mode) -->
-    {% if htmx_request %}
-    <div class="modal-form-header">
-        <div class="modal-form-title">
-            <i class='bx bxs-file-plus' style="color:var(--primary); margin-right:8px;"></i>
-            {{ _('modal_add_title') if not original else _('modal_edit_title') }}
-        </div>
-        <button type="button" onclick="closeOverlay('modal-overlay')" class="modal-close-btn">
-            <i class='bx bx-x' style="font-size: 1.5rem;"></i>
-        </button>
-    </div>
-    {% endif %}
-
-    <!-- Form -->
-    <form method="post" novalidate id="quote-request-form" 
-          {% if htmx_request %}
-          hx-post="{{ request.url }}" hx-target="#main-content" hx-swap="innerHTML"
-          {% endif %}>
+<div class="card form-container-enhanced" style="max-width: 900px; margin: 0 auto; padding: 30px;">
+    <form method="post" novalidate id="quote-request-form">
         
-        <div class="form-scroll-area">
-            <div class="form-grid">
-                
-                <!-- LEFT -->
-                <div class="form-section">
-                    <div class="form-section-title"><i class='bx bx-user'></i> {{ _('client_section') }}</div>
+        <!-- СЕКЦИЯ КЛИЕНТА -->
+        <div class="form-section">
+            <h3 style="margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 10px;">
+                <i class='bx bxs-user-detail'></i> {{ _('client_info') }}
+            </h3>
 
-                    {% if original %}
-                    <div class="input-group">
-                        <label>{{ _('header_client') }}</label>
-                        <div style="padding: 12px 16px; background: #EEF2FF; border-radius: 10px; border: 1px solid #C7D2FE; color: #3730A3; font-weight: 500;">
-                            {{ original.contact.full_name }} <span style="opacity: 0.7;">({{ original.contact.phone }})</span>
-                        </div>
-                        <input type="hidden" name="contact_id" value="{{ original.contact_id }}">
-                    </div>
-                    {% else %}
-                        {{ form.contact_id() }}
-                        <div class="input-group">
-                            <label>{{ _('search_client_input') }}</label>
-                            <div style="position: relative;">
-                                <!-- Иконка -->
-                                <i class='bx bx-search' style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size: 1.2rem;"></i>
-                                <input type="text" id="contact-search" class="input-field" placeholder="..."
-                                    autocomplete="off" 
-                                    hx-get="{{ request.url_for('admin_htmx_contact_search', locale=request.state.locale) }}"
-                                    hx-trigger="keyup[target.value.length > 1] changed delay:300ms" 
-                                    hx-target="#search-results"
-                                    name="q" style="padding-left: 40px;"> <!-- Отступ под иконку -->
-                                <div id="search-results" class="search-results-container"></div>
-                            </div>
-                            
-                            <div style="text-align: right; margin-top: 6px;">
-                                <a href="#" onclick="showNewContactForm(); return false;" style="font-size: 0.8rem; color: var(--primary); font-weight: 500;">
-                                    {{ _('create_new_client_link') }}
-                                </a>
-                            </div>
-                        </div>
-
-                        <div id="new-contact-fields" style="display: none; background: #F0FDF4; padding: 16px; border-radius: 10px; border: 1px solid #BBF7D0; margin-bottom: 20px;">
-                            <div style="font-weight: 700; font-size: 0.85rem; margin-bottom: 12px; color: #166534; display:flex; align-items:center; gap:6px;">
-                                <i class='bx bx-user-plus'></i> {{ _('new_client_block') }}
-                            </div>
-                            <div class="input-group">
-                                <label>{{ _('label_name') }}</label>
-                                {{ form.new_contact_name(class_='input-field', style="background: white;") }}
-                            </div>
-                            <div class="input-group">
-                                <label>{{ _('label_phone') }}</label>
-                                {{ form.new_contact_phone(class_='input-field', style="background: white;") }}
-                            </div>
-                            <button type="button" onclick="hideNewContactForm()" class="btn btn-secondary btn-sm" style="background: white;">{{ _('cancel') }}</button>
-                        </div>
-                    {% endif %}
-                    
-                    <div class="input-group">
-                        <label>{{ _('label_subject') }} <span style="color:#EF4444">*</span></label>
-                        {{ form.subject(class_='input-field') }}
-                        {% if form.subject.errors %}<div style="color:red; font-size:0.8rem;">{{ form.subject.errors[0] }}</div>{% endif %}
-                    </div>
-
-                    <div class="input-group">
-                        <label>{{ _('status') }}</label>
-                        {{ form.status(class_='select-field') }}
-                    </div>
-                    <div class="input-group">
-                        <label>{{ _('header_assignee') }}</label>
-                        {{ form.assigned_to_id(class_='select-field') }}
-                    </div>
-                    <div class="input-group">
-                        <label>{{ _('label_message') }}</label>
-                        {{ form.message(class_='textarea-field', style="height: 100px;") }}
+            {% if original %}
+                <div class="input-group">
+                    <label>{{ _('form_field_contact') }}</label>
+                    <div class="input-field readonly-field">
+                        {{ original.contact.full_name }} ({{ original.contact.phone }})
                     </div>
                 </div>
-                
-                <!-- RIGHT -->
-                <div class="form-section">
-                    <div class="form-section-title"><i class='bx bx-briefcase-alt-2'></i> {{ _('manager_section') }}</div>
-                    
-                    <div class="input-group"><label>{{ _('label_business_type') }}</label>{{ form.business_type(class_='input-field') }}</div>
-                    <div class="input-group"><label>{{ _('label_dimensions') }}</label>{{ form.dimensions(class_='input-field') }}</div>
-                    <div class="input-group"><label>{{ _('label_investment') }}</label>{{ form.investment_details(class_='textarea-field', style="height: 80px;") }}</div>
-                    <div class="input-group"><label>{{ _('label_conclusion') }}</label>{{ form.conclusion(class_='textarea-field', style="height: 80px;") }}</div>
-                    <div class="input-group"><label>{{ _('label_additional') }}</label>{{ form.additional_info(class_='textarea-field', style="height: 80px;") }}</div>
+            {% else %}
+                {{ form.contact_id() }}
+                <div class="input-group">
+                    <label for="contact-search">{{ _('contact_search_label') }}</label>
+                    <div style="position: relative;">
+                        <i class='bx bx-search' style="position: absolute; left: 12px; top: 13px; color: var(--text-secondary);"></i>
+                        <input type="text" id="contact-search" class="input-field" 
+                               placeholder="{{ _('contact_search_placeholder') }}" 
+                               style="padding-left: 40px;" autocomplete="off"
+                               hx-get="{{ request.url_for('admin_htmx_contact_search', locale=request.state.locale) }}"
+                               hx-trigger="keyup[target.value.length > 1] changed delay:300ms" 
+                               hx-target="#search-results">
+                        <div id="search-results" class="search-results-dropdown"></div>
+                    </div>
+                </div>
+
+                <!-- БЛОК НОВОГО КЛИЕНТА -->
+                <div id="new-contact-fields" style="display: none; margin-top: 20px; padding: 20px; background: rgba(34, 197, 94, 0.05); border: 1px dashed var(--success); border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <strong style="color: var(--success);">{{ _('new_client_reg_title') }}</strong>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="hideNewContactForm(event)">{{ _('btn_cancel') }}</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="input-group">
+                            <label>{{ _('form_field_name') }}</label>
+                            {{ form.new_contact_name(class_='input-field') }}
+                        </div>
+                        <div class="input-group">
+                            <label>{{ _('form_field_phone') }}</label>
+                            {{ form.new_contact_phone(class_='input-field', placeholder='+998...') }}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- СЕКЦИЯ ДЕТАЛЕЙ -->
+        <div class="form-section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+            <div class="column">
+                <div class="input-group">
+                    <label>{{ _('label_subject') }}</label>
+                    {{ form.subject(class_='input-field', placeholder=_('subject_placeholder')) }}
+                </div>
+                <div class="input-group">
+                    <label>{{ _('label_status') }}</label>
+                    {{ form.status(class_='select-field') }}
+                </div>
+                <div class="input-group">
+                    <label>{{ _('label_assignee') }}</label>
+                    {{ form.assigned_to_id(class_='select-field') }}
+                </div>
+            </div>
+            <div class="column">
+                <div class="input-group">
+                    <label>{{ _('label_business_type') }}</label>
+                    {{ form.business_type(class_='input-field') }}
+                </div>
+                <div class="input-group">
+                    <label>{{ _('label_dimensions') }}</label>
+                    {{ form.dimensions(class_='input-field') }}
+                </div>
+                <div class="input-group">
+                    <label>{{ _('label_message') }}</label>
+                    {{ form.message(class_='textarea-field', style='height: 115px;') }}
                 </div>
             </div>
         </div>
 
-        <div class="form-footer">
-            {% if htmx_request %}
-                <button type="button" onclick="closeOverlay('modal-overlay')" class="btn btn-secondary">{{ _('cancel') }}</button>
-            {% endif %}
-            
-            {% if original %}
-                <a href="{{ request.url_for('admin_quoterequest_delete', locale=request.state.locale, pk=original.id) }}" 
-                   class="btn btn-secondary" style="color: #DC2626; border-color: #FEE2E2; background: #FEF2F2; margin-right: auto;">
-                   {{ _('delete_request_btn') }}
-                </a>
-            {% endif %}
-            
-            <button type="submit" class="btn btn-primary">{{ _('save') }}</button>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" style="padding: 15px 40px; font-size: 1.1rem;">
+                <i class='bx bx-save'></i> {{ _('btn_save_request') }}
+            </button>
         </div>
     </form>
 </div>
-<!-- ... script for contacts (same as before) ... -->
-<script>
-    function selectContact(id, name) {
-        document.getElementById('contact_id').value = id;
-        document.getElementById('contact-search').value = name;
-        document.getElementById('search-results').innerHTML = '';
-        hideNewContactForm();
+<style>
+    .search-results-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 0 0 10px 10px;
+        z-index: 100;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        max-height: 300px;
+        overflow-y: auto;
     }
+    .form-container-enhanced {
+        background: var(--bg-surface);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+</style>
+
+<script>
     function showNewContactForm() {
         document.getElementById('new-contact-fields').style.display = 'block';
         document.getElementById('contact-search').value = '';
-        document.getElementById('contact_id').value = '';
         document.getElementById('search-results').innerHTML = '';
+        document.getElementById('new_contact_name').focus();
     }
-    function hideNewContactForm() {
+    function hideNewContactForm(e) {
+        e.preventDefault();
         document.getElementById('new-contact-fields').style.display = 'none';
         document.getElementById('new_contact_name').value = '';
         document.getElementById('new_contact_phone').value = '';
     }
-    document.addEventListener('click', function(e) {
-        const sb = document.getElementById('contact-search');
-        const sr = document.getElementById('search-results');
-        if (sb && sr && !sb.contains(e.target) && !sr.contains(e.target)) sr.innerHTML = '';
-    });
+    function selectContact(id, name) {
+        document.getElementById('contact_id').value = id;
+        document.getElementById('contact-search').value = name;
+        document.getElementById('search-results').innerHTML = '';
+        document.getElementById('new-contact-fields').style.display = 'none';
+    }
 </script>
-<style>
-    .search-results-container { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; max-height: 200px; overflow-y: auto; }
-    .search-result-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--border-light); font-size: 0.9rem; }
-    .search-result-item:hover { background: #F3F4F6; }
-</style>
-{% endblock %}
+{% endblock %}  

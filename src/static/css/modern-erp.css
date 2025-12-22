@@ -1323,3 +1323,39 @@ input[type="checkbox"] {
 @media (max-width: 1024px) {
     .charts-grid { grid-template-columns: 1fr; }
 }
+
+/* Фикс для форм, чтобы не были сплющенными */
+.input-field, .select-field, .textarea-field {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    font-size: 1rem;
+    margin-bottom: 5px; /* Чтобы ошибки не прилипали */
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Выделение полей при фокусе */
+.input-field:focus, .select-field:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+/* Убираем эффект сплющенности у сетки */
+@media (min-width: 768px) {
+    .form-section .column {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+}
