@@ -32,12 +32,13 @@
 
     <!-- 2. Панель фильтров (Как в Канбане) -->
     <form id="filters-form" 
-          class="filter-bar" 
-          style="margin-bottom: 24px; border: 1px solid var(--border-light); border-radius: 12px;"
-          hx-get="{{ request.url.path }}" 
-          hx-target="#list-content-wrapper" 
-          hx-trigger="keyup changed delay:300ms from:input, change"
-          hx-push-url="true">
+      method="get"
+      onsubmit="return false;"
+      class="filter-bar" 
+      hx-get="{{ request.url.path }}" 
+      hx-target="#list-content-wrapper" 
+      hx-trigger="keyup changed delay:300ms from:input, change"
+      hx-push-url="true">
 
         <div class="search-input-wrapper">
             <i class='bx bx-search'></i>

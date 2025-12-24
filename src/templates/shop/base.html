@@ -68,7 +68,15 @@
 
 </head>
 <body x-data="{ mobileMenuOpen: false, pageLoading: true }" @load.window="pageLoading = false" @keydown.escape.window="mobileMenuOpen = false">
-
+  <div class="call-center-alert">
+    <div class="container">
+        {% if request.state.locale == 'uz' %}
+            <i class="fas fa-phone-alt"></i> Savollaringiz bormi? Call-markazimizga qo'ng'iroq qiling: <a href="tel:+998555008887">+998 55 500 88 87</a>
+        {% else %}
+            <i class="fas fa-phone-alt"></i> Есть вопросы? Звоните в наш колл-центр: <a href="tel:+998555008887">+998 55 500 88 87</a>
+        {% endif %}
+    </div>
+</div>
   <div x-show="pageLoading" x-transition:leave="transition ease-in duration-400" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="preloader">
     <div class="preloader__logo">
       {% include 'shop/partials/_logo.html' %}
@@ -186,7 +194,7 @@
         <div class="footer-column">
           <h3 class="footer__section-title">{% if request.state.locale == 'uz' %}Kontaktlar{% else %}Контакты{% endif %}</h3>
           <ul class="footer__links footer__contacts">
-            <li><a href="tel:+998771308888" class="footer__contact"><i class="fas fa-phone-alt"></i><span>+998 77 130 88 88</span></a></li>
+            <li><a href="tel:+998771308888" class="footer__contact"><i class="fas fa-phone-alt"></i><span>+998 55 500 88 87</span></a></li>
             <li><a href="mailto:weconstructuz@gmail.com" class="footer__contact"><i class="fas fa-envelope"></i><span>weconstructuz@gmail.com</span></a></li>
             <li>
                 <span class="footer__contact">

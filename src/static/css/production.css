@@ -1643,3 +1643,36 @@ select {
     height: 40px;
   }
 }
+
+/* Добавьте в конец файла */
+.call-center-alert {
+    background-color: var(--secondary); /* Оранжевый цвет как акцент */
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    z-index: 1031;
+    position: relative;
+}
+
+.call-center-alert a {
+    color: white;
+    text-decoration: underline;
+    margin-left: 5px;
+}
+
+.call-center-alert i {
+    margin-right: 8px;
+}
+
+/* Корректировка шапки, чтобы она не перекрывала банер, если она фиксированная */
+.site-header {
+    top: calc(var(--space-2) + 40px); /* Увеличиваем отступ сверху */
+}
+
+@media (max-width: 768px) {
+    .site-header {
+        top: 50px; 
+    }
+}

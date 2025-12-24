@@ -83,7 +83,7 @@ def create_admin_app() -> FastAPI:
 
     async def set_locale_admin(request: Request, locale: str = Path(..., description="Код языка (ru или uz)")):
         if locale not in ["ru", "uz"]:
-            locale = "ru" 
+            locale = "uz" 
         request.state.locale = locale
 
     locale_router = APIRouter(prefix="/{locale}", dependencies=[Depends(set_locale_admin)])
@@ -100,7 +100,7 @@ def create_admin_app() -> FastAPI:
     
     @app.get("/", include_in_schema=False)
     async def admin_root_redirect(request: Request):
-        return RedirectResponse(url=request.url_for('admin_kanban_board', locale='ru'))
+        return RedirectResponse(url=request.url_for('admin_kanban_board', locale='uz'))
         
     add_pagination(app)
 
@@ -108,17 +108,17 @@ def create_admin_app() -> FastAPI:
 
     @app.exception_handler(401)
     async def unauthorized_exception_handler(request: Request, exc: Exception):
-        if not hasattr(request.state, "locale"): request.state.locale = "ru"
+        if not hasattr(request.state, "locale"): request.state.locale = "uz"
         try:
             login_url = request.url_for('admin_login')
-            next_path = request.url.path if request.url.path != '/' else request.url_for('admin_kanban_board', locale='ru')
+            next_path = request.url.path if request.url.path != '/' else request.url_for('admin_kanban_board', locale='uz')
             return RedirectResponse(url=f"{login_url}?next={next_path}", status_code=302)
         except:
             return RedirectResponse(url="/admin/login", status_code=302)
 
     @app.exception_handler(404)
     async def not_found_error(request: Request, exc: Exception):
-        if not hasattr(request.state, "locale"): request.state.locale = "ru"
+        if not hasattr(request.state, "locale"): request.state.locale = "uz"
         return templates.TemplateResponse("admin/error.html", {
             "request": request,
             "status_code": 404,
@@ -170,7 +170,7 @@ def create_site_app() -> FastAPI:
     app.include_router(site_router)
     @app.get("/", include_in_schema=False)
     async def root_redirect(request: Request):
-        return RedirectResponse(url="/ru")
+        return RedirectResponse(url="/uz")
     app.mount("/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
     app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
     @app.get("/robots.txt", include_in_schema=False)
@@ -229,7 +229,7 @@ def create_site_app() -> FastAPI:
     def _ensure_locale(request: Request):
         if not hasattr(request.state, "locale"):
             path_parts = request.url.path.split('/')
-            request.state.locale = path_parts[1] if len(path_parts) > 1 and path_parts[1] in ['ru', 'uz'] else 'ru'
+            request.state.locale = path_parts[1] if len(path_parts) > 1 and path_parts[1] in ['ru', 'uz'] else 'uz'
     @app.exception_handler(404)
     async def not_found_exception_handler(request: Request, exc: Exception):
         _ensure_locale(request)
