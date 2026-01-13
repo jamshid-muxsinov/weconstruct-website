@@ -19,7 +19,6 @@ O'zbekistonda modulli uylar, kapsula mehmonxonalar, ofislar va pavilyonlar quris
 <section class="hero">
   <div class="hero__background-overlay"></div>
   <div class="container hero__content">
-    <!-- ИЗМЕНЕНО -->
     <h1 class="hero__title">
       {% if request.state.locale == 'uz' %}
       <span class="hero__title-main">O'zbekistonda modulli binolar</span>
@@ -29,7 +28,6 @@ O'zbekistonda modulli uylar, kapsula mehmonxonalar, ofislar va pavilyonlar quris
       <span class="hero__title-sub">Современные решения для жизни и бизнеса</span>
       {% endif %}
     </h1>
-    <!-- /ИЗМЕНЕНО -->
     <p class="hero__description">
       {% if request.state.locale == 'uz' %}
       Ofislar va savdo pavilyonlaridan tortib turar-joy binolari va sanitariya bloklarigacha bo'lgan har qanday maqsaddagi tez quriladigan binolarni loyihalashtiramiz, ishlab chiqaramiz va o'rnatamiz.
@@ -106,6 +104,58 @@ O'zbekistonda modulli uylar, kapsula mehmonxonalar, ofislar va pavilyonlar quris
   </div>
 </section>
 {% endfor %}
+
+<section class="portfolio-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{% if request.state.locale == 'uz' %}Amalga oshirilgan loyihalar{% else %}Выполненные проекты{% endif %}</h2>
+      <p class="section-subtitle">{% if request.state.locale == 'uz' %}Bizning eng yaxshi ishlarimizdan namunalar. Sifat va dizaynga e'tibor bering.{% else %}Примеры наших лучших работ. Обратите внимание на качество и дизайн.{% endif %}</p>
+    </div>
+    
+    <div class="portfolio-grid">
+   <!-- Project 1 -->
+   <div class="portfolio-item">
+      <!-- ИСПРАВЛЕНО: href указывает на реальное изображение -->
+      <a href="{{ url_for('static', path='img/1rew.jpg') }}" class="lightbox" data-gallery="portfolio">
+         <img src="{{ url_for('static', path='img/1rew.jpg') }}" alt="Project 1" class="portfolio-item__img">
+         <div class="portfolio-item__overlay">
+            <div class="portfolio-item__icon"><i class="fas fa-search-plus"></i></div>
+         </div>
+      </a>
+   </div>
+   
+   <!-- Project 2 -->
+   <div class="portfolio-item">
+      <a href="{{ url_for('static', path='img/2rew.jpg') }}" class="lightbox" data-gallery="portfolio">
+         <img src="{{ url_for('static', path='img/2rew.jpg') }}" alt="Project 2" class="portfolio-item__img">
+         <div class="portfolio-item__overlay">
+            <div class="portfolio-item__icon"><i class="fas fa-search-plus"></i></div>
+         </div>
+      </a>
+   </div>
+   
+   <!-- Project 3 -->
+   <div class="portfolio-item">
+      <a href="{{ url_for('static', path='img/3rew.jpg') }}" class="lightbox" data-gallery="portfolio">
+         <img src="{{ url_for('static', path='img/3rew.jpg') }}" alt="Project 3" class="portfolio-item__img">
+         <div class="portfolio-item__overlay">
+            <div class="portfolio-item__icon"><i class="fas fa-search-plus"></i></div>
+         </div>
+      </a>
+   </div>
+   
+   <!-- Project 4 -->
+   <div class="portfolio-item">
+      <a href="{{ url_for('static', path='img/4rew.jpg') }}" class="lightbox" data-gallery="portfolio">
+         <img src="{{ url_for('static', path='img/4rew.jpg') }}" alt="Project 4" class="portfolio-item__img">
+         <div class="portfolio-item__overlay">
+            <div class="portfolio-item__icon"><i class="fas fa-search-plus"></i></div>
+         </div>
+      </a>
+   </div>
+</div>
+  </div>
+</section>
 
 <section class="advantages-section">
     <div class="container">
@@ -185,6 +235,62 @@ O'zbekistonda modulli uylar, kapsula mehmonxonalar, ofislar va pavilyonlar quris
     </div>
 </section>
 
+<section class="reviews-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">
+        {% if request.state.locale == 'uz' %}Mijozlarimiz fikrlari{% else %}Отзывы клиентов{% endif %}
+      </h2>
+      <p class="section-subtitle">
+        {% if request.state.locale == 'uz' %}Bizning ishimiz haqida haqiqiy video sharhlar.{% else %}Реальные видеообзоры о нашей работе.{% endif %}
+      </p>
+    </div>
+
+    <div class="reviews-grid">
+      <!-- Video 1 -->
+      <div class="review-card" onclick="handleVideoClick(this)">
+        <!-- 
+             1. Убрали poster
+             2. preload="metadata" — грузит только обложку и инфо (экономит трафик)
+             3. Используем src (не data-src), чтобы обложка появилась сама
+        -->
+        <video 
+            playsinline 
+            loop 
+            preload="metadata"
+            width="100%" 
+            height="100%">
+            <source src="{{ url_for('media', path='reviews/video1.mp4') }}" type="video/mp4">
+        </video>
+        
+        <div class="review-card__overlay">
+            <div class="review-card__play-btn">
+                <i class="fas fa-play" style="padding-left: 4px;"></i>
+            </div>
+        </div>
+      </div>
+      
+      <!-- Video 2 -->
+      <div class="review-card" onclick="handleVideoClick(this)">
+        <video 
+            playsinline 
+            loop 
+            preload="metadata"
+            width="100%" 
+            height="100%">
+            <source src="{{ url_for('media', path='reviews/video2.mp4') }}" type="video/mp4">
+        </video>
+        
+        <div class="review-card__overlay">
+            <div class="review-card__play-btn">
+                <i class="fas fa-play" style="padding-left: 4px;"></i>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="cta">
     <div class="container">
         <div class="cta__content">
@@ -203,4 +309,33 @@ O'zbekistonda modulli uylar, kapsula mehmonxonalar, ofislar va pavilyonlar quris
         </div>
     </div>
 </section>
+
+<!-- Скрипт в самом низу страницы -->
+<script>
+function handleVideoClick(card) {
+    const video = card.querySelector('video');
+    const allVideos = document.querySelectorAll('.review-card video');
+    const allCards = document.querySelectorAll('.review-card');
+
+    if (!video.paused) {
+        // Если играет - ставим на паузу
+        video.pause();
+        card.classList.remove('is-playing');
+        video.controls = false; 
+    } else {
+        // Если на паузе - останавливаем другие и запускаем это
+        allVideos.forEach((v, index) => {
+            if (v !== video) {
+                v.pause();
+                v.controls = false;
+                allCards[index].classList.remove('is-playing');
+            }
+        });
+
+        video.play();
+        card.classList.add('is-playing');
+        video.controls = true; 
+    }
+}
+</script>
 {% endblock %}

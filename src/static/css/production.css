@@ -1676,3 +1676,334 @@ select {
         top: 50px; 
     }
 }
+
+/* ============================================== */
+/* ===== NEW SECTIONS: INSTAGRAM & PORTFOLIO ===== */
+/* ============================================== */
+
+/* --- Instagram / Video Section --- */
+.instagram-section {
+    padding: var(--space-12) 0;
+    background-color: var(--bg-secondary);
+    overflow: hidden;
+}
+
+.instagram-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+}
+
+.video-card {
+    position: relative;
+    aspect-ratio: 9 / 16; /* Vertical Reels format */
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--elevation-4);
+    transition: transform 0.3s var(--transition-standard), box-shadow 0.3s var(--transition-standard);
+    cursor: pointer;
+    background: black;
+}
+
+.video-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--elevation-8);
+}
+
+.video-card__poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    opacity: 0.9;
+}
+
+.video-card:hover .video-card__poster {
+    transform: scale(1.05);
+    opacity: 0.7;
+}
+
+.video-card__overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 50%);
+}
+
+.video-card__icon {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    transition: transform 0.3s ease, background 0.3s ease;
+    margin-bottom: auto; /* Push to center vertically with margin adjustments if needed */
+    margin-top: auto;
+}
+
+.video-card:hover .video-card__icon {
+    transform: scale(1.2);
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.video-card__footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: var(--space-4);
+    color: white;
+    transform: translateY(10px);
+    transition: transform 0.3s ease;
+}
+
+.video-card:hover .video-card__footer {
+    transform: translateY(0);
+}
+
+.video-card__title {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* --- Completed Projects / Portfolio Section --- */
+.portfolio-section {
+    padding: var(--space-16) 0;
+    background-color: transparent; 
+}
+
+.portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-4);
+}
+
+/* Make specific items span rows/cols for a masonry feel on desktop */
+@media (min-width: 1024px) {
+    .portfolio-grid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-auto-rows: 250px;
+    }
+    .portfolio-item:nth-child(1) { grid-row: span 2; }
+    .portfolio-item:nth-child(4) { grid-column: span 2; }
+}
+
+.portfolio-item {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: zoom-in;
+    box-shadow: var(--elevation-2);
+    height: 100%;
+    min-height: 250px;
+    background: var(--gray-100);
+}
+
+.portfolio-item__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.portfolio-item:hover .portfolio-item__img {
+    transform: scale(1.05);
+}
+
+.portfolio-item__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(7, 56, 90, 0.7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.portfolio-item:hover .portfolio-item__overlay {
+    opacity: 1;
+}
+
+.portfolio-item__zoom {
+    color: white;
+    font-size: 2rem;
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+}
+
+.portfolio-item:hover .portfolio-item__zoom {
+    transform: scale(1);
+}
+
+/* --- Mobile Adjustments for New Sections --- */
+@media (max-width: 768px) {
+    .instagram-grid {
+        display: flex;
+        overflow-x: auto;
+        gap: var(--space-3);
+        padding-bottom: var(--space-4);
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .video-card {
+        min-width: 160px;
+        width: 160px;
+        scroll-snap-align: start;
+        border-radius: var(--radius-lg);
+    }
+
+    .portfolio-grid {
+        display: grid; /* Reset masonry for mobile */
+        grid-template-columns: 1fr; 
+        grid-auto-rows: auto;
+        gap: var(--space-3);
+    }
+    
+    .portfolio-item {
+        height: 250px;
+    }
+    
+    /* Reset masonry spans */
+    .portfolio-item:nth-child(1),
+    .portfolio-item:nth-child(4) { 
+        grid-row: span 1; 
+        grid-column: span 1; 
+    }
+}
+/* --- Секция Отзывов (Видео) --- */
+.reviews-section {
+    padding: var(--space-12) 0;
+    background-color: transparent; 
+}
+
+
+/* Контейнер для видео */
+.reviews-grid {
+    display: flex;              /* Используем Flex вместо Grid */
+    flex-wrap: wrap;            /* Разрешаем перенос на новую строку */
+    justify-content: center;    /* ЦЕНТРИРУЕМ содержимое */
+    gap: 30px;                  /* Отступы между карточками */
+    margin-top: var(--space-6);
+}
+
+/* Карточка видео */
+.review-card {
+    position: relative;
+    /* На ПК делаем фиксированный размер, похожий на телефон */
+    width: 300px;               
+    height: 533px;              /* Пропорция 9:16 (300 * 1.77) */
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    background: #000;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); /* Тень поглубже */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transform: translateZ(0);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.review-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(7, 56, 90, 0.25);
+}
+
+.review-card video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    display: block;
+}
+
+/* Оверлей (затемнение + кнопка) */
+.review-card__overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease, background 0.3s ease;
+    z-index: 2;
+    pointer-events: none; /* Клик проходит сквозь оверлей */
+}
+
+.review-card:hover .review-card__overlay {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.review-card.is-playing .review-card__overlay {
+    opacity: 0;
+}
+
+/* Кнопка Play */
+.review-card__play-btn {
+    width: 70px;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.8rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: background 0.3s ease;
+}
+
+.review-card:hover .review-card__play-btn {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* --- Адаптив для телефонов (оставляем свайп) --- */
+@media (max-width: 768px) {
+    .reviews-grid {
+        display: flex;
+        flex-wrap: nowrap;      /* Запрещаем перенос на мобильных */
+        justify-content: flex-start; /* На мобильном выравнивание по левому краю для скролла */
+        overflow-x: auto;
+        gap: 16px;
+        padding-bottom: 20px;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        
+        /* Компенсация отступов контейнера */
+        margin-left: -16px;
+        margin-right: -16px;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    
+    .review-card {
+        min-width: 260px; /* Ширина на телефоне */
+        width: 260px;
+        height: 462px;    /* Пропорция 9:16 */
+        scroll-snap-align: center;
+    }
+    
+    .review-card__play-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+}
