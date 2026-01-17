@@ -19,6 +19,18 @@ root_router = APIRouter(tags=["Public Website Root"])
 async def get_shop_index(
     request: Request,
     locale: str,
+):
+    context = {
+        "request": request,
+        "current_year": datetime.now().year,
+    }
+    return templates.TemplateResponse("shop/index.html", context)
+
+# --- НОВЫЙ РОУТ ДЛЯ ТОВАРОВ ---
+@router.get("/products", response_class=HTMLResponse, name="products")
+async def get_products_page(
+    request: Request,
+    locale: str,
     db: AsyncSession = Depends(get_db_session)
 ):
     categories = await shop_service.get_categories_with_active_products(db)
@@ -27,7 +39,7 @@ async def get_shop_index(
         "categories_with_products": categories,
         "current_year": datetime.now().year,
     }
-    return templates.TemplateResponse("shop/index.html", context)
+    return templates.TemplateResponse("shop/products.html", context)
 
 @router.get("/about", response_class=HTMLResponse, name="about")
 async def get_about_page(

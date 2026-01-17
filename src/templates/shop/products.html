@@ -1,0 +1,100 @@
+{% extends "shop/base.html" %}
+
+{% set page_title %}{% if request.state.locale == 'uz' %}Mahsulotlar katalogi | WeConstruct{% else %}Каталог продукции | WeConstruct{% endif %}{% endset %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<!-- Заголовок страницы -->
+<section class="page-header">
+  <div class="container">
+    <div class="page-header__content text-center" style="padding-top: 120px; padding-bottom: 40px;">
+      <h1 class="page-title">
+        {% if request.state.locale == 'uz' %}Bizning Mahsulotlar{% else %}Наша Продукция{% endif %}
+      </h1>
+      <p class="page-subtitle">
+        {% if request.state.locale == 'uz' %}Sifatli va zamonaviy modulli yechimlar{% else %}Качественные и современные модульные решения{% endif %}
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Тот самый цикл товаров из админки -->
+{% for category in categories_with_products %}
+<section class="products-section" id="category-{{ category.slug }}">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{{ t_get(request, category, 'name') }}</h2>
+      {% set category_desc = t_get(request, category, 'description') %}
+      {% if category_desc %}
+      <p class="section-subtitle">{{ category_desc }}</p>
+      {% endif %}
+    </div>
+    
+    <div class="products-grid">
+      {% for product in category.products %}
+      <article class="product-card cursor-pointer" 
+               hx-get="{{ request.url_for('htmx_product_modal', locale=request.state.locale, product_id=product.id) }}"
+               hx-target="#modal-placeholder"
+               hx-swap="innerHTML"
+               title="{{ t_get(request, product, 'name') }} haqida batafsil">
+        <div class="product-card__image">
+          {% if product.main_image %}
+              <img src="{{ url_for('media', path=product.main_image) }}" alt="{{ t_get(request, product, 'name') }}">
+          {% else %}
+              <img src="{{ url_for('static', path='img/placeholder.png') }}" alt="{{ t_get(request, product, 'name') }}">
+          {% endif %}
+          <div class="product-card__overlay">
+            <span class="product-card__view-text">
+                <i class="fas fa-eye"></i>
+                <span>{% if request.state.locale == 'uz' %}Batafsil{% else %}Узнать подробнее{% endif %}</span>
+            </span>
+          </div>
+        </div>
+           <div class="product-card__content">
+          <div>
+            <h3 class="product-card__title">{{ t_get(request, product, 'name') }}</h3>
+            <p class="product-card__description">
+              {% set short_desc = t_get(request, product, 'short_description') %}
+              {% if short_desc %}
+                {{ short_desc }}
+              {% else %}
+                {% if request.state.locale == 'uz' %}Qisqa tavsif mavjud emas.{% else %}Краткое описание отсутствует.{% endif %}
+              {% endif %}
+            </p>
+          </div>
+          
+          {% if product.price_min %}
+          <div class="product-card__footer">
+              <span class="product-card__price">{% if request.state.locale == 'uz' %}{{ product.price_min|format_number }} so'mdan{% else %}от {{ product.price_min|format_number }} сум{% endif %}</span>
+          </div>
+          {% endif %}
+          
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endfor %}
+
+<!-- CTA внизу каталога -->
+<section class="cta">
+    <div class="container">
+        <div class="cta__content">
+          <div class="cta__text">
+            <h2 class="cta__title">{% if request.state.locale == 'uz' %}Savollaringiz bormi?{% else %}Остались вопросы?{% endif %}</h2>
+            <p class="cta__description">{% if request.state.locale == 'uz' %}Biz bilan bog'laning.{% else %}Свяжитесь с нами для консультации.{% endif %}</p>
+          </div>
+          <div class="cta__actions">
+            <button hx-get="{{ request.url_for('htmx_general_quote_form', locale=request.state.locale) }}"
+                    hx-target="#modal-placeholder"
+                    hx-swap="innerHTML"
+                    class="btn btn--white btn--hero">
+              <span>{% if request.state.locale == 'uz' %}Ariza qoldirish{% else %}Оставить заявку{% endif %}</span>
+            </button>
+          </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

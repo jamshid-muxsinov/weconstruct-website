@@ -1,21 +1,13 @@
 {% extends "shop/base.html" %}
 
 {% set page_title %}{% if request.state.locale == 'uz' %}Modulli uylar Toshkent va O'zbekistonda – Tez quriladigan binolar | WeConstruct{% else %}Модульные дома в Ташкенте и Узбекистане – Купить быстровозводимые здания | WeConstruct{% endif %}{% endset %}
-{% set page_description %}
-{% if request.state.locale == 'uz' %}
-O'zbekistonda modulli uylar, kapsula mehmonxonalar, ofislar va pavilyonlar qurish va o'rnatish. ✅ Sifat kafolati ✅ Tez muddatlar. WeConstruct veb-saytida loyihangiz narxini hisoblang.
-{% else %}
-Производство и монтаж модульных домов, капсульных отелей, офисов и павильонов под ключ в Узбекистане. ✅ Гарантия качества ✅ Быстрые сроки. Рассчитайте стоимость вашего проекта на сайте WeConstruct.
-{% endif %}
-{% endset %}
+{% set page_description %}{% if request.state.locale == 'uz' %}O'zbekistonda modulli uylar...{% else %}Производство и монтаж модульных домов...{% endif %}{% endset %}
 
 {% block title %}{{ page_title }}{% endblock %}
 {% block meta_description %}{{ page_description }}{% endblock %}
-{% block og_title %}{{ page_title }}{% endblock %}
-{% block og_description %}{{ page_description }}{% endblock %}
-{% block twitter_title %}{{ page_title }}{% endblock %}
-{% block twitter_description %}{{ page_description }}{% endblock %}
+
 {% block content %}
+<!-- 1. HERO -->
 <section class="hero">
   <div class="hero__background-overlay"></div>
   <div class="container hero__content">
@@ -36,127 +28,57 @@ O'zbekistonda modulli uylar, kapsula mehmonxonalar, ofislar va pavilyonlar quris
       {% endif %}
     </p>
     <div class="hero__actions">
-        <button hx-get="{{ request.url_for('htmx_general_quote_form', locale=request.state.locale) }}"
-                hx-target="#modal-placeholder"
-                hx-swap="innerHTML"
-                class="btn btn--primary btn--hero">
-          <span>{% if request.state.locale == 'uz' %}Ariza qoldirish{% else %}Оставить заявку{% endif %}</span>
+        <!-- Кнопка в Hero теперь тоже ведет на страницу товаров -->
+        <a href="{{ request.url_for('products', locale=request.state.locale) }}" class="btn btn--primary btn--hero">
+          <span>{% if request.state.locale == 'uz' %}Mahsulotlar katalogi{% else %}Каталог продукции{% endif %}</span>
           <svg class="icon icon-arrow" width="24" height="24"><use xlink:href="#icon-arrow-right"></use></svg>
-        </button>
+        </a>
     </div>
   </div>
 </section>
 
-{% for category in categories_with_products %}
-<section class="products-section" id="category-{{ category.slug }}">
-  <div class="container">
-    <div class="section-header">
-      <h2 class="section-title">{{ t_get(request, category, 'name') }}</h2>
-      {% set category_desc = t_get(request, category, 'description') %}
-      {% if category_desc %}
-      <p class="section-subtitle">{{ category_desc }}</p>
-      {% endif %}
-    </div>
-    
-    <div class="products-grid">
-      {% for product in category.products %}
-      <article class="product-card cursor-pointer" 
-               hx-get="{{ request.url_for('htmx_product_modal', locale=request.state.locale, product_id=product.id) }}"
-               hx-target="#modal-placeholder"
-               hx-swap="innerHTML"
-               title="{{ t_get(request, product, 'name') }} haqida batafsil">
-        <div class="product-card__image">
-          {% if product.main_image %}
-              <img src="{{ url_for('media', path=product.main_image) }}" alt="{{ t_get(request, product, 'name') }}">
-          {% else %}
-              <img src="{{ url_for('static', path='img/placeholder.png') }}" alt="{{ t_get(request, product, 'name') }}">
-          {% endif %}
-          <div class="product-card__overlay">
-            <span class="product-card__view-text">
-                <i class="fas fa-eye"></i>
-                <span>{% if request.state.locale == 'uz' %}Batafsil{% else %}Узнать подробнее{% endif %}</span>
-            </span>
-          </div>
-        </div>
-           <div class="product-card__content">
-          <div>
-            <h3 class="product-card__title">{{ t_get(request, product, 'name') }}</h3>
-            <p class="product-card__description">
-              {% set short_desc = t_get(request, product, 'short_description') %}
-              {% if short_desc %}
-                {{ short_desc }}
-              {% else %}
-                {% if request.state.locale == 'uz' %}Qisqa tavsif mavjud emas.{% else %}Краткое описание отсутствует.{% endif %}
-              {% endif %}
-            </p>
-          </div>
-          
-          {% if product.price_min %}
-          <div class="product-card__footer">
-              <span class="product-card__price">{% if request.state.locale == 'uz' %}{{ product.price_min|format_number }} so'mdan{% else %}от {{ product.price_min|format_number }} сум{% endif %}</span>
-          </div>
-          {% endif %}
-          
-        </div>
-      </article>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-{% endfor %}
-
+<!-- 2. ВЫПОЛНЕННЫЕ ПРОЕКТЫ (Бегущая строка) -->
 <section class="portfolio-section">
-  <div class="container">
+  <div class="container-fluid" style="padding: 0;">
     <div class="section-header">
       <h2 class="section-title">{% if request.state.locale == 'uz' %}Amalga oshirilgan loyihalar{% else %}Выполненные проекты{% endif %}</h2>
-      <p class="section-subtitle">{% if request.state.locale == 'uz' %}Bizning eng yaxshi ishlarimizdan namunalar. Sifat va dizaynga e'tibor bering.{% else %}Примеры наших лучших работ. Обратите внимание на качество и дизайн.{% endif %}</p>
     </div>
     
-    <div class="portfolio-grid">
-   <!-- Project 1 -->
-   <div class="portfolio-item">
-      <!-- ИСПРАВЛЕНО: href указывает на реальное изображение -->
-      <a href="{{ url_for('static', path='img/1rew.jpg') }}" class="lightbox" data-gallery="portfolio">
-         <img src="{{ url_for('static', path='img/1rew.jpg') }}" alt="Project 1" class="portfolio-item__img">
-         <div class="portfolio-item__overlay">
-            <div class="portfolio-item__icon"><i class="fas fa-search-plus"></i></div>
-         </div>
-      </a>
-   </div>
-   
-   <!-- Project 2 -->
-   <div class="portfolio-item">
-      <a href="{{ url_for('static', path='img/2rew.jpg') }}" class="lightbox" data-gallery="portfolio">
-         <img src="{{ url_for('static', path='img/2rew.jpg') }}" alt="Project 2" class="portfolio-item__img">
-         <div class="portfolio-item__overlay">
-            <div class="portfolio-item__icon"><i class="fas fa-search-plus"></i></div>
-         </div>
-      </a>
-   </div>
-   
-   <!-- Project 3 -->
-   <div class="portfolio-item">
-      <a href="{{ url_for('static', path='img/3rew.jpg') }}" class="lightbox" data-gallery="portfolio">
-         <img src="{{ url_for('static', path='img/3rew.jpg') }}" alt="Project 3" class="portfolio-item__img">
-         <div class="portfolio-item__overlay">
-            <div class="portfolio-item__icon"><i class="fas fa-search-plus"></i></div>
-         </div>
-      </a>
-   </div>
-   
-   <!-- Project 4 -->
-   <div class="portfolio-item">
-      <a href="{{ url_for('static', path='img/4rew.jpg') }}" class="lightbox" data-gallery="portfolio">
-         <img src="{{ url_for('static', path='img/4rew.jpg') }}" alt="Project 4" class="portfolio-item__img">
-         <div class="portfolio-item__overlay">
-            <div class="portfolio-item__icon"><i class="fas fa-search-plus"></i></div>
-         </div>
-      </a>
-   </div>
-</div>
+    <div class="portfolio-marquee">
+       <div class="portfolio-track">
+           {% for i in range(3) %}
+               <div class="portfolio-item-small">
+                  <a href="{{ url_for('static', path='img/1rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
+                     <img src="{{ url_for('static', path='img/1rew.jpg') }}" alt="Project">
+                  </a>
+               </div>
+               <div class="portfolio-item-small">
+                  <a href="{{ url_for('static', path='img/2rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
+                     <img src="{{ url_for('static', path='img/2rew.jpg') }}" alt="Project">
+                  </a>
+               </div>
+               <div class="portfolio-item-small">
+                  <a href="{{ url_for('static', path='img/3rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
+                     <img src="{{ url_for('static', path='img/3rew.jpg') }}" alt="Project">
+                  </a>
+               </div>
+               <div class="portfolio-item-small">
+                  <a href="{{ url_for('static', path='img/4rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
+                     <img src="{{ url_for('static', path='img/4rew.jpg') }}" alt="Project">
+                  </a>
+               </div>
+               <div class="portfolio-item-small">
+                  <a href="{{ url_for('static', path='img/placeholder.png') }}" class="lightbox" data-gallery="portfolio-home">
+                     <img src="{{ url_for('static', path='img/placeholder.png') }}" alt="Project">
+                  </a>
+               </div>
+           {% endfor %}
+       </div>
+    </div>
   </div>
 </section>
 
+<!-- 3. ADVANTAGES -->
 <section class="advantages-section">
     <div class="container">
         <div class="section-header">
@@ -188,6 +110,7 @@ O'zbekistonda modulli uylar, kapsula mehmonxonalar, ofislar va pavilyonlar quris
     </div>
 </section>
 
+<!-- 4. STEPS -->
 <section class="steps-section">
     <div class="container">
         <div class="section-header">
@@ -235,62 +158,56 @@ O'zbekistonda modulli uylar, kapsula mehmonxonalar, ofislar va pavilyonlar quris
     </div>
 </section>
 
+<!-- 5. ОТЗЫВЫ И НОВОСТИ (YouTube ССЫЛКИ В НОВОЙ ВКЛАДКЕ) -->
 <section class="reviews-section">
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">
-        {% if request.state.locale == 'uz' %}Mijozlarimiz fikrlari{% else %}Отзывы клиентов{% endif %}
+        {% if request.state.locale == 'uz' %}Mijozlar fikri va Yangiliklar{% else %}Отзывы и Новости{% endif %}
       </h2>
       <p class="section-subtitle">
-        {% if request.state.locale == 'uz' %}Bizning ishimiz haqida haqiqiy video sharhlar.{% else %}Реальные видеообзоры о нашей работе.{% endif %}
+        {% if request.state.locale == 'uz' %}Eng so'nggi video sharhlar va kompaniya yangiliklari.{% else %}Свежие видеообзоры и новости компании.{% endif %}
       </p>
     </div>
 
     <div class="reviews-grid">
-      <!-- Video 1 -->
-      <div class="review-card" onclick="handleVideoClick(this)">
-        <!-- 
-             1. Убрали poster
-             2. preload="metadata" — грузит только обложку и инфо (экономит трафик)
-             3. Используем src (не data-src), чтобы обложка появилась сама
-        -->
-        <video 
-            playsinline 
-            loop 
-            preload="metadata"
-            width="100%" 
-            height="100%">
-            <source src="{{ url_for('static', path='reviews/video1.mp4') }}" type="video/mp4">
-        </video>
-        
-        <div class="review-card__overlay">
-            <div class="review-card__play-btn">
-                <i class="fas fa-play" style="padding-left: 4px;"></i>
-            </div>
-        </div>
-      </div>
       
-      <!-- Video 2 -->
-      <div class="review-card" onclick="handleVideoClick(this)">
-        <video 
-            playsinline 
-            loop 
-            preload="metadata"
-            width="100%" 
-            height="100%">
-            <source src="{{ url_for('static', path='reviews/video2.mp4') }}" type="video/mp4">
-        </video>
-        
-        <div class="review-card__overlay">
-            <div class="review-card__play-btn">
-                <i class="fas fa-play" style="padding-left: 4px;"></i>
-            </div>
+      <!-- YouTube Video 1 -->
+      <!-- ВАЖНО: class="review-card-yt" (БЕЗ lightbox), target="_blank" -->
+      <a href="https://www.youtube.com/shorts/CaGsdlTnvyQ" target="_blank" rel="noopener noreferrer" class="review-card-yt">
+        <img src="https://img.youtube.com/vi/CaGsdlTnvyQ/hqdefault.jpg" alt="Video Review" class="review-card-yt__thumb">
+        <div class="review-card-yt__overlay">
+            <div class="review-card-yt__icon"><i class="fas fa-play"></i></div>
         </div>
-      </div>
+      </a>
+      
+      <!-- YouTube Video 2 -->
+      <a href="https://www.youtube.com/shorts/VOPcYSZ1yiE" target="_blank" rel="noopener noreferrer" class="review-card-yt">
+        <img src="https://img.youtube.com/vi/VOPcYSZ1yiE/hqdefault.jpg" alt="Video Review" class="review-card-yt__thumb">
+        <div class="review-card-yt__overlay">
+            <div class="review-card-yt__icon"><i class="fas fa-play"></i></div>
+        </div>
+      </a>
+
+      <!-- YouTube Video 3 -->
+      <a href="https://www.youtube.com/shorts/GesNBATDKA4" target="_blank" rel="noopener noreferrer" class="review-card-yt">
+        <img src="https://img.youtube.com/vi/GesNBATDKA4/hqdefault.jpg" alt="Video Review" class="review-card-yt__thumb">
+        <div class="review-card-yt__overlay">
+            <div class="review-card-yt__icon"><i class="fas fa-play"></i></div>
+        </div>
+      </a>
+
+      <a href="https://www.youtube.com/shorts/ipUV6jPg8mY" target="_blank" rel="noopener noreferrer" class="review-card-yt">
+        <img src="https://img.youtube.com/vi/ipUV6jPg8mY/hqdefault.jpg" alt="Video Review" class="review-card-yt__thumb">
+        <div class="review-card-yt__overlay">
+            <div class="review-card-yt__icon"><i class="fas fa-play"></i></div>
+        </div>
+      </a>
     </div>
   </div>
 </section>
 
+<!-- 6. CTA -->
 <section class="cta">
     <div class="container">
         <div class="cta__content">
@@ -309,33 +226,4 @@ O'zbekistonda modulli uylar, kapsula mehmonxonalar, ofislar va pavilyonlar quris
         </div>
     </div>
 </section>
-
-<!-- Скрипт в самом низу страницы -->
-<script>
-function handleVideoClick(card) {
-    const video = card.querySelector('video');
-    const allVideos = document.querySelectorAll('.review-card video');
-    const allCards = document.querySelectorAll('.review-card');
-
-    if (!video.paused) {
-        // Если играет - ставим на паузу
-        video.pause();
-        card.classList.remove('is-playing');
-        video.controls = false; 
-    } else {
-        // Если на паузе - останавливаем другие и запускаем это
-        allVideos.forEach((v, index) => {
-            if (v !== video) {
-                v.pause();
-                v.controls = false;
-                allCards[index].classList.remove('is-playing');
-            }
-        });
-
-        video.play();
-        card.classList.add('is-playing');
-        video.controls = true; 
-    }
-}
-</script>
 {% endblock %}

@@ -1,9 +1,23 @@
 <div 
-    x-data="{ show: false }"
-    x-init="() => { $nextTick(() => show = true) }"
+    x-data="{ 
+        show: false,
+        init() {
+            this.$nextTick(() => { 
+                this.show = true; 
+                document.body.classList.add('body-no-scroll');
+            });
+        },
+        closeModal() {
+            this.show = false;
+            document.body.classList.remove('body-no-scroll');
+            setTimeout(() => {
+                this.$el.remove();
+            }, 300);
+        }
+    }"
     class="modal-overlay" 
-    @keydown.escape.window="$el.remove()"
-    @click.self="$el.remove()"
+    @keydown.escape.window="closeModal()"
+    @click.self="closeModal()"
     x-show="show"
     x-transition:enter="transition ease-out duration-300"
     x-transition:enter-start="opacity-0"
@@ -23,20 +37,25 @@
         x-transition:leave-end="opacity-0 scale-95"
     >
         
-        <button class="modal-close-btn" @click="$el.parentElement.parentElement.remove()">&times;</button>
+        <button class="modal-close-btn" @click="closeModal()">&times;</button>
         
         <div class="modal-grid">
             {% set all_images = [] %}
             {% if product.main_image %}{% set _ = all_images.append(product.main_image) %}{% endif %}
             {% for img in product.images %}{% set _ = all_images.append(img.image) %}{% endfor %}
 
+            <!-- ЛЕВАЯ КОЛОНКА: Фото + Форма -->
             <div class="modal-gallery">
-                <a href="{{ url_for('media', path=all_images[0]) if all_images else url_for('static', path='img/placeholder.png') }}" 
-                   class="gallery-main-link lightbox" 
-                   data-gallery="product-{{ product.id }}">
-                    <img src="{{ url_for('media', path=all_images[0]) if all_images else url_for('static', path='img/placeholder.png') }}" alt="Основное изображение">
-                </a>
+                <!-- 1. Главное фото -->
+                <div class="modal-gallery__main">
+                    <a href="{{ url_for('media', path=all_images[0]) if all_images else url_for('static', path='img/placeholder.png') }}" 
+                       class="gallery-main-link lightbox" 
+                       data-gallery="product-{{ product.id }}">
+                        <img src="{{ url_for('media', path=all_images[0]) if all_images else url_for('static', path='img/placeholder.png') }}" alt="Основное изображение">
+                    </a>
+                </div>
                 
+                <!-- 2. Миниатюры -->
                 {% if all_images|length > 1 %}
                 <div class="modal-gallery__thumbnails">
                     {% for image_path in all_images[1:] %}
@@ -48,13 +67,32 @@
                     {% endfor %}
                 </div>
                 {% endif %}
+
+                <!-- 3. Форма заявки -->
+                <div id="modal-form-wrapper">
+                    {% include 'shop/partials/_quote_form.html' %}
+                </div>
             </div>
+
+            <!-- ПРАВАЯ КОЛОНКА -->
             <div class="modal-info-scrollable">
+                
+                <!-- 1. БЛОК "Sizning loyihangiz" (ТЕПЕРЬ ТУТ, В САМОМ ВВЕРХУ) -->
+                <div class="customization-note" style="margin-bottom: 25px; margin-top: 0;">
+                    <div class="customization-note__icon"><i class="fas fa-drafting-compass"></i></div>
+                    <div class="customization-note__text">
+                        <h5>{% if request.state.locale == 'uz' %}Sizning loyihangiz, sizning tanlovingiz!{% else %}Ваш проект — ваш выбор!{% endif %}</h5>
+                        <p>{% if request.state.locale == 'uz' %}Har qanday loyihaning tashqi va ichki pardoz materiallarini byudjetingiz va didingizga mos ravda o'zgartirishimiz mumkin.{% else %}Мы можем изменить материалы внешней и внутренней отделки в любом проекте под ваш бюджет и вкус.{% endif %}</p>
+                    </div>
+                </div>
+
+                <!-- 2. Заголовок -->
                 <h2 class="modal-title">{{ t_get(request, product, 'name') }}</h2>
                 
                 {% set dimensions = t_get(request, product, 'dimensions') %}
                 {% set materials_list = product.materials_ru_list if request.state.locale == 'ru' else product.materials_uz_list %}
                 
+                <!-- 3. Характеристики -->
                 {% if dimensions or materials_list or product.price_min %}
                 <div class="product-specs">
                     {% if product.price_min %}
@@ -96,6 +134,7 @@
                 </div>
                 {% endif %}
                 
+                <!-- 4. Описание -->
                 {% set full_desc = t_get(request, product, 'full_description') %}
                 {% if full_desc %}
                     <h4 class="full-description-title"><i class="fas fa-info-circle"></i> {% if request.state.locale == 'uz' %}To'liq tavsif{% else %}Полное описание{% endif %}</h4>
@@ -103,16 +142,6 @@
                         {{ full_desc|replace("\n", "<br>")|safe }}
                     </div>
                 {% endif %}
-                <div class="customization-note">
-                    <div class="customization-note__icon"><i class="fas fa-drafting-compass"></i></div>
-                    <div class="customization-note__text">
-                        <h5>{% if request.state.locale == 'uz' %}Sizning loyihangiz, sizning tanlovingiz!{% else %}Ваш проект — ваш выбор!{% endif %}</h5>
-                        <p>{% if request.state.locale == 'uz' %}Har qanday loyihaning tashqi va ichki pardoz materiallarini byudjetingiz va didingizga mos ravda o'zgartirishimiz mumkin.{% else %}Мы можем изменить материалы внешней и внутренней отделки в любом проекте под ваш бюджет и вкус.{% endif %}</p>
-                    </div>
-                </div>
-                <div id="modal-form-wrapper">
-                    {% include 'shop/partials/_quote_form.html' %}
-                </div>
             </div>
         </div>
     </div>
@@ -124,7 +153,6 @@
   "@type": "Product",
   "name": "{{ t_get(request, product, 'name') }}",
   "image": "{{ url_for('media', path=product.main_image) if product.main_image else url_for('static', path='img/placeholder.png') }}",
-  "description": "{{ t_get(request, product, 'full_description') or t_get(request, product, 'short_description') }}",
   "sku": "WC-{{ product.id }}",
   "brand": {
     "@type": "Brand",
@@ -134,13 +162,8 @@
   "offers": {
     "@type": "AggregateOffer",
     "lowPrice": "{{ product.price_min }}",
-    {% if product.price_max %}
-    "highPrice": "{{ product.price_max }}",
-    {% endif %}
     "priceCurrency": "UZS",
-    "offerCount": 1,
-    "availability": "https://schema.org/InStock",
-    "url": "{{ request.url }}"
+    "availability": "https://schema.org/InStock"
   }
   {% endif %}
 }
