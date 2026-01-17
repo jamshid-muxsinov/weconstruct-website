@@ -158,7 +158,7 @@
     </div>
 </section>
 
-<!-- 5. ОТЗЫВЫ И НОВОСТИ (YouTube ССЫЛКИ В НОВОЙ ВКЛАДКЕ) -->
+<!-- 5. ОТЗЫВЫ И НОВОСТИ (Исправленная версия для мобильных) -->
 <section class="reviews-section">
   <div class="container">
     <div class="section-header">
@@ -171,36 +171,83 @@
     </div>
 
     <div class="reviews-grid">
-      
       <!-- YouTube Video 1 -->
-      <!-- ВАЖНО: class="review-card-yt" (БЕЗ lightbox), target="_blank" -->
-      <a href="https://www.youtube.com/shorts/CaGsdlTnvyQ" target="_blank" rel="noopener noreferrer" class="review-card-yt">
-        <img src="https://img.youtube.com/vi/CaGsdlTnvyQ/hqdefault.jpg" alt="Video Review" class="review-card-yt__thumb">
+      <a href="https://www.youtube.com/shorts/CaGsdlTnvyQ" 
+         target="_blank" 
+         rel="noopener noreferrer" 
+         class="review-card-yt"
+         aria-label="Смотреть видео отзыв 1">
+        <img src="https://img.youtube.com/vi/CaGsdlTnvyQ/hqdefault.jpg" 
+             alt="Video Review 1" 
+             class="review-card-yt__thumb"
+             loading="lazy">
         <div class="review-card-yt__overlay">
-            <div class="review-card-yt__icon"><i class="fas fa-play"></i></div>
+            <div class="review-card-yt__icon">
+                <i class="fas fa-play"></i>
+            </div>
+            <div class="review-card-yt__title">
+                {% if request.state.locale == 'uz' %}Video sharh{% else %}Видео отзыв{% endif %} 1
+            </div>
         </div>
       </a>
       
       <!-- YouTube Video 2 -->
-      <a href="https://www.youtube.com/shorts/VOPcYSZ1yiE" target="_blank" rel="noopener noreferrer" class="review-card-yt">
-        <img src="https://img.youtube.com/vi/VOPcYSZ1yiE/hqdefault.jpg" alt="Video Review" class="review-card-yt__thumb">
+      <a href="https://www.youtube.com/shorts/VOPcYSZ1yiE" 
+         target="_blank" 
+         rel="noopener noreferrer" 
+         class="review-card-yt"
+         aria-label="Смотреть видео отзыв 2">
+        <img src="https://img.youtube.com/vi/VOPcYSZ1yiE/hqdefault.jpg" 
+             alt="Video Review 2" 
+             class="review-card-yt__thumb"
+             loading="lazy">
         <div class="review-card-yt__overlay">
-            <div class="review-card-yt__icon"><i class="fas fa-play"></i></div>
+            <div class="review-card-yt__icon">
+                <i class="fas fa-play"></i>
+            </div>
+            <div class="review-card-yt__title">
+                {% if request.state.locale == 'uz' %}Video sharh{% else %}Видео отзыв{% endif %} 2
+            </div>
         </div>
       </a>
 
       <!-- YouTube Video 3 -->
-      <a href="https://www.youtube.com/shorts/GesNBATDKA4" target="_blank" rel="noopener noreferrer" class="review-card-yt">
-        <img src="https://img.youtube.com/vi/GesNBATDKA4/hqdefault.jpg" alt="Video Review" class="review-card-yt__thumb">
+      <a href="https://www.youtube.com/shorts/GesNBATDKA4" 
+         target="_blank" 
+         rel="noopener noreferrer" 
+         class="review-card-yt"
+         aria-label="Смотреть видео отзыв 3">
+        <img src="https://img.youtube.com/vi/GesNBATDKA4/hqdefault.jpg" 
+             alt="Video Review 3" 
+             class="review-card-yt__thumb"
+             loading="lazy">
         <div class="review-card-yt__overlay">
-            <div class="review-card-yt__icon"><i class="fas fa-play"></i></div>
+            <div class="review-card-yt__icon">
+                <i class="fas fa-play"></i>
+            </div>
+            <div class="review-card-yt__title">
+                {% if request.state.locale == 'uz' %}Video sharh{% else %}Видео отзыв{% endif %} 3
+            </div>
         </div>
       </a>
 
-      <a href="https://www.youtube.com/shorts/ipUV6jPg8mY" target="_blank" rel="noopener noreferrer" class="review-card-yt">
-        <img src="https://img.youtube.com/vi/ipUV6jPg8mY/hqdefault.jpg" alt="Video Review" class="review-card-yt__thumb">
+      <!-- YouTube Video 4 -->
+      <a href="https://www.youtube.com/shorts/ipUV6jPg8mY" 
+         target="_blank" 
+         rel="noopener noreferrer" 
+         class="review-card-yt"
+         aria-label="Смотреть видео отзыв 4">
+        <img src="https://img.youtube.com/vi/ipUV6jPg8mY/hqdefault.jpg" 
+             alt="Video Review 4" 
+             class="review-card-yt__thumb"
+             loading="lazy">
         <div class="review-card-yt__overlay">
-            <div class="review-card-yt__icon"><i class="fas fa-play"></i></div>
+            <div class="review-card-yt__icon">
+                <i class="fas fa-play"></i>
+            </div>
+            <div class="review-card-yt__title">
+                {% if request.state.locale == 'uz' %}Video sharh{% else %}Видео отзыв{% endif %} 4
+            </div>
         </div>
       </a>
     </div>
