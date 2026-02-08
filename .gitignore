@@ -10,11 +10,11 @@
 
 # ========== DEVELOPMENT ONLY ==========
 # 🚀 Dev файлы (НИКОГДА на сервер!)
-docker-compose.override.yml  # NEVER on production!
-docker-compose.dev.yml       # NEVER on production!
-.env.dev                     # Dev переменные
-.env.development             # Альтернативный dev конфиг
-.env.test                    # Test конфиг
+docker-compose.override.yml  
+docker-compose.dev.yml      
+.env.dev                  
+.env.development             
+.env.test                 
 
 # IDE и редакторы
 .vscode/
