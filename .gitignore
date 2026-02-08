@@ -1,28 +1,86 @@
 # .gitignore
 
+# ========== PRODUCTION SAFETY ==========
+# 🚨 НИКОГДА не коммитить production конфиги!
+# Эти файлы используются на VDS и должны оставаться неизменными
+
 # Исключаем локальные переменные окружения и секреты
 .env
+.env.local
 
-# Исключаем папки с данными, которые генерируются во время работы
-/media/
-/logs/
+# ========== DEVELOPMENT ONLY ==========
+# 🚀 Dev файлы (НИКОГДА на сервер!)
+docker-compose.override.yml  # NEVER on production!
+docker-compose.dev.yml       # NEVER on production!
+.env.dev                     # Dev переменные
+.env.development             # Альтернативный dev конфиг
+.env.test                    # Test конфиг
 
+# IDE и редакторы
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ========== PYTHON CACHE & VENV ==========
 # Исключаем кэш и артефакты Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .pytest_cache/
+.coverage
+htmlcov/
 
 # Исключаем папки виртуального окружения Python
 .venv
 venv
 env
+ENV
+env.bak
+venv.bak
+.env.venv
 
-# Исключаем файлы и папки, связанные с Node.js (если используются)
+# ========== NODE/NPM ==========
+# Исключаем файлы и папки, связанные с Node.js
 node_modules/
 npm-debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 package-lock.json
+yarn.lock
+
+# ========== DATA & LOGS ==========
+# Исключаем папки с данными, которые генерируются во время работы
+/media/
+/logs/
+*.log
+
+# ========== BUILD & DIST ==========
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# ========== DATABASE & CREDENTIALS ==========
+# Исключаем локальные БД и credentials
+*.db
+*.sqlite
+*.sqlite3
+/config/credentials.json
+credentials.json
+!config/credentials.json.example
+
+# ========== MISCELLANEOUS ==========
+.DS_Store
+.AppleDouble
+.LSOverride
+.env.*.local
+verify_setup_output.txt
+FILES_CREATED.txt
 
 # Исключаем файлы IDE и редакторов кода
 .idea/

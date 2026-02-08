@@ -1,0 +1,95 @@
+# docker-compose.override.yml
+# 🚀 ЛОКАЛЬНАЯ РАЗРАБОТКА
+# 
+# Этот файл автоматически применяется Docker Compose при наличии.
+# Переопределяет production-конфиг для быстрой локальной разработки.
+#
+# Использование:
+#   docker compose up
+#
+# ⚠️ ВАЖНО: Production конфиг остается неизменным!
+#
+# Отличия от production:
+# - Uvicorn вместо Gunicorn (live-reload)
+# - Bind mounts для src/, static/, media/
+# - Отключены health checks
+# - DEBUG=true для лучшего логирования
+# - Логирование в консоль
+
+services:
+  db:
+    # Используем исходный конфиг
+    # Но можно добавить удобства для dev:
+    environment:
+      - POSTGRES_INITDB_ARGS=-c log_statement=all
+
+  redis:
+    # Исходный конфиг
+    # Можно отключить, если не нужен для dev:
+    # profiles: ["optional"]
+
+  site:
+    # ⚠️ КРИТИЧЕСКИ: Используем uvicorn вместо gunicorn
+    # --reload = автоматический перезапуск при изменении кода
+    # --host 0.0.0.0 = доступен извне контейнера
+    command: >
+      uvicorn 
+      --host 0.0.0.0 
+      --port 8000 
+      --reload
+      --reload-dir /app/src
+      main:app
+    
+    environment:
+      - APP_TO_RUN=site
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    
+    # 🔥 BIND MOUNTS: Изменения в коде видны сразу (live-reload)
+    volumes:
+      - .:/app                  # Вся папка проекта
+      - ./src:/app/src          # Python код (с повышенным приоритетом)
+      - ./media:/app/media      # Медиа файлы
+      - /app/__pycache__        # Исключить .pyc кэш из volume
+      - /app/src/__pycache__
+    
+    # Остаемся в контейнере при ошибке (для дебага)
+    stdin_open: true
+    tty: true
+
+  admin:
+    command: >
+      uvicorn 
+      --host 0.0.0.0 
+      --port 8000 
+      --reload
+      --reload-dir /app/src
+      main:app
+    
+    environment:
+      - APP_TO_RUN=admin
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    
+    volumes:
+      - .:/app
+      - ./src:/app/src
+      - ./media:/app/media
+      - /app/__pycache__
+      - /app/src/__pycache__
+    
+    stdin_open: true
+    tty: true
+
+  nginx:
+    # В dev можно заменить на nginx или выключить
+    # Закомментируй эту секцию, если хочешь тестировать без nginx
+    # и обращаться сразу к http://localhost:8000 (admin) и http://localhost:8001 (site)
+    
+    # Отключаем nginx в dev (опционально, раскомментируй если нужен)
+    # profiles: ["optional"]
+    profiles: ["optional"]

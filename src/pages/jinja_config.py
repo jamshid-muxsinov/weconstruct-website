@@ -99,5 +99,3 @@ def configure_jinja_templates(app_templates: Jinja2Templates):
     app_templates.env.filters['format_number'] = format_number
     app_templates.env.filters['format_phone'] = format_phone
     app_templates.env.filters['localtime'] = format_localtime
-    
-    print(f"--- Jinja templates instance {id(app_templates)} configured successfully ---")

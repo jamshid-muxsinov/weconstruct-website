@@ -76,11 +76,9 @@ async def update_single_card_status(
     current_user: User = Depends(get_current_active_user)
 ):
     """Обновление статуса одной карточки (для Drag & Drop)"""
-    print(f"DEBUG: Updating card {update_data.id} to status {update_data.status}")
-    
     req = await crm_service.update_quote_request_status(db, update_data, current_user.id)
-    
+
     if not req:
         raise HTTPException(status_code=404, detail="QuoteRequest not found")
-        
+
     return {"status": "ok", "new_status": req.status}

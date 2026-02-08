@@ -137,13 +137,5 @@ async def test_form_receiver(request: Request):
     Этот эндпоинт просто принимает любой POST-запрос,
     печатает его содержимое в лог и возвращает успешный ответ.
     """
-    print("="*20 + " TEST FORM RECEIVED " + "="*20)
-    print("HEADERS:")
-    for name, value in request.headers.items():
-        print(f"  {name}: {value}")
-    
     body = await request.body()
-    print("\nRAW BODY:")
-    print(body.decode('utf-8', errors='ignore'))
-    print("="*58)
     return {"status": "ok", "message": "Test data received successfully"}

@@ -24,8 +24,7 @@ from src.core.middleware import HTMXMiddleware
 from src.pages.admin.router import router as admin_router, unprotected_router as admin_unprotected_router
 from src.pages.admin.api import router as api_router
 from src.core.config import get_settings
-from src.core.db import check_db_connection, async_session_factory, get_db_session
-from src.models.shop_models import Category, Product 
+from src.core.db import check_db_connection, async_session_factory, get_db_session 
 from src.core.security import get_current_active_user
 from src.pages.shop_pages import router as shop_router, root_router as shop_root_router
 from src.services.user_service import create_first_superuser
@@ -200,27 +199,6 @@ def create_site_app() -> FastAPI:
         <priority>{priority}</priority>
     </url>
 """
-
-        """
-        products_stmt = select(Product).where(Product.is_active == True)
-        products_result = await db.execute(products_stmt)
-        products = products_result.scalars().all()
-        
-        for product in products:
-            # Предполагается, что у вас будет URL вида /ru/shop/product/{product.slug}
-            product_path = f"/shop/product/{product.slug}" 
-            last_mod = product.updated_at.strftime("%Y-%m-%d") if product.updated_at else today
-            
-            xml_content += f'''
-    <url>
-        <loc>{base_url}/ru{product_path}</loc>
-        <xhtml:link rel="alternate" hreflang="ru" href="{base_url}/ru{product_path}"/>
-        <xhtml:link rel="alternate" hreflang="uz" href="{base_url}/uz{product_path}"/>
-        <lastmod>{last_mod}</lastmod>
-        <priority>0.9</priority>
-    </url>
-'''
-        """
 
         xml_content += '</urlset>'
         

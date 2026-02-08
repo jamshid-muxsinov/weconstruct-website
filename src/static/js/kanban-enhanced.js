@@ -14,7 +14,6 @@ function initKanbanSortable() {
             ghostClass: 'kanban-card-ghost',
             delay: 100, // Небольшая задержка, чтобы не путать с кликом
             delayOnTouchOnly: true,
-            
             onEnd: function (evt) {
                 const itemEl = evt.item;
                 const cardId = itemEl.dataset.id;
@@ -26,8 +25,6 @@ function initKanbanSortable() {
 
                 // Если статус не изменился, ничего не делаем
                 if (newStatus === oldStatus) return;
-
-                console.log(`Moving card #${cardId} from ${oldStatus} to ${newStatus}`);
 
                 // Визуально меняем цвет полоски статуса сразу (для плавности)
                 itemEl.classList.remove(`status-${oldStatus}`);
@@ -60,7 +57,7 @@ function initKanbanSortable() {
                     const notyf = new Notyf({position: {x:'right', y:'top'}});
                     notyf.error('Ошибка сохранения. Возвращаем карточку.');
                     // Возвращаем карточку назад при ошибке
-                    evt.from.appendChild(itemEl); 
+                    evt.from.appendChild(itemEl);
                 });
             }
         });
