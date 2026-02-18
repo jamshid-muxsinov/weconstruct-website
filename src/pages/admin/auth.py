@@ -17,6 +17,16 @@ from src.schemas.user_schemas import UserCreate
 router = APIRouter()
 settings = get_settings()
 
+
+def get_access_cookie_secure_flag() -> bool:
+    """
+    Для локальной разработки по HTTP cookie должен быть insecure,
+    в остальных окружениях - secure.
+    """
+    if settings.COOKIE_SECURE is not None:
+        return settings.COOKIE_SECURE
+    return not settings.DEBUG
+
 class RegistrationForm(wtforms.Form):
     username = wtforms.StringField('Имя пользователя', validators=[wtforms.validators.DataRequired(), wtforms.validators.Length(min=4, max=25)])
     password = wtforms.PasswordField('Пароль', validators=[wtforms.validators.DataRequired(), wtforms.validators.Length(min=8)])
@@ -62,7 +72,7 @@ async def login_for_access_token(
         value=token, 
         httponly=True,
         samesite="lax",
-        secure=True,
+        secure=get_access_cookie_secure_flag(),
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60  
     )
     

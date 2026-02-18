@@ -33,7 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const trigger = evt.detail.xhr.getResponseHeader("HX-Trigger");
         if (trigger) {
             try {
-                const data = JSON.parse(trigger);
+                let data;
+                try {
+                    data = JSON.parse(trigger);
+                } catch {
+                    data = JSON.parse(decodeURIComponent(trigger));
+                }
                 if (data['show-toast']) {
                     const { message, type } = data['show-toast'];
                     window.notyf.open({ type: type || 'success', message });

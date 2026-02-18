@@ -1,10 +1,10 @@
 <!-- HEADER -->
 <div class="panel-header">
     <div class="panel-title">
-        <span style="color:var(--text-muted); font-size:1rem;">#{{ req.id }}</span>
+        <span class="quote-id-label">#{{ req.id }}</span>
         <span>{{ req.contact.full_name }}</span>
     </div>
-    <button class="panel-close" onclick="closeOverlay('slide-over-overlay')">
+    <button class="panel-close" data-action="close-overlay" data-overlay-id="slide-over-overlay">
         <i class='bx bx-x'></i>
     </button>
 </div>
@@ -13,12 +13,12 @@
 <div class="panel-body">
     
     <!-- Actions -->
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 24px;">
+    <div class="quote-actions-grid">
         <a href="{{ url_for('admin_quoterequest_change', locale=request.state.locale, pk=req.id) }}" 
-           class="btn btn-secondary" style="width:100%;">
+           class="btn btn-secondary btn-full">
             <i class='bx bx-edit'></i> {{ _('edit') }}
         </a>
-        <a href="tel:{{ req.contact.phone }}" class="btn btn-primary" style="width:100%;">
+        <a href="tel:{{ req.contact.phone }}" class="btn btn-primary btn-full">
             <i class='bx bxs-phone'></i> {{ _('call') }}
         </a>
     </div>
@@ -31,20 +31,20 @@
 
     <div class="detail-group">
         <div class="detail-label">{{ _('label_phone') }}</div>
-        <div class="detail-value" style="font-family: monospace; font-size: 1.1rem;">
+        <div class="detail-value quote-phone-value">
             {{ req.contact.phone | format_phone }}
         </div>
     </div>
 
     <div class="detail-group">
         <div class="detail-label">{{ _('label_message') }}</div>
-        <div class="detail-value" style="white-space: pre-wrap;">{{ req.message or "—" }}</div>
+        <div class="detail-value quote-prewrap">{{ req.message or "—" }}</div>
     </div>
 
     {% if req.business_type or req.dimensions %}
-    <div style="border-top: 1px solid var(--border-light); margin: 20px 0;"></div>
+    <div class="quote-divider"></div>
     
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div class="quote-two-col">
         <div class="detail-group">
             <div class="detail-label">{{ _('label_business') }}</div>
             <div class="detail-value">{{ req.business_type or "—" }}</div>
@@ -57,10 +57,10 @@
     {% endif %}
 
     <!-- Assignee -->
-    <div style="background: var(--bg-body); padding: 16px; border-radius: 12px; margin-top: 24px;">
-        <div class="detail-label" style="margin-bottom:12px;">{{ _('label_assignee') }}</div>
-        <form hx-post="{{ url_for('admin_api_quote_assign', pk=req.id) }}" hx-trigger="change" style="display:flex; gap:10px;">
-            <select name="assigned_to_id" class="select-field" style="background: white;">
+    <div class="quote-assignee-box">
+        <div class="detail-label quote-assignee-label">{{ _('label_assignee') }}</div>
+        <form hx-post="{{ url_for('admin_api_quote_assign', pk=req.id) }}" hx-trigger="change" class="quote-assignee-form">
+            <select name="assigned_to_id" class="select-field quote-assignee-select">
                 <option value="0">{{ _('unassigned_option') }}</option>
                 {% for u in staff_users %}
                 <option value="{{ u.id }}" {% if req.assigned_to_id == u.id %}selected{% endif %}>{{ u.username }}</option>
@@ -70,10 +70,10 @@
     </div>
 
     <!-- Tasks -->
-    <div style="margin-top: 32px;">
+    <div class="quote-tasks-wrap">
         <div class="detail-label">{{ _('label_tasks') }}</div>
         
-        <div class="task-list-container" style="border: 1px solid var(--border-light); border-radius: 8px; overflow: hidden; background: white;">
+        <div class="task-list-container quote-task-list-box">
             {% include 'admin/partials/_task_list_partial.html' %}
         </div>
 
@@ -81,12 +81,12 @@
               hx-target=".task-list-container"
               hx-swap="innerHTML"
               hx-on::after-request="this.reset()"
-              style="margin-top: 12px; display: flex; gap: 8px;">
+              class="quote-task-form">
             
             <input type="text" name="title" class="input-field" placeholder="{{ _('add_task_placeholder') }}" required>
             <input type="hidden" name="assigned_to_id" value="{{ user.id }}">
             <button type="submit" class="btn btn-secondary"><i class='bx bx-plus'></i></button>
         </form>
     </div>
-    <div style="height: 40px;"></div>
+    <div class="quote-bottom-spacer"></div>
 </div>

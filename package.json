@@ -3,11 +3,12 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "esbuild src/static/css/main.css --bundle --minify --outfile=src/static/dist/bundle.min.css && esbuild src/static/js/main.js --bundle --minify --outfile=src/static/dist/bundle.min.js"
+    "build": "esbuild src/static/css/main.css --bundle --minify --outfile=src/static/dist/bundle.min.css && esbuild src/static/js/main.js --bundle --minify --outfile=src/static/dist/bundle.min.js",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "1.54.2",
     "esbuild": "0.23.1"
   }
 }
-
 

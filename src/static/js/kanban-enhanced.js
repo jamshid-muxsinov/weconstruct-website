@@ -1,5 +1,7 @@
 /* --- src/static/js/kanban-enhanced.js --- */
 
+const pendingStatusUpdates = new Set();
+
 function initKanbanSortable() {
     const columns = document.querySelectorAll('.kanban-column-body');
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -17,6 +19,7 @@ function initKanbanSortable() {
             onEnd: function (evt) {
                 const itemEl = evt.item;
                 const cardId = itemEl.dataset.id;
+                const oldNextSibling = evt.oldIndex < evt.from.children.length ? evt.from.children[evt.oldIndex] : null;
                 
                 // Получаем новую колонку и её статус
                 const newColumn = evt.to.closest('.kanban-column');
@@ -25,13 +28,29 @@ function initKanbanSortable() {
 
                 // Если статус не изменился, ничего не делаем
                 if (newStatus === oldStatus) return;
+                if (!csrfToken) {
+                    const notyfNoToken = window.notyf || new Notyf({ position: { x: 'right', y: 'top' } });
+                    notyfNoToken.error('CSRF токен не найден. Обновите страницу.');
+                    if (oldNextSibling) evt.from.insertBefore(itemEl, oldNextSibling);
+                    else evt.from.appendChild(itemEl);
+                    return;
+                }
+                if (pendingStatusUpdates.has(cardId)) {
+                    const notyfPending = window.notyf || new Notyf({ position: { x: 'right', y: 'top' } });
+                    notyfPending.error('Подождите, предыдущее обновление еще выполняется.');
+                    if (oldNextSibling) evt.from.insertBefore(itemEl, oldNextSibling);
+                    else evt.from.appendChild(itemEl);
+                    return;
+                }
 
                 // Визуально меняем цвет полоски статуса сразу (для плавности)
                 itemEl.classList.remove(`status-${oldStatus}`);
                 itemEl.classList.add(`status-${newStatus}`);
+                pendingStatusUpdates.add(cardId);
 
                 // Отправляем запрос на сервер
-                fetch('/api/update-status', {
+                const requestFn = window.adminApiFetch || fetch;
+                requestFn('/api/update-status', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -44,20 +63,24 @@ function initKanbanSortable() {
                 })
                 .then(response => {
                     if (response.ok) {
-                        // Успех
-                        const notyf = new Notyf({position: {x:'right', y:'top'}});
+                        const notyf = window.notyf || new Notyf({ position: { x: 'right', y: 'top' } });
                         notyf.success('Статус обновлен');
                     } else {
-                        // Ошибка сервера
-                        throw new Error('Server error');
+                        throw new Error(`Server error: ${response.status}`);
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    const notyf = new Notyf({position: {x:'right', y:'top'}});
+                    const notyf = window.notyf || new Notyf({ position: { x: 'right', y: 'top' } });
                     notyf.error('Ошибка сохранения. Возвращаем карточку.');
                     // Возвращаем карточку назад при ошибке
-                    evt.from.appendChild(itemEl);
+                    itemEl.classList.remove(`status-${newStatus}`);
+                    itemEl.classList.add(`status-${oldStatus}`);
+                    if (oldNextSibling) evt.from.insertBefore(itemEl, oldNextSibling);
+                    else evt.from.appendChild(itemEl);
+                })
+                .finally(() => {
+                    pendingStatusUpdates.delete(cardId);
                 });
             }
         });

@@ -1,8 +1,11 @@
 # src/services/telegram_service.py
 
+import asyncio
 import logging
-import httpx
 from typing import Dict, Any
+
+import httpx
+
 from src.core.config import get_settings
 
 log = logging.getLogger(__name__)
@@ -51,16 +54,26 @@ async def send_new_lead_notification(lead_data: Dict[str, Any]):
         "parse_mode": "MarkdownV2"
     }
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(api_url, json=params)
-            response.raise_for_status() 
-            log.info(f"Уведомление о лиде '{lead_data.get('client_name')}' успешно отправлено в Telegram.")
-        except httpx.HTTPStatusError as e:
-            log.error(
-                f"Ошибка API Telegram: {e.response.status_code} - {e.response.text}\n"
-                f"Отправляемый текст: {message}",
-                exc_info=True
-            )
-        except Exception as e:
-            log.error(f"Не удалось отправить уведомление в Telegram: {e}", exc_info=True)
+    max_attempts = 3
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = await client.post(api_url, json=params)
+                response.raise_for_status()
+                log.info(f"Уведомление о лиде '{lead_data.get('client_name')}' успешно отправлено в Telegram.")
+                return
+            except httpx.HTTPStatusError as e:
+                status_code = e.response.status_code
+                is_retryable = status_code == 429 or status_code >= 500
+                if not is_retryable or attempt == max_attempts:
+                    log.error(
+                        f"Ошибка API Telegram: {status_code} - {e.response.text}\n"
+                        f"Отправляемый текст: {message}",
+                        exc_info=True
+                    )
+                    return
+            except httpx.RequestError as e:
+                if attempt == max_attempts:
+                    log.error(f"Не удалось отправить уведомление в Telegram: {e}", exc_info=True)
+                    return
+            await asyncio.sleep(attempt)

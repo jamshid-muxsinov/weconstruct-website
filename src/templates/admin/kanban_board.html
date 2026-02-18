@@ -22,7 +22,7 @@
         </div>
         
         <!-- Выбор менеджера -->
-        <div style="width: 200px;">
+        <div class="kanban-assignee-select-wrap">
              <select name="assignee" class="select-field">
                 <option value="">{{ _('all_managers') }}</option>
                 <option value="me" {% if current_filters.assignee == 'me' %}selected{% endif %}>{{ _('only_my') }}</option>
@@ -33,17 +33,19 @@
         </div>
 
         <!-- Переключатель Архива -->
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; margin-left: 10px;">
+        <label class="kanban-archive-label">
             <input type="checkbox" name="show_archived" value="true" 
                    {% if current_filters.show_archived %}checked{% endif %} 
-                   style="width:18px; height:18px; accent-color:var(--primary);">
-            <span style="font-size:0.9rem; color:var(--text-main); font-weight: 500;">{{ _('show_archive') }}</span>
+                   class="kanban-archive-checkbox">
+            <span class="kanban-archive-text">{{ _('show_archive') }}</span>
         </label>
 
         <!-- Кнопка Новая заявка -->
         <a href="{{ url_for('admin_quoterequest_add', locale=request.state.locale) }}" 
-           class="btn btn-primary" style="margin-left: auto;"
-           onclick="htmx.ajax('GET', '{{ url_for('admin_quoterequest_add', locale=request.state.locale) }}', {target:'#modal-body-content'}); openOverlay('modal-overlay'); return false;">
+           class="btn btn-primary kanban-add-btn"
+           data-action="open-modal"
+           data-url="{{ url_for('admin_quoterequest_add', locale=request.state.locale) }}"
+           data-target="#modal-body-content">
             <i class='bx bx-plus'></i> {{ _('new_request_btn') }}
         </a>
     </form>
@@ -55,8 +57,8 @@
          hx-swap="innerHTML">
         
         <!-- Заглушка загрузки -->
-        <div style="display:flex; justify-content:center; align-items:center; height:100%; color:var(--text-muted);">
-            <i class='bx bx-loader-alt bx-spin' style="font-size: 2rem;"></i>
+        <div class="kanban-loading-state">
+            <i class='bx bx-loader-alt bx-spin kanban-loading-icon'></i>
         </div>
     </div>
 </div>

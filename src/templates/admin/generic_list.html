@@ -33,7 +33,6 @@
     <!-- 2. Панель фильтров (Как в Канбане) -->
     <form id="filters-form" 
       method="get"
-      onsubmit="return false;"
       class="filter-bar" 
       hx-get="{{ request.url.path }}" 
       hx-target="#list-content-wrapper" 

@@ -50,7 +50,7 @@
 **Используй когда нужно выполнить конкретную операцию!**
 
 ### 5️⃣ ИТОГОВАЯ ИНСТРУКЦИЯ
-**Файл:** `SETUP_SUMMARY.md` (10 KB)
+**Файл:** `FIXED_AND_READY.md` (4.5 KB)
 - ✅ Что было сделано
 - 🎯 Результат (production не трогается)
 - 🚀 Быстрый старт
@@ -147,7 +147,7 @@ docker compose logs -f admin
 ✨ DEVELOPMENT.md ................ (13 KB) ← читай это
 ✨ DOCKER_ANALYSIS.md ............ (19 KB) ← техническое
 ✨ DOCKER_QUICK_REFERENCE.md ..... (8.7 KB) ← шпаргалка
-✨ SETUP_SUMMARY.md .............. (10 KB) ← итоговое
+✨ FIXED_AND_READY.md ............ (4.5 KB) ← итоговое
 ✨ LOCAL_SETUP.md ................ (4 KB) ← быстрый старт
 ✨ FINAL_REPORT.md ............... (12 KB) ← отчет
 ✨ PRODUCTION_CHECKLIST.md ....... (9 KB) ← перед деплоем
@@ -243,7 +243,7 @@ A: Bind mount: `./src:/app/src` монтирует твою локальную �
 A: docker-compose.override.yml НЕ существует на VDS. Там используется только docker-compose.yml.
 
 ### Q: Что если я случайно изменю docker-compose.yml?
-A: Используй `git diff docker-compose.yml` чтобы посмотреть изменения, и `git checkout docker-compose.yml` чтобы откатить.
+A: Используй `git diff docker-compose.yml` чтобы посмотреть изменения, и `git restore docker-compose.yml` чтобы откатить.
 
 ### Q: Если БД поломалась?
 A: `docker compose down -v && docker compose up` (потеряешь данные, но это dev).

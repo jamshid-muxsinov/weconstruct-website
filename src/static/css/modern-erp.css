@@ -757,6 +757,250 @@ tr:hover td { background: var(--bg-body); cursor: pointer; }
     color: var(--text-muted);
 }
 
+/* --- Admin Utility Classes --- */
+.admin-page-wrap {
+    padding: 32px;
+    margin: 0 auto;
+}
+
+.admin-page-wrap-lg {
+    max-width: 1600px;
+}
+
+.admin-page-wrap-md {
+    max-width: 1200px;
+}
+
+.admin-page-title-row {
+    margin-bottom: 24px;
+}
+
+.admin-page-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+.admin-grid-two {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 32px;
+    align-items: start;
+}
+
+.admin-flex-col-gap-12 {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.admin-card-min-400 {
+    min-height: 400px;
+}
+
+.admin-card-plain {
+    padding: 0;
+    overflow: hidden;
+}
+
+.admin-card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.admin-card-header-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.admin-table-full {
+    width: 100%;
+}
+
+.admin-muted {
+    color: var(--text-muted);
+}
+
+.admin-empty-state {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 20px;
+}
+
+.admin-empty-state-icon {
+    font-size: 2rem;
+    color: #10B981;
+}
+
+.admin-empty-state-text {
+    margin-top: 8px;
+}
+
+.kanban-assignee-select-wrap {
+    width: 200px;
+}
+
+.kanban-archive-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    margin-left: 10px;
+}
+
+.kanban-archive-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+}
+
+.kanban-archive-text {
+    font-size: 0.9rem;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.kanban-add-btn {
+    margin-left: auto;
+}
+
+.kanban-loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: var(--text-muted);
+}
+
+.kanban-loading-icon {
+    font-size: 2rem;
+}
+
+.kanban-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.kanban-card-id {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.kanban-card-subject {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    line-height: 1.3;
+}
+
+.kanban-card-tag-wrap {
+    margin-bottom: 8px;
+}
+
+.kanban-card-meta-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.kanban-user-avatar {
+    width: 20px;
+    height: 20px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quote-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.btn-full {
+    width: 100%;
+}
+
+.quote-id-label {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+.quote-phone-value {
+    font-family: monospace;
+    font-size: 1.1rem;
+}
+
+.quote-prewrap {
+    white-space: pre-wrap;
+}
+
+.quote-divider {
+    border-top: 1px solid var(--border-light);
+    margin: 20px 0;
+}
+
+.quote-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.quote-assignee-box {
+    background: var(--bg-body);
+    padding: 16px;
+    border-radius: 12px;
+    margin-top: 24px;
+}
+
+.quote-assignee-label {
+    margin-bottom: 12px;
+}
+
+.quote-assignee-form {
+    display: flex;
+    gap: 10px;
+}
+
+.quote-assignee-select {
+    background: #fff;
+}
+
+.quote-tasks-wrap {
+    margin-top: 32px;
+}
+
+.quote-task-list-box {
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.quote-task-form {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+.quote-bottom-spacer {
+    height: 40px;
+}
+
+.table-check-col,
+.table-check-col td,
+.table-check-col th {
+    text-align: center;
+}
+
 /* --- Modern Form Styles (Modal & Page) --- */
 
 /* Скрываем лишнее в модальном режиме */

@@ -45,7 +45,7 @@
                 <div id="new-contact-fields" style="display: none; margin-top: 20px; padding: 20px; background: rgba(34, 197, 94, 0.05); border: 1px dashed var(--success); border-radius: 10px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <strong style="color: var(--success);">{{ _('new_client_reg_title') }}</strong>
-                        <button type="button" class="btn btn-sm btn-danger" onclick="hideNewContactForm(event)">{{ _('btn_cancel') }}</button>
+                        <button type="button" class="btn btn-sm btn-danger" data-action="hide-new-contact">{{ _('btn_cancel') }}</button>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div class="input-group">
@@ -120,24 +120,4 @@
     }
 </style>
 
-<script>
-    function showNewContactForm() {
-        document.getElementById('new-contact-fields').style.display = 'block';
-        document.getElementById('contact-search').value = '';
-        document.getElementById('search-results').innerHTML = '';
-        document.getElementById('new_contact_name').focus();
-    }
-    function hideNewContactForm(e) {
-        e.preventDefault();
-        document.getElementById('new-contact-fields').style.display = 'none';
-        document.getElementById('new_contact_name').value = '';
-        document.getElementById('new_contact_phone').value = '';
-    }
-    function selectContact(id, name) {
-        document.getElementById('contact_id').value = id;
-        document.getElementById('contact-search').value = name;
-        document.getElementById('search-results').innerHTML = '';
-        document.getElementById('new-contact-fields').style.display = 'none';
-    }
-</script>
 {% endblock %}  

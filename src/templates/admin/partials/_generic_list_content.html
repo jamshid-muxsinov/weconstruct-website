@@ -3,7 +3,7 @@
         <thead>
             <tr>
                 {% if meta.model_name == 'quoterequest' %}
-                <th style="width:90px; text-align: center;">
+                <th class="table-check-col" style="width:90px;">
                     <input type="checkbox" id="select-all">
                 </th>
                 {% endif %}
@@ -24,14 +24,18 @@
             {% for item in page.items %}
                 {% set change_url = request.url_for(meta.change_url_name, locale=request.state.locale, pk=item.id) if meta.change_url_name else '#' %}
                 
-                <tr onclick="{% if meta.model_name == 'quoterequest' %}
-                                htmx.ajax('GET', '{{ request.url_for('admin_htmx_quote_slide_over', locale=request.state.locale, pk=item.id) }}', {target:'#slide-over-content'}); openOverlay('slide-over-overlay');
-                             {% else %}
-                                window.location.href='{{ change_url }}'
-                             {% endif %}">
+                <tr
+                    {% if meta.model_name == 'quoterequest' %}
+                    data-action="open-slide-over"
+                    data-url="{{ request.url_for('admin_htmx_quote_slide_over', locale=request.state.locale, pk=item.id) }}"
+                    data-target="#slide-over-content"
+                    {% else %}
+                    data-action="navigate"
+                    data-url="{{ change_url }}"
+                    {% endif %}>
                     
                     {% if meta.model_name == 'quoterequest' %}
-                    <td onclick="event.stopPropagation()" style="text-align: center;">
+                    <td data-stop-row-click="1" class="table-check-col">
                         <input type="checkbox" value="{{ item.id }}">
                     </td>
                     {% endif %}
@@ -44,14 +48,14 @@
                             {% if field_name == 'status' %}
                                 <span class="badge badge-info">{{ get_status_display(item.status) }}</span>
                             {% elif field_name == 'created_at' %}
-                                <span style="color:var(--text-muted); font-size:0.85rem;">{{ item.created_at | localtime }}</span>
+                                <span class="admin-muted" style="font-size:0.85rem;">{{ item.created_at | localtime }}</span>
                             {% elif field_name == 'assigned_to' and value %}
-                                <div style="display:flex; align-items:center; gap:6px;">
-                                    <div style="width:20px; height:20px; background:var(--primary); color:white; border-radius:50%; font-size:0.6rem; display:flex; justify-content:center; align-items:center;">{{ value.username[0]|upper }}</div>
+                                <div class="kanban-card-meta-left">
+                                    <div class="kanban-user-avatar">{{ value.username[0]|upper }}</div>
                                     <span>{{ value.username }}</span>
                                 </div>
                             {% elif value is none %}
-                                <span style="color: var(--text-muted);">—</span>
+                                <span class="admin-muted">—</span>
                             {% else %}
                                 {{ value }}
                             {% endif %}
@@ -60,8 +64,8 @@
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                        <i class='bx bx-search' style="font-size: 2rem; margin-bottom: 8px;"></i>
+                    <td colspan="10" class="admin-empty-state">
+                        <i class='bx bx-search admin-empty-state-icon' style="color: var(--text-muted);"></i>
                         <p>{{ _('no_records_found') }}</p>
                     </td>
                 </tr>
@@ -73,7 +77,7 @@
     <div class="pagination-bar">
         <div class="page-info">
             Страница {{ page.page }} из {{ (page.total / page.size) | round(0, 'ceil') | int }} 
-            <span style="color:var(--text-muted); margin-left:8px;">(Всего: {{ page.total }})</span>
+            <span class="admin-muted" style="margin-left:8px;">(Всего: {{ page.total }})</span>
         </div>
         
         <div class="pagination-controls">

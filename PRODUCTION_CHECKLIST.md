@@ -20,14 +20,7 @@ git diff alembic.ini
 **Если есть изменения:**
 ```bash
 # Откатить
-git checkout docker-compose.yml
-git checkout Dockerfile
-git checkout entrypoint.sh
-git checkout .env
-git checkout alembic.ini
-
-# Или
-git reset --hard HEAD
+git restore docker-compose.yml Dockerfile entrypoint.sh .env alembic.ini
 ```
 
 ### 2. Git - Dev файлы в .gitignore
@@ -35,10 +28,9 @@ git reset --hard HEAD
 ```bash
 # Проверь что эти файлы В .gitignore
 grep "docker-compose.override.yml" .gitignore
-grep "docker-compose.dev.yml" .gitignore
 grep ".env.local" .gitignore
 
-# ✅ Все три должны быть в .gitignore
+# ✅ Все должны быть в .gitignore
 ```
 
 ### 3. Git - Не коммитишь dev файлы
@@ -117,13 +109,12 @@ git status
 
 # ❌ Не должно быть:
 # - .env.local
-# - docker-compose.dev.yml
 # - .vscode/settings.json (если редактировал)
 # - __pycache__ (должны быть в .gitignore)
 # - *.pyc, *.pyo
 
 # Удали если есть
-rm -f .env.local docker-compose.dev.yml
+rm -f .env.local
 find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 find . -name "*.pyc" -delete
 find . -name "*.pyo" -delete
@@ -147,7 +138,7 @@ ls -la docker-compose.override.yml
 
 ```bash
 # Коммит с документацией и новыми dev файлами
-git add DEVELOPMENT.md DOCKER_ANALYSIS.md DOCKER_QUICK_REFERENCE.md SETUP_SUMMARY.md LOCAL_SETUP.md verify_setup.sh .gitignore
+git add DEVELOPMENT.md DOCKER_ANALYSIS.md DOCKER_QUICK_REFERENCE.md LOCAL_SETUP.md FINAL_REPORT.md verify_setup.sh .gitignore
 
 git commit -m "Add local development setup with docker-compose.override.yml
 
@@ -279,7 +270,7 @@ docker compose logs admin
 
 ```bash
 # На VDS
-git reset --hard HEAD~1
+git revert --no-edit HEAD
 docker compose down
 docker compose up -d
 ```

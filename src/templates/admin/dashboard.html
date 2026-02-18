@@ -1,10 +1,10 @@
 {% extends "admin/base.html" %}
 
 {% block content %}
-<div style="padding: 32px; max-width: 1600px; margin: 0 auto;">
+<div class="admin-page-wrap admin-page-wrap-lg">
     
-    <div style="margin-bottom: 24px;">
-        <h1 style="font-size: 1.5rem; font-weight: 800;">{{ _('page_title_stats') }}</h1>
+    <div class="admin-page-title-row">
+        <h1 class="admin-page-title">{{ _('page_title_stats') }}</h1>
     </div>
 
     <!-- 1. KPI CARDS -->
@@ -41,40 +41,40 @@
     <!-- 2. CHARTS AREA -->
     <div class="charts-grid">
         <!-- Левый график: Финансы (Демо-данные для красоты, если реальных мало) -->
-        <div class="card" style="min-height: 400px;">
+        <div class="card admin-card-min-400">
             <div class="form-section-title">Финансовая динамика (Демо)</div>
             <div id="financeChart"></div>
         </div>
 
         <!-- Правый график: Воронка -->
-        <div class="card" style="min-height: 400px;">
+        <div class="card admin-card-min-400">
             <div class="form-section-title">{{ _('funnel_title') }}</div>
             <div id="funnelChart"></div>
         </div>
     </div>
 
     <!-- 3. BOTTOM LISTS -->
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px; align-items: start;">
+    <div class="admin-grid-two">
         
         <!-- Топ Менеджеры -->
-        <div class="card" style="padding: 0; overflow: hidden;">
-            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-light);">
-                <h3 style="margin: 0; font-size: 1rem; font-weight: 700;">{{ _('top_managers_title') }}</h3>
+        <div class="card admin-card-plain">
+            <div class="admin-card-header">
+                <h3 class="admin-card-header-title">{{ _('top_managers_title') }}</h3>
             </div>
-            <table style="width: 100%;">
+            <table class="admin-table-full">
                 <tbody>
                     {% for user, count in top_managers %}
                     <tr>
-                        <td style="width: 60px; text-align: center; font-weight: 700; color: var(--text-muted);">#{{ loop.index }}</td>
+                        <td style="width: 60px; font-weight: 700;" class="table-check-col admin-muted">#{{ loop.index }}</td>
                         <td>
-                            <div style="font-weight: 600;">{{ user.username }}</div>
+                            <div><strong>{{ user.username }}</strong></div>
                         </td>
                         <td style="text-align: right; font-weight: 700; color: var(--primary);">
-                            {{ count }} <span style="font-size: 0.8rem; font-weight: 400; color: var(--text-muted);">{{ _('deals_count') }}</span>
+                            {{ count }} <span class="admin-muted" style="font-size: 0.8rem; font-weight: 400;">{{ _('deals_count') }}</span>
                         </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="3" style="padding: 30px; text-align: center; color: var(--text-muted);">{{ _('no_data') }}</td></tr>
+                    <tr><td colspan="3" class="admin-empty-state">{{ _('no_data') }}</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -84,20 +84,21 @@
         <div class="card">
             <h3 style="margin-bottom: 20px; font-size: 1rem; font-weight: 700;">{{ _('unassigned_title') }}</h3>
             {% if new_unassigned_requests %}
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="admin-flex-col-gap-12">
                 {% for req in new_unassigned_requests %}
-                <div style="padding: 12px; border: 1px solid var(--border-light); border-radius: 10px; cursor: pointer; transition: 0.2s; background: #F9FAFB;"
-                     class="hover-bg"
-                     onclick="htmx.ajax('GET', '{{ request.url_for('admin_htmx_quote_slide_over', locale=request.state.locale, pk=req.id) }}', {target:'#slide-over-content'}); openOverlay('slide-over-overlay');">
-                    <div style="font-weight: 600; font-size: 0.9rem;">{{ req.contact.full_name }}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">{{ req.subject or '—' }}</div>
+                <div class="detail-value hover-bg"
+                     data-action="open-slide-over"
+                     data-url="{{ request.url_for('admin_htmx_quote_slide_over', locale=request.state.locale, pk=req.id) }}"
+                     data-target="#slide-over-content">
+                    <div><strong>{{ req.contact.full_name }}</strong></div>
+                    <div class="admin-muted" style="font-size: 0.8rem; margin-top: 4px;">{{ req.subject or '—' }}</div>
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <div style="text-align: center; color: var(--text-muted); padding: 20px;">
-                <i class='bx bx-check-circle' style="font-size: 2rem; color: #10B981;"></i>
-                <p style="margin-top: 8px;">{{ _('no_new_requests') }}</p>
+            <div class="admin-empty-state">
+                <i class='bx bx-check-circle admin-empty-state-icon'></i>
+                <p class="admin-empty-state-text">{{ _('no_new_requests') }}</p>
             </div>
             {% endif %}
         </div>

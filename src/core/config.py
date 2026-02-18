@@ -1,6 +1,10 @@
 from functools import lru_cache
+from typing import List, Optional
+
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional, List
+
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "WeConstruct CRM"
     DEBUG: bool = True
@@ -24,11 +28,20 @@ class Settings(BaseSettings):
     CACHE_ENABLED: bool = True
      
     ROOT_PATH: str = ""
+    COOKIE_SECURE: Optional[bool] = None
     TELEGRAM_BOT_TOKEN: Optional[str] = None
     TELEGRAM_CHAT_ID: Optional[str] = None
     GOOGLE_WEBHOOK_SECRET_KEY: Optional[str] = None
-    
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, value: str) -> str:
+        if len(value.strip()) < 16:
+            raise ValueError("SECRET_KEY must be at least 16 characters long.")
+        return value
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
 
 @lru_cache
 def get_settings() -> Settings:

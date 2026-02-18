@@ -1,16 +1,12 @@
 # src/services/shop_service.py
-import httpx 
-from src.core.config import get_settings
+import logging
+from datetime import datetime, timedelta
+from typing import Optional, Union
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import func
-from sqlalchemy.dialects.postgresql import insert as pg_insert
-from datetime import datetime, timedelta
-from sqlalchemy.exc import IntegrityError
-import logging
-from typing import Optional, Union
-from typing import Any
+
 from src.services import telegram_service
 from src.models.shop_models import Category, Product, Contact, QuoteRequest, User, Notification
 from src.core.cache import cache_result, invalidate_cache
@@ -58,81 +54,40 @@ async def _create_quote_request(db: AsyncSession, contact_id: int, message: str,
     await db.flush()
     return quote
 
-async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: str):
-    """
-    Отправляет уведомления о новой заявке и менеджерам в CRM, и в Telegram.
-    """
-    settings = get_settings()
-    
+
+async def _notify_managers_in_crm(db: AsyncSession, quote_id: int, contact_name: str) -> None:
+    """Создает уведомления в CRM для активных сотрудников."""
     managers_stmt = select(User).where(User.is_staff == True, User.is_active == True)
     managers_result = await db.execute(managers_stmt)
     managers = managers_result.scalars().all()
-    
-    if managers:
-        quote_url = f"/ru/admin/quoterequest/{quote.id}/change/"
-        message_text = f"Новая заявка #{quote.id} от {contact_name}"
 
-        notifications = [
-            Notification(user_id=manager.id, message=message_text, link=quote_url)
-            for manager in managers
-        ]
-        db.add_all(notifications)
-
-    token = settings.TELEGRAM_BOT_TOKEN
-    chat_id = settings.TELEGRAM_CHAT_ID
-
-    if not token or not chat_id:
-        log.warning("TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID не установлены. Уведомление в Telegram не отправлено.")
+    if not managers:
         return
 
-    def _escape_markdown(text: Any) -> str:
-        if not isinstance(text, str): text = str(text)
-        escape_chars = r'_*[]()~`>#+-=|{}.!'
-        return "".join(f'\\{char}' if char in escape_chars else char for char in text)
-   
-    client_name_escaped = _escape_markdown(contact_name)
-    phone_raw = quote.contact.phone if quote.contact else ""
-    phone_escaped = _escape_markdown(phone_raw)
-    
-    subject = quote.subject or ""
-    business_type_escaped = _escape_markdown(quote.business_type or "Не указан")
-    
-    region_escaped = "Не указан"
-    if "Лид из Facebook (" in subject:
-        try:
-            content = subject.split("(", 1)[1].rsplit(")", 1)[0]
-            parts = content.split(" / ")
-            if len(parts) > 1:
-                region_escaped = _escape_markdown(parts[0])
-        except IndexError:
-            pass
-    
-    phone_url = f"tel:{''.join(filter(str.isdigit, phone_raw))}"
+    quote_url = f"/ru/admin/quoterequest/{quote_id}/change/"
+    message_text = f"Новая заявка #{quote_id} от {contact_name}"
+    notifications = [
+        Notification(user_id=manager.id, message=message_text, link=quote_url)
+        for manager in managers
+    ]
+    db.add_all(notifications)
+    await db.flush()
 
-    message = (
-        f"🔥 *Новый лид из Facebook/Instagram*\n\n"
-        f"👤 *Клиент:* {client_name_escaped}\n"
-        f"📞 *Телефон:* [{phone_escaped}]({phone_url})\n"
-        f"🏢 *Тип бизнеса:* {business_type_escaped}\n"
-        f"📍 *Регион:* {region_escaped}"
-    )
 
-    api_url = f"https://api.telegram.org/bot{token}/sendMessage"
-    params = {
-        "chat_id": chat_id,
-        "text": message,
-        "parse_mode": "MarkdownV2"
+async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: str) -> None:
+    """
+    Backward-compatible wrapper for legacy import flows.
+    Sends CRM notifications and Telegram alert for imported leads.
+    """
+    await _notify_managers_in_crm(db, quote.id, contact_name)
+
+    lead_data_for_tg = {
+        "source_text": "Новый лид из Facebook/Instagram",
+        "client_name": contact_name,
+        "phone": quote.phone,
+        "subject": quote.subject,
     }
-
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(api_url, json=params)
-            response.raise_for_status()
-            log.info(f"Уведомление о заявке #{quote.id} успешно отправлено в Telegram.")
-    except httpx.HTTPStatusError as e:
-        log.error(f"Ошибка API Telegram при отправке заявки #{quote.id}: {e.response.status_code} - {e.response.text}")
-    except Exception as e:
-        log.error(f"Не удалось отправить уведомление о заявке #{quote.id} в Telegram: {e}", exc_info=True)
+    await telegram_service.send_new_lead_notification(lead_data_for_tg)
 
 @invalidate_cache("categories_with_products") 
 async def process_quote_request(db: AsyncSession, name: str, phone: str, message: str, subject: Optional[str] = "Заявка с сайта", source: str = "website") -> Union[QuoteRequest, str]:
@@ -162,6 +117,7 @@ async def process_quote_request(db: AsyncSession, name: str, phone: str, message
             return "duplicate"
         
         quote = await _create_quote_request(db, contact.id, message, subject, source)
+        await _notify_managers_in_crm(db, quote.id, contact.full_name)
         
         await db.commit()
         

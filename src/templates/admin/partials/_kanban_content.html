@@ -15,8 +15,8 @@
 </div>
 
 <script>
-    if (window.initializeKanban) {
-        initializeKanban();
+    if (window.initKanbanSortable) {
+        window.initKanbanSortable();
     }
     if (window.Alpine && Alpine.store('kanbanManager')) {
         Alpine.store('kanbanManager').clearSelection();

@@ -73,7 +73,9 @@
                                            style="font-size: 0.8rem; padding: 6px 10px; width: 200px; background: #F9FAFB;">
                                     
                                     <button class="btn btn-secondary btn-sm" 
-                                            onclick="navigator.clipboard.writeText('{{ request.url_for('admin_register') }}?invite={{ invite.code }}'); new Notyf().success('{{ _('link_copied') }}');">
+                                            data-action="copy-text"
+                                            data-copy-text="{{ request.url_for('admin_register') }}?invite={{ invite.code }}"
+                                            data-success-message="{{ _('link_copied') }}">
                                         <i class='bx bx-copy'></i>
                                     </button>
                                 </div>

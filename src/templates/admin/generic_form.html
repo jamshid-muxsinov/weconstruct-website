@@ -126,9 +126,9 @@
                                         <!-- Кнопка добавления категории "на лету" -->
                                         {% if field.name == 'category_id' %}
                                         <button type="button" 
-                                                hx-get="{{ request.url_for('admin_htmx_category_add_modal', locale=request.state.locale) }}" 
-                                                hx-target="#modal-body-content" 
-                                                onclick="openOverlay('modal-overlay')"
+                                                data-action="open-modal"
+                                                data-url="{{ request.url_for('admin_htmx_category_add_modal', locale=request.state.locale) }}"
+                                                data-target="#modal-body-content"
                                                 style="position:absolute; right: 5px; top: 5px; padding: 6px 10px; background: var(--bg-body); border: 1px solid var(--border-light); border-radius: 6px; cursor: pointer;">
                                             <i class='bx bx-plus'></i>
                                         </button>
