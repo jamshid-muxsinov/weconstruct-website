@@ -151,6 +151,8 @@ def create_admin_app() -> FastAPI:
 
 
 def create_site_app() -> FastAPI:
+    from src.pages.admin.webhooks import router as webhooks_router
+    
     fastapi_kwargs = {"title": "WeConstruct Website"}
     if not settings.DEBUG:
         fastapi_kwargs.update({"docs_url": None, "redoc_url": None, "openapi_url": None})
