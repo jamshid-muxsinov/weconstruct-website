@@ -167,6 +167,7 @@ def create_site_app() -> FastAPI:
     site_router.include_router(shop_root_router)
     site_router.include_router(shop_router, prefix="/shop")
     app.include_router(site_router)
+    app.include_router(webhooks_router)
     @app.get("/", include_in_schema=False)
     async def root_redirect(request: Request):
         return RedirectResponse(url="/uz")
