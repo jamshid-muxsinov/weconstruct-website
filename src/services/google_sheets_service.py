@@ -17,9 +17,9 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive.file"
 ]
 
-SPREADSHEET_ID = "16dZ3_sWE1yYUhYmtfpdNlbWDhRrltNNGMtroTmzkNpo"
-WORKSHEET_NAME = "Gullola" 
-STATUS_COLUMN = 7 
+SPREADSHEET_ID = "1YWao03ij0qmaXcnkGdcKQPhfeqaWQEaTSj7xrDaBlmI"
+WORKSHEET_NAME = "leads" 
+STATUS_COLUMN = 6 
 
 
 def get_gspread_client() -> gspread.Client | None:

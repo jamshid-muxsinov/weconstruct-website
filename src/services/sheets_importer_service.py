@@ -56,7 +56,7 @@ async def process_single_lead_row(session: AsyncSession, lead_data: Dict[str, An
     # Регистрация факта импорта из Google Sheets
     new_lead_entry = GoogleSheetLead(
         sheet_row_id=sheet_row_id,
-        spreadsheet_id="16dZ3_sWE1yYUhYmtfpdNlbWDhRrltNNGMtroTmzkNpo",
+        spreadsheet_id="1YWao03ij0qmaXcnkGdcKQPhfeqaWQEaTSj7xrDaBlmI",
         status=GoogleSheetLead.StatusEnum.IMPORTED,
         processed_at=datetime.utcnow(),
         quote_request_id=quote.id,
