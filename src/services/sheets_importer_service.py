@@ -65,6 +65,6 @@ async def process_single_lead_row(session: AsyncSession, lead_data: Dict[str, An
     session.add(new_lead_entry)
     
     # Уведомления менеджеров и в Telegram
-    await _notify_managers(session, quote, contact.full_name)
+    await _notify_managers(session, quote, contact.full_name, phone=phone_number)
     
     log.info(f"Успешно обработан и добавлен в сессию лид с ID {sheet_row_id}")

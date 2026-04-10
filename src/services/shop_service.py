@@ -74,7 +74,7 @@ async def _notify_managers_in_crm(db: AsyncSession, quote_id: int, contact_name:
     await db.flush()
 
 
-async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: str) -> None:
+async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: str, phone: str = "") -> None:
     """
     Backward-compatible wrapper for legacy import flows.
     Sends CRM notifications and Telegram alert for imported leads.
@@ -84,7 +84,7 @@ async def _notify_managers(db: AsyncSession, quote: QuoteRequest, contact_name: 
     lead_data_for_tg = {
         "source_text": "Новый лид из Facebook/Instagram",
         "client_name": contact_name,
-        "phone": quote.phone,
+        "phone": phone,
         "subject": quote.subject,
     }
     await telegram_service.send_new_lead_notification(lead_data_for_tg)
