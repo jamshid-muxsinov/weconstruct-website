@@ -52,13 +52,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="{{ url_for('static', path='css/production.css') }}" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <noscript>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
         <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', path='css/production.css') }}">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     </noscript>
 
     <!-- Scripts -->
@@ -236,9 +236,9 @@
       <div class="footer-bottom">
         <p class="footer__copyright">© {{ current_year }} WeConstruct. {% if request.state.locale == 'uz' %}Barcha huquqlar himoyalangan.{% else %}Все права защищены.{% endif %}</p>
         <div class="footer__socials">
-          <a href="https://t.me/weconstructuz" target="_blank" rel="noopener noreferrer" class="footer__social-link" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
-          <a href="https://www.instagram.com/weconstruct.uz/" target="_blank" rel="noopener noreferrer" class="footer__social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-          <a href="https://www.linkedin.com/in/%D1%81%D0%BE%D0%B1%D0%B8%D1%80-%D0%BA%D0%B0%D1%8E%D0%BC%D0%BE%D0%B2-4b8582374/" target="_blank" rel="noopener noreferrer" class="footer__social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a href="https://t.me/weconstructuz" target="_blank" rel="noopener noreferrer" class="footer__social-link" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
+          <a href="https://www.instagram.com/weconstruct.uz/" target="_blank" rel="noopener noreferrer" class="footer__social-link" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+          <a href="https://www.linkedin.com/in/%D1%81%D0%BE%D0%B1%D0%B8%D1%80-%D0%BA%D0%B0%D1%8E%D0%BC%D0%BE%D0%B2-4b8582374/" target="_blank" rel="noopener noreferrer" class="footer__social-link" aria-label="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
         </div>
       </div>
     </div>
@@ -246,7 +246,7 @@
 
   <!-- Floating Telegram Button -->
   <a href="https://t.me/weconstructuz" target="_blank" rel="noopener noreferrer" class="floating-tg-btn" aria-label="Telegram">
-    <i class="fab fa-telegram-plane"></i>
+    <i class="fa-brands fa-telegram"></i>
   </a>
 
   <div id="modal-placeholder"></div>
