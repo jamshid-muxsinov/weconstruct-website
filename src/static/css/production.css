@@ -1495,7 +1495,7 @@ select {
 /* ============================================== */
 .team-team {
   padding: var(--space-16) 0;
-  background: var(--bg-secondary);
+  background: transparent;
 }
 
 .team-grid {
