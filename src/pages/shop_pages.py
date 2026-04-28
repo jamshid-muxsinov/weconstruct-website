@@ -19,14 +19,19 @@ root_router = APIRouter(tags=["Public Website Root"])
 async def get_shop_index(
     request: Request,
     locale: str,
+    db: AsyncSession = Depends(get_db_session)
 ):
+    categories = await shop_service.get_categories_with_active_products(db)
+    form = GeneralQuoteForm(request)
     context = {
         "request": request,
+        "categories_with_products": categories,
+        "form": form,
         "current_year": datetime.now().year,
     }
     return templates.TemplateResponse("shop/index.html", context)
 
-# --- НОВЫЙ РОУТ ДЛЯ ТОВАРОВ ---
+# --- Редиректы старых страниц на главную (для SEO) ---
 @router.get("/products", response_class=HTMLResponse, name="products")
 async def get_products_page(
     request: Request,
@@ -39,18 +44,21 @@ async def get_products_page(
         "categories_with_products": categories,
         "current_year": datetime.now().year,
     }
-    return templates.TemplateResponse("shop/products.html", context)
+    return templates.TemplateResponse("shop/index.html", context)
 
 @router.get("/about", response_class=HTMLResponse, name="about")
 async def get_about_page(
     request: Request,
-    locale: str
+    locale: str,
+    db: AsyncSession = Depends(get_db_session)
 ):
+    categories = await shop_service.get_categories_with_active_products(db)
     context = {
         "request": request,
+        "categories_with_products": categories,
         "current_year": datetime.now().year,
     }
-    return templates.TemplateResponse("shop/about.html", context)
+    return templates.TemplateResponse("shop/index.html", context)
 
 @router.get("/htmx/product-modal/{product_id}", response_class=HTMLResponse, name="htmx_product_modal")
 async def htmx_get_product_modal(

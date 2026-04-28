@@ -1,4 +1,4 @@
-<form hx-post="{{ request.url_for('request_general_quote', locale=request.state.locale) }}" hx-target="#modal-form-wrapper" hx-swap="innerHTML">
+<form hx-post="{{ request.url_for('request_general_quote', locale=request.state.locale) }}" hx-target="#modal-form-wrapper" hx-swap="innerHTML" x-data="phoneMask()" @submit="unmaskPhone($refs.phoneInput)">
     {{ form.csrf_token }}
 
     <h3 class="modal-title">{% if request.state.locale == 'uz' %}Ariza qoldirish{% else %}Оставить заявку{% endif %}</h3>
@@ -13,7 +13,7 @@
     </div>
     
     <div class="form-group">
-        {{ form.phone(class="form-input") }}
+        <input type="text" name="phone" id="{{ form.phone.id }}" class="form-input" x-model="maskedPhone" @input="formatPhone($event)" x-ref="phoneInput" placeholder=" ">
         <label for="{{ form.phone.id }}" class="form-label">{% if request.state.locale == 'uz' %}Telefon raqamingiz *{% else %}Ваш телефон *{% endif %}</label>
         {% if form.phone.errors %}
             <div class="form-error">{{ form.phone.errors[0] }}</div>
@@ -33,3 +33,30 @@
         <i class="fas fa-spinner fa-spin htmx-indicator"></i>
     </button>
 </form>
+
+<script>
+function phoneMask() {
+    return {
+        maskedPhone: '',
+        rawPhone: '',
+        formatPhone(e) {
+            let val = e.target.value.replace(/\D/g, '');
+            if (val.startsWith('998')) val = val.slice(3);
+            if (val.length > 9) val = val.slice(0, 9);
+            let formatted = '+998';
+            if (val.length > 0) formatted += ' (' + val.slice(0, 2);
+            if (val.length >= 2) formatted += ')';
+            if (val.length > 2) formatted += ' ' + val.slice(2, 5);
+            if (val.length > 5) formatted += '-' + val.slice(5, 7);
+            if (val.length > 7) formatted += '-' + val.slice(7, 9);
+            this.maskedPhone = formatted;
+            this.rawPhone = '+998' + val;
+        },
+        unmaskPhone(inputEl) {
+            if (inputEl && this.rawPhone.length >= 12) {
+                inputEl.value = this.rawPhone;
+            }
+        }
+    }
+}
+</script>

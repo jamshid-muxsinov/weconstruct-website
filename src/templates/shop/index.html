@@ -7,37 +7,213 @@
 {% block meta_description %}{{ page_description }}{% endblock %}
 
 {% block content %}
-<!-- 1. HERO -->
-<section class="hero">
-  <div class="hero__background-overlay"></div>
-  <div class="container hero__content">
-    <h1 class="hero__title">
-      {% if request.state.locale == 'uz' %}
-      <span class="hero__title-main">O'zbekistonda modulli binolar</span>
-      <span class="hero__title-sub">Hayot va biznes uchun zamonaviy yechimlar</span>
-      {% else %}
-      <span class="hero__title-main">Модульные здания в Узбекистане</span>
-      <span class="hero__title-sub">Современные решения для жизни и бизнеса</span>
-      {% endif %}
-    </h1>
-    <p class="hero__description">
-      {% if request.state.locale == 'uz' %}
-      Ofislar va savdo pavilyonlaridan tortib turar-joy binolari va sanitariya bloklarigacha bo'lgan har qanday maqsaddagi tez quriladigan binolarni loyihalashtiramiz, ishlab chiqaramiz va o'rnatamiz.
-      {% else %}
-      Проектируем, производим и монтируем быстровозводимые здания любого назначения: от офисов и торговых павильонов до жилых домов и санитарных блоков.
-      {% endif %}
-    </p>
-    <div class="hero__actions">
-        <!-- Кнопка в Hero теперь тоже ведет на страницу товаров -->
-        <a href="{{ request.url_for('products', locale=request.state.locale) }}" class="btn btn--primary btn--hero">
-          <span>{% if request.state.locale == 'uz' %}Mahsulotlar katalogi{% else %}Каталог продукции{% endif %}</span>
-          <svg class="icon icon-arrow" width="24" height="24"><use xlink:href="#icon-arrow-right"></use></svg>
+<!-- 1. HERO SPLIT (Glassmorphism + 3D Render) -->
+<section class="hero-split">
+  <div class="hero-split__bg"></div>
+  <div class="container hero-split__container">
+    
+    <!-- Левая колонка: Контент -->
+    <div class="hero-split__content">
+      <div class="hero-split__badge">
+        <span class="badge-dot"></span> {% if request.state.locale == 'uz' %}Innovatsiyalar{% else %}Инновации в строительстве{% endif %}
+      </div>
+      
+      <h1 class="hero-split__title">
+        {% if request.state.locale == 'uz' %}
+        Zamonaviy <span class="text-primary">modulli binolar</span><br>qurilishi
+        {% else %}
+        Современные <span class="text-primary">модульные здания</span><br>под ключ
+        {% endif %}
+      </h1>
+      
+      <p class="hero-split__description">
+        {% if request.state.locale == 'uz' %}
+        O'zbekistonda biznes va hayot uchun tez quriladigan, energiya tejovchi binolar. 14 kun ichida tayyor ob'ektni topshiramiz.
+        {% else %}
+        Быстровозводимые, энергоэффективные здания для бизнеса и жизни в Узбекистане. Сдаем готовый объект от 14 дней.
+        {% endif %}
+      </p>
+      
+      <div class="hero-split__actions">
+        <button hx-get="{{ request.url_for('htmx_general_quote_form', locale=request.state.locale) }}"
+                hx-target="#modal-placeholder"
+                hx-swap="innerHTML"
+                class="btn btn--primary btn--hero">
+          {% if request.state.locale == 'uz' %}Loyihani hisoblash{% else %}Рассчитать проект{% endif %}
+        </button>
+        <a href="#catalog" class="btn btn--secondary btn--hero">
+          {% if request.state.locale == 'uz' %}Katalogga o'tish{% else %}Смотреть каталог{% endif %}
         </a>
+      </div>
+    </div>
+
+    <!-- Правая колонка: 3D Рендер и Карточки -->
+    <div class="hero-split__visual">
+      <div class="hero-split__image-wrapper">
+        <img src="{{ url_for('static', path='img/hero.png') }}" alt="WeConstruct Modular 3D" class="hero-split__image">
+        
+        <!-- Карточка 1 (Верхний правый угол) -->
+        <div class="glass-card glass-card--top-right">
+          <div class="glass-card__icon"><i class="fas fa-shield-alt"></i></div>
+          <div class="glass-card__text">
+            {% if request.state.locale == 'uz' %}<strong>2 yil</strong> kafolat{% else %}<strong>2 года</strong> гарантии{% endif %}
+          </div>
+        </div>
+
+        <!-- Карточка 2 (Нижний левый угол) -->
+        <div class="glass-card glass-card--bottom-left">
+          <div class="glass-card__icon"><i class="fas fa-shipping-fast"></i></div>
+          <div class="glass-card__text">
+            {% if request.state.locale == 'uz' %}O'rnatish <strong>3 kundan</strong>{% else %}Монтаж <strong>от 3 дней</strong>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 1.5 STATS (Floating Stats Bar) -->
+<section class="stats-bar-section">
+  <div class="container">
+    <div class="stats-bar__wrapper" x-data="{
+        animateCounter(el, finalValue, suffix = '') {
+            let start = 0;
+            const duration = 1500;
+            const frameRate = 60;
+            const totalFrames = Math.round(duration / (1000 / frameRate));
+            const increment = finalValue / totalFrames;
+            let currentFrame = 0;
+            const timer = setInterval(() => {
+                currentFrame++;
+                start += increment;
+                if (currentFrame === totalFrames) {
+                    clearInterval(timer);
+                    start = finalValue;
+                }
+                el.textContent = Math.floor(start) + suffix;
+            }, 1000 / frameRate);
+        }
+    }">
+      
+      <div class="stat-item" x-intersect:enter="animateCounter($refs.projects, 50, '+')">
+        <div class="stat-item__number" x-ref="projects">0+</div>
+        <div class="stat-item__label">{% if request.state.locale == 'uz' %}Amalga oshirilgan loyihalar{% else %}Реализованных проектов{% endif %}</div>
+      </div>
+      
+      <div class="stat-item__divider"></div>
+      
+      <div class="stat-item" x-intersect:enter="animateCounter($refs.days, 3)">
+        <div class="stat-item__number" x-ref="days">0</div>
+        <div class="stat-item__label">{% if request.state.locale == 'uz' %}Kun — o'rtacha montaj{% else %}Дня — средний монтаж{% endif %}</div>
+      </div>
+      
+      <div class="stat-item__divider"></div>
+      
+      <div class="stat-item" x-intersect:enter="animateCounter($refs.clients, 98, '%')">
+        <div class="stat-item__number" x-ref="clients">0%</div>
+        <div class="stat-item__label">{% if request.state.locale == 'uz' %}Mamnun mijozlar{% else %}Довольных клиентов{% endif %}</div>
+      </div>
+      
+      <div class="stat-item__divider"></div>
+      
+      <div class="stat-item" x-intersect:enter="animateCounter($refs.warranty, 2)">
+        <div class="stat-item__number" x-ref="warranty">0</div>
+        <div class="stat-item__label">{% if request.state.locale == 'uz' %}Yilgacha kafolat{% else %}Года гарантии{% endif %}</div>
+      </div>
+
     </div>
   </div>
 </section>
 
-<!-- 2. ВЫПОЛНЕННЫЕ ПРОЕКТЫ (Бегущая строка) -->
+<!-- 2. КАТАЛОГ ПРОДУКЦИИ (с табами) -->
+{% if categories_with_products %}
+<section id="catalog" class="products-section"
+  x-data="{ activeTab: '{{ categories_with_products[0].slug }}', showAll: {} }"
+  x-init="{% for cat in categories_with_products %}showAll['{{ cat.slug }}'] = false; {% endfor %}">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{% if request.state.locale == 'uz' %}Mahsulotlar katalogi{% else %}Каталог продукции{% endif %}</h2>
+      <p class="section-subtitle">{% if request.state.locale == 'uz' %}Sifatli va zamonaviy modulli yechimlar{% else %}Качественные и современные модульные решения{% endif %}</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="products-tabs" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 40px;">
+      {% for category in categories_with_products %}
+      <button
+        @click="activeTab = '{{ category.slug }}'"
+        :class="activeTab === '{{ category.slug }}' ? 'btn btn--primary' : 'btn btn--white'"
+        style="border: 1px solid var(--gray-300); min-height: 40px; padding: 8px 20px; font-size: 0.95rem;">
+        {{ t_get(request, category, 'name') }}
+      </button>
+      {% endfor %}
+    </div>
+
+    <!-- Product grids per category -->
+    {% for category in categories_with_products %}
+    <div x-show="activeTab === '{{ category.slug }}'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-cloak>
+      <div class="products-grid">
+        {% for product in category.products %}
+        <article class="product-card cursor-pointer"
+                 x-show="showAll['{{ category.slug }}'] || {{ loop.index0 }} < 4"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 hx-get="{{ request.url_for('htmx_product_modal', locale=request.state.locale, product_id=product.id) }}"
+                 hx-target="#modal-placeholder"
+                 hx-swap="innerHTML"
+                 title="{{ t_get(request, product, 'name') }}">
+          <div class="product-card__image">
+            {% if product.main_image %}
+                <img src="{{ url_for('media', path=product.main_image) }}" alt="{{ t_get(request, product, 'name') }}" loading="lazy">
+            {% else %}
+                <img src="{{ url_for('static', path='img/placeholder.png') }}" alt="{{ t_get(request, product, 'name') }}" loading="lazy">
+            {% endif %}
+            <div class="product-card__overlay">
+              <span class="product-card__view-text">
+                  <i class="fas fa-eye"></i>
+                  <span>{% if request.state.locale == 'uz' %}Batafsil{% else %}Узнать подробнее{% endif %}</span>
+              </span>
+            </div>
+          </div>
+          <div class="product-card__content">
+            <div>
+              <h3 class="product-card__title">{{ t_get(request, product, 'name') }}</h3>
+              <p class="product-card__description">
+                {% set short_desc = t_get(request, product, 'short_description') %}
+                {% if short_desc %}
+                  {{ short_desc }}
+                {% else %}
+                  {% if request.state.locale == 'uz' %}Qisqa tavsif mavjud emas.{% else %}Краткое описание отсутствует.{% endif %}
+                {% endif %}
+              </p>
+            </div>
+            {% if product.price_min %}
+            <div class="product-card__footer">
+                <span class="product-card__price">{% if request.state.locale == 'uz' %}{{ product.price_min|format_number }} so'mdan{% else %}от {{ product.price_min|format_number }} сум{% endif %}</span>
+            </div>
+            {% endif %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+
+      {% if category.products|length > 4 %}
+      <div style="text-align: center; margin-top: 40px;">
+        <button @click="showAll['{{ category.slug }}'] = !showAll['{{ category.slug }}']" class="btn btn--primary">
+          <span x-show="!showAll['{{ category.slug }}']">{% if request.state.locale == 'uz' %}Barchasini ko'rish{% else %}Смотреть все{% endif %}</span>
+          <span x-show="showAll['{{ category.slug }}']" x-cloak>{% if request.state.locale == 'uz' %}Kamroq ko'rsatish{% else %}Свернуть{% endif %}</span>
+          <i class="fas" :class="showAll['{{ category.slug }}'] ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </button>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- 3. БЕГУЩАЯ СТРОКА (Портфолио) -->
 <section class="portfolio-section">
   <div class="container-fluid" style="padding: 0;">
     <div class="section-header">
@@ -49,47 +225,47 @@
            {% for i in range(3) %}
                <div class="portfolio-item-small">
                   <a href="{{ url_for('static', path='img/1rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
-                     <img src="{{ url_for('static', path='img/1rew.jpg') }}" alt="Project">
+                     <img src="{{ url_for('static', path='img/1rew.jpg') }}" alt="Project" loading="lazy">
                   </a>
                </div>
                <div class="portfolio-item-small">
                   <a href="{{ url_for('static', path='img/2rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
-                     <img src="{{ url_for('static', path='img/2rew.jpg') }}" alt="Project">
+                     <img src="{{ url_for('static', path='img/2rew.jpg') }}" alt="Project" loading="lazy">
                   </a>
                </div>
                <div class="portfolio-item-small">
                   <a href="{{ url_for('static', path='img/3rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
-                     <img src="{{ url_for('static', path='img/3rew.jpg') }}" alt="Project">
+                     <img src="{{ url_for('static', path='img/3rew.jpg') }}" alt="Project" loading="lazy">
                   </a>
                </div>
                <div class="portfolio-item-small">
                   <a href="{{ url_for('static', path='img/4rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
-                     <img src="{{ url_for('static', path='img/4rew.jpg') }}" alt="Project">
+                     <img src="{{ url_for('static', path='img/4rew.jpg') }}" alt="Project" loading="lazy">
                   </a>
                </div>
                <div class="portfolio-item-small">
                   <a href="{{ url_for('static', path='img/5rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
-                     <img src="{{ url_for('static', path='img/5rew.jpg') }}" alt="Project">
+                     <img src="{{ url_for('static', path='img/5rew.jpg') }}" alt="Project" loading="lazy">
                   </a>
                </div>
                <div class="portfolio-item-small">
                   <a href="{{ url_for('static', path='img/6rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
-                     <img src="{{ url_for('static', path='img/6rew.jpg') }}" alt="Project">
+                     <img src="{{ url_for('static', path='img/6rew.jpg') }}" alt="Project" loading="lazy">
                   </a>
                </div>
                <div class="portfolio-item-small">
                   <a href="{{ url_for('static', path='img/7rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
-                     <img src="{{ url_for('static', path='img/7rew.jpg') }}" alt="Project">
+                     <img src="{{ url_for('static', path='img/7rew.jpg') }}" alt="Project" loading="lazy">
                   </a>
                </div>
                <div class="portfolio-item-small">
                   <a href="{{ url_for('static', path='img/8rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
-                     <img src="{{ url_for('static', path='img/8rew.jpg') }}" alt="Project">
+                     <img src="{{ url_for('static', path='img/8rew.jpg') }}" alt="Project" loading="lazy">
                   </a>
                </div>
                <div class="portfolio-item-small">
                   <a href="{{ url_for('static', path='img/9rew.jpg') }}" class="lightbox" data-gallery="portfolio-home">
-                     <img src="{{ url_for('static', path='img/9rew.jpg') }}" alt="Project">
+                     <img src="{{ url_for('static', path='img/9rew.jpg') }}" alt="Project" loading="lazy">
                   </a>
                </div>
            {% endfor %}
@@ -98,8 +274,8 @@
   </div>
 </section>
 
-<!-- 3. ADVANTAGES -->
-<section class="advantages-section">
+<!-- 4. ADVANTAGES + STEPS -->
+<section id="advantages" class="advantages-section">
     <div class="container">
         <div class="section-header">
             <h2 class="section-title">{% if request.state.locale == 'uz' %}Nima uchun WeConstruct'ni tanlashadi{% else %}Почему выбирают WeConstruct{% endif %}</h2>
@@ -130,7 +306,6 @@
     </div>
 </section>
 
-<!-- 4. STEPS -->
 <section class="steps-section">
     <div class="container">
         <div class="section-header">
@@ -138,7 +313,6 @@
             <p class="section-subtitle">{% if request.state.locale == 'uz' %}G'oyadan tayyor ob'ektgacha — 4 oddiy qadamda.{% else %}От идеи до готового объекта за 4 простых шага.{% endif %}</p>
         </div>
         <div class="steps-timeline">
-            <!-- Step 1 -->
             <div class="step">
                 <div class="step__point"></div>
                 <div class="step__card">
@@ -147,7 +321,6 @@
                     <p class="step__text">{% if request.state.locale == 'uz' %}Siz ariza qoldirasiz, biz sizning maqsadlaringizni muhokama qilamiz va eng yaxshi yechimni tanlaymiz.{% else %}Вы оставляете заявку, мы обсуждаем ваши цели и подбираем лучшее решение.{% endif %}</p>
                 </div>
             </div>
-            <!-- Step 2 -->
             <div class="step">
                 <div class="step__point"></div>
                 <div class="step__card">
@@ -156,7 +329,6 @@
                     <p class="step__text">{% if request.state.locale == 'uz' %}Reja, materiallarni kelishib olamiz va 3D-vizualizatsiyani tayyorlaymiz.{% else %}Согласовываем планировку, материалы и готовим 3D-визуализацию.{% endif %}</p>
                 </div>
             </div>
-            <!-- Step 3 -->
             <div class="step">
                 <div class="step__point"></div>
                 <div class="step__card">
@@ -165,7 +337,6 @@
                     <p class="step__text">{% if request.state.locale == 'uz' %}Hamkorlarimiz modullarni zavodda sifat nazorati ostida ishlab chiqaradilar.{% else %}Наши партнеры изготавливают модули на заводе с контролем качества.{% endif %}</p>
                 </div>
             </div>
-            <!-- Step 4 -->
             <div class="step">
                 <div class="step__point"></div>
                 <div class="step__card">
@@ -178,8 +349,27 @@
     </div>
 </section>
 
-<!-- 5. ОТЗЫВЫ И НОВОСТИ (Исправленная версия для мобильных) -->
-<section class="reviews-section">
+<!-- 5. ПРОИЗВОДСТВО (Китай) -->
+<section class="production">
+  <div class="container">
+    <div class="production__content">
+      <div class="production__visual">
+        <img src="https://opis-cdn.tinkoffjournal.ru/mercury/main-modular-house.90crpnkltypj..jpg?preset=image_570w_2x" alt="WeConstruct ishlab chiqarishi" class="production__image" loading="lazy">
+      </div>
+      <div class="production__text">
+        <h2 class="production__title section-title">{% if request.state.locale == 'uz' %}Sifat kafolati — <span class="text-primary">tasdiqlangan hamkorlar</span>{% else %}Гарантия качества — <span class="text-primary">проверенные партнёры</span>{% endif %}</h2>
+        <p class="production__description">{% if request.state.locale == 'uz' %}Biz Xitoydagi yetakchi zavod-ishlab chiqaruvchilar bilan bevosita hamkorlik qilamiz. Hamkorlarni sinchkovlik bilan tanlash va ishlab chiqarishning ballar bosquchlarida qat'iy nazorat qilish bizga yuqori sifatli mahsulot, zamonaviy texnologiyalar va ishonchli materiallardan foydalanishni kafolatlash imkonini beradi. Siz texnologik mahsulotni optimal narxda olasiz.{% else %}Мы сотрудничаем напрямую с ведущими заводами-производителями в Китае. Тщательный отбор партнёров и строгий контроль на всех этапах производства позволяют нам гарантировать высокое качество продукции, использование современных технологий и надёжных материалов. Вы получаете технологичный продукт по оптимальной цене.{% endif %}</p>
+        <a href="#catalog" class="btn btn--primary btn--lg">
+          <span>{% if request.state.locale == 'uz' %}Mahsulotlarni ko'rish{% else %}Посмотреть продукцию{% endif %}</span>
+          <svg class="icon icon-arrow" width="24" height="24"><use xlink:href="#icon-arrow-right"></use></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. ВИДЕО-ОТЗЫВЫ -->
+<section id="reviews" class="reviews-section">
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">
@@ -191,82 +381,66 @@
     </div>
 
     <div class="reviews-grid">
-      <!-- YouTube Video 1 -->
-      <a href="https://www.youtube.com/shorts/CaGsdlTnvyQ" 
-         target="_blank" 
-         rel="noopener noreferrer" 
+      <a href="https://www.youtube.com/shorts/CaGsdlTnvyQ"
+         target="_blank"
+         rel="noopener noreferrer"
          class="review-card-yt"
          aria-label="Смотреть видео отзыв 1">
-        <img src="https://img.youtube.com/vi/CaGsdlTnvyQ/hqdefault.jpg" 
-             alt="Video Review 1" 
+        <img src="https://img.youtube.com/vi/CaGsdlTnvyQ/hqdefault.jpg"
+             alt="Video Review 1"
              class="review-card-yt__thumb"
              loading="lazy">
         <div class="review-card-yt__overlay">
             <div class="review-card-yt__icon">
                 <i class="fas fa-play"></i>
-            </div>
-            <div class="review-card-yt__title">
-                {% if request.state.locale == 'uz' %}Video sharh{% else %}Видео отзыв{% endif %} 1
             </div>
         </div>
       </a>
       
-      <!-- YouTube Video 2 -->
-      <a href="https://www.youtube.com/shorts/VOPcYSZ1yiE" 
-         target="_blank" 
-         rel="noopener noreferrer" 
+      <a href="https://www.youtube.com/shorts/VOPcYSZ1yiE"
+         target="_blank"
+         rel="noopener noreferrer"
          class="review-card-yt"
          aria-label="Смотреть видео отзыв 2">
-        <img src="https://img.youtube.com/vi/VOPcYSZ1yiE/hqdefault.jpg" 
-             alt="Video Review 2" 
+        <img src="https://img.youtube.com/vi/VOPcYSZ1yiE/hqdefault.jpg"
+             alt="Video Review 2"
              class="review-card-yt__thumb"
              loading="lazy">
         <div class="review-card-yt__overlay">
             <div class="review-card-yt__icon">
                 <i class="fas fa-play"></i>
             </div>
-            <div class="review-card-yt__title">
-                {% if request.state.locale == 'uz' %}Video sharh{% else %}Видео отзыв{% endif %} 2
-            </div>
         </div>
       </a>
 
-      <!-- YouTube Video 3 -->
-      <a href="https://www.youtube.com/shorts/GesNBATDKA4" 
-         target="_blank" 
-         rel="noopener noreferrer" 
+      <a href="https://www.youtube.com/shorts/GesNBATDKA4"
+         target="_blank"
+         rel="noopener noreferrer"
          class="review-card-yt"
          aria-label="Смотреть видео отзыв 3">
-        <img src="https://img.youtube.com/vi/GesNBATDKA4/hqdefault.jpg" 
-             alt="Video Review 3" 
+        <img src="https://img.youtube.com/vi/GesNBATDKA4/hqdefault.jpg"
+             alt="Video Review 3"
              class="review-card-yt__thumb"
              loading="lazy">
         <div class="review-card-yt__overlay">
             <div class="review-card-yt__icon">
                 <i class="fas fa-play"></i>
-            </div>
-            <div class="review-card-yt__title">
-                {% if request.state.locale == 'uz' %}Video sharh{% else %}Видео отзыв{% endif %} 3
             </div>
         </div>
       </a>
 
-      <!-- YouTube Video 4 -->
-      <a href="https://www.youtube.com/shorts/ipUV6jPg8mY" 
-         target="_blank" 
-         rel="noopener noreferrer" 
+      <a href="https://www.youtube.com/shorts/ipUV6jPg8mY"
+         target="_blank"
+         rel="noopener noreferrer"
          class="review-card-yt"
          aria-label="Смотреть видео отзыв 4">
-        <img src="https://img.youtube.com/vi/ipUV6jPg8mY/hqdefault.jpg" 
-             alt="Video Review 4" 
+        <img src="https://img.youtube.com/vi/ipUV6jPg8mY/hqdefault.jpg"
+             alt="Video Review 4"
              class="review-card-yt__thumb"
              loading="lazy">
         <div class="review-card-yt__overlay">
             <div class="review-card-yt__icon">
                 <i class="fas fa-play"></i>
-            </div>
-            <div class="review-card-yt__title">
-                {% if request.state.locale == 'uz' %}Video sharh{% else %}Видео отзыв{% endif %} 4
             </div>
         </div>
       </a>
@@ -274,23 +448,257 @@
   </div>
 </section>
 
-<!-- 6. CTA -->
+<!-- 7. О КОМПАНИИ (Основатель) -->
+<section id="about" class="team team-alt">
+  <div class="container">
+    <div class="team__header section-header">
+      <h2 class="section-title">{% if request.state.locale == 'uz' %}WeConstruct asoschisi{% else %}Основатель WeConstruct{% endif %}</h2>
+    </div>
+    <div class="team__founder">
+      <div class="team-member">
+        <div class="team-member__image">
+          <img src="{{ url_for('static', path='img/photo_2025-07-29_11-08-03.jpg') }}" alt="Sobir Qayumov" loading="lazy">
+        </div>
+        <div class="team-member__info">
+          <h3 class="team-member__name">{% if request.state.locale == 'uz' %}Sobir Qayumov{% else %}Собир Каюмов{% endif %}</h3>
+          <p class="team-member__position">{% if request.state.locale == 'uz' %}Biznes egasi{% else %}Владелец бизнеса{% endif %}</p>
+          <p class="team-member__bio">
+            {% if request.state.locale == 'uz' %}
+            Sobir Qayumov boshchiligida WeConstruct O'zbekiston bozoriga innovatsion modulli yechimlarni olib kirmoqda. Uning maqsadi — qurilish sohasida tezlik, sifat va zamonaviy dizayn uyg'unligini ta'minlash orqali mijozlar uchun eng qulay sharoitlarni yaratishdir.
+            {% else %}
+            Под руководством Собира Каюмова WeConstruct внедряет инновационные модульные решения на рынок Узбекистана. Его цель — создание максимально комфортных условий для клиентов путем сочетания скорости, качества и современного дизайна в строительстве.
+            {% endif %}
+          </p>
+          
+          <a href="tel:+998982008118" class="team-member__phone">
+            <i class="fas fa-phone-alt"></i> +998 98 200 81 18
+          </a>
+
+          <div class="team-member__socials" style="margin-top: 16px;">
+            <a href="https://t.me/weconstructuz" target="_blank" rel="noopener noreferrer" class="team-member__social-link" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
+            <a href="https://www.instagram.com/weconstruct.uz/" target="_blank" rel="noopener noreferrer" class="team-member__social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.linkedin.com/in/%D1%81%D0%BE%D0%B1%D0%B8%D1%80-%D0%BA%D0%B0%D1%8E%D0%BC%D0%BE%D0%B2-4b8582374/" target="_blank" rel="noopener noreferrer" class="team-member__social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7.5 КОМАНДА -->
+<section class="team-team">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{% if request.state.locale == 'uz' %}Jamoa{% else %}Команда{% endif %}</h2>
+      <p class="section-subtitle">{% if request.state.locale == 'uz' %}Professional jamoa — muvaffaqiyatingiz kafolati{% else %}Профессиональная команда — гарантия вашего успеха{% endif %}</p>
+    </div>
+    <div class="team-grid"
+         x-data="{ 
+            scrollInterval: null,
+            init() {
+                let container = $el;
+                const startAutoScroll = () => {
+                    this.scrollInterval = setInterval(() => {
+                        if (container.scrollLeft + container.offsetWidth >= container.scrollWidth - 10) {
+                            // If reached the end, snap back to start
+                            container.scrollTo({ left: 0, behavior: 'smooth' });
+                        } else {
+                            // Scroll to the next card (card width + gap)
+                            container.scrollBy({ left: 328, behavior: 'smooth' });
+                        }
+                    }, 3000); // Scroll every 3 seconds
+                };
+                const stopAutoScroll = () => {
+                    if (this.scrollInterval) clearInterval(this.scrollInterval);
+                };
+
+                startAutoScroll();
+
+                // Pause on interaction
+                container.addEventListener('mouseenter', stopAutoScroll.bind(this));
+                container.addEventListener('mouseleave', startAutoScroll.bind(this));
+                container.addEventListener('touchstart', stopAutoScroll.bind(this));
+                container.addEventListener('touchend', startAutoScroll.bind(this));
+                
+                // Cleanup on destroy
+                this.$watch(() => container.parentElement, (newVal) => {
+                    if (!newVal) stopAutoScroll.bind(this)();
+                });
+            }
+         }">
+      <!-- Xodjayeva Aziza - HR -->
+      <div class="team-card">
+        <div class="team-card__icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+          <i class="fas fa-user-tie"></i>
+        </div>
+        <div class="team-card__info">
+          <h3 class="team-card__name">Xodjayeva Aziza</h3>
+          <p class="team-card__position">{% if request.state.locale == 'uz' %}HR Direktor{% else %}HR Директор{% endif %}</p>
+          <p class="team-card__desc">{% if request.state.locale == 'uz' %}Jamoani shakllantirish, iste'dodlarni rivojlantirish va korporativ madaniyatni mustahkamlash bo'yicha mutaxassis.{% else %}Специалист по формированию команды, развитию персонала и укреплению корпоративной культуры.{% endif %}</p>
+          <a href="tel:+998777454747" class="team-card__phone"><i class="fas fa-phone-alt"></i> +998 77 745 47 47</a>
+        </div>
+      </div>
+
+      <!-- Umid Urazov - Sotuv -->
+      <div class="team-card">
+        <div class="team-card__icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+          <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="team-card__info">
+          <h3 class="team-card__name">Umid Urazov</h3>
+          <p class="team-card__position">{% if request.state.locale == 'uz' %}Sotuv bo'limi rahbari (ROP, KAM){% else %}Руководитель отдела продаж (РОП, КАМ){% endif %}</p>
+          <p class="team-card__desc">{% if request.state.locale == 'uz' %}Mijozlar bilan ishlash va savdo strategiyalarini ishlab chiqish bo'yicha yetakchi mutaxassis.{% else %}Ведущий специалист по работе с клиентами и разработке стратегий продаж.{% endif %}</p>
+          <a href="tel:+998771308882" class="team-card__phone"><i class="fas fa-phone-alt"></i> +998 77 130 88 82</a>
+        </div>
+      </div>
+
+      <!-- Kamiljon Muhammadinov - Moliya -->
+      <div class="team-card">
+        <div class="team-card__icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+          <i class="fas fa-coins"></i>
+        </div>
+        <div class="team-card__info">
+          <h3 class="team-card__name">Kamiljon Muhammadinov</h3>
+          <p class="team-card__position">{% if request.state.locale == 'uz' %}Ta'minot va moliya bo'limi{% else %}Отдел снабжения и финансов{% endif %}</p>
+          <p class="team-card__desc">{% if request.state.locale == 'uz' %}Loyihalarni o'z vaqtida resurslar bilan ta'minlash va moliyaviy barqarorlikni nazorat qiladi.{% else %}Обеспечивает проекты ресурсами и контролирует финансовую стабильность.{% endif %}</p>
+          <a href="tel:+998771308883" class="team-card__phone"><i class="fas fa-phone-alt"></i> +998 77 130 88 83</a>
+        </div>
+      </div>
+
+      <!-- Nilufar Usmonova - Dizayner -->
+      <div class="team-card">
+        <div class="team-card__icon" style="background: linear-gradient(135deg, #fa709a, #fee140);">
+          <i class="fas fa-pencil-ruler"></i>
+        </div>
+        <div class="team-card__info">
+          <h3 class="team-card__name">Nilufar Usmonova</h3>
+          <p class="team-card__position">{% if request.state.locale == 'uz' %}Dizayner{% else %}Дизайнер{% endif %}</p>
+          <p class="team-card__desc">{% if request.state.locale == 'uz' %}Binolarning ichki va tashqi ko'rinishiga estetik joziba va zamonaviy uslub beruvchi ijodkor.{% else %}Творец, придающий эстетику и современный стиль внутреннему и внешнему виду зданий.{% endif %}</p>
+          <a href="tel:+998771308885" class="team-card__phone"><i class="fas fa-phone-alt"></i> +998 77 130 88 85</a>
+        </div>
+      </div>
+
+      <!-- Jahongir Safoyev - Sotuvchi -->
+      <div class="team-card">
+        <div class="team-card__icon" style="background: linear-gradient(135deg, #a8edea, #fed6e3);">
+          <i class="fas fa-headset"></i>
+        </div>
+        <div class="team-card__info">
+          <h3 class="team-card__name">Jahongir Safoyev</h3>
+          <p class="team-card__position">{% if request.state.locale == 'uz' %}Sotuvchi / Operator{% else %}Продавец / Оператор{% endif %}</p>
+          <p class="team-card__desc">{% if request.state.locale == 'uz' %}Mijozlarga loyihalar haqida ma'lumot berish va arizalarni qabul qilish bo'yicha mutaxassis.{% else %}Специалист по предоставлению информации о проектах и приему заявок.{% endif %}</p>
+          <a href="tel:+998771308887" class="team-card__phone"><i class="fas fa-phone-alt"></i> +998 77 130 88 87</a>
+        </div>
+      </div>
+
+      <!-- Gullola Qayumova - Sotuvchi -->
+      <div class="team-card">
+        <div class="team-card__icon" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);">
+          <i class="fas fa-comments"></i>
+        </div>
+        <div class="team-card__info">
+          <h3 class="team-card__name">Gullola Qayumova</h3>
+          <p class="team-card__position">{% if request.state.locale == 'uz' %}Sotuvchi / Operator{% else %}Продавец / Оператор{% endif %}</p>
+          <p class="team-card__desc">{% if request.state.locale == 'uz' %}Mijozlar bilan aloqalarni mustahkamlovchi va ularga eng yaxshi takliflarni tanlashda ko'maklashuvchi mutaxassis.{% else %}Специалист по укреплению связей с клиентами и подбору лучших предложений.{% endif %}</p>
+          <a href="tel:+998771308888" class="team-card__phone"><i class="fas fa-phone-alt"></i> +998 77 130 88 88</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. МОЩНЫЙ CTA (Inline форма) -->
 <section class="cta">
     <div class="container">
-        <div class="cta__content">
+        <div class="cta__content cta__content--with-form">
           <div class="cta__text">
             <h2 class="cta__title">{% if request.state.locale == 'uz' %}Mos variant topmadingizmi?{% else %}Не нашли подходящий вариант?{% endif %}</h2>
             <p class="cta__description">{% if request.state.locale == 'uz' %}Biz bilan bog'laning va biz sizning vazifalaringiz uchun individual loyiha ishlab chiqamiz.{% else %}Свяжитесь с нами, и мы разработаем индивидуальный проект под ваши задачи.{% endif %}</p>
           </div>
-          <div class="cta__actions">
-            <button hx-get="{{ request.url_for('htmx_general_quote_form', locale=request.state.locale) }}"
-                    hx-target="#modal-placeholder"
-                    hx-swap="innerHTML"
-                    class="btn btn--white btn--hero">
-              <span>{% if request.state.locale == 'uz' %}Ariza qoldirish{% else %}Оставить заявку{% endif %}</span>
-            </button>
+          <div class="cta-form" id="cta-form-wrapper">
+            <form hx-post="{{ request.url_for('request_general_quote', locale=request.state.locale) }}"
+                  hx-target="#cta-form-wrapper"
+                  hx-swap="innerHTML"
+                  x-data="phoneMask()"
+                  @submit="unmaskPhone()">
+                {{ form.csrf_token }}
+                <h3 class="form-title" style="color: white; margin-bottom: 8px;">{% if request.state.locale == 'uz' %}Ariza qoldirish{% else %}Оставить заявку{% endif %}</h3>
+                <p class="form-subtitle" style="color: rgba(255,255,255,0.8); margin-bottom: 20px; font-size: 0.9rem;">{% if request.state.locale == 'uz' %}Tez orada bog'lanamiz{% else %}Свяжемся в ближайшее время{% endif %}</p>
+
+                <div class="form-group">
+                    {{ form.name(class="form-input", placeholder=" ") }}
+                    <label for="{{ form.name.id }}" class="form-label">{% if request.state.locale == 'uz' %}Ismingiz *{% else %}Ваше имя *{% endif %}</label>
+                    {% if form.name.errors %}
+                        <div class="form-error">{{ form.name.errors[0] }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <input type="text" name="phone" id="{{ form.phone.id }}" class="form-input" x-model="maskedPhone" @input="formatPhone($event)" x-ref="phoneInput" placeholder=" ">
+                    <label for="{{ form.phone.id }}" class="form-label">{% if request.state.locale == 'uz' %}Telefon *{% else %}Телефон *{% endif %}</label>
+                    {% if form.phone.errors %}
+                        <div class="form-error">{{ form.phone.errors[0] }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.message(class="form-textarea", placeholder=" ") }}
+                    <label for="{{ form.message.id }}" class="form-label">{% if request.state.locale == 'uz' %}Xabar (ixtiyoriy){% else %}Сообщение (необяз.){% endif %}</label>
+                    {% if form.message.errors %}
+                        <div class="form-error">{{ form.message.errors[0] }}</div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn btn--white btn--full htmx-indicator-parent" @click="unmaskPhone($refs.phoneInput)">
+                    <span class="htmx-indicator-text">{% if request.state.locale == 'uz' %}Arizani yuborish{% else %}Отправить заявку{% endif %}</span>
+                    <i class="fas fa-spinner fa-spin htmx-indicator"></i>
+                </button>
+            </form>
           </div>
         </div>
     </div>
 </section>
+
+<!-- 9. КАРТА И КОНТАКТЫ -->
+<section id="contacts" class="map">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{% if request.state.locale == 'uz' %}Biz xaritadamiz{% else %}Мы на карте{% endif %}</h2>
+      <p class="section-subtitle">{% if request.state.locale == 'uz' %}Loyihangizni muhokama qilish uchun ofisimizga tashrif buyuring.{% else %}Приезжайте к нам в офис для обсуждения вашего проекта.{% endif %}</p>
+    </div>
+    <iframe src="https://yandex.ru/map-widget/v1/?ll=69.217915%2C41.259567&z=19&pt=69.217915%2C41.259567,pm2rdm"
+            class="map__iframe"
+            allowfullscreen="true"
+            loading="lazy">
+    </iframe>
+  </div>
+</section>
+
+<!-- Phone Mask Alpine Component -->
+<script>
+function phoneMask() {
+    return {
+        maskedPhone: '',
+        rawPhone: '',
+        formatPhone(e) {
+            let val = e.target.value.replace(/\D/g, '');
+            if (val.startsWith('998')) val = val.slice(3);
+            if (val.length > 9) val = val.slice(0, 9);
+            let formatted = '+998';
+            if (val.length > 0) formatted += ' (' + val.slice(0, 2);
+            if (val.length >= 2) formatted += ')';
+            if (val.length > 2) formatted += ' ' + val.slice(2, 5);
+            if (val.length > 5) formatted += '-' + val.slice(5, 7);
+            if (val.length > 7) formatted += '-' + val.slice(7, 9);
+            this.maskedPhone = formatted;
+            this.rawPhone = '+998' + val;
+        },
+        unmaskPhone(inputEl) {
+            if (inputEl && this.rawPhone.length >= 12) {
+                inputEl.value = this.rawPhone;
+            }
+        }
+    }
+}
+</script>
 {% endblock %}
